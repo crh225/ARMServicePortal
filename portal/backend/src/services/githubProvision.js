@@ -1,34 +1,83 @@
 import { App as GitHubApp } from "@octokit/app";
 import { Octokit } from "@octokit/rest";
 import crypto from "crypto";
+import fs from "fs";
+import path from "path";
 import { getBlueprintById } from "../config/blueprints.js";
 
-const GITHUB_APP_ID = process.env.GITHUB_APP_ID;
-const GITHUB_INSTALLATION_ID = process.env.GITHUB_INSTALLATION_ID;
 
-const GITHUB_APP_PRIVATE_KEY =
-  process.env.GITHUB_APP_PRIVATE_KEY ||
-  (process.env.GITHUB_APP_PRIVATE_KEY_BASE64
-    ? Buffer.from(process.env.GITHUB_APP_PRIVATE_KEY_BASE64, "base64").toString("utf8")
-    : undefined);
+function getConfig() {
+  const {
+    GITHUB_APP_ID,
+    GITHUB_INSTALLATION_ID,
+    GITHUB_APP_PRIVATE_KEY,
+    GITHUB_APP_PRIVATE_KEY_BASE64,
+    GITHUB_APP_PRIVATE_KEY_PATH,
+    GITHUB_INFRA_OWNER,
+    GITHUB_INFRA_REPO
+  } = process.env;
 
-const INFRA_OWNER = process.env.GITHUB_INFRA_OWNER; 
-const INFRA_REPO = process.env.GITHUB_INFRA_REPO;
+  let resolvedPrivateKey = GITHUB_APP_PRIVATE_KEY;
 
-if (!GITHUB_APP_ID || !GITHUB_INSTALLATION_ID || !GITHUB_APP_PRIVATE_KEY) {
-  console.warn("[githubProvision] GitHub App env vars are not fully set. Provisioning will fail until configured.");
+  if (!resolvedPrivateKey && GITHUB_APP_PRIVATE_KEY_PATH) {
+    try {
+      const keyPath = path.isAbsolute(GITHUB_APP_PRIVATE_KEY_PATH)
+        ? GITHUB_APP_PRIVATE_KEY_PATH
+        : path.join(process.cwd(), GITHUB_APP_PRIVATE_KEY_PATH);
+
+      resolvedPrivateKey = fs.readFileSync(keyPath, "utf8");
+    } catch (err) {
+      console.error(
+        "[githubProvision] Failed to read key from GITHUB_APP_PRIVATE_KEY_PATH:",
+        err
+      );
+    }
+  }
+
+  if (!resolvedPrivateKey && GITHUB_APP_PRIVATE_KEY_BASE64) {
+    try {
+      resolvedPrivateKey = Buffer.from(
+        GITHUB_APP_PRIVATE_KEY_BASE64,
+        "base64"
+      ).toString("utf8");
+    } catch (err) {
+      console.error(
+        "[githubProvision] Failed to decode GITHUB_APP_PRIVATE_KEY_BASE64:",
+        err
+      );
+    }
+  }
+
+  return {
+    appId: GITHUB_APP_ID,
+    installationId: GITHUB_INSTALLATION_ID,
+    privateKey: resolvedPrivateKey,
+    infraOwner: GITHUB_INFRA_OWNER,
+    infraRepo: GITHUB_INFRA_REPO
+  };
 }
 
 async function getInstallationClient() {
+  const { appId, installationId, privateKey } = getConfig();
+
+  if (!appId || !installationId || !privateKey) {
+    throw new Error(
+      "GitHub App configuration missing. Check env vars: " +
+        "GITHUB_APP_ID, GITHUB_INSTALLATION_ID, and GITHUB_APP_PRIVATE_KEY / _PATH / _BASE64"
+    );
+  }
+
   const app = new GitHubApp({
-    appId: GITHUB_APP_ID,
-    privateKey: GITHUB_APP_PRIVATE_KEY
+    appId,
+    privateKey
   });
 
-  const { data: { token } } = await app.octokit.request(
+  const {
+    data: { token }
+  } = await app.octokit.request(
     "POST /app/installations/{installation_id}/access_tokens",
     {
-      installation_id: GITHUB_INSTALLATION_ID
+      installation_id: installationId
     }
   );
 
@@ -46,7 +95,10 @@ export async function createGitHubRequest({ environment, blueprintId, variables 
   if (!blueprint) {
     throw new Error(`Unknown blueprintId: ${blueprintId}`);
   }
-  if (!INFRA_OWNER || !INFRA_REPO) {
+
+  const { infraOwner, infraRepo } = getConfig();
+
+  if (!infraOwner || !infraRepo) {
     throw new Error("GITHUB_INFRA_OWNER and GITHUB_INFRA_REPO must be set");
   }
 
@@ -54,15 +106,15 @@ export async function createGitHubRequest({ environment, blueprintId, variables 
 
   // 1) Get default branch SHA
   const { data: repo } = await octokit.repos.get({
-    owner: INFRA_OWNER,
-    repo: INFRA_REPO
+    owner: infraOwner,
+    repo: infraRepo
   });
 
   const baseBranch = repo.default_branch || "main";
 
   const { data: baseRef } = await octokit.git.getRef({
-    owner: INFRA_OWNER,
-    repo: INFRA_REPO,
+    owner: infraOwner,
+    repo: infraRepo,
     ref: `heads/${baseBranch}`
   });
 
@@ -74,8 +126,8 @@ export async function createGitHubRequest({ environment, blueprintId, variables 
   const branchName = `requests/${environment}/${safeBlueprint}-${shortId}`;
 
   await octokit.git.createRef({
-    owner: INFRA_OWNER,
-    repo: INFRA_REPO,
+    owner: infraOwner,
+    repo: infraRepo,
     ref: `refs/heads/${branchName}`,
     sha: baseSha
   });
@@ -92,7 +144,7 @@ export async function createGitHubRequest({ environment, blueprintId, variables 
 
   for (const [k, v] of Object.entries(variables)) {
     if (!allowedVarNames.includes(k)) continue;
-    const value = String(v).replace(/"/g, '\"');
+    const value = String(v).replace(/"/g, '\\"');
     lines.push(`  ${k} = "${value}"`);
   }
 
@@ -103,8 +155,8 @@ export async function createGitHubRequest({ environment, blueprintId, variables 
 
   // 4) Create file in the branch
   const { data: file } = await octokit.repos.createOrUpdateFileContents({
-    owner: INFRA_OWNER,
-    repo: INFRA_REPO,
+    owner: infraOwner,
+    repo: infraRepo,
     path: filePath,
     message: `chore: request ${blueprintId} in ${environment} (${shortId})`,
     content: Buffer.from(tfContent, "utf8").toString("base64"),
@@ -124,8 +176,8 @@ export async function createGitHubRequest({ environment, blueprintId, variables 
   ].join("\n");
 
   const { data: pr } = await octokit.pulls.create({
-    owner: INFRA_OWNER,
-    repo: INFRA_REPO,
+    owner: infraOwner,
+    repo: infraRepo,
     title,
     head: branchName,
     base: baseBranch,

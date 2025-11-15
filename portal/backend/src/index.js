@@ -1,3 +1,13 @@
+import path from "path";
+import { fileURLToPath } from "url";
+import dotenv from "dotenv";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+
+dotenv.config({ path: path.join(__dirname, "..", ".env") });
+
 import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
@@ -11,7 +21,6 @@ app.use(cors());
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
 });
-
 
 app.get("/api/catalog", (req, res) => {
   const publicBlueprints = BLUEPRINTS.map(({ moduleSource, ...rest }) => rest);
@@ -46,7 +55,10 @@ app.post("/api/provision", async (req, res) => {
     });
   } catch (err) {
     console.error("Error in /api/provision:", err);
-    return res.status(500).json({ error: "Failed to create GitHub request", details: err.message });
+    return res.status(500).json({
+      error: "Failed to create GitHub request",
+      details: err.message
+    });
   }
 });
 
