@@ -9,7 +9,65 @@ function App() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    fetch("/api/catalog")
+      .then((res) => res.json())
+      .then(setBlueprints)
+      .catch((err) => {
+        console.error(err);
+        setError("Failed to load blueprints");
+      });
+  }, []);
 
+  const handleSelectBlueprint = (id) => {
+    const bp = blueprints.find((b) => b.id === id) || null;
+    setSelectedBlueprint(bp);
+    setResult(null);
+    setError(null);
+    if (bp) {
+      const initial = {};
+      (bp.variables || []).forEach((v) => {
+        initial[v.name] = v.default || "";
+      });
+      setFormValues(initial);
+    } else {
+      setFormValues({});
+    }
+  };
+
+  const handleChange = (name, value) => {
+    setFormValues((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = () => {
+    if (!selectedBlueprint) return;
+    setLoading(true);
+    setError(null);
+    setResult(null);
+
+    fetch("/api/provision", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        blueprintId: selectedBlueprint.id,
+        variables: formValues
+      })
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setLoading(false);
+        if (data.error) {
+          setError(data.error);
+        } else {
+          setResult(data);
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+        setLoading(false);
+        setError("Failed to submit request");
+      });
+  };
 
   return (
     <div className="app-root">
@@ -17,11 +75,10 @@ function App() {
         <header className="app-header">
           <div>
             <div className="logo-row">
-              <span className="logo-text">Cloud Self-Service</span>
+              <span className="logo-text">Cloud Self-Service Portal</span>
             </div>
             <p className="app-subtitle">
-              Provision approved Azure resources through GitHub + Terraform,
-              without opening a ticket.
+              Provision approved Azure resources through GitOps + Terraform.
             </p>
           </div>
           <nav className="app-nav">
@@ -130,7 +187,102 @@ function App() {
             )}
           </section>
 
+          <aside className="panel panel--right">
+            <div>
+              <h2 className="panel-title">3. Result</h2>
+              <p className="panel-help">
+                Track the GitHub Pull Request that will run Terraform via Actions.
+              </p>
+            </div>
 
+            {error && (
+              <div className="alert alert--error">
+                <strong>Error:</strong> {error}
+              </div>
+            )}
+
+            {result ? (
+              <div className="result-card">
+                <div className="result-row">
+                  <span className="result-label">Status</span>
+                  <span className="result-value">{result.status}</span>
+                </div>
+
+                {result.pullRequestUrl && (
+                  <div className="result-row">
+                    <span className="result-label">Pull Request</span>
+                    <a
+                      className="result-link"
+                      href={result.pullRequestUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {result.pullRequestUrl}
+                    </a>
+                  </div>
+                )}
+
+                {result.branchName && (
+                  <div className="result-row">
+                    <span className="result-label">Branch</span>
+                    <code className="result-code">{result.branchName}</code>
+                  </div>
+                )}
+
+                {result.filePath && (
+                  <div className="result-row">
+                    <span className="result-label">Terraform file</span>
+                    <code className="result-code">{result.filePath}</code>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="empty-state">
+                <p>No request submitted yet.</p>
+                <p className="empty-state-sub">
+                  Select a blueprint, fill in parameters, then submit to create
+                  a PR.
+                </p>
+              </div>
+            )}
+
+            <div className="terminal">
+              <div className="terminal-header">
+                <span className="dot dot--red" />
+                <span className="dot dot--amber" />
+                <span className="dot dot--green" />
+                <span className="terminal-title">terraform-actions.log</span>
+              </div>
+              <div className="terminal-body">
+                {result ? (
+                  <>
+                    <span className="terminal-line">
+                      $ terraform init && terraform plan
+                    </span>
+                    <span className="terminal-line terminal-line--dim">
+                      Running in GitHub Actions on PR merge…
+                    </span>
+                    <span className="terminal-line">
+                      file: <code>{result.filePath}</code>
+                    </span>
+                    <span className="terminal-line">
+                      branch: <code>{result.branchName}</code>
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="terminal-line">
+                      # Waiting for first request…
+                    </span>
+                    <span className="terminal-line terminal-line--dim">
+                      Submit a blueprint to see the GitHub-driven Terraform
+                      flow.
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
+          </aside>
         </main>
 
         <footer className="app-footer">

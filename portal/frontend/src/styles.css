@@ -228,9 +228,7 @@ body {
   padding: 11px 13px;
   border-radius: 16px;
   border: 1px solid rgba(148, 163, 184, 0.6);
-  background:
-    radial-gradient(circle at top left, var(--accent-soft), transparent 60%),
-    #ffffff;
+  background: #ffffff;
   color: inherit;
   cursor: pointer;
   transition: all 0.16s ease-out;
@@ -324,13 +322,11 @@ body {
   font-weight: 500;
   font-size: 0.88rem;
   cursor: pointer;
-  box-shadow: 0 16px 40px rgba(37, 99, 235, 0.55);
   transition: all 0.16s ease-out;
 }
 
 .primary-btn:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 20px 50px rgba(37, 99, 235, 0.7);
 }
 
 .primary-btn:disabled {
@@ -428,9 +424,7 @@ body {
   border-radius: 16px;
   border: 1px solid rgba(148, 163, 184, 0.9);
   background:
-    radial-gradient(circle at top left, rgba(219, 234, 254, 0.9), transparent 55%),
-    radial-gradient(circle at bottom right, rgba(221, 239, 253, 0.95), transparent 55%),
-    #eff6ff;
+    rgb(255, 255, 255);
   box-shadow: 0 14px 32px rgba(148, 163, 184, 0.45);
   overflow: hidden;
 }
