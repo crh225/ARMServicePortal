@@ -182,7 +182,7 @@ function App() {
 
                 <p className="hint-text">
                   The portal never applies Terraform directly. It just opens a
-                  reviewed PR in your repo.
+                  PR in your repo.
                 </p>
               </div>
             )}
