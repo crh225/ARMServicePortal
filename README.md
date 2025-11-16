@@ -53,7 +53,7 @@ The system consists of three core components:
 
 ---
 
-## Architecture Diagram (Conceptual)
+## Architecture Diagram
 
 ```text
 +------------------------+        +----------------------------+
@@ -81,7 +81,7 @@ The system consists of three core components:
 
 ---
 
-## Screenshots (Placeholders)
+## Screenshots
 
 ### Blueprint Catalog
 <img width="1303" height="588" alt="image" src="https://github.com/user-attachments/assets/9265328f-6787-45dd-8bbd-d5ef669e58d5" />
