@@ -35,10 +35,10 @@ jobs:
 
       - name: Debug env wiring
         run: |
-          echo "Has ARM_CLIENT_ID: ${ARM_CLIENT_ID:+yes}"
-          echo "Has ARM_CLIENT_SECRET: ${ARM_CLIENT_SECRET:+yes}"
-          echo "Has ARM_TENANT_ID: ${ARM_TENANT_ID:+yes}"
-          echo "Has ARM_SUBSCRIPTION_ID: ${ARM_SUBSCRIPTION_ID:+yes}"
+          echo "Has AZURE_CLIENT_ID: ${AZURE_CLIENT_ID:+yes}"
+          echo "Has AZURE_CLIENT_SECRET: ${AZURE_CLIENT_SECRET:+yes}"
+          echo "Has AZURE_TENANT_ID: ${AZURE_TENANT_ID:+yes}"
+          echo "Has AZURE_SUBSCRIPTION_ID: ${AZURE_SUBSCRIPTION_ID:+yes}"
 
       - name: Terraform Init
         run: terraform init -input=false
