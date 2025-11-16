@@ -5,6 +5,6 @@ module "azure-key-vault-basic_e10a89dc" {
   resource_group_name = "test-dev-rg"
   location = "eastus2"
   sku_name = "standard"
-  soft_delete_retention_days = "7"
+  soft_delete_retention_days = "6"
   purge_protection_enabled = "true"
 }
