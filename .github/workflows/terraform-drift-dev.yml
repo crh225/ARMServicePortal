@@ -1,0 +1,107 @@
+name: Terraform Drift Detection (Dev)
+
+on:
+  schedule:
+    - cron: "0 6 * * *"  # every day at 06:00 UTC
+  workflow_dispatch: {}   # allow manual runs
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+
+    env:
+      ARM_CLIENT_ID:       ${{ secrets.AZURE_CLIENT_ID }}
+      ARM_CLIENT_SECRET:   ${{ secrets.AZURE_CLIENT_SECRET }}
+      ARM_TENANT_ID:       ${{ secrets.AZURE_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+    defaults:
+      run:
+        working-directory: infra/environments/dev
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
+
+      - name: Terraform init
+        run: |
+          terraform init -input=false
+
+      - name: Terraform plan (drift detection)
+        id: plan
+        run: |
+          set +e
+          terraform plan -input=false -no-color -detailed-exitcode > drift-plan.txt
+          exit_code=$?
+          echo "exit_code=$exit_code" >> $GITHUB_OUTPUT
+
+          if [ $exit_code -eq 0 ]; then
+            echo "No drift detected."
+          elif [ $exit_code -eq 2 ]; then
+            echo "Drift detected."
+          else
+            echo "Terraform plan failed with exit code $exit_code"
+            exit $exit_code
+          fi
+        shell: bash
+
+      - name: Upload drift plan artifact (if drift)
+        if: steps.plan.outputs.exit_code == '2'
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-drift-dev
+          path: infra/environments/dev/drift-plan.txt
+
+      - name: Open/update drift issue
+        if: steps.plan.outputs.exit_code == '2'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const plan = fs.readFileSync('infra/environments/dev/drift-plan.txt', 'utf8');
+
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            // Look for an existing open "Drift detected (dev)" issue
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner,
+              repo,
+              state: 'open',
+              labels: 'terraform-drift,dev',
+            });
+
+            const body = [
+              'Terraform drift detected in **dev**:',
+              '',
+              '```txt',
+              plan.substring(0, 6000),
+              '```',
+              '',
+              '_This issue was created automatically by the Terraform Drift Detection workflow._'
+            ].join('\n');
+
+            if (issues.length > 0) {
+              // Comment on the first existing issue
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: issues[0].number,
+                body,
+              });
+            } else {
+              // Create a new issue
+              await github.rest.issues.create({
+                owner,
+                repo,
+                title: 'Terraform drift detected (dev)',
+                body,
+                labels: ['terraform-drift', 'dev'],
+              });
+            }
