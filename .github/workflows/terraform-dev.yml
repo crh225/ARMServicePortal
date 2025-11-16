@@ -49,28 +49,48 @@ jobs:
         id: tfoutputs
         run: terraform output -json > tf-outputs.json
 
-      - name: Find associated PR for this commit
+      - name: Comment outputs on associated PR (main only)
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        id: find_pr
-        uses: peter-evans/find-pull-request@v3
-        with:
-          commit: ${{ github.sha }}
-
-      - name: Comment outputs on PR
-        if: >
-          github.event_name == 'push' &&
-          github.ref == 'refs/heads/main' &&
-          steps.find_pr.outputs.pull_request_number != ''
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
-            const outputs = JSON.parse(fs.readFileSync('tf-outputs.json', 'utf8'));
+            const path = require('path');
+
+            // 1) Read terraform outputs JSON
+            const outputsPath = path.join(
+              process.cwd(),
+              'infra/environments/dev/tf-outputs.json'
+            );
+            let outputs;
+            try {
+              outputs = JSON.parse(fs.readFileSync(outputsPath, 'utf8'));
+            } catch (err) {
+              core.warning(`Failed to read Terraform outputs at ${outputsPath}: ${err.message}`);
+              return;
+            }
             const pretty = JSON.stringify(outputs, null, 2);
 
-            const prNumber = Number(process.env.PR_NUMBER);
+            // 2) Find PR associated with this commit
+            const commitSha = context.sha;
+            const { data: prs } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: commitSha,
+            });
+
+            if (!prs || prs.length === 0) {
+              core.info(`No PR found for commit ${commitSha}, skipping outputs comment.`);
+              return;
+            }
+
+            const pr = prs[0];
+            const prNumber = pr.number;
+            core.info(`Commenting Terraform outputs on PR #${prNumber}`);
+
+            // 3) Post comment with TF_OUTPUTS block
             const body = [
-              '### Terraform Outputs',
+              'TF_OUTPUTS:',
               '',
               '```json',
               pretty,
@@ -81,7 +101,5 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: prNumber,
-              body
+              body,
             });
-        env:
-          PR_NUMBER: ${{ steps.find_pr.outputs.pull_request_number }}
