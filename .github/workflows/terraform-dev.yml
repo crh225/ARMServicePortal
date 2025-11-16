@@ -38,10 +38,63 @@ jobs:
 
       - name: Terraform Plan (PRs only)
         if: github.event_name == 'pull_request'
+        id: terraform_plan
+        continue-on-error: true
         run: terraform plan -input=false -no-color
+
+      - name: Label PR with plan status
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const outcome = '${{ steps.terraform_plan.outcome }}';
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const issue_number = context.issue.number;
+
+            const PLAN_OK = 'status:plan-ok';
+            const PLAN_FAILED = 'status:plan-failed';
+
+            // Best-effort remove old plan labels
+            try {
+              await github.rest.issues.removeLabel({
+                owner,
+                repo,
+                issue_number,
+                name: PLAN_OK,
+              });
+            } catch (e) {
+              // ignore if not present
+            }
+
+            try {
+              await github.rest.issues.removeLabel({
+                owner,
+                repo,
+                issue_number,
+                name: PLAN_FAILED,
+              });
+            } catch (e) {
+              // ignore if not present
+            }
+
+            const labelToAdd = outcome === 'success' ? PLAN_OK : PLAN_FAILED;
+
+            await github.rest.issues.addLabels({
+              owner,
+              repo,
+              issue_number,
+              labels: [labelToAdd],
+            });
+
+            if (outcome !== 'success') {
+              core.setFailed(`Terraform plan failed with outcome: ${outcome}`);
+            }
 
       - name: Terraform Apply (main only)
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        id: terraform_apply
+        continue-on-error: true
         run: terraform apply -input=false -auto-approve
 
       - name: Capture Terraform outputs (main only)
@@ -49,9 +102,11 @@ jobs:
         id: tfoutputs
         run: terraform output -json > tf-outputs.json
 
-      - name: Comment outputs on associated PR (main only)
+      - name: Comment outputs + label apply status on associated PR (main only)
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/github-script@v7
+        env:
+          APPLY_OUTCOME: ${{ steps.terraform_apply.outcome }}
         with:
           script: |
             const fs = require('fs');
@@ -67,39 +122,88 @@ jobs:
               outputs = JSON.parse(fs.readFileSync(outputsPath, 'utf8'));
             } catch (err) {
               core.warning(`Failed to read Terraform outputs at ${outputsPath}: ${err.message}`);
-              return;
+              outputs = null;
             }
-            const pretty = JSON.stringify(outputs, null, 2);
 
-            // 2) Find PR associated with this commit
+            const applyOutcome = process.env.APPLY_OUTCOME || 'unknown';
+
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
             const commitSha = context.sha;
+
+            // 2) Find PR(s) associated with this commit
             const { data: prs } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
+              owner,
+              repo,
               commit_sha: commitSha,
             });
 
             if (!prs || prs.length === 0) {
-              core.info(`No PR found for commit ${commitSha}, skipping outputs comment.`);
-              return;
+              core.info(`No PR found for commit ${commitSha}, skipping label/comment.`);
+            } else {
+              const pr = prs[0];
+              const issue_number = pr.number;
+              core.info(`Updating PR #${issue_number}`);
+
+              // 2a) Update apply labels
+              const APPLY_OK = 'status:apply-ok';
+              const APPLY_FAILED = 'status:apply-failed';
+
+              // Remove old apply labels if present
+              try {
+                await github.rest.issues.removeLabel({
+                  owner,
+                  repo,
+                  issue_number,
+                  name: APPLY_OK,
+                });
+              } catch (e) {
+                // ignore missing
+              }
+
+              try {
+                await github.rest.issues.removeLabel({
+                  owner,
+                  repo,
+                  issue_number,
+                  name: APPLY_FAILED,
+                });
+              } catch (e) {
+                // ignore missing
+              }
+
+              const applyLabel = applyOutcome === 'success' ? APPLY_OK : APPLY_FAILED;
+
+              await github.rest.issues.addLabels({
+                owner,
+                repo,
+                issue_number,
+                labels: [applyLabel],
+              });
+
+              // 2b) Comment TF outputs if we have them
+              if (outputs) {
+                const pretty = JSON.stringify(outputs, null, 2);
+                const body = [
+                  'TF_OUTPUTS:',
+                  '',
+                  '```json',
+                  pretty,
+                  '```'
+                ].join('\n');
+
+                await github.rest.issues.createComment({
+                  owner,
+                  repo,
+                  issue_number,
+                  body,
+                });
+              } else {
+                core.info('No outputs to comment.');
+              }
             }
 
-            const pr = prs[0];
-            const prNumber = pr.number;
-            core.info(`Commenting Terraform outputs on PR #${prNumber}`);
-
-            // 3) Post comment with TF_OUTPUTS block
-            const body = [
-              'TF_OUTPUTS:',
-              '',
-              '```json',
-              pretty,
-              '```'
-            ].join('\n');
-
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: prNumber,
-              body,
-            });
+            // 3) Fail workflow if apply failed
+            if (applyOutcome !== 'success') {
+              core.setFailed(`Terraform apply failed with outcome: ${applyOutcome}`);
+            }
