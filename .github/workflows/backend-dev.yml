@@ -17,13 +17,20 @@ jobs:
 
     env:
       NODE_VERSION: 20.x
-      ACR_NAME: armportalacre4k9
+      ACR_NAME: armportalacre4k9          # ACR from Terraform
       RESOURCE_GROUP: rg-testpr3-dev-rg
       CONTAINER_APP_NAME: armportal-api-dev
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Setup Node.js (optional, for tests / lint)
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: portal/backend/package-lock.json
 
       - name: Azure login (OIDC)
         uses: azure/login@v2
