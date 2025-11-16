@@ -6,7 +6,7 @@ import { createGitHubRequest } from "../services/githubProvision.js";
  * Creates a GitHub PR with Terraform configuration
  */
 export async function provisionBlueprint(req, res) {
-  const { blueprintId, variables, environment } = req.body || {};
+  const { blueprintId, variables, environment, moduleName } = req.body || {};
 
   // Validation
   if (!blueprintId || !variables) {
@@ -28,7 +28,8 @@ export async function provisionBlueprint(req, res) {
     const gh = await createGitHubRequest({
       environment: envValue,
       blueprintId,
-      variables
+      variables,
+      moduleName
     });
 
     return res.status(202).json({

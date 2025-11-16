@@ -2,7 +2,7 @@ import React from "react";
 import EmptyState from "./EmptyState";
 import "../styles/JobDetail.css";
 
-function JobDetail({ job, loading, error }) {
+function JobDetail({ job, loading, error, onUpdate, onDelete }) {
   if (!job) {
     return (
       <EmptyState
@@ -12,8 +12,28 @@ function JobDetail({ job, loading, error }) {
     );
   }
 
+  const isDeployed = job.merged && job.status === "merged";
+  const canManageResource = isDeployed && job.resourceExists;
+
   return (
     <div className="result-card jobs-detail">
+      {canManageResource && (
+        <div className="resource-actions">
+          <button
+            className="resource-btn resource-btn--update"
+            onClick={() => onUpdate && onUpdate(job)}
+          >
+            Update Resource
+          </button>
+          <button
+            className="resource-btn resource-btn--delete"
+            onClick={() => onDelete && onDelete(job)}
+          >
+            Delete Resource
+          </button>
+        </div>
+      )}
+
       <div className="result-row">
         <span className="result-label">Status</span>
         <span className="result-value">

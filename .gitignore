@@ -37,6 +37,7 @@ terraform.rc
 
 # Node modules
 node_modules/
+.claude/
 
 # Build output
 dist/
@@ -135,4 +136,4 @@ Desktop.ini
 
 *.pem
 
-.claude/
+.claude

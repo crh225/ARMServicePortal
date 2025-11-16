@@ -1,5 +1,52 @@
 /* Job detail */
 
+.resource-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.resource-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 18px;
+  border-radius: 999px;
+  border: none;
+  font-weight: 500;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: all 0.16s ease-out;
+}
+
+.resource-btn--update {
+  background: linear-gradient(135deg, var(--accent-grad-from), var(--accent-grad-to));
+  color: #f9fafb;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+}
+
+.resource-btn--update:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.4);
+}
+
+.resource-btn--delete {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #f9fafb;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
+}
+
+.resource-btn--delete:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.4);
+}
+
+.resource-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 .badge {
   font-size: 11px;
   padding: 2px 8px;

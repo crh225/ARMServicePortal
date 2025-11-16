@@ -12,6 +12,12 @@ import Footer from "./components/Footer";
  */
 function App() {
   const [activeTab, setActiveTab] = useState("blueprints");
+  const [updateResourceData, setUpdateResourceData] = useState(null);
+
+  const handleUpdateResource = (job) => {
+    setUpdateResourceData(job);
+    setActiveTab("blueprints");
+  };
 
   return (
     <div className="app-root">
@@ -19,10 +25,17 @@ function App() {
         <Header activeTab={activeTab} onTabChange={setActiveTab} />
 
         <main className="app-main">
-          {activeTab === "blueprints" ? (
-            <BlueprintsPanel />
-          ) : (
-            <JobsPanel isActive={activeTab === "jobs"} />
+          {activeTab === "blueprints" && (
+            <BlueprintsPanel
+              updateResourceData={updateResourceData}
+              onUpdateComplete={() => setUpdateResourceData(null)}
+            />
+          )}
+          {activeTab === "jobs" && (
+            <JobsPanel
+              isActive={true}
+              onUpdateResource={handleUpdateResource}
+            />
           )}
         </main>
 

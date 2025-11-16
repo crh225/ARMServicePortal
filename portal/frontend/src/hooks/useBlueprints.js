@@ -2,15 +2,36 @@ import { useState, useEffect } from "react";
 import api from "../services/api";
 
 /**
+ * Parse variables from Terraform module code
+ */
+function parseTerraformVariables(terraformModule) {
+  if (!terraformModule) return {};
+
+  const variables = {};
+  // Match patterns like: variable_name = "value" or variable_name = value
+  const regex = /(\w+)\s*=\s*"([^"]*)"|(\w+)\s*=\s*([^\s\n]+)/g;
+  let match;
+
+  while ((match = regex.exec(terraformModule)) !== null) {
+    const key = match[1] || match[3];
+    const value = match[2] || match[4];
+    variables[key] = value;
+  }
+
+  return variables;
+}
+
+/**
  * Custom hook for managing blueprint state and operations
  */
-export function useBlueprints() {
+export function useBlueprints(updateResourceData, onUpdateComplete) {
   const [blueprints, setBlueprints] = useState([]);
   const [selectedBlueprint, setSelectedBlueprint] = useState(null);
   const [formValues, setFormValues] = useState({});
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [moduleName, setModuleName] = useState(null);
 
   // Load blueprints on mount
   useEffect(() => {
@@ -23,12 +44,37 @@ export function useBlueprints() {
       });
   }, []);
 
+  // Handle update resource data
+  useEffect(() => {
+    if (updateResourceData && blueprints.length > 0) {
+      const blueprintId = updateResourceData.blueprintId;
+      if (blueprintId) {
+        const bp = blueprints.find((b) => b.id === blueprintId);
+        if (bp) {
+          setSelectedBlueprint(bp);
+
+          // Parse variables from Terraform module
+          const parsedVars = parseTerraformVariables(updateResourceData.terraformModule);
+          setFormValues(parsedVars);
+
+          // Store the module name to lock it during update
+          setModuleName(updateResourceData.moduleName);
+
+          if (onUpdateComplete) {
+            onUpdateComplete();
+          }
+        }
+      }
+    }
+  }, [updateResourceData, blueprints, onUpdateComplete]);
+
   // Handle blueprint selection
   const handleSelectBlueprint = (id) => {
     const bp = blueprints.find((b) => b.id === id) || null;
     setSelectedBlueprint(bp);
     setResult(null);
     setError(null);
+    setModuleName(null); // Clear module name when selecting a new blueprint
 
     if (bp) {
       const initial = {};
@@ -57,7 +103,8 @@ export function useBlueprints() {
     try {
       const data = await api.provisionBlueprint(
         selectedBlueprint.id,
-        formValues
+        formValues,
+        moduleName // Pass module name for updates, null for new provisions
       );
 
       if (data.error) {

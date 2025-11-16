@@ -6,7 +6,8 @@ function BlueprintForm({
   formValues,
   onChange,
   onSubmit,
-  loading
+  loading,
+  isUpdating
 }) {
   if (!blueprint) return null;
 
@@ -47,6 +48,8 @@ function BlueprintForm({
                 onChange={(e) =>
                   onChange(v.name, e.target.value)
                 }
+                disabled={isUpdating && v.name === "project_name"}
+                title={isUpdating && v.name === "project_name" ? "Resource name cannot be changed when updating" : ""}
               />
             )}
           </div>
@@ -58,7 +61,10 @@ function BlueprintForm({
         onClick={onSubmit}
         disabled={loading}
       >
-        {loading ? "Creating GitHub PR..." : "Create GitHub PR"}
+        {loading
+          ? (isUpdating ? "Updating Blueprint..." : "Creating GitHub PR...")
+          : (isUpdating ? "Update Blueprint" : "Create GitHub PR")
+        }
       </button>
 
       <p className="hint-text">

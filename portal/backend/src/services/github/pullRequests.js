@@ -115,6 +115,41 @@ export async function getGitHubRequestByNumber(prNumber) {
     prNumber
   });
 
+  // Get the Terraform file path from PR files
+  const { data: files } = await octokit.pulls.listFiles({
+    owner: infraOwner,
+    repo: infraRepo,
+    pull_number: prNumber
+  });
+
+  const tfFile = files.find(f => f.filename.endsWith(".tf"));
+  const terraformFilePath = tfFile ? tfFile.filename : null;
+
+  // Extract module name from file path (e.g., "infra/environments/dev/azure-rg-basic_92b8015f.tf" -> "azure-rg-basic_92b8015f")
+  let moduleName = null;
+  if (terraformFilePath) {
+    const parts = terraformFilePath.split("/");
+    const fileName = parts[parts.length - 1];
+    moduleName = fileName.replace(/\.tf$/, "");
+  }
+
+  // Check if the Terraform file still exists on the base branch (for deployed resources)
+  let resourceExists = false;
+  if (pr.merged_at && terraformFilePath) {
+    try {
+      await octokit.repos.getContent({
+        owner: infraOwner,
+        repo: infraRepo,
+        path: terraformFilePath,
+        ref: pr.base?.ref || "main"
+      });
+      resourceExists = true;
+    } catch (err) {
+      // File doesn't exist (404) or other error
+      resourceExists = false;
+    }
+  }
+
   return {
     id: pr.number,
     number: pr.number,
@@ -137,6 +172,9 @@ export async function getGitHubRequestByNumber(prNumber) {
     baseBranch: pr.base?.ref || null,
     author: pr.user?.login || null,
     terraformModule: terraformModule || null,
+    terraformFilePath: terraformFilePath,
+    moduleName: moduleName,
+    resourceExists: resourceExists,
     outputs,
     additions: pr.additions || 0,
     deletions: pr.deletions || 0,
