@@ -151,7 +151,7 @@ export async function createGitHubRequest({ environment, blueprintId, variables 
   lines.push("}");
   const tfContent = lines.join("\n");
 
-  const filePath = `infra/environments/${environment}/requests/${moduleName}.tf`;
+  const filePath = `infra/environments/${environment}/${moduleName}.tf`;
 
   // 4) Create file in the branch
   const { data: file } = await octokit.repos.createOrUpdateFileContents({
