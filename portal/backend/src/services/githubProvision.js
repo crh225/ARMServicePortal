@@ -192,3 +192,132 @@ export async function createGitHubRequest({ environment, blueprintId, variables 
     commitSha: file.commit.sha
   };
 }
+
+
+function parseBlueprintMetadataFromBody(body) {
+  if (!body) {
+    return { blueprintId: null, environment: null };
+  }
+
+  let blueprintId = null;
+  let environment = null;
+
+  const blueprintMatch = body.match(/Blueprint:\s*`([^`]+)`/i);
+  if (blueprintMatch && blueprintMatch[1]) {
+    blueprintId = blueprintMatch[1].trim();
+  }
+
+  const envMatch = body.match(/Environment:\s*`([^`]+)`/i);
+  if (envMatch && envMatch[1]) {
+    environment = envMatch[1].trim();
+  }
+
+  return { blueprintId, environment };
+}
+
+export async function listGitHubRequests({ environment } = {}) {
+  const { infraOwner, infraRepo } = getConfig();
+
+  if (!infraOwner || !infraRepo) {
+    throw new Error("GITHUB_INFRA_OWNER and GITHUB_INFRA_REPO must be set");
+  }
+
+  const octokit = await getInstallationClient();
+
+  // Get recent PRs
+  const { data: pulls } = await octokit.pulls.list({
+    owner: infraOwner,
+    repo: infraRepo,
+    state: "all",
+    per_page: 50,
+    sort: "created",
+    direction: "desc"
+  });
+
+  const jobs = [];
+
+  for (const pr of pulls) {
+    const headRef = pr.head && pr.head.ref ? pr.head.ref : "";
+
+    // Only consider request branches created by this portal
+    if (!headRef.startsWith("requests/")) continue;
+
+    // Optional environment filter like requests/dev/...
+    if (environment && !headRef.startsWith(`requests/${environment}/`)) {
+      continue;
+    }
+
+    const { blueprintId, environment: envFromBody } = parseBlueprintMetadataFromBody(
+      pr.body || ""
+    );
+
+    let status = "unknown";
+    if (pr.state === "open") {
+      status = "open";
+    } else if (pr.merged_at) {
+      status = "merged";
+    } else if (pr.state === "closed") {
+      status = "closed";
+    }
+
+    jobs.push({
+      id: pr.number,
+      number: pr.number,
+      title: pr.title,
+      blueprintId: blueprintId || null,
+      environment: environment || envFromBody || null,
+      status,
+      state: pr.state,
+      merged: Boolean(pr.merged_at),
+      createdAt: pr.created_at,
+      updatedAt: pr.updated_at,
+      pullRequestUrl: pr.html_url,
+      headRef
+    });
+  }
+
+  return jobs;
+}
+
+export async function getGitHubRequestByNumber(prNumber) {
+  const { infraOwner, infraRepo } = getConfig();
+
+  if (!infraOwner || !infraRepo) {
+    throw new Error("GITHUB_INFRA_OWNER and GITHUB_INFRA_REPO must be set");
+  }
+
+  const octokit = await getInstallationClient();
+
+  const { data: pr } = await octokit.pulls.get({
+    owner: infraOwner,
+    repo: infraRepo,
+    pull_number: prNumber
+  });
+
+  const headRef = pr.head && pr.head.ref ? pr.head.ref : "";
+  const { blueprintId, environment } = parseBlueprintMetadataFromBody(pr.body || "");
+
+  let status = "unknown";
+  if (pr.state === "open") {
+    status = "open";
+  } else if (pr.merged_at) {
+    status = "merged";
+  } else if (pr.state === "closed") {
+    status = "closed";
+  }
+
+  return {
+    id: pr.number,
+    number: pr.number,
+    title: pr.title,
+    blueprintId: blueprintId || null,
+    environment: environment || null,
+    status,
+    state: pr.state,
+    merged: Boolean(pr.merged_at),
+    createdAt: pr.created_at,
+    updatedAt: pr.updated_at,
+    pullRequestUrl: pr.html_url,
+    headRef
+  };
+}

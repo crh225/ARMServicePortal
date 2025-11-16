@@ -8,8 +8,13 @@ function App() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+  const [activeTab, setActiveTab] = useState("blueprints");
+  const [jobs, setJobs] = useState([]);
+  const [jobsLoading, setJobsLoading] = useState(false);
+  const [jobsError, setJobsError] = useState(null);
+  const [selectedJob, setSelectedJob] = useState(null);
 
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
   useEffect(() => {
     fetch(`${API_BASE_URL}/api/catalog`)
       .then((res) => res.json())
@@ -69,6 +74,42 @@ function App() {
         setError("Failed to submit request");
       });
   };
+  const refreshJobs = () => {
+    setJobsLoading(true);
+    setJobsError(null);
+
+    fetch(`${API_BASE_URL}/api/jobs`)
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Failed to load jobs");
+        }
+        return res.json();
+      })
+      .then((data) => {
+        const safe = Array.isArray(data) ? data : [];
+        setJobs(safe);
+
+        if (safe.length > 0) {
+          setSelectedJob((current) => {
+            if (current) {
+              const still = safe.find((j) => j.id === current.id);
+              return still || safe[0];
+            }
+            return safe[0];
+          });
+        } else {
+          setSelectedJob(null);
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+        setJobsError(err.message || "Failed to load jobs");
+      })
+      .finally(() => {
+        setJobsLoading(false);
+      });
+  };
+
 
   return (
     <div className="app-root">
@@ -83,9 +124,24 @@ function App() {
             </p>
           </div>
           <nav className="app-nav">
-            <button className="nav-pill nav-pill--active">Blueprints</button>
-            <button className="nav-pill" disabled>
-              Jobs (coming soon)
+            <button
+              className={
+                "nav-pill" + (activeTab === "blueprints" ? " nav-pill--active" : "")
+              }
+              onClick={() => setActiveTab("blueprints")}
+            >
+              Blueprints
+            </button>
+            <button
+              className={
+                "nav-pill" + (activeTab === "jobs" ? " nav-pill--active" : "")
+              }
+              onClick={() => {
+                setActiveTab("jobs");
+                refreshJobs();
+              }}
+            >
+              Jobs
             </button>
             <button className="nav-pill" disabled>
               Admin (coming soon)
@@ -182,13 +238,15 @@ function App() {
 
                 <p className="hint-text">
                   The portal never applies Terraform directly. It just opens a
-                  PR in your repo.
+                  reviewed PR in your repo.
                 </p>
               </div>
             )}
           </section>
 
           <aside className="panel panel--right">
+            {activeTab === "blueprints" ? (
+              <>
             <div>
               <h2 className="panel-title">3. Result</h2>
               <p className="panel-help">
@@ -283,6 +341,108 @@ function App() {
                 )}
               </div>
             </div>
+              </>
+            ) : (
+              <>
+                <div>
+                  <h2 className="panel-title">Jobs</h2>
+                  <p className="panel-help">
+                    Recent self-service requests created as GitHub pull requests.
+                  </p>
+                </div>
+
+                {jobsError && (
+                  <div className="alert alert--error">
+                    <strong>Error:</strong> {jobsError}
+                  </div>
+                )}
+
+                {jobsLoading && (
+                  <div className="empty-state">
+                    <p>Loading jobs…</p>
+                  </div>
+                )}
+
+                {!jobsLoading && !jobsError && (
+                  <>
+                    {jobs.length === 0 ? (
+                      <div className="empty-state">
+                        <p>No jobs found yet.</p>
+                        <p className="empty-state-sub">
+                          Submit a request from the Blueprints tab to see it here.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="jobs-list">
+                        <ul className="jobs-list">
+                          {jobs.map((job) => (
+                            <li
+                              key={job.id}
+                              className={
+                                "job-item" +
+                                (selectedJob && selectedJob.id === job.id ? " job-item--active" : "")
+                              }
+                              onClick={() => setSelectedJob(job)}
+                            >
+                              <div className="job-line">
+                                <span className="job-title">
+                                  {job.blueprintId || "Provision request"}
+                                </span>
+                                <span
+                                  className={`job-status job-status--${job.status || "unknown"}`}
+                                >
+                                  {job.status || "unknown"}
+                                </span>
+                              </div>
+
+                              <div className="job-meta">
+                                env: {job.environment || "n/a"} · #{job.number} ·{" "}
+                                {job.createdAt
+                                  ? new Date(job.createdAt).toLocaleString()
+                                  : "time unknown"}
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+
+                      </div>
+                    )}
+
+                    {selectedJob && (
+                      <div className="result-card jobs-detail">
+                        <div className="result-row">
+                          <span className="result-label">Status</span>
+                          <span className="result-value">
+                            {selectedJob.status}
+                          </span>
+                        </div>
+                        {selectedJob.pullRequestUrl && (
+                          <div className="result-row">
+                            <span className="result-label">Pull Request</span>
+                            <a
+                              className="result-link"
+                              href={selectedJob.pullRequestUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              View on GitHub
+                            </a>
+                          </div>
+                        )}
+                        {selectedJob.headRef && (
+                          <div className="result-row">
+                            <span className="result-label">Branch</span>
+                            <span className="result-value">
+                              {selectedJob.headRef}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </>
+                )}
+              </>
+            )}
           </aside>
         </main>
 
