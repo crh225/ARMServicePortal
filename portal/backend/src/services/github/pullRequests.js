@@ -92,7 +92,7 @@ export async function getGitHubRequestByNumber(prNumber) {
   });
 
   const headRef = pr.head && pr.head.ref ? pr.head.ref : "";
-  const { blueprintId, environment } = parseBlueprintMetadataFromBody(
+  const { blueprintId, environment, terraformModule } = parseBlueprintMetadataFromBody(
     pr.body || ""
   );
   const { planStatus, applyStatus, labels } = mapStatusFromLabels(
@@ -119,6 +119,7 @@ export async function getGitHubRequestByNumber(prNumber) {
     id: pr.number,
     number: pr.number,
     title: pr.title,
+    description: pr.body || null,
     blueprintId: blueprintId || null,
     environment: environment || null,
     status,
@@ -127,10 +128,18 @@ export async function getGitHubRequestByNumber(prNumber) {
     applyStatus,
     state: pr.state,
     merged: Boolean(pr.merged_at),
+    mergedAt: pr.merged_at || null,
+    closedAt: pr.closed_at || null,
     createdAt: pr.created_at,
     updatedAt: pr.updated_at,
     pullRequestUrl: pr.html_url,
     headRef,
-    outputs
+    baseBranch: pr.base?.ref || null,
+    author: pr.user?.login || null,
+    terraformModule: terraformModule || null,
+    outputs,
+    additions: pr.additions || 0,
+    deletions: pr.deletions || 0,
+    changedFiles: pr.changed_files || 0
   };
 }

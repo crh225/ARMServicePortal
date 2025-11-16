@@ -28,6 +28,8 @@
 
 .result-row--stacked {
   align-items: flex-start;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .result-value--mono {
@@ -35,4 +37,19 @@
     "Liberation Mono", "Courier New", monospace;
   font-size: 12px;
   line-height: 1.5;
+}
+
+.terraform-code {
+  width: 100%;
+  margin: 0;
+  padding: 12px;
+  background: #1e293b;
+  color: #e2e8f0;
+  border-radius: 8px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-x: auto;
+  border: 1px solid rgba(148, 163, 184, 0.3);
 }

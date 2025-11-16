@@ -3,11 +3,12 @@
  */
 export function parseBlueprintMetadataFromBody(body) {
   if (!body) {
-    return { blueprintId: null, environment: null };
+    return { blueprintId: null, environment: null, terraformModule: null };
   }
 
   let blueprintId = null;
   let environment = null;
+  let terraformModule = null;
 
   const blueprintMatch = body.match(/Blueprint:\s*`([^`]+)`/i);
   if (blueprintMatch && blueprintMatch[1]) {
@@ -19,7 +20,13 @@ export function parseBlueprintMetadataFromBody(body) {
     environment = envMatch[1].trim();
   }
 
-  return { blueprintId, environment };
+  // Extract the Terraform module from the code block
+  const tfMatch = body.match(/```hcl\n([\s\S]*?)\n```/);
+  if (tfMatch && tfMatch[1]) {
+    terraformModule = tfMatch[1].trim();
+  }
+
+  return { blueprintId, environment, terraformModule };
 }
 
 /**

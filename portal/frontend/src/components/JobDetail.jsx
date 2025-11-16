@@ -66,6 +66,35 @@ function JobDetail({ job, loading, error }) {
         </div>
       )}
 
+      {job.author && (
+        <div className="result-row">
+          <span className="result-label">Author</span>
+          <span className="result-value">
+            {job.author}
+          </span>
+        </div>
+      )}
+
+      {job.changedFiles !== undefined && (
+        <div className="result-row">
+          <span className="result-label">Changes</span>
+          <span className="result-value">
+            {job.changedFiles} file{job.changedFiles !== 1 ? 's' : ''}
+            {job.additions > 0 && <span style={{ color: '#22c55e' }}> +{job.additions}</span>}
+            {job.deletions > 0 && <span style={{ color: '#f87171' }}> -{job.deletions}</span>}
+          </span>
+        </div>
+      )}
+
+      {job.terraformModule && (
+        <div className="result-row result-row--stacked">
+          <span className="result-label">Terraform Module</span>
+          <pre className="terraform-code">
+            {job.terraformModule}
+          </pre>
+        </div>
+      )}
+
       {loading && (
         <div className="result-row">
           <span className="result-label">Outputs</span>
@@ -84,7 +113,7 @@ function JobDetail({ job, loading, error }) {
 
       {job.outputs && !loading && (
         <div className="result-row result-row--stacked">
-          <span className="result-label">Outputs</span>
+          <span className="result-label">Terraform Outputs</span>
           <div className="result-value result-value--mono">
             {Object.entries(job.outputs).map(
               ([key, obj]) => (
