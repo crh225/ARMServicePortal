@@ -90,6 +90,20 @@ const api = {
   },
 
   /**
+   * Promote a deployed resource to the next environment
+   */
+  async promoteResource(resourceNumber) {
+    const response = await fetch(`${API_BASE_URL}/api/promote/${resourceNumber}`, {
+      method: "POST"
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.details || errorData.error || "Failed to create promotion PR");
+    }
+    return response.json();
+  },
+
+  /**
    * Get cost estimate for a blueprint configuration
    * @param {string} blueprintId - The blueprint ID
    * @param {object} variables - The Terraform variables

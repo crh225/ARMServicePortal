@@ -2,7 +2,7 @@ import React from "react";
 import EmptyState from "./EmptyState";
 import "../styles/JobDetail.css";
 
-function JobDetail({ job, loading, error, onUpdate, onDelete }) {
+function JobDetail({ job, loading, error, onUpdate, onDelete, onPromote, promoteLoading }) {
   if (!job) {
     return (
       <EmptyState
@@ -15,19 +15,40 @@ function JobDetail({ job, loading, error, onUpdate, onDelete }) {
   const isDeployed = job.merged && job.status === "merged";
   const canManageResource = isDeployed && job.resourceExists;
 
+  // Determine next environment for promotion
+  const environmentPath = {
+    dev: "qa",
+    qa: "staging",
+    staging: "prod",
+    prod: null
+  };
+  const nextEnvironment = environmentPath[job.environment];
+  const canPromote = isDeployed && nextEnvironment;
+
   return (
     <div className="result-card jobs-detail">
       {canManageResource && (
         <div className="resource-actions">
+          {canPromote && (
+            <button
+              className="resource-btn resource-btn--promote"
+              onClick={() => onPromote && onPromote(job)}
+              disabled={promoteLoading}
+            >
+              {promoteLoading ? "Promoting..." : `Promote to ${nextEnvironment}`}
+            </button>
+          )}
           <button
             className="resource-btn resource-btn--update"
             onClick={() => onUpdate && onUpdate(job)}
+            disabled={promoteLoading}
           >
             Update Resource
           </button>
           <button
             className="resource-btn resource-btn--delete"
             onClick={() => onDelete && onDelete(job)}
+            disabled={promoteLoading}
           >
             Delete Resource
           </button>

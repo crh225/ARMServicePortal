@@ -219,14 +219,14 @@ Deploy to Azure Static Web Apps or Storage Static Website.
 ---
 
 ## Roadmap
-- Dynamic validation
+- Done: Dynamic validation
 - RBAC and permissions model
 - Admin UI for blueprint management
-- Cost estimation integration
-- Destroy workflows with approval gates
-- Blueprint versioning
-- Notifications - Email
-- Multi-cloud support - Crossplane
+- Done: Cost estimation integration
+- Done: workflows with approval gates
+- Done: Blueprint versioning
+- Notifications
+- Multi-cloud support
 
 ---
 

@@ -1,8 +1,8 @@
 /* Job detail */
 
 .resource-actions {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 8px;
   margin-bottom: 16px;
 }
@@ -40,6 +40,17 @@
 .resource-btn--delete:hover:not(:disabled) {
   transform: translateY(-1px);
   box-shadow: 0 4px 16px rgba(239, 68, 68, 0.4);
+}
+
+.resource-btn--promote {
+  background: linear-gradient(135deg, var(--accent-grad-from), var(--accent-grad-to));
+  color: #f9fafb;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+}
+
+.resource-btn--promote:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.4);
 }
 
 .resource-btn:disabled {

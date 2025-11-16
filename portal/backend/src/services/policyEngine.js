@@ -218,3 +218,81 @@ export function validateAzureNaming(resourceType, name) {
     errors
   };
 }
+
+/**
+ * Validate environment promotion eligibility
+ * @param {Object} sourceJob - The source job/resource
+ * @param {string} targetEnvironment - The target environment to promote to
+ * @returns {Object} - Validation result
+ */
+export function validatePromotion(sourceJob, targetEnvironment) {
+  const errors = [];
+  const warnings = [];
+
+  // Define valid promotion paths
+  const promotionPaths = {
+    dev: ["qa"],
+    qa: ["staging"],
+    staging: ["prod"],
+    prod: []
+  };
+
+  const sourceEnv = sourceJob.environment;
+
+  // Check if source environment is valid
+  if (!sourceEnv) {
+    errors.push({
+      field: "environment",
+      message: "Source resource has no environment specified",
+      policy: "promotion-validation"
+    });
+    return { valid: false, errors, warnings };
+  }
+
+  // Check if promotion path is valid
+  const validTargets = promotionPaths[sourceEnv] || [];
+  if (!validTargets.includes(targetEnvironment)) {
+    errors.push({
+      field: "environment",
+      message: `Cannot promote from ${sourceEnv} to ${targetEnvironment}. Valid targets: ${validTargets.length > 0 ? validTargets.join(", ") : "none (final environment)"}`,
+      policy: "promotion-path"
+    });
+  }
+
+  // Check if source is deployed
+  if (!sourceJob.merged) {
+    errors.push({
+      field: "status",
+      message: "Source resource must be deployed (PR merged) before promotion",
+      policy: "promotion-deployment-status"
+    });
+  }
+
+  // Environment-specific warnings
+  if (targetEnvironment === "staging") {
+    warnings.push({
+      message: "Staging promotion requires QA testing validation",
+      policy: "staging-requirements",
+      severity: "medium"
+    });
+  }
+
+  if (targetEnvironment === "prod") {
+    warnings.push({
+      message: "Production promotion requires 2 approvals and change control documentation",
+      policy: "production-requirements",
+      severity: "high"
+    });
+    warnings.push({
+      message: "Ensure staging validation is complete before promoting to production",
+      policy: "production-staging-validation",
+      severity: "high"
+    });
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors,
+    warnings
+  };
+}
