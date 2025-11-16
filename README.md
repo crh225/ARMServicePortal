@@ -85,22 +85,26 @@ The system consists of three core components:
 
 ### Blueprint Catalog
 ```
-[ Blueprint Cards Screenshot ]
+<img width="1303" height="588" alt="image" src="https://github.com/user-attachments/assets/9265328f-6787-45dd-8bbd-d5ef669e58d5" />
+
 ```
 
 ### Pull Request View
 ```
-[ Pull Request Showing Terraform Plan Screenshot ]
+<img width="1301" height="800" alt="image" src="https://github.com/user-attachments/assets/b1d4bf7c-c95e-48a2-9048-e8820bed02ed" />
+
 ```
 
 ### Job Status Dashboard
 ```
-[ Jobs List and Status Indicators Screenshot ]
+<img width="1277" height="580" alt="image" src="https://github.com/user-attachments/assets/6fd83d0f-bf39-4b76-b0ee-38e99022cb8f" />
+
 ```
 
 ### Outputs Viewer
 ```
-[ Terraform Outputs Screenshot ]
+<img width="526" height="281" alt="image" src="https://github.com/user-attachments/assets/cc57591e-51bb-4562-8078-b032d4abc45e" />
+
 ```
 
 ---
