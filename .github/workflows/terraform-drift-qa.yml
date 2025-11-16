@@ -1,0 +1,104 @@
+name: Terraform Drift Detection - QA
+
+on:
+  schedule:
+    # Run every 6 hours
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+jobs:
+  drift-detection:
+    runs-on: ubuntu-latest
+
+    env:
+      ARM_CLIENT_ID:       ${{ secrets.AZURE_CLIENT_ID }}
+      ARM_CLIENT_SECRET:   ${{ secrets.AZURE_CLIENT_SECRET }}
+      ARM_TENANT_ID:       ${{ secrets.AZURE_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+    defaults:
+      run:
+        working-directory: infra/environments/qa
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.5
+
+      - name: Terraform Init
+        run: terraform init -input=false
+
+      - name: Terraform Plan (detect drift)
+        id: drift_plan
+        continue-on-error: true
+        env:
+          TF_VAR_github_infra_owner:            ${{ secrets.GH_INFRA_OWNER }}
+          TF_VAR_github_infra_repo:             ${{ secrets.GH_INFRA_REPO }}
+          TF_VAR_github_app_id:                 ${{ secrets.GH_APP_ID }}
+          TF_VAR_github_installation_id:        ${{ secrets.GH_INSTALLATION_ID }}
+          TF_VAR_github_app_private_key_base64: ${{ secrets.GH_APP_PRIVATE_KEY_BASE64 }}
+        run: |
+          terraform plan -detailed-exitcode -input=false -no-color > drift-plan.txt 2>&1
+          echo "exit_code=$?" >> $GITHUB_OUTPUT
+
+      - name: Create drift issue if detected
+        if: steps.drift_plan.outputs.exit_code == '2'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const driftPlan = fs.readFileSync('infra/environments/qa/drift-plan.txt', 'utf8');
+
+            const title = '🚨 Terraform Drift Detected in QA Environment';
+            const body = [
+              '**Environment:** QA',
+              `**Detected:** ${new Date().toISOString()}`,
+              '',
+              'Terraform has detected configuration drift in the QA environment.',
+              'This means the actual infrastructure state differs from the code.',
+              '',
+              '<details><summary>View Drift Plan</summary>',
+              '',
+              '```',
+              driftPlan.substring(0, 60000), // GitHub comment limit
+              '```',
+              '',
+              '</details>',
+              '',
+              '**Action Required:**',
+              '1. Review the drift plan above',
+              '2. Determine if this is expected or requires remediation',
+              '3. Update the Terraform code or manually fix the infrastructure',
+              '4. Re-run this workflow to verify drift is resolved',
+            ].join('\n');
+
+            // Check if there's already an open drift issue for QA
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'drift-detection,environment:qa'
+            });
+
+            if (issues.length > 0) {
+              // Update existing issue
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issues[0].number,
+                body: `⚠️ **Drift still detected as of ${new Date().toISOString()}**\n\nSee workflow run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`
+              });
+            } else {
+              // Create new issue
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                labels: ['drift-detection', 'environment:qa', 'priority:medium']
+              });
+            }

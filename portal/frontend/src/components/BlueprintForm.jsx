@@ -13,12 +13,52 @@ function BlueprintForm({
 }) {
   if (!blueprint) return null;
 
+  // Get environment value
+  const environment = formValues.environment || "dev";
+
+  // Environment-specific warnings
+  const getEnvironmentWarning = (env) => {
+    const warnings = {
+      qa: {
+        level: "warning",
+        icon: "⚠️",
+        title: "QA Environment",
+        message: "This deployment requires 1 approval before merging to main."
+      },
+      staging: {
+        level: "warning",
+        icon: "⚠️",
+        title: "Staging Environment",
+        message: "This deployment requires 1 approval and should match QA tested configuration."
+      },
+      prod: {
+        level: "critical",
+        icon: "🔴",
+        title: "Production Environment",
+        message: "This deployment requires 2 approvals and change control documentation."
+      }
+    };
+    return warnings[env] || null;
+  };
+
+  const envWarning = getEnvironmentWarning(environment);
+
   return (
     <div className="panel panel--form">
       <h2 className="panel-title">2. Parameters</h2>
       <p className="panel-help">
         Values will be written into a Terraform module file in GitHub.
       </p>
+
+      {envWarning && (
+        <div className={`environment-warning environment-warning--${envWarning.level}`}>
+          <div className="environment-warning__header">
+            <span className="environment-warning__icon">{envWarning.icon}</span>
+            <span className="environment-warning__title">{envWarning.title}</span>
+          </div>
+          <div className="environment-warning__message">{envWarning.message}</div>
+        </div>
+      )}
 
       {policyErrors && policyErrors.length > 0 && (
         <div className="policy-errors">

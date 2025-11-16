@@ -19,7 +19,7 @@ export const BLUEPRINTS = [
         label: "Environment",
         type: "select",
         required: true,
-        options: ["dev","prod"],
+        options: ["dev", "qa", "staging", "prod"],
         default: "dev"
       },
       {
@@ -49,7 +49,7 @@ export const BLUEPRINTS = [
         label: "Environment",
         type: "select",
         required: true,
-        options: ["dev","prod"],
+        options: ["dev", "qa", "staging", "prod"],
         default: "dev"
       },
       {

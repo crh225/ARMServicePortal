@@ -106,3 +106,46 @@
 .policy-errors__item:last-child {
   margin-bottom: 0;
 }
+
+/* Environment Warnings */
+
+.environment-warning {
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+  border: 1px solid;
+}
+
+.environment-warning--warning {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border-color: #fbbf24;
+}
+
+.environment-warning--critical {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border-color: #ef4444;
+}
+
+.environment-warning__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.environment-warning__icon {
+  font-size: 1rem;
+}
+
+.environment-warning__title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.environment-warning__message {
+  font-size: 0.85rem;
+  color: #374151;
+  line-height: 1.4;
+  margin-left: 28px;
+}

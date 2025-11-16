@@ -23,9 +23,29 @@ const POLICIES = {
 
   // Environment-specific policies
   environments: {
+    dev: {
+      requiresApproval: false,
+      message: "Development environment - no approval required",
+      allowedHours: "24/7"
+    },
+    qa: {
+      requiresApproval: true,
+      approvalCount: 1,
+      message: "QA deployments require 1 approval",
+      allowedHours: "business hours"
+    },
+    staging: {
+      requiresApproval: true,
+      approvalCount: 1,
+      message: "Staging deployments require 1 approval and must match QA tested config",
+      allowedHours: "business hours"
+    },
     prod: {
       requiresApproval: true,
-      message: "Production deployments require approval"
+      approvalCount: 2,
+      message: "Production deployments require 2 approvals",
+      allowedHours: "business hours",
+      requiresChangeControl: true
     }
   }
 };

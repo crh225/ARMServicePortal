@@ -1,0 +1,188 @@
+name: Terraform Production
+
+on:
+  pull_request:
+    paths:
+      - "infra/environments/prod/**"
+  push:
+    branches:
+      - main
+    paths:
+      - "infra/environments/prod/**"
+
+concurrency:
+  group: terraform-prod-state
+  cancel-in-progress: false
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      # Production requires 2 approvals before deployment
+
+    env:
+      ARM_CLIENT_ID:       ${{ secrets.AZURE_CLIENT_ID }}
+      ARM_CLIENT_SECRET:   ${{ secrets.AZURE_CLIENT_SECRET }}
+      ARM_TENANT_ID:       ${{ secrets.AZURE_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+    defaults:
+      run:
+        working-directory: infra/environments/prod
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.5
+
+      - name: Terraform Init
+        run: terraform init -input=false
+
+      - name: Terraform Plan (PRs only)
+        if: github.event_name == 'pull_request'
+        id: terraform_plan
+        continue-on-error: true
+        env:
+          TF_VAR_github_infra_owner:            ${{ secrets.GH_INFRA_OWNER }}
+          TF_VAR_github_infra_repo:             ${{ secrets.GH_INFRA_REPO }}
+          TF_VAR_github_app_id:                 ${{ secrets.GH_APP_ID }}
+          TF_VAR_github_installation_id:        ${{ secrets.GH_INSTALLATION_ID }}
+          TF_VAR_github_app_private_key_base64: ${{ secrets.GH_APP_PRIVATE_KEY_BASE64 }}
+        run: terraform plan -input=false -no-color
+
+      - name: Label PR with plan status
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const outcome = '${{ steps.terraform_plan.outcome }}';
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const issue_number = context.issue.number;
+
+            const PLAN_OK = 'status:plan-ok-prod';
+            const PLAN_FAILED = 'status:plan-failed-prod';
+
+            try {
+              await github.rest.issues.removeLabel({
+                owner, repo, issue_number, name: PLAN_OK,
+              });
+            } catch (e) {}
+
+            try {
+              await github.rest.issues.removeLabel({
+                owner, repo, issue_number, name: PLAN_FAILED,
+              });
+            } catch (e) {}
+
+            const labelToAdd = outcome === 'success' ? PLAN_OK : PLAN_FAILED;
+            await github.rest.issues.addLabels({
+              owner, repo, issue_number,
+              labels: [labelToAdd, 'environment:prod', 'priority:high'],
+            });
+
+            // Add comment about production deployment requirements
+            await github.rest.issues.createComment({
+              owner, repo, issue_number,
+              body: `⚠️ **Production Deployment**\n\nThis PR targets production and requires:\n- ✅ 2 approvals\n- ✅ Successful terraform plan\n- ✅ All checks passing\n- ⚠️ Change control documentation\n\nPlan status: \`${outcome}\``
+            });
+
+            if (outcome !== 'success') {
+              core.setFailed(`Terraform plan failed with outcome: ${outcome}`);
+            }
+
+      - name: Terraform Apply (main only)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        id: terraform_apply
+        continue-on-error: true
+        env:
+          TF_VAR_github_infra_owner:            ${{ secrets.GH_INFRA_OWNER }}
+          TF_VAR_github_infra_repo:             ${{ secrets.GH_INFRA_REPO }}
+          TF_VAR_github_app_id:                 ${{ secrets.GH_APP_ID }}
+          TF_VAR_github_installation_id:        ${{ secrets.GH_INSTALLATION_ID }}
+          TF_VAR_github_app_private_key_base64: ${{ secrets.GH_APP_PRIVATE_KEY_BASE64 }}
+        run: terraform apply -input=false -auto-approve
+
+      - name: Capture Terraform outputs (main only)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        id: tfoutputs
+        run: terraform output -json > tf-outputs.json
+
+      - name: Comment outputs + label apply status on associated PR (main only)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/github-script@v7
+        env:
+          APPLY_OUTCOME: ${{ steps.terraform_apply.outcome }}
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            const outputsPath = path.join(process.cwd(), 'infra/environments/prod/tf-outputs.json');
+            let outputs;
+            try {
+              outputs = JSON.parse(fs.readFileSync(outputsPath, 'utf8'));
+            } catch (err) {
+              core.warning(`Failed to read Terraform outputs: ${err.message}`);
+              outputs = null;
+            }
+
+            const applyOutcome = process.env.APPLY_OUTCOME || 'unknown';
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const commitSha = context.sha;
+
+            const { data: prs } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+              owner, repo, commit_sha: commitSha,
+            });
+
+            if (prs && prs.length > 0) {
+              const pr = prs[0];
+              const issue_number = pr.number;
+
+              const APPLY_OK = 'status:apply-ok-prod';
+              const APPLY_FAILED = 'status:apply-failed-prod';
+
+              try {
+                await github.rest.issues.removeLabel({
+                  owner, repo, issue_number, name: APPLY_OK,
+                });
+              } catch (e) {}
+
+              try {
+                await github.rest.issues.removeLabel({
+                  owner, repo, issue_number, name: APPLY_FAILED,
+                });
+              } catch (e) {}
+
+              const applyLabel = applyOutcome === 'success' ? APPLY_OK : APPLY_FAILED;
+              await github.rest.issues.addLabels({
+                owner, repo, issue_number, labels: [applyLabel],
+              });
+
+              if (outputs) {
+                const pretty = JSON.stringify(outputs, null, 2);
+                const body = [
+                  '🚀 **Production Terraform Deployment Complete**',
+                  '',
+                  '```json',
+                  pretty,
+                  '```',
+                  '',
+                  `Apply outcome: \`${applyOutcome}\``
+                ].join('\n');
+
+                await github.rest.issues.createComment({
+                  owner, repo, issue_number, body,
+                });
+              }
+            }
+
+            if (applyOutcome !== 'success') {
+              core.setFailed(`Terraform apply failed with outcome: ${applyOutcome}`);
+            }
