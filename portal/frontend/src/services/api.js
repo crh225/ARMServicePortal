@@ -38,7 +38,16 @@ const api = {
     });
 
     if (!response.ok) {
-      throw new Error("Failed to submit provision request");
+      const errorData = await response.json().catch(() => ({}));
+      // If there are policy errors, return them so the UI can display them
+      if (errorData.policyErrors) {
+        return {
+          error: errorData.error || "Policy validation failed",
+          policyErrors: errorData.policyErrors,
+          policyWarnings: errorData.policyWarnings
+        };
+      }
+      throw new Error(errorData.details || errorData.error || "Failed to submit provision request");
     }
 
     return response.json();
@@ -77,6 +86,28 @@ const api = {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.details || errorData.error || "Failed to create destroy PR");
     }
+    return response.json();
+  },
+
+  /**
+   * Get cost estimate for a blueprint configuration
+   * @param {string} blueprintId - The blueprint ID
+   * @param {object} variables - The Terraform variables
+   */
+  async getCostEstimate(blueprintId, variables) {
+    const response = await fetch(`${API_BASE_URL}/api/pricing/estimate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        blueprintId,
+        variables
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch cost estimate");
+    }
+
     return response.json();
   }
 };

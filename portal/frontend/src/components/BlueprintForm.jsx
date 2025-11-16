@@ -1,4 +1,5 @@
 import React from "react";
+import CostEstimate from "./CostEstimate";
 import "../styles/BlueprintForm.css";
 
 function BlueprintForm({
@@ -7,7 +8,8 @@ function BlueprintForm({
   onChange,
   onSubmit,
   loading,
-  isUpdating
+  isUpdating,
+  policyErrors
 }) {
   if (!blueprint) return null;
 
@@ -17,6 +19,17 @@ function BlueprintForm({
       <p className="panel-help">
         Values will be written into a Terraform module file in GitHub.
       </p>
+
+      {policyErrors && policyErrors.length > 0 && (
+        <div className="policy-errors">
+          <div className="policy-errors__title">⚠️ Policy Violations</div>
+          {policyErrors.map((error, idx) => (
+            <div key={idx} className="policy-errors__item">
+              <strong>{error.field}:</strong> {error.message}
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="form-grid">
         {(blueprint.variables || []).map((v) => (
@@ -55,6 +68,8 @@ function BlueprintForm({
           </div>
         ))}
       </div>
+
+      <CostEstimate blueprint={blueprint} formValues={formValues} />
 
       <button
         className="primary-btn"

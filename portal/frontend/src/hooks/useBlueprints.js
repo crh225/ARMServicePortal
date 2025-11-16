@@ -24,7 +24,7 @@ function parseTerraformVariables(terraformModule) {
 /**
  * Custom hook for managing blueprint state and operations
  */
-export function useBlueprints(updateResourceData, onUpdateComplete) {
+export function useBlueprints(updateResourceData, onClearUpdate) {
   const [blueprints, setBlueprints] = useState([]);
   const [selectedBlueprint, setSelectedBlueprint] = useState(null);
   const [formValues, setFormValues] = useState({});
@@ -32,6 +32,7 @@ export function useBlueprints(updateResourceData, onUpdateComplete) {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [moduleName, setModuleName] = useState(null);
+  const [policyErrors, setPolicyErrors] = useState(null);
 
   // Load blueprints on mount
   useEffect(() => {
@@ -60,13 +61,17 @@ export function useBlueprints(updateResourceData, onUpdateComplete) {
           // Store the module name to lock it during update
           setModuleName(updateResourceData.moduleName);
 
-          if (onUpdateComplete) {
-            onUpdateComplete();
-          }
+          // Clear any previous results/errors when starting an update
+          setResult(null);
+          setError(null);
+          setPolicyErrors(null);
+
+          // Don't call onUpdateComplete here - let the parent keep updateResourceData
+          // It will be cleared when a new result comes in or user selects a different blueprint
         }
       }
     }
-  }, [updateResourceData, blueprints, onUpdateComplete]);
+  }, [updateResourceData, blueprints]);
 
   // Handle blueprint selection
   const handleSelectBlueprint = (id) => {
@@ -75,6 +80,12 @@ export function useBlueprints(updateResourceData, onUpdateComplete) {
     setResult(null);
     setError(null);
     setModuleName(null); // Clear module name when selecting a new blueprint
+    setPolicyErrors(null);
+
+    // Clear update resource data when user manually selects a blueprint
+    if (onClearUpdate) {
+      onClearUpdate();
+    }
 
     if (bp) {
       const initial = {};
@@ -99,6 +110,7 @@ export function useBlueprints(updateResourceData, onUpdateComplete) {
     setLoading(true);
     setError(null);
     setResult(null);
+    setPolicyErrors(null);
 
     try {
       const data = await api.provisionBlueprint(
@@ -109,17 +121,43 @@ export function useBlueprints(updateResourceData, onUpdateComplete) {
 
       if (data.error) {
         setError(data.error);
+        // Check for policy errors
+        if (data.policyErrors) {
+          setPolicyErrors(data.policyErrors);
+        }
       } else {
         setResult({
           status: data.status,
           pullRequestUrl: data.pullRequestUrl,
           branchName: data.branchName,
-          filePath: data.filePath
+          filePath: data.filePath,
+          policyWarnings: data.policyWarnings
         });
+
+        // Reset the form to force user to select a blueprint again
+        setSelectedBlueprint(null);
+        setFormValues({});
+        setModuleName(null);
+
+        // Clear update resource data so they can start fresh
+        if (onClearUpdate) {
+          onClearUpdate();
+        }
       }
     } catch (err) {
       console.error(err);
-      setError("Failed to submit request");
+      const errorMessage = err.message || "Failed to submit request";
+      setError(errorMessage);
+
+      // Try to parse policy errors from error response
+      try {
+        const errorData = JSON.parse(errorMessage);
+        if (errorData.policyErrors) {
+          setPolicyErrors(errorData.policyErrors);
+        }
+      } catch {
+        // Not JSON, ignore
+      }
     } finally {
       setLoading(false);
     }
@@ -132,6 +170,7 @@ export function useBlueprints(updateResourceData, onUpdateComplete) {
     result,
     error,
     loading,
+    policyErrors,
     handleSelectBlueprint,
     handleFormChange,
     handleSubmit

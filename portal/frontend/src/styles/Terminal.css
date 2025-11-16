@@ -1,7 +1,7 @@
 /* Terminal */
 
 .terminal {
-  margin-top: auto;
+  margin-top: 16px;
   border-radius: 16px;
   border: 1px solid rgba(148, 163, 184, 0.9);
   background:

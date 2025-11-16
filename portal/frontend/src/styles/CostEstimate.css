@@ -1,0 +1,132 @@
+/* Cost Estimate Component */
+
+.cost-estimate {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 16px;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.cost-estimate--updating {
+  opacity: 0.7;
+}
+
+.cost-estimate__title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #0369a1;
+  margin: 0 0 12px 0;
+}
+
+.cost-estimate__updating-indicator {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: #64748b;
+  font-style: italic;
+}
+
+.cost-estimate__loading {
+  font-size: 0.85rem;
+  color: #64748b;
+  font-style: italic;
+}
+
+.cost-estimate__error {
+  font-size: 0.85rem;
+  color: #dc2626;
+  background: #fee2e2;
+  padding: 8px;
+  border-radius: 4px;
+}
+
+.cost-estimate__total {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.cost-estimate__amount {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #0369a1;
+  line-height: 1;
+}
+
+.cost-estimate__currency {
+  font-size: 0.9rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.cost-estimate__breakdown {
+  border-top: 1px solid #bae6fd;
+  padding-top: 12px;
+  margin-top: 12px;
+}
+
+.cost-estimate__breakdown-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #0369a1;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.cost-estimate__item {
+  background: white;
+  border: 1px solid #e0f2fe;
+  border-radius: 6px;
+  padding: 10px;
+  margin-bottom: 8px;
+}
+
+.cost-estimate__item:last-child {
+  margin-bottom: 0;
+}
+
+.cost-estimate__item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.cost-estimate__item-type {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #1e293b;
+}
+
+.cost-estimate__item-price {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #0369a1;
+}
+
+.cost-estimate__item-sku {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+.cost-estimate__item-note {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-style: italic;
+  line-height: 1.4;
+}
+
+.cost-estimate__disclaimer {
+  margin-top: 12px;
+  padding: 8px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  color: #92400e;
+  line-height: 1.5;
+}

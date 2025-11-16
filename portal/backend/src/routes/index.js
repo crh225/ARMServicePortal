@@ -4,6 +4,7 @@ import catalogRoutes from "./catalog.routes.js";
 import provisionRoutes from "./provision.routes.js";
 import jobsRoutes from "./jobs.routes.js";
 import destroyRoutes from "./destroy.routes.js";
+import pricingRoutes from "./pricing.routes.js";
 
 const router = express.Router();
 
@@ -13,5 +14,6 @@ router.use("/catalog", catalogRoutes);
 router.use("/provision", provisionRoutes);
 router.use("/jobs", jobsRoutes);
 router.use("/destroy", destroyRoutes);
+router.use("/pricing", pricingRoutes);
 
 export default router;

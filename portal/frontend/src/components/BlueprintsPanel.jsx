@@ -9,7 +9,7 @@ import Terminal from "./Terminal";
  * Container component for the Blueprints tab
  * Handles all blueprints-related logic and state
  */
-function BlueprintsPanel({ updateResourceData, onUpdateComplete }) {
+function BlueprintsPanel({ updateResourceData, onClearUpdate }) {
   const {
     blueprints,
     selectedBlueprint,
@@ -17,11 +17,11 @@ function BlueprintsPanel({ updateResourceData, onUpdateComplete }) {
     result,
     error,
     loading,
+    policyErrors,
     handleSelectBlueprint,
     handleFormChange,
-    handleSubmit,
-    setFormValuesDirectly
-  } = useBlueprints(updateResourceData, onUpdateComplete);
+    handleSubmit
+  } = useBlueprints(updateResourceData, onClearUpdate);
 
   return (
     <>
@@ -39,6 +39,7 @@ function BlueprintsPanel({ updateResourceData, onUpdateComplete }) {
           onSubmit={handleSubmit}
           loading={loading}
           isUpdating={!!updateResourceData}
+          policyErrors={policyErrors}
         />
       </section>
 

@@ -1,5 +1,6 @@
 import { getBlueprintById } from "../config/blueprints.js";
 import { createGitHubRequest } from "../services/githubProvision.js";
+import { validatePolicies, applyAutoFill } from "../services/policyEngine.js";
 
 /**
  * Handle blueprint provisioning requests
@@ -24,11 +25,31 @@ export async function provisionBlueprint(req, res) {
 
   const envValue = environment || variables.environment || "dev";
 
+  // Run policy validation
+  const policyResult = validatePolicies({
+    blueprintId,
+    environment: envValue,
+    variables,
+    blueprint
+  });
+
+  // If there are policy errors, return them
+  if (!policyResult.valid) {
+    return res.status(400).json({
+      error: "Policy validation failed",
+      policyErrors: policyResult.errors,
+      policyWarnings: policyResult.warnings
+    });
+  }
+
+  // Apply auto-filled values
+  const finalVariables = applyAutoFill(variables, policyResult.autoFilled);
+
   try {
     const gh = await createGitHubRequest({
       environment: envValue,
       blueprintId,
-      variables,
+      variables: finalVariables,
       moduleName
     });
 
@@ -36,7 +57,9 @@ export async function provisionBlueprint(req, res) {
       status: "submitted",
       pullRequestUrl: gh.pullRequestUrl,
       branchName: gh.branchName,
-      filePath: gh.filePath
+      filePath: gh.filePath,
+      policyWarnings: policyResult.warnings.length > 0 ? policyResult.warnings : undefined,
+      autoFilled: Object.keys(policyResult.autoFilled).length > 0 ? policyResult.autoFilled : undefined
     });
   } catch (err) {
     console.error("Error in provision controller:", err);

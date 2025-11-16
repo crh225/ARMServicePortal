@@ -3,7 +3,11 @@ name: Terraform Drift Detection (Dev)
 on:
   schedule:
     - cron: "0 6 * * *"  # every day at 06:00 UTC
-  workflow_dispatch: {}   # allow manual runs
+  workflow_dispatch: {}
+
+concurrency:
+  group: terraform-dev-state
+  cancel-in-progress: false
 
 jobs:
   drift:
@@ -14,6 +18,13 @@ jobs:
       ARM_CLIENT_SECRET:   ${{ secrets.AZURE_CLIENT_SECRET }}
       ARM_TENANT_ID:       ${{ secrets.AZURE_TENANT_ID }}
       ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # 👇 Match your working example's GitHub-related vars
+      TF_VAR_github_infra_owner:            ${{ secrets.GH_INFRA_OWNER }}
+      TF_VAR_github_infra_repo:             ${{ secrets.GH_INFRA_REPO }}
+      TF_VAR_github_app_id:                 ${{ secrets.GH_APP_ID }}
+      TF_VAR_github_installation_id:        ${{ secrets.GH_INSTALLATION_ID }}
+      TF_VAR_github_app_private_key_base64: ${{ secrets.GH_APP_PRIVATE_KEY_BASE64 }}
 
     defaults:
       run:
@@ -26,11 +37,10 @@ jobs:
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 1.9.8
+          terraform_version: 1.9.5
 
       - name: Terraform init
-        run: |
-          terraform init -input=false
+        run: terraform init -input=false
 
       - name: Terraform plan (drift detection)
         id: plan
@@ -69,7 +79,7 @@ jobs:
             const owner = context.repo.owner;
             const repo = context.repo.repo;
 
-            // Look for an existing open "Drift detected (dev)" issue
+            // Find any existing open drift issue for dev
             const { data: issues } = await github.rest.issues.listForRepo({
               owner,
               repo,
@@ -88,7 +98,7 @@ jobs:
             ].join('\n');
 
             if (issues.length > 0) {
-              // Comment on the first existing issue
+              // Comment on existing issue
               await github.rest.issues.createComment({
                 owner,
                 repo,
@@ -96,7 +106,7 @@ jobs:
                 body,
               });
             } else {
-              // Create a new issue
+              // Create new issue
               await github.rest.issues.create({
                 owner,
                 repo,

@@ -28,7 +28,7 @@ function App() {
           {activeTab === "blueprints" && (
             <BlueprintsPanel
               updateResourceData={updateResourceData}
-              onUpdateComplete={() => setUpdateResourceData(null)}
+              onClearUpdate={() => setUpdateResourceData(null)}
             />
           )}
           {activeTab === "jobs" && (
