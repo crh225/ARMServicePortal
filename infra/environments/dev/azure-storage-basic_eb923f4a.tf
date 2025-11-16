@@ -5,5 +5,5 @@ module "azure-storage-basic_eb923f4a" {
   resource_group_name = "test-dev-rg"
   location = "eastus2"
   account_tier = "Standard"
-  replication_type = "LRS"
+  replication_type = "GRS"
 }
