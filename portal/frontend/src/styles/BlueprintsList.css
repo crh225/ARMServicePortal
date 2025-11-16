@@ -1,0 +1,45 @@
+/* Blueprint list */
+
+.blueprint-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.blueprint-card {
+  width: 100%;
+  text-align: left;
+  padding: 11px 13px;
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  background: #ffffff;
+  color: inherit;
+  cursor: pointer;
+  transition: all 0.16s ease-out;
+}
+
+.blueprint-card:hover {
+  border-color: var(--accent-strong);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-card);
+}
+
+.blueprint-card--active {
+  border-color: var(--accent);
+  box-shadow:
+    0 0 0 1px rgba(37, 99, 235, 0.85),
+    0 18px 34px rgba(148, 163, 184, 0.45);
+}
+
+.blueprint-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.blueprint-desc {
+  margin: 4px 0 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}

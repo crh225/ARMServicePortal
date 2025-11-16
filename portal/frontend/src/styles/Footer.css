@@ -1,0 +1,10 @@
+/* Footer */
+
+.app-footer {
+  margin-top: 16px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 0.75rem;
+  color: var(--text-soft);
+  text-align: right;
+}

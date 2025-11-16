@@ -1,0 +1,38 @@
+/* Job detail */
+
+.badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 1px solid rgba(148, 163, 184, 0.7);
+}
+
+.badge--ok {
+  color: #166534;
+  background: #dcfce7;
+  border-color: #22c55e;
+}
+
+.badge--failed {
+  color: #7f1d1d;
+  background: #fee2e2;
+  border-color: #f87171;
+}
+
+.badge--unknown {
+  color: var(--text-muted);
+  background: var(--bg-chip);
+}
+
+.result-row--stacked {
+  align-items: flex-start;
+}
+
+.result-value--mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  font-size: 12px;
+  line-height: 1.5;
+}

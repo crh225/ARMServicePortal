@@ -1,0 +1,16 @@
+/* Empty state */
+
+.empty-state {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px dashed rgba(148, 163, 184, 0.7);
+  background: #f3f4f6;
+  font-size: 0.8rem;
+}
+
+.empty-state-sub {
+  margin: 4px 0 0;
+  color: var(--text-soft);
+  font-size: 0.78rem;
+}

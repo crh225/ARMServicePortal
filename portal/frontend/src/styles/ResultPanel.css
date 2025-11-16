@@ -1,0 +1,58 @@
+/* Result panel */
+
+.alert {
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 0.8rem;
+}
+
+.alert--error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+}
+
+.result-card {
+  background: #f9fafb;
+  border-radius: 16px;
+  border: 1px solid var(--border-subtle);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.result-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.8rem;
+}
+
+.result-label {
+  color: var(--text-muted);
+}
+
+.result-value {
+  font-weight: 500;
+  color: #111827;
+}
+
+.result-code {
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  padding: 2px 6px;
+  border-radius: 7px;
+  background: #eef2ff;
+  border: 1px solid rgba(129, 140, 248, 0.6);
+}
+
+.result-link {
+  color: #2563eb;
+  text-decoration: none;
+  font-size: 0.78rem;
+}
+
+.result-link:hover {
+  text-decoration: underline;
+}
