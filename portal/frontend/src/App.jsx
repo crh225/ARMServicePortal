@@ -8,9 +8,10 @@ function App() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
   useEffect(() => {
-    fetch("/api/catalog")
+    fetch(`${API_BASE_URL}/api/catalog`)
       .then((res) => res.json())
       .then(setBlueprints)
       .catch((err) => {
@@ -45,7 +46,7 @@ function App() {
     setError(null);
     setResult(null);
 
-    fetch("/api/provision", {
+    fetch(`${API_BASE_URL}/api/provision`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
