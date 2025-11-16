@@ -24,7 +24,12 @@ function BlueprintsList({ blueprints, selectedBlueprint, onSelectBlueprint }) {
             }
             onClick={() => onSelectBlueprint(bp.id)}
           >
-            <h3 className="blueprint-title">{bp.displayName}</h3>
+            <div className="blueprint-header">
+              <h3 className="blueprint-title">{bp.displayName}</h3>
+              {bp.version && (
+                <span className="blueprint-version">v{bp.version}</span>
+              )}
+            </div>
             <p className="blueprint-desc">{bp.description}</p>
           </button>
         ))}

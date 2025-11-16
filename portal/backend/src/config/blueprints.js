@@ -3,6 +3,7 @@
 export const BLUEPRINTS = [
   {
     id: "azure-rg-basic",
+    version: "1.0.0",
     displayName: "Azure Resource Group (basic)",
     description: "Creates a single Resource Group using a standardized naming convention.",
     moduleSource: "../../modules/azure-rg-basic",
@@ -32,6 +33,7 @@ export const BLUEPRINTS = [
   },
   {
     id: "azure-storage-basic",
+    version: "1.0.0",
     displayName: "Azure Storage Account (basic)",
     description: "Creates a general-purpose v2 Storage Account with standard settings in an existing Resource Group.",
     moduleSource: "../../modules/azure-storage-basic",
@@ -83,6 +85,7 @@ export const BLUEPRINTS = [
   },
   {
   id: "azure-key-vault-basic",
+  version: "1.0.0",
   displayName: "Azure Key Vault (basic RBAC)",
   description:
     "Creates an Azure Key Vault using RBAC authorization in an existing Resource Group.",
@@ -142,6 +145,62 @@ export const BLUEPRINTS = [
 }
 ];
 
-export function getBlueprintById(id) {
-  return BLUEPRINTS.find((b) => b.id === id) || null;
+/**
+ * Compare semantic versions (e.g., "1.0.0", "1.2.3")
+ * Returns: 1 if a > b, -1 if a < b, 0 if equal
+ */
+function compareSemver(a, b) {
+  const pa = a.split(".").map(Number);
+  const pb = b.split(".").map(Number);
+  for (let i = 0; i < 3; i++) {
+    const da = pa[i] || 0;
+    const db = pb[i] || 0;
+    if (da > db) return 1;
+    if (da < db) return -1;
+  }
+  return 0;
+}
+
+/**
+ * Get a blueprint by ID and optional version
+ * @param {string} id - Blueprint ID
+ * @param {string} [version] - Optional version (e.g., "1.0.0"). If not provided, returns latest version.
+ * @returns {Object|null} - Blueprint object or null if not found
+ */
+export function getBlueprintById(id, version) {
+  const candidates = BLUEPRINTS.filter((b) => b.id === id);
+  if (candidates.length === 0) return null;
+
+  if (!version) {
+    // Return latest by semver
+    return candidates
+      .slice()
+      .sort((a, b) => compareSemver(b.version, a.version))[0];
+  }
+
+  return (
+    candidates.find((b) => b.version === version) ||
+    null
+  );
+}
+
+/**
+ * Get all versions of a blueprint by ID
+ * @param {string} id - Blueprint ID
+ * @returns {Array} - Array of version strings sorted descending
+ */
+export function getBlueprintVersions(id) {
+  return BLUEPRINTS
+    .filter((b) => b.id === id)
+    .map((b) => b.version)
+    .sort((a, b) => compareSemver(b, a));
+}
+
+/**
+ * Get unique blueprint IDs (returns only latest version of each)
+ * @returns {Array} - Array of blueprint objects (latest version only)
+ */
+export function getLatestBlueprints() {
+  const uniqueIds = [...new Set(BLUEPRINTS.map((b) => b.id))];
+  return uniqueIds.map((id) => getBlueprintById(id));
 }

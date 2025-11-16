@@ -7,7 +7,7 @@ import { validatePolicies, applyAutoFill } from "../services/policyEngine.js";
  * Creates a GitHub PR with Terraform configuration
  */
 export async function provisionBlueprint(req, res) {
-  const { blueprintId, variables, environment, moduleName } = req.body || {};
+  const { blueprintId, blueprintVersion, variables, environment, moduleName } = req.body || {};
 
   // Validation
   if (!blueprintId || !variables) {
@@ -16,10 +16,12 @@ export async function provisionBlueprint(req, res) {
     });
   }
 
-  const blueprint = getBlueprintById(blueprintId);
+  const blueprint = getBlueprintById(blueprintId, blueprintVersion);
   if (!blueprint) {
     return res.status(404).json({
-      error: "Unknown blueprintId"
+      error: blueprintVersion
+        ? `Unknown blueprint or version: ${blueprintId}@${blueprintVersion}`
+        : `Unknown blueprintId: ${blueprintId}`
     });
   }
 
@@ -49,6 +51,7 @@ export async function provisionBlueprint(req, res) {
     const gh = await createGitHubRequest({
       environment: envValue,
       blueprintId,
+      blueprintVersion: blueprint.version,
       variables: finalVariables,
       moduleName
     });
@@ -58,6 +61,7 @@ export async function provisionBlueprint(req, res) {
       pullRequestUrl: gh.pullRequestUrl,
       branchName: gh.branchName,
       filePath: gh.filePath,
+      blueprintVersion: blueprint.version,
       policyWarnings: policyResult.warnings.length > 0 ? policyResult.warnings : undefined,
       autoFilled: Object.keys(policyResult.autoFilled).length > 0 ? policyResult.autoFilled : undefined
     });

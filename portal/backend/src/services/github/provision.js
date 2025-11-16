@@ -12,13 +12,14 @@ import { renderTerraformModule } from "../../utils/terraformRenderer.js";
  *
  * @param {string} environment - The target environment
  * @param {string} blueprintId - The blueprint ID
+ * @param {string} [blueprintVersion] - Optional blueprint version
  * @param {object} variables - The Terraform variables
  * @param {string} [moduleName] - Optional module name (for updates). If not provided, generates a new one.
  */
-export async function createGitHubRequest({ environment, blueprintId, variables, moduleName: providedModuleName }) {
-  const blueprint = getBlueprintById(blueprintId);
+export async function createGitHubRequest({ environment, blueprintId, blueprintVersion, variables, moduleName: providedModuleName }) {
+  const blueprint = getBlueprintById(blueprintId, blueprintVersion);
   if (!blueprint) {
-    throw new Error(`Unknown blueprintId: ${blueprintId}`);
+    throw new Error(`Unknown blueprintId: ${blueprintId}${blueprintVersion ? `@${blueprintVersion}` : ''}`);
   }
 
   const { infraOwner, infraRepo } = getGitHubConfig();
@@ -117,6 +118,7 @@ export async function createGitHubRequest({ environment, blueprintId, variables,
 
   const body = [
     `Blueprint: \`${blueprintId}\``,
+    `Version: \`${blueprint.version}\``,
     `Environment: \`${environment}\``,
     isUpdate ? `**Update**: Modifying existing resource \`${moduleName}\`` : "",
     "",

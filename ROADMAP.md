@@ -75,7 +75,7 @@
 
 ### Cost Management
 - [ ] Integrate Infracost for cost estimates
-- [ ] Show estimated monthly cost before submit
+- [X] Show estimated monthly cost before submit
 - [ ] Cost dashboard by environment
 - [ ] Budget alerts
 
@@ -87,7 +87,7 @@
 
 ### Developer Experience
 - [ ] Blueprint templates/wizards
-- [ ] Validation before submit
+- [X] Validation before submit
 - [ ] Dry-run mode (plan without create)
 - [ ] Rollback capability
 - [ ] Scheduled deployments
@@ -100,7 +100,7 @@
 - [ ] Delegated administration
 
 ### Compliance & Governance
-- [ ] Policy enforcement (OPA/Sentinel)
+- [X] Policy enforcement (OPA/Sentinel)
 - [ ] Compliance scanning
 - [ ] Approval chains
 - [ ] Change windows

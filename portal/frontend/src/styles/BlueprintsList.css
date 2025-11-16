@@ -32,11 +32,28 @@
     0 18px 34px rgba(148, 163, 184, 0.45);
 }
 
+.blueprint-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
 .blueprint-title {
   margin: 0;
   font-size: 0.95rem;
   font-weight: 600;
   color: #111827;
+}
+
+.blueprint-version {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
 }
 
 .blueprint-desc {
