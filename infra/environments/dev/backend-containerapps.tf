@@ -80,5 +80,5 @@ resource "azurerm_container_app" "backend" {
 }
 
 output "backend_api_url" {
-  value = "https://${azurerm_container_app.backend.latest_revision_fqdn}"
+  value = "https://${azurerm_container_app.backend.ingress[0].fqdn}"
 }
