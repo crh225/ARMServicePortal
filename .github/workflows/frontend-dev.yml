@@ -5,7 +5,7 @@ on:
     branches: [ main ]
     paths:
       - "portal/frontend/**"
-      
+
 permissions:
   id-token: write
   contents: read     
@@ -16,6 +16,8 @@ jobs:
 
     env:
       NODE_VERSION: "22.x"
+      VITE_API_BASE_URL: https://armportal-api-dev--nu2g26k.kindisland-0c7a7c9a.eastus2.azurecontainerapps.io
+
 
     steps:
       - name: Checkout
