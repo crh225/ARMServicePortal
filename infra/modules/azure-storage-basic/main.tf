@@ -63,8 +63,9 @@ resource "azurerm_storage_account" "this" {
   account_tier             = var.account_tier
   account_replication_type = var.replication_type
 
-  kind                      = "StorageV2"
-  min_tls_version           = "TLS1_2"
+  # `kind` is no longer a valid argument in azurerm v4.x – it’s computed.
+  # Default behavior is effectively a general purpose v2 account.
+  min_tls_version            = "TLS1_2"
   https_traffic_only_enabled = true
 
   allow_nested_items_to_be_public = true
