@@ -55,6 +55,11 @@ export async function createPromotionPR(sourceJob, targetEnvironment) {
 
   const sourceContent = Buffer.from(fileData.content, "base64").toString("utf8");
 
+  // Update the environment variable in the Terraform content
+  // Replace environment = "dev" with environment = "qa", etc.
+  const envVarPattern = new RegExp(`environment\\s*=\\s*"${sourceJob.environment}"`, 'g');
+  const updatedContent = sourceContent.replace(envVarPattern, `environment = "${targetEnvironment}"`);
+
   // Generate new filename and content for target environment
   // Extract the environment path from the source file
   // e.g., infra/environments/dev/azure-rg-basic_abc123.tf -> infra/environments/qa/azure-rg-basic_abc123.tf
@@ -109,7 +114,7 @@ export async function createPromotionPR(sourceJob, targetEnvironment) {
     repo: infraRepo,
     path: targetFilePath,
     message: `promote: ${sourceJob.environment} → ${targetEnvironment} (${baseFilename})`,
-    content: Buffer.from(sourceContent, "utf8").toString("base64"),
+    content: Buffer.from(updatedContent, "utf8").toString("base64"),
     branch: promotionBranchName
   });
 
