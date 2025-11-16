@@ -412,10 +412,23 @@ function App() {
                       <div className="result-card jobs-detail">
                         <div className="result-row">
                           <span className="result-label">Status</span>
-                          <span className="result-value">
-                            {selectedJob.status}
+                          <span className="result-value">{selectedJob.status}</span>
+                        </div>
+
+                        <div className="result-row">
+                          <span className="result-label">Plan</span>
+                          <span className={`badge badge--${selectedJob.planStatus || "unknown"}`}>
+                            {selectedJob.planStatus || "unknown"}
                           </span>
                         </div>
+
+                        <div className="result-row">
+                          <span className="result-label">Apply</span>
+                          <span className={`badge badge--${selectedJob.applyStatus || "unknown"}`}>
+                            {selectedJob.applyStatus || "unknown"}
+                          </span>
+                        </div>
+
                         {selectedJob.pullRequestUrl && (
                           <div className="result-row">
                             <span className="result-label">Pull Request</span>
@@ -429,12 +442,27 @@ function App() {
                             </a>
                           </div>
                         )}
+
                         {selectedJob.headRef && (
                           <div className="result-row">
                             <span className="result-label">Branch</span>
-                            <span className="result-value">
-                              {selectedJob.headRef}
-                            </span>
+                            <span className="result-value">{selectedJob.headRef}</span>
+                          </div>
+                        )}
+
+                        {selectedJob.outputs && (
+                          <div className="result-row result-row--stacked">
+                            <span className="result-label">Outputs</span>
+                            <div className="result-value result-value--mono">
+                              {Object.entries(selectedJob.outputs).map(([key, obj]) => (
+                                <div key={key}>
+                                  <strong>{key}</strong>:{" "}
+                                  {typeof obj === "object" && obj !== null && "value" in obj
+                                    ? String(obj.value)
+                                    : String(obj)}
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         )}
                       </div>

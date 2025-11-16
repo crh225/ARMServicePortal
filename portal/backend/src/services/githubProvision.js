@@ -193,6 +193,19 @@ export async function createGitHubRequest({ environment, blueprintId, variables 
   };
 }
 
+function mapStatusFromLabels(labels) {
+  const names = (labels || []).map((l) => l.name);
+
+  let planStatus = "unknown";
+  if (names.includes("status:plan-ok")) planStatus = "ok";
+  if (names.includes("status:plan-failed")) planStatus = "failed";
+
+  let applyStatus = "unknown";
+  if (names.includes("status:apply-ok")) applyStatus = "ok";
+  if (names.includes("status:apply-failed")) applyStatus = "failed";
+
+  return { planStatus, applyStatus, labels: names };
+}
 
 function parseBlueprintMetadataFromBody(body) {
   if (!body) {
@@ -251,6 +264,8 @@ export async function listGitHubRequests({ environment } = {}) {
       pr.body || ""
     );
 
+    const { planStatus, applyStatus, labels } = mapStatusFromLabels(pr.labels || []);
+
     let status = "unknown";
     if (pr.state === "open") {
       status = "open";
@@ -267,6 +282,9 @@ export async function listGitHubRequests({ environment } = {}) {
       blueprintId: blueprintId || null,
       environment: environment || envFromBody || null,
       status,
+      labels,
+      planStatus,
+      applyStatus,
       state: pr.state,
       merged: Boolean(pr.merged_at),
       createdAt: pr.created_at,
@@ -296,6 +314,7 @@ export async function getGitHubRequestByNumber(prNumber) {
 
   const headRef = pr.head && pr.head.ref ? pr.head.ref : "";
   const { blueprintId, environment } = parseBlueprintMetadataFromBody(pr.body || "");
+  const { planStatus, applyStatus, labels } = mapStatusFromLabels(pr.labels || []);
 
   let status = "unknown";
   if (pr.state === "open") {
@@ -306,6 +325,33 @@ export async function getGitHubRequestByNumber(prNumber) {
     status = "closed";
   }
 
+
+  let outputs = null;
+  try {
+    const { data: comments } = await octokit.issues.listComments({
+      owner: infraOwner,
+      repo: infraRepo,
+      issue_number: prNumber,
+      per_page: 50
+    });
+
+    const tfComment = [...comments]
+      .reverse()
+      .find(
+        (c) =>
+          typeof c.body === "string" && c.body.startsWith("TF_OUTPUTS:")
+      );
+
+    if (tfComment) {
+      const match = tfComment.body.match(/```json([\s\S]*?)```/);
+      if (match && match[1]) {
+        outputs = JSON.parse(match[1]);
+      }
+    }
+  } catch (e) {
+    console.warn("Failed to parse TF outputs comment", e.message);
+  }
+
   return {
     id: pr.number,
     number: pr.number,
@@ -313,11 +359,16 @@ export async function getGitHubRequestByNumber(prNumber) {
     blueprintId: blueprintId || null,
     environment: environment || null,
     status,
+    labels,
+    planStatus,
+    applyStatus,
     state: pr.state,
     merged: Boolean(pr.merged_at),
     createdAt: pr.created_at,
     updatedAt: pr.updated_at,
     pullRequestUrl: pr.html_url,
-    headRef
+    headRef,
+    outputs   // <-- new field
   };
 }
+

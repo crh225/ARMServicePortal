@@ -50,3 +50,45 @@ jobs:
       - name: Terraform Apply (main only)
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: terraform apply -input=false -auto-approve
+
+      - name: Capture Terraform outputs (main only)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        id: tfoutputs
+        run: terraform output -json > tf-outputs.json
+
+      - name: Find associated PR for this commit
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        id: find_pr
+        uses: peter-evans/find-pull-request@v4
+        with:
+          commit: ${{ github.sha }}
+
+      - name: Comment outputs on PR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.find_pr.outputs.pr_number != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const outputs = JSON.parse(
+              fs.readFileSync('infra/environments/dev/tf-outputs.json', 'utf8')
+            );
+            const pretty = JSON.stringify(outputs, null, 2);
+
+            const body = [
+              'TF_OUTPUTS:',
+              '',
+              '```json',
+              pretty,
+              '```'
+            ].join('\n');
+
+            const prNumber = Number('${{ steps.find_pr.outputs.pr_number }}');
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number: prNumber,
+              body
+            });
