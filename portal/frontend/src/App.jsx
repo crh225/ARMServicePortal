@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import "./styles.css";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+
 function App() {
   const [blueprints, setBlueprints] = useState([]);
   const [selectedBlueprint, setSelectedBlueprint] = useState(null);
@@ -9,12 +11,18 @@ function App() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("blueprints");
+
   const [jobs, setJobs] = useState([]);
   const [jobsLoading, setJobsLoading] = useState(false);
   const [jobsError, setJobsError] = useState(null);
   const [selectedJob, setSelectedJob] = useState(null);
 
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+  const [jobDetailLoading, setJobDetailLoading] = useState(false);
+  const [jobDetailError, setJobDetailError] = useState(null);
+  const [jobDetailsCache, setJobDetailsCache] = useState({});
+  const [jobsPage, setJobsPage] = useState(1);
+  const pageSize = 5;
+
   useEffect(() => {
     fetch(`${API_BASE_URL}/api/catalog`)
       .then((res) => res.json())
@@ -65,7 +73,12 @@ function App() {
         if (data.error) {
           setError(data.error);
         } else {
-          setResult(data);
+          setResult({
+            status: data.status,
+            pullRequestUrl: data.pullRequestUrl,
+            branchName: data.branchName,
+            filePath: data.filePath
+          });
         }
       })
       .catch((err) => {
@@ -74,6 +87,50 @@ function App() {
         setError("Failed to submit request");
       });
   };
+
+  const loadJobDetail = (job) => {
+    if (!job) return;
+
+    setJobDetailError(null);
+
+    const cached = jobDetailsCache[job.number];
+    if (cached && cached.outputs !== undefined) {
+      setSelectedJob(cached);
+      return;
+    }
+
+    setSelectedJob((current) => {
+      if (current && current.number === job.number) {
+        return current;
+      }
+      return { ...job, outputs: undefined };
+    });
+
+    setJobDetailLoading(true);
+
+    fetch(`${API_BASE_URL}/api/jobs/${job.number}`)
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Failed to load job details");
+        }
+        return res.json();
+      })
+      .then((data) => {
+        setJobDetailsCache((prev) => ({
+          ...prev,
+          [data.number]: data
+        }));
+        setSelectedJob(data);
+      })
+      .catch((err) => {
+        console.error(err);
+        setJobDetailError(err.message || "Failed to load job details");
+      })
+      .finally(() => {
+        setJobDetailLoading(false);
+      });
+  };
+
   const refreshJobs = () => {
     setJobsLoading(true);
     setJobsError(null);
@@ -88,15 +145,10 @@ function App() {
       .then((data) => {
         const safe = Array.isArray(data) ? data : [];
         setJobs(safe);
+        setJobsPage(1);
 
         if (safe.length > 0) {
-          setSelectedJob((current) => {
-            if (current) {
-              const still = safe.find((j) => j.id === current.id);
-              return still || safe[0];
-            }
-            return safe[0];
-          });
+          loadJobDetail(safe[0]);
         } else {
           setSelectedJob(null);
         }
@@ -110,6 +162,20 @@ function App() {
       });
   };
 
+  const handleJobsTabClick = () => {
+    setActiveTab("jobs");
+    refreshJobs();
+  };
+
+  const handleSelectJob = (job) => {
+    loadJobDetail(job);
+  };
+
+
+  const totalPages = Math.max(1, Math.ceil(jobs.length / pageSize));
+  const currentPage = Math.min(jobsPage, totalPages);
+  const startIndex = (currentPage - 1) * pageSize;
+  const pageJobs = jobs.slice(startIndex, startIndex + pageSize);
 
   return (
     <div className="app-root">
@@ -126,7 +192,8 @@ function App() {
           <nav className="app-nav">
             <button
               className={
-                "nav-pill" + (activeTab === "blueprints" ? " nav-pill--active" : "")
+                "nav-pill" +
+                (activeTab === "blueprints" ? " nav-pill--active" : "")
               }
               onClick={() => setActiveTab("blueprints")}
             >
@@ -136,10 +203,7 @@ function App() {
               className={
                 "nav-pill" + (activeTab === "jobs" ? " nav-pill--active" : "")
               }
-              onClick={() => {
-                setActiveTab("jobs");
-                refreshJobs();
-              }}
+              onClick={handleJobsTabClick}
             >
               Jobs
             </button>
@@ -247,107 +311,111 @@ function App() {
           <aside className="panel panel--right">
             {activeTab === "blueprints" ? (
               <>
-            <div>
-              <h2 className="panel-title">3. Result</h2>
-              <p className="panel-help">
-                Track the GitHub Pull Request that will run Terraform via Actions.
-              </p>
-            </div>
-
-            {error && (
-              <div className="alert alert--error">
-                <strong>Error:</strong> {error}
-              </div>
-            )}
-
-            {result ? (
-              <div className="result-card">
-                <div className="result-row">
-                  <span className="result-label">Status</span>
-                  <span className="result-value">{result.status}</span>
+                <div>
+                  <h2 className="panel-title">3. Result</h2>
+                  <p className="panel-help">
+                    Track the GitHub Pull Request that will run Terraform via
+                    Actions.
+                  </p>
                 </div>
 
-                {result.pullRequestUrl && (
-                  <div className="result-row">
-                    <span className="result-label">Pull Request</span>
-                    <a
-                      className="result-link"
-                      href={result.pullRequestUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      {result.pullRequestUrl}
-                    </a>
+                {error && (
+                  <div className="alert alert--error">
+                    <strong>Error:</strong> {error}
                   </div>
                 )}
 
-                {result.branchName && (
-                  <div className="result-row">
-                    <span className="result-label">Branch</span>
-                    <code className="result-code">{result.branchName}</code>
-                  </div>
-                )}
-
-                {result.filePath && (
-                  <div className="result-row">
-                    <span className="result-label">Terraform file</span>
-                    <code className="result-code">{result.filePath}</code>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="empty-state">
-                <p>No request submitted yet.</p>
-                <p className="empty-state-sub">
-                  Select a blueprint, fill in parameters, then submit to create
-                  a PR.
-                </p>
-              </div>
-            )}
-
-            <div className="terminal">
-              <div className="terminal-header">
-                <span className="dot dot--red" />
-                <span className="dot dot--amber" />
-                <span className="dot dot--green" />
-                <span className="terminal-title">terraform-actions.log</span>
-              </div>
-              <div className="terminal-body">
                 {result ? (
-                  <>
-                    <span className="terminal-line">
-                      $ terraform init && terraform plan
-                    </span>
-                    <span className="terminal-line terminal-line--dim">
-                      Running in GitHub Actions on PR merge…
-                    </span>
-                    <span className="terminal-line">
-                      file: <code>{result.filePath}</code>
-                    </span>
-                    <span className="terminal-line">
-                      branch: <code>{result.branchName}</code>
-                    </span>
-                  </>
+                  <div className="result-card">
+                    <div className="result-row">
+                      <span className="result-label">Status</span>
+                      <span className="result-value">{result.status}</span>
+                    </div>
+
+                    {result.pullRequestUrl && (
+                      <div className="result-row">
+                        <span className="result-label">Pull Request</span>
+                        <a
+                          className="result-link"
+                          href={result.pullRequestUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          {result.pullRequestUrl}
+                        </a>
+                      </div>
+                    )}
+
+                    {result.branchName && (
+                      <div className="result-row">
+                        <span className="result-label">Branch</span>
+                        <code className="result-code">{result.branchName}</code>
+                      </div>
+                    )}
+
+                    {result.filePath && (
+                      <div className="result-row">
+                        <span className="result-label">Terraform file</span>
+                        <code className="result-code">{result.filePath}</code>
+                      </div>
+                    )}
+                  </div>
                 ) : (
-                  <>
-                    <span className="terminal-line">
-                      # Waiting for first request…
-                    </span>
-                    <span className="terminal-line terminal-line--dim">
-                      Submit a blueprint to see the GitHub-driven Terraform
-                      flow.
-                    </span>
-                  </>
+                  <div className="empty-state">
+                    <p>No request submitted yet.</p>
+                    <p className="empty-state-sub">
+                      Select a blueprint, fill in parameters, then submit to
+                      create a PR.
+                    </p>
+                  </div>
                 )}
-              </div>
-            </div>
+
+                <div className="terminal">
+                  <div className="terminal-header">
+                    <span className="dot dot--red" />
+                    <span className="dot dot--amber" />
+                    <span className="dot dot--green" />
+                    <span className="terminal-title">
+                      terraform-actions.log
+                    </span>
+                  </div>
+                  <div className="terminal-body">
+                    {result ? (
+                      <>
+                        <span className="terminal-line">
+                          $ terraform init && terraform plan
+                        </span>
+                        <span className="terminal-line terminal-line--dim">
+                          Running in GitHub Actions on PR merge…
+                        </span>
+                        <span className="terminal-line">
+                          file: <code>{result.filePath}</code>
+                        </span>
+                        <span className="terminal-line">
+                          branch: <code>{result.branchName}</code>
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="terminal-line">
+                          # Waiting for first request…
+                        </span>
+                        <span className="terminal-line terminal-line--dim">
+                          Submit a blueprint to see the GitHub-driven Terraform
+                          flow.
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </div>
               </>
             ) : (
               <>
                 <div>
                   <h2 className="panel-title">Jobs</h2>
                   <p className="panel-help">
-                    Recent self-service requests created as GitHub pull requests.
+                    Recent self-service requests created as GitHub pull
+                    requests.
                   </p>
                 </div>
 
@@ -369,62 +437,108 @@ function App() {
                       <div className="empty-state">
                         <p>No jobs found yet.</p>
                         <p className="empty-state-sub">
-                          Submit a request from the Blueprints tab to see it here.
+                          Submit a request from the Blueprints tab to see it
+                          here.
                         </p>
                       </div>
                     ) : (
-                      <div className="jobs-list">
-                        <ul className="jobs-list">
-                          {jobs.map((job) => (
-                            <li
-                              key={job.id}
-                              className={
-                                "job-item" +
-                                (selectedJob && selectedJob.id === job.id ? " job-item--active" : "")
-                              }
-                              onClick={() => setSelectedJob(job)}
-                            >
-                              <div className="job-line">
-                                <span className="job-title">
-                                  {job.blueprintId || "Provision request"}
-                                </span>
-                                <span
-                                  className={`job-status job-status--${job.status || "unknown"}`}
-                                >
-                                  {job.status || "unknown"}
-                                </span>
-                              </div>
+                      <>
+                        <div className="jobs-list">
+                          <ul className="jobs-list">
+                            {pageJobs.map((job) => (
+                              <li
+                                key={job.id}
+                                className={
+                                  "job-item" +
+                                  (selectedJob &&
+                                  selectedJob.id === job.id
+                                    ? " job-item--active"
+                                    : "")
+                                }
+                                onClick={() => handleSelectJob(job)}
+                              >
+                                <div className="job-line">
+                                  <span className="job-title">
+                                    {job.blueprintId || "Provision request"}
+                                  </span>
+                                  <span
+                                    className={`job-status job-status--${
+                                      job.status || "unknown"
+                                    }`}
+                                  >
+                                    {job.status || "unknown"}
+                                  </span>
+                                </div>
 
-                              <div className="job-meta">
-                                env: {job.environment || "n/a"} · #{job.number} ·{" "}
-                                {job.createdAt
-                                  ? new Date(job.createdAt).toLocaleString()
-                                  : "time unknown"}
-                              </div>
-                            </li>
-                          ))}
-                        </ul>
+                                <div className="job-meta">
+                                  env: {job.environment || "n/a"} · #
+                                  {job.number} ·{" "}
+                                  {job.createdAt
+                                    ? new Date(
+                                        job.createdAt
+                                      ).toLocaleString()
+                                    : "time unknown"}
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
 
-                      </div>
+                        <div className="jobs-pagination">
+                          <button
+                            className="nav-pill"
+                            disabled={currentPage <= 1}
+                            onClick={() =>
+                              setJobsPage((p) => Math.max(1, p - 1))
+                            }
+                          >
+                            ← Prev
+                          </button>
+                          <span className="jobs-pagination-info">
+                            Page {currentPage} of {totalPages}
+                          </span>
+                          <button
+                            className="nav-pill"
+                            disabled={currentPage >= totalPages}
+                            onClick={() =>
+                              setJobsPage((p) =>
+                                Math.min(totalPages, p + 1)
+                              )
+                            }
+                          >
+                            Next →
+                          </button>
+                        </div>
+                      </>
                     )}
 
                     {selectedJob && (
                       <div className="result-card jobs-detail">
                         <div className="result-row">
                           <span className="result-label">Status</span>
-                          <span className="result-value">{selectedJob.status}</span>
+                          <span className="result-value">
+                            {selectedJob.status}
+                          </span>
                         </div>
 
                         <div className="result-row">
                           <span className="result-label">Plan</span>
-                          <span className={`badge badge--${selectedJob.planStatus || "unknown"}`}>
+                          <span
+                            className={`badge badge--${
+                              selectedJob.planStatus || "unknown"
+                            }`}
+                          >
                             {selectedJob.planStatus || "unknown"}
                           </span>
                         </div>
 
                         <div className="result-row">
                           <span className="result-label">Apply</span>
-                          <span className={`badge badge--${selectedJob.applyStatus || "unknown"}`}>
+                          <span
+                            className={`badge badge--${
+                              selectedJob.applyStatus || "unknown"
+                            }`}
+                          >
                             {selectedJob.applyStatus || "unknown"}
                           </span>
                         </div>
@@ -446,22 +560,44 @@ function App() {
                         {selectedJob.headRef && (
                           <div className="result-row">
                             <span className="result-label">Branch</span>
-                            <span className="result-value">{selectedJob.headRef}</span>
+                            <span className="result-value">
+                              {selectedJob.headRef}
+                            </span>
                           </div>
                         )}
 
-                        {selectedJob.outputs && (
+                        {jobDetailLoading && (
+                          <div className="result-row">
+                            <span className="result-label">Outputs</span>
+                            <span className="result-value">
+                              Loading outputs…
+                            </span>
+                          </div>
+                        )}
+
+                        {jobDetailError && (
+                          <div className="alert alert--error">
+                            <strong>Error loading outputs:</strong>{" "}
+                            {jobDetailError}
+                          </div>
+                        )}
+
+                        {selectedJob.outputs && !jobDetailLoading && (
                           <div className="result-row result-row--stacked">
                             <span className="result-label">Outputs</span>
                             <div className="result-value result-value--mono">
-                              {Object.entries(selectedJob.outputs).map(([key, obj]) => (
-                                <div key={key}>
-                                  <strong>{key}</strong>:{" "}
-                                  {typeof obj === "object" && obj !== null && "value" in obj
-                                    ? String(obj.value)
-                                    : String(obj)}
-                                </div>
-                              ))}
+                              {Object.entries(selectedJob.outputs).map(
+                                ([key, obj]) => (
+                                  <div key={key}>
+                                    <strong>{key}</strong>:{" "}
+                                    {typeof obj === "object" &&
+                                    obj !== null &&
+                                    "value" in obj
+                                      ? String(obj.value)
+                                      : String(obj)}
+                                  </div>
+                                )
+                              )}
                             </div>
                           </div>
                         )}

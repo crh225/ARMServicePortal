@@ -5,55 +5,54 @@ import fs from "fs";
 import path from "path";
 import { getBlueprintById } from "../config/blueprints.js";
 
-
 function getConfig() {
   const {
-    GITHUB_APP_ID,
-    GITHUB_INSTALLATION_ID,
-    GITHUB_APP_PRIVATE_KEY,
-    GITHUB_APP_PRIVATE_KEY_BASE64,
-    GITHUB_APP_PRIVATE_KEY_PATH,
-    GITHUB_INFRA_OWNER,
-    GITHUB_INFRA_REPO
+    GH_APP_ID,
+    GH_INSTALLATION_ID,
+    GH_APP_PRIVATE_KEY,
+    GH_APP_PRIVATE_KEY_BASE64,
+    GH_APP_PRIVATE_KEY_PATH,
+    GH_INFRA_OWNER,
+    GH_INFRA_REPO
   } = process.env;
 
-  let resolvedPrivateKey = GITHUB_APP_PRIVATE_KEY;
+  let resolvedPrivateKey = GH_APP_PRIVATE_KEY;
 
-  if (!resolvedPrivateKey && GITHUB_APP_PRIVATE_KEY_PATH) {
+  if (!resolvedPrivateKey && GH_APP_PRIVATE_KEY_PATH) {
     try {
-      const keyPath = path.isAbsolute(GITHUB_APP_PRIVATE_KEY_PATH)
-        ? GITHUB_APP_PRIVATE_KEY_PATH
-        : path.join(process.cwd(), GITHUB_APP_PRIVATE_KEY_PATH);
+      const keyPath = path.isAbsolute(GH_APP_PRIVATE_KEY_PATH)
+        ? GH_APP_PRIVATE_KEY_PATH
+        : path.join(process.cwd(), GH_APP_PRIVATE_KEY_PATH);
 
       resolvedPrivateKey = fs.readFileSync(keyPath, "utf8");
     } catch (err) {
       console.error(
-        "[githubProvision] Failed to read key from GITHUB_APP_PRIVATE_KEY_PATH:",
+        "[githubProvision] Failed to read key from GH_APP_PRIVATE_KEY_PATH:",
         err
       );
     }
   }
 
-  if (!resolvedPrivateKey && GITHUB_APP_PRIVATE_KEY_BASE64) {
+  if (!resolvedPrivateKey && GH_APP_PRIVATE_KEY_BASE64) {
     try {
       resolvedPrivateKey = Buffer.from(
-        GITHUB_APP_PRIVATE_KEY_BASE64,
+        GH_APP_PRIVATE_KEY_BASE64,
         "base64"
       ).toString("utf8");
     } catch (err) {
       console.error(
-        "[githubProvision] Failed to decode GITHUB_APP_PRIVATE_KEY_BASE64:",
+        "[githubProvision] Failed to decode GH_APP_PRIVATE_KEY_BASE64:",
         err
       );
     }
   }
 
   return {
-    appId: GITHUB_APP_ID,
-    installationId: GITHUB_INSTALLATION_ID,
+    appId: GH_APP_ID,
+    installationId: GH_INSTALLATION_ID,
     privateKey: resolvedPrivateKey,
-    infraOwner: GITHUB_INFRA_OWNER,
-    infraRepo: GITHUB_INFRA_REPO
+    infraOwner: GH_INFRA_OWNER,
+    infraRepo: GH_INFRA_REPO
   };
 }
 
@@ -63,7 +62,7 @@ async function getInstallationClient() {
   if (!appId || !installationId || !privateKey) {
     throw new Error(
       "GitHub App configuration missing. Check env vars: " +
-        "GITHUB_APP_ID, GITHUB_INSTALLATION_ID, and GITHUB_APP_PRIVATE_KEY / _PATH / _BASE64"
+        "GH_APP_ID, GH_INSTALLATION_ID, and GH_APP_PRIVATE_KEY / _PATH / _BASE64"
     );
   }
 
@@ -88,7 +87,7 @@ async function getInstallationClient() {
  * Creates a branch + Terraform module file + PR in *this* repo.
  *
  * It writes a .tf file under:
- *   infra/environments/{environment}/requests/{moduleName}.tf
+ *   infra/environments/{environment}/{moduleName}.tf
  */
 export async function createGitHubRequest({ environment, blueprintId, variables }) {
   const blueprint = getBlueprintById(blueprintId);
@@ -99,7 +98,7 @@ export async function createGitHubRequest({ environment, blueprintId, variables 
   const { infraOwner, infraRepo } = getConfig();
 
   if (!infraOwner || !infraRepo) {
-    throw new Error("GITHUB_INFRA_OWNER and GITHUB_INFRA_REPO must be set");
+    throw new Error("GH_INFRA_OWNER and GH_INFRA_REPO must be set");
   }
 
   const octokit = await getInstallationClient();
@@ -193,6 +192,38 @@ export async function createGitHubRequest({ environment, blueprintId, variables 
   };
 }
 
+async function fetchTerraformOutputs({ octokit, owner, repo, prNumber }) {
+  try {
+    const { data: comments } = await octokit.issues.listComments({
+      owner,
+      repo,
+      issue_number: prNumber,
+      per_page: 50
+    });
+
+    const tfComment = [...comments]
+      .reverse()
+      .find(
+        (c) =>
+          typeof c.body === "string" && c.body.startsWith("TF_OUTPUTS:")
+      );
+
+    if (!tfComment) {
+      return null;
+    }
+
+    const match = tfComment.body.match(/```json([\s\S]*?)```/);
+    if (!match || !match[1]) {
+      return null;
+    }
+
+    return JSON.parse(match[1]);
+  } catch (e) {
+    console.warn(`Failed to parse TF outputs for PR #${prNumber}`, e.message);
+    return null;
+  }
+}
+
 function mapStatusFromLabels(labels) {
   const names = (labels || []).map((l) => l.name);
 
@@ -232,12 +263,11 @@ export async function listGitHubRequests({ environment } = {}) {
   const { infraOwner, infraRepo } = getConfig();
 
   if (!infraOwner || !infraRepo) {
-    throw new Error("GITHUB_INFRA_OWNER and GITHUB_INFRA_REPO must be set");
+    throw new Error("GH_INFRA_OWNER and GH_INFRA_REPO must be set");
   }
 
   const octokit = await getInstallationClient();
 
-  // Get recent PRs
   const { data: pulls } = await octokit.pulls.list({
     owner: infraOwner,
     repo: infraRepo,
@@ -252,19 +282,18 @@ export async function listGitHubRequests({ environment } = {}) {
   for (const pr of pulls) {
     const headRef = pr.head && pr.head.ref ? pr.head.ref : "";
 
-    // Only consider request branches created by this portal
     if (!headRef.startsWith("requests/")) continue;
 
-    // Optional environment filter like requests/dev/...
     if (environment && !headRef.startsWith(`requests/${environment}/`)) {
       continue;
     }
 
-    const { blueprintId, environment: envFromBody } = parseBlueprintMetadataFromBody(
-      pr.body || ""
-    );
+    const { blueprintId, environment: envFromBody } =
+      parseBlueprintMetadataFromBody(pr.body || "");
 
-    const { planStatus, applyStatus, labels } = mapStatusFromLabels(pr.labels || []);
+    const { planStatus, applyStatus, labels } = mapStatusFromLabels(
+      pr.labels || []
+    );
 
     let status = "unknown";
     if (pr.state === "open") {
@@ -301,7 +330,7 @@ export async function getGitHubRequestByNumber(prNumber) {
   const { infraOwner, infraRepo } = getConfig();
 
   if (!infraOwner || !infraRepo) {
-    throw new Error("GITHUB_INFRA_OWNER and GITHUB_INFRA_REPO must be set");
+    throw new Error("GH_INFRA_OWNER and GH_INFRA_REPO must be set");
   }
 
   const octokit = await getInstallationClient();
@@ -313,8 +342,12 @@ export async function getGitHubRequestByNumber(prNumber) {
   });
 
   const headRef = pr.head && pr.head.ref ? pr.head.ref : "";
-  const { blueprintId, environment } = parseBlueprintMetadataFromBody(pr.body || "");
-  const { planStatus, applyStatus, labels } = mapStatusFromLabels(pr.labels || []);
+  const { blueprintId, environment } = parseBlueprintMetadataFromBody(
+    pr.body || ""
+  );
+  const { planStatus, applyStatus, labels } = mapStatusFromLabels(
+    pr.labels || []
+  );
 
   let status = "unknown";
   if (pr.state === "open") {
@@ -325,32 +358,12 @@ export async function getGitHubRequestByNumber(prNumber) {
     status = "closed";
   }
 
-
-  let outputs = null;
-  try {
-    const { data: comments } = await octokit.issues.listComments({
-      owner: infraOwner,
-      repo: infraRepo,
-      issue_number: prNumber,
-      per_page: 50
-    });
-
-    const tfComment = [...comments]
-      .reverse()
-      .find(
-        (c) =>
-          typeof c.body === "string" && c.body.startsWith("TF_OUTPUTS:")
-      );
-
-    if (tfComment) {
-      const match = tfComment.body.match(/```json([\s\S]*?)```/);
-      if (match && match[1]) {
-        outputs = JSON.parse(match[1]);
-      }
-    }
-  } catch (e) {
-    console.warn("Failed to parse TF outputs comment", e.message);
-  }
+  const outputs = await fetchTerraformOutputs({
+    octokit,
+    owner: infraOwner,
+    repo: infraRepo,
+    prNumber
+  });
 
   return {
     id: pr.number,
@@ -368,7 +381,6 @@ export async function getGitHubRequestByNumber(prNumber) {
     updatedAt: pr.updated_at,
     pullRequestUrl: pr.html_url,
     headRef,
-    outputs   // <-- new field
+    outputs
   };
 }
-

@@ -40,6 +40,12 @@ jobs:
         if: github.event_name == 'pull_request'
         id: terraform_plan
         continue-on-error: true
+        env:
+          TF_VAR_github_infra_owner:            ${{ secrets.GH_INFRA_OWNER }}
+          TF_VAR_github_infra_repo:             ${{ secrets.GH_INFRA_REPO }}
+          TF_VAR_github_app_id:                 ${{ secrets.GH_APP_ID }}
+          TF_VAR_github_installation_id:        ${{ secrets.GH_INSTALLATION_ID }}
+          TF_VAR_github_app_private_key_base64: ${{ secrets.GH_APP_PRIVATE_KEY_BASE64 }}
         run: terraform plan -input=false -no-color
 
       - name: Label PR with plan status
@@ -95,6 +101,12 @@ jobs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         id: terraform_apply
         continue-on-error: true
+        env:
+          TF_VAR_github_infra_owner:            ${{ secrets.GH_INFRA_OWNER }}
+          TF_VAR_github_infra_repo:             ${{ secrets.GH_INFRA_REPO }}
+          TF_VAR_github_app_id:                 ${{ secrets.GH_APP_ID }}
+          TF_VAR_github_installation_id:        ${{ secrets.GH_INSTALLATION_ID }}
+          TF_VAR_github_app_private_key_base64: ${{ secrets.GH_APP_PRIVATE_KEY_BASE64 }}
         run: terraform apply -input=false -auto-approve
 
       - name: Capture Terraform outputs (main only)

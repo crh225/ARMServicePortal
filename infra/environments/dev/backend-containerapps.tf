@@ -38,9 +38,16 @@ resource "azurerm_container_app" "backend" {
     type = "SystemAssigned"
   }
 
+  # ACR admin password as secret
   secret {
     name  = "acr-password"
     value = azurerm_container_registry.backend_acr.admin_password
+  }
+
+  # GitHub App private key as secret (sensitive)
+  secret {
+    name  = "gh-app-private-key"
+    value = var.github_app_private_key_base64
   }
 
   registry {
@@ -56,8 +63,8 @@ resource "azurerm_container_app" "backend" {
 
     # Required in azurerm v4+: at least one traffic_weight block
     traffic_weight {
-      percentage       = 100
-      latest_revision  = true
+      percentage      = 100
+      latest_revision = true
     }
   }
 
@@ -74,6 +81,33 @@ resource "azurerm_container_app" "backend" {
       env {
         name  = "NODE_ENV"
         value = "production"
+      }
+
+      # Non-sensitive GitHub config
+      env {
+        name  = "GH_INFRA_OWNER"
+        value = var.github_infra_owner
+      }
+
+      env {
+        name  = "GH_INFRA_REPO"
+        value = var.github_infra_repo
+      }
+
+      env {
+        name  = "GH_APP_ID"
+        value = var.github_app_id
+      }
+
+      env {
+        name  = "GH_INSTALLATION_ID"
+        value = var.github_installation_id
+      }
+
+      # Sensitive key from secret
+      env {
+        name        = "GH_APP_PRIVATE_KEY_BASE64"
+        secret_name = "gh-app-private-key"
       }
     }
   }
