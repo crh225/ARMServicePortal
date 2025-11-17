@@ -36,6 +36,8 @@ jobs:
 
       - name: Build
         working-directory: portal/frontend
+        env:
+          VITE_API_URL: https://armportal-api-dev.kindisland-0c7a7c9a.eastus2.azurecontainerapps.io
         run: npm run build
 
       - name: Azure login

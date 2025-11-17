@@ -98,7 +98,7 @@ jobs:
             --name $CONTAINER_APP_NAME \
             --resource-group $RESOURCE_GROUP \
             --image "$IMAGE" \
-            --replace-env-vars \
+            --set-env-vars \
               GH_APP_ID="${{ secrets.GH_APP_ID }}" \
               GH_INSTALLATION_ID="${{ secrets.GH_INSTALLATION_ID }}" \
               GH_INFRA_OWNER="${{ secrets.GH_INFRA_OWNER }}" \
