@@ -82,6 +82,13 @@ jobs:
             --username $ACR_USERNAME \
             --password $ACR_PASSWORD
 
+      - name: Update Container App secrets
+        run: |
+          az containerapp secret set \
+            --name $CONTAINER_APP_NAME \
+            --resource-group $RESOURCE_GROUP \
+            --secrets gh-oauth-secret="${{ secrets.GH_OAUTH_CLIENT_SECRET }}"
+
       - name: Update Container App image and environment variables
         run: |
           LOGIN_SERVER="${{ steps.acr.outputs.login_server }}"
@@ -96,10 +103,3 @@ jobs:
               GH_OAUTH_CLIENT_SECRET=secretref:gh-oauth-secret \
               APP_URL="https://armportal-api-dev.kindisland-0c7a7c9a.eastus2.azurecontainerapps.io" \
               FRONTEND_URL="https://armportalfec4ji.z20.web.core.windows.net"
-
-      - name: Update Container App secrets
-        run: |
-          az containerapp secret set \
-            --name $CONTAINER_APP_NAME \
-            --resource-group $RESOURCE_GROUP \
-            --secrets gh-oauth-secret="${{ secrets.GH_OAUTH_CLIENT_SECRET }}"
