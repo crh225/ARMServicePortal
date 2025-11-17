@@ -31,17 +31,27 @@ export function parseBlueprintMetadataFromBody(body) {
 
 /**
  * Map GitHub labels to plan/apply status
+ * Supports environment-specific labels like status:plan-ok-qa, status:apply-ok-staging
  */
 export function mapStatusFromLabels(labels) {
   const names = (labels || []).map((l) => l.name);
 
   let planStatus = "unknown";
-  if (names.includes("status:plan-ok")) planStatus = "ok";
-  if (names.includes("status:plan-failed")) planStatus = "failed";
-
   let applyStatus = "unknown";
-  if (names.includes("status:apply-ok")) applyStatus = "ok";
-  if (names.includes("status:apply-failed")) applyStatus = "failed";
+
+  // Check for any plan status label (dev, qa, staging, prod, or generic)
+  const planOkLabel = names.find(l => l === "status:plan-ok" || l.match(/^status:plan-ok-(dev|qa|staging|prod)$/));
+  const planFailedLabel = names.find(l => l === "status:plan-failed" || l.match(/^status:plan-failed-(dev|qa|staging|prod)$/));
+
+  if (planOkLabel) planStatus = "ok";
+  if (planFailedLabel) planStatus = "failed";
+
+  // Check for any apply status label (dev, qa, staging, prod, or generic)
+  const applyOkLabel = names.find(l => l === "status:apply-ok" || l.match(/^status:apply-ok-(dev|qa|staging|prod)$/));
+  const applyFailedLabel = names.find(l => l === "status:apply-failed" || l.match(/^status:apply-failed-(dev|qa|staging|prod)$/));
+
+  if (applyOkLabel) applyStatus = "ok";
+  if (applyFailedLabel) applyStatus = "failed";
 
   return { planStatus, applyStatus, labels: names };
 }
