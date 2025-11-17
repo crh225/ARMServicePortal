@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useJobs } from "../hooks/useJobs";
 import JobsList from "./JobsList";
 import JobDetail from "./JobDetail";
@@ -11,6 +12,7 @@ import api from "../services/api";
  * Handles all jobs-related logic and state
  */
 function JobsPanel({ isActive, onUpdateResource }) {
+  const [searchParams] = useSearchParams();
   const {
     jobs,
     allJobs,
@@ -26,9 +28,12 @@ function JobsPanel({ isActive, onUpdateResource }) {
     loadJobDetail
   } = useJobs();
 
-  const [statusFilter, setStatusFilter] = useState("merged");
+  // Initialize filters - set to "all" if job ID is in URL
+  const jobIdParam = searchParams.get("job");
+  const [statusFilter, setStatusFilter] = useState(jobIdParam ? "all" : "merged");
   const [environmentFilter, setEnvironmentFilter] = useState("all");
   const [blueprintFilter, setBlueprintFilter] = useState("all");
+  const [jobIdFilter, setJobIdFilter] = useState(jobIdParam || "");
   const [modalState, setModalState] = useState({ isOpen: false, type: "info", title: "", content: null });
   const [confirmState, setConfirmState] = useState({ isOpen: false, job: null });
   const [promoteLoading, setPromoteLoading] = useState(false);
@@ -58,9 +63,18 @@ function JobsPanel({ isActive, onUpdateResource }) {
     };
   }, [allJobs]);
 
-  // Filter jobs based on status, environment, and blueprint
+  // Filter jobs based on status, environment, blueprint, and job ID
   const filteredJobs = useMemo(() => {
     let filtered = allJobs;
+
+    // Job ID filter - takes precedence over all other filters
+    if (jobIdFilter) {
+      const jobId = parseInt(jobIdFilter, 10);
+      if (!isNaN(jobId)) {
+        filtered = filtered.filter(job => job.number === jobId);
+        return filtered;
+      }
+    }
 
     // Status filter
     if (statusFilter === "merged") {
@@ -82,7 +96,7 @@ function JobsPanel({ isActive, onUpdateResource }) {
     }
 
     return filtered;
-  }, [allJobs, statusFilter, environmentFilter, blueprintFilter]);
+  }, [allJobs, statusFilter, environmentFilter, blueprintFilter, jobIdFilter]);
 
   // Recalculate pagination for filtered jobs
   const pageSize = 5;
@@ -241,28 +255,40 @@ function JobsPanel({ isActive, onUpdateResource }) {
         </div>
 
         <div style={{ marginBottom: "8px" }}>
-          <div style={{ marginBottom: "6px", display: "flex", gap: "8px" }}>
+          <div style={{ marginBottom: "6px", display: "flex", gap: "8px", alignItems: "center" }}>
+            <input
+              type="text"
+              className="field-input"
+              placeholder="Job ID..."
+              value={jobIdFilter}
+              onChange={(e) => setJobIdFilter(e.target.value)}
+              style={{ width: "100px" }}
+            />
             <button
               className={`nav-pill ${statusFilter === "all" ? "nav-pill--active" : ""}`}
               onClick={() => setStatusFilter("all")}
+              disabled={!!jobIdFilter}
             >
               All
             </button>
             <button
               className={`nav-pill ${statusFilter === "merged" ? "nav-pill--active" : ""}`}
               onClick={() => setStatusFilter("merged")}
+              disabled={!!jobIdFilter}
             >
               Deployed
             </button>
             <button
               className={`nav-pill ${statusFilter === "open" ? "nav-pill--active" : ""}`}
               onClick={() => setStatusFilter("open")}
+              disabled={!!jobIdFilter}
             >
               Open
             </button>
             <button
               className={`nav-pill ${statusFilter === "closed" ? "nav-pill--active" : ""}`}
               onClick={() => setStatusFilter("closed")}
+              disabled={!!jobIdFilter}
             >
               Closed
             </button>
@@ -274,6 +300,7 @@ function JobsPanel({ isActive, onUpdateResource }) {
               value={environmentFilter}
               onChange={(e) => setEnvironmentFilter(e.target.value)}
               style={{ flex: 1 }}
+              disabled={!!jobIdFilter}
             >
               <option value="all">All Environments</option>
               {environments.map(env => (
@@ -286,6 +313,7 @@ function JobsPanel({ isActive, onUpdateResource }) {
               value={blueprintFilter}
               onChange={(e) => setBlueprintFilter(e.target.value)}
               style={{ flex: 1 }}
+              disabled={!!jobIdFilter}
             >
               <option value="all">All Blueprints</option>
               {blueprints.map(bp => (
