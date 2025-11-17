@@ -8,7 +8,7 @@
 - [x] Terraform module visualization
 - [x] Basic error handling
 
-## Phase 2: Resource Management (Current)
+## Phase 2: Resource Management
 
 ### High Priority
 - [X] **Resource Inventory Page**
@@ -42,34 +42,23 @@
   - Show resources to be created/modified/destroyed
   - Highlight potential issues
 
-- [ ] **Job Filtering & Search**
+- [X] **Job Filtering & Search**
   - Search by blueprint, environment, author
-  - Date range filter
+  - Job Id filter
   - Status filter (open/merged/closed)
 
 ## Phase 3: Workflow & Approvals
 
-### Authentication Options
-**Option A: No-Auth (GitHub-based)**
-- Use PR author for identity
-- GitHub repo settings enforce approvals
-- Portal is read-only, GitHub is source of truth
-
-**Option B: Simple API Keys**
-- Generate keys via env vars
-- Store in localStorage
-- Basic role checking (admin/user)
-
-**Option C: GitHub OAuth**
-- Full GitHub authentication
-- Use GitHub teams for authorization
-- Seamless user experience
+### Authentication
+**: GitHub OAuth**
+- [X] Full GitHub authentication
+- [X] Use GitHub teams for authorization
+- [X] Seamless user experience
 
 ### Approval Workflow
 - [ ] Define approval rules per blueprint
 - [ ] Visual approval status
-- [ ] Email/Slack notifications for approvals
-- [ ] Override capability for emergencies
+- [ ] notifications for approvals
 
 ## Phase 4: Advanced Features
 

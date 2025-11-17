@@ -1,3 +1,107 @@
+/* Job filters */
+
+.job-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.job-filters-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.job-id-input {
+  width: 90px;
+  padding: 6px 10px;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  border-radius: 6px;
+  font-size: 0.78rem;
+  background: #ffffff;
+  transition: all 0.16s ease-out;
+}
+
+.job-id-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+.job-id-input::placeholder {
+  color: #9ca3af;
+}
+
+.filter-pill-group {
+  display: inline-flex;
+  padding: 3px;
+  gap: 3px;
+  background: #e5e7eb;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+}
+
+.filter-pill {
+  border: none;
+  background: transparent;
+  color: var(--text-soft);
+  font-size: 0.75rem;
+  padding: 5px 11px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.16s ease-out;
+  white-space: nowrap;
+}
+
+.filter-pill--active {
+  background: #ffffff;
+  color: var(--text-main);
+  box-shadow:
+    0 0 0 1px rgba(148, 163, 184, 0.6),
+    0 2px 8px rgba(148, 163, 184, 0.25);
+  font-weight: 500;
+}
+
+.filter-pill:hover:not(.filter-pill--active):not(:disabled) {
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--text-main);
+}
+
+.filter-pill:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.filter-select {
+  flex: 1;
+  min-width: 130px;
+  padding: 6px 10px;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  border-radius: 6px;
+  font-size: 0.78rem;
+  background: #ffffff;
+  cursor: pointer;
+  transition: all 0.16s ease-out;
+}
+
+.filter-select:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+.filter-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f3f4f6;
+}
+
 /* Jobs list */
 
 .jobs-list {

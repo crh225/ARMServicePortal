@@ -6,6 +6,7 @@ import JobDetail from "./JobDetail";
 import Modal from "./Modal";
 import ConfirmModal from "./ConfirmModal";
 import api from "../services/api";
+import "../styles/JobsList.css";
 
 /**
  * Container component for the Jobs tab
@@ -254,52 +255,52 @@ function JobsPanel({ isActive, onUpdateResource }) {
           </p>
         </div>
 
-        <div style={{ marginBottom: "8px" }}>
-          <div style={{ marginBottom: "6px", display: "flex", gap: "8px", alignItems: "center" }}>
+        <div className="job-filters">
+          <div className="job-filters-row">
             <input
               type="text"
-              className="field-input"
+              className="job-id-input"
               placeholder="Job ID..."
               value={jobIdFilter}
               onChange={(e) => setJobIdFilter(e.target.value)}
-              style={{ width: "100px" }}
             />
-            <button
-              className={`nav-pill ${statusFilter === "all" ? "nav-pill--active" : ""}`}
-              onClick={() => setStatusFilter("all")}
-              disabled={!!jobIdFilter}
-            >
-              All
-            </button>
-            <button
-              className={`nav-pill ${statusFilter === "merged" ? "nav-pill--active" : ""}`}
-              onClick={() => setStatusFilter("merged")}
-              disabled={!!jobIdFilter}
-            >
-              Deployed
-            </button>
-            <button
-              className={`nav-pill ${statusFilter === "open" ? "nav-pill--active" : ""}`}
-              onClick={() => setStatusFilter("open")}
-              disabled={!!jobIdFilter}
-            >
-              Open
-            </button>
-            <button
-              className={`nav-pill ${statusFilter === "closed" ? "nav-pill--active" : ""}`}
-              onClick={() => setStatusFilter("closed")}
-              disabled={!!jobIdFilter}
-            >
-              Closed
-            </button>
+            <div className="filter-pill-group">
+              <button
+                className={`filter-pill ${statusFilter === "all" ? "filter-pill--active" : ""}`}
+                onClick={() => setStatusFilter("all")}
+                disabled={!!jobIdFilter}
+              >
+                All
+              </button>
+              <button
+                className={`filter-pill ${statusFilter === "merged" ? "filter-pill--active" : ""}`}
+                onClick={() => setStatusFilter("merged")}
+                disabled={!!jobIdFilter}
+              >
+                Deployed
+              </button>
+              <button
+                className={`filter-pill ${statusFilter === "open" ? "filter-pill--active" : ""}`}
+                onClick={() => setStatusFilter("open")}
+                disabled={!!jobIdFilter}
+              >
+                Open
+              </button>
+              <button
+                className={`filter-pill ${statusFilter === "closed" ? "filter-pill--active" : ""}`}
+                onClick={() => setStatusFilter("closed")}
+                disabled={!!jobIdFilter}
+              >
+                Closed
+              </button>
+            </div>
           </div>
 
-          <div style={{ display: "flex", gap: "8px" }}>
+          <div className="job-filters-row">
             <select
-              className="field-input"
+              className="filter-select"
               value={environmentFilter}
               onChange={(e) => setEnvironmentFilter(e.target.value)}
-              style={{ flex: 1 }}
               disabled={!!jobIdFilter}
             >
               <option value="all">All Environments</option>
@@ -309,10 +310,9 @@ function JobsPanel({ isActive, onUpdateResource }) {
             </select>
 
             <select
-              className="field-input"
+              className="filter-select"
               value={blueprintFilter}
               onChange={(e) => setBlueprintFilter(e.target.value)}
-              style={{ flex: 1 }}
               disabled={!!jobIdFilter}
             >
               <option value="all">All Blueprints</option>
