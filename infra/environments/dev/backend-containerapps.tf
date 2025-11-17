@@ -84,7 +84,6 @@ resource "azurerm_container_app" "backend" {
         path      = "/api/health"
         port      = 4000
         interval_seconds = 30
-        failure_threshold = 3
       }
 
       # Readiness probe - check if container is ready to receive traffic
@@ -93,8 +92,6 @@ resource "azurerm_container_app" "backend" {
         path      = "/api/health"
         port      = 4000
         interval_seconds = 10
-        failure_threshold = 3
-        success_threshold = 1
       }
 
       # Startup probe - give app time to start before health checks
@@ -103,7 +100,6 @@ resource "azurerm_container_app" "backend" {
         path      = "/api/health"
         port      = 4000
         interval_seconds = 5
-        failure_threshold = 12
       }
 
       env {
