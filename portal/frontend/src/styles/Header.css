@@ -8,7 +8,7 @@
   padding-bottom: 18px;
   border-bottom: 1px solid var(--border-subtle);
   position: relative;
-  z-index: 1;
+  z-index: 100;
 }
 
 .logo-row {
@@ -50,6 +50,12 @@
 
 /* Nav */
 
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
 .app-nav {
   display: inline-flex;
   padding: 4px;
@@ -89,11 +95,104 @@
   opacity: 0.55;
 }
 
+/* User Menu */
+
+.user-menu {
+  position: relative;
+  z-index: 2000;
+}
+
+.user-avatar-btn {
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+
+.user-avatar-btn:hover {
+  transform: scale(1.05);
+}
+
+.user-avatar-img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid #e5e7eb;
+  display: block;
+}
+
+.user-avatar-fallback {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid #e5e7eb;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.user-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 200px;
+  z-index: 2001;
+}
+
+.user-dropdown-info {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.user-dropdown-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 2px;
+}
+
+.user-dropdown-username {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.user-dropdown-logout {
+  width: 100%;
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  color: #ef4444;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.user-dropdown-logout:hover {
+  background: #fee2e2;
+}
+
 @media (max-width: 768px) {
   .app-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
+  }
+
+  .header-right {
+    width: 100%;
+    justify-content: space-between;
   }
 
   .app-nav {

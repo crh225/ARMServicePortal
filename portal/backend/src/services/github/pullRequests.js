@@ -35,7 +35,7 @@ export async function listGitHubRequests({ environment } = {}) {
       continue;
     }
 
-    const { blueprintId, environment: envFromBody } =
+    const { blueprintId, environment: envFromBody, createdBy } =
       parseBlueprintMetadataFromBody(pr.body || "");
 
     const { planStatus, applyStatus, labels } = mapStatusFromLabels(
@@ -66,7 +66,8 @@ export async function listGitHubRequests({ environment } = {}) {
       createdAt: pr.created_at,
       updatedAt: pr.updated_at,
       pullRequestUrl: pr.html_url,
-      headRef
+      headRef,
+      createdBy: createdBy || null
     });
   }
 
@@ -92,7 +93,7 @@ export async function getGitHubRequestByNumber(prNumber) {
   });
 
   const headRef = pr.head && pr.head.ref ? pr.head.ref : "";
-  const { blueprintId, environment, terraformModule } = parseBlueprintMetadataFromBody(
+  const { blueprintId, environment, terraformModule, createdBy } = parseBlueprintMetadataFromBody(
     pr.body || ""
   );
   const { planStatus, applyStatus, labels } = mapStatusFromLabels(
@@ -171,6 +172,7 @@ export async function getGitHubRequestByNumber(prNumber) {
     headRef,
     baseBranch: pr.base?.ref || null,
     author: pr.user?.login || null,
+    createdBy: createdBy || null,
     terraformModule: terraformModule || null,
     terraformFilePath: terraformFilePath,
     moduleName: moduleName,

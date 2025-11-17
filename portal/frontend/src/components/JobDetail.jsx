@@ -116,6 +116,15 @@ function JobDetail({ job, loading, error, onUpdate, onDelete, onPromote, promote
         </div>
       )}
 
+      {job.createdBy && (
+        <div className="result-row">
+          <span className="result-label">Created by</span>
+          <span className="result-value">
+            @{job.createdBy}
+          </span>
+        </div>
+      )}
+
       {job.changedFiles !== undefined && (
         <div className="result-row">
           <span className="result-label">Changes</span>

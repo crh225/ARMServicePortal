@@ -32,7 +32,7 @@ function AdminPanel() {
       <div className="admin-header">
         <div className="user-info">
           <img
-            src={user.avatarUrl}
+            src={user.avatar_url}
             alt={user.login}
             className="user-avatar"
           />

@@ -53,7 +53,8 @@ export async function provisionBlueprint(req, res) {
       blueprintId,
       blueprintVersion: blueprint.version,
       variables: finalVariables,
-      moduleName
+      moduleName,
+      createdBy: req.user?.login || null
     });
 
     return res.status(202).json({

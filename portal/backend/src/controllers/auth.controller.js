@@ -102,7 +102,7 @@ export async function handleGitHubCallback(req, res) {
         login: userData.login,
         name: userData.name,
         email: userData.email,
-        avatarUrl: userData.avatar_url
+        avatar_url: userData.avatar_url
       },
       createdAt: Date.now(),
       expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000 // 7 days
@@ -124,7 +124,7 @@ export async function getCurrentUser(req, res) {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ error: "Unauthorized" });
+    return res.status(401).json({ error: "Unauthorized - Please Login via Admin tab" });
   }
 
   const token = authHeader.substring(7);
@@ -167,7 +167,7 @@ export function requireAuth(req, res, next) {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ error: "Unauthorized" });
+    return res.status(401).json({ error: "Unauthorized - Please Login via Admin tab" });
   }
 
   const token = authHeader.substring(7);
