@@ -69,14 +69,42 @@ resource "azurerm_container_app" "backend" {
   }
 
   template {
-    min_replicas = 0
-    max_replicas = 1
+    min_replicas = 1
+    max_replicas = 2
 
     container {
       name   = "armportal-api-backend"
       image  = "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest"
       cpu    = 0.5
       memory = "1Gi"
+
+      # Liveness probe - check if container is running
+      liveness_probe {
+        transport = "HTTP"
+        path      = "/api/health"
+        port      = 4000
+        interval_seconds = 30
+        failure_threshold = 3
+      }
+
+      # Readiness probe - check if container is ready to receive traffic
+      readiness_probe {
+        transport = "HTTP"
+        path      = "/api/health"
+        port      = 4000
+        interval_seconds = 10
+        failure_threshold = 3
+        success_threshold = 1
+      }
+
+      # Startup probe - give app time to start before health checks
+      startup_probe {
+        transport = "HTTP"
+        path      = "/api/health"
+        port      = 4000
+        interval_seconds = 5
+        failure_threshold = 12
+      }
 
       env {
         name  = "NODE_ENV"
