@@ -100,65 +100,142 @@ export const BLUEPRINTS = [
     ]
   },
   {
-  id: "azure-key-vault-basic",
-  version: "1.0.0",
-  displayName: "Azure Key Vault (basic RBAC)",
-  description:
-    "Creates an Azure Key Vault using RBAC authorization in an existing Resource Group.",
-  moduleSource: "../../modules/azure-key-vault-basic",
-  variables: [
-    {
-      name: "project_name",
-      label: "Project Name",
-      type: "string",
-      required: true
-    },
-    {
-      name: "environment",
-      label: "Environment",
-      type: "select",
-      required: true,
-      options: ["dev", "prod"],
-      default: "dev"
-    },
-    {
-      name: "resource_group_name",
-      label: "Resource Group Name",
-      type: "string",
-      required: true
-    },
-    {
-      name: "location",
-      label: "Location",
-      type: "string",
-      required: true,
-      default: "eastus2"
-    },
-    {
-      name: "sku_name",
-      label: "SKU",
-      type: "select",
-      required: true,
-      options: ["standard", "premium"],
-      default: "standard"
-    },
-    {
-      name: "soft_delete_retention_days",
-      label: "Soft Delete Retention (days)",
-      type: "string",
-      required: false,
-      default: "7"
-    },
-    {
-      name: "purge_protection_enabled",
-      label: "Enable Purge Protection",
-      type: "select",
-      required: false,
-      options: ["true", "false"],
-      default: "true"
-    }
-  ]
-}
+    id: "azure-key-vault-basic",
+    version: "1.0.0",
+    displayName: "Azure Key Vault (basic RBAC)",
+    description:
+      "Creates an Azure Key Vault using RBAC authorization in an existing Resource Group.",
+    moduleSource: "../../modules/azure-key-vault-basic",
+    variables: [
+      {
+        name: "project_name",
+        label: "Project Name",
+        type: "string",
+        required: true
+      },
+      {
+        name: "environment",
+        label: "Environment",
+        type: "select",
+        required: true,
+        options: ["dev", "prod"],
+        default: "dev"
+      },
+      {
+        name: "resource_group_name",
+        label: "Resource Group Name",
+        type: "string",
+        required: true
+      },
+      {
+        name: "location",
+        label: "Location",
+        type: "string",
+        required: true,
+        default: "eastus2"
+      },
+      {
+        name: "sku_name",
+        label: "SKU",
+        type: "select",
+        required: true,
+        options: ["standard", "premium"],
+        default: "standard"
+      },
+      {
+        name: "soft_delete_retention_days",
+        label: "Soft Delete Retention (days)",
+        type: "string",
+        required: false,
+        default: "7"
+      },
+      {
+        name: "purge_protection_enabled",
+        label: "Enable Purge Protection",
+        type: "select",
+        required: false,
+        options: ["true", "false"],
+        default: "true"
+      }
+    ]
+  },
+  {
+    id: "azure-static-site",
+    version: "1.0.0",
+    displayName: "Static Website",
+    description: "Host a static website on Azure Storage with optional CDN support. Perfect for SPAs, documentation sites, and marketing pages.",
+    category: "Web",
+    moduleSource: "../../infra/modules/azure-static-site",
+    variables: [
+      {
+        name: "project_name",
+        label: "Project Name",
+        type: "string",
+        required: true
+      },
+      {
+        name: "environment",
+        label: "Environment",
+        type: "select",
+        required: true,
+        options: ["dev", "qa", "staging", "prod"],
+        default: "dev"
+      },
+      {
+        name: "resource_group_name",
+        label: "Resource Group Name",
+        type: "string",
+        required: true
+      },
+      {
+        name: "location",
+        label: "Location",
+        type: "string",
+        required: true,
+        default: "eastus2"
+      },
+      {
+        name: "index_document",
+        label: "Index Document",
+        type: "string",
+        required: false,
+        default: "index.html"
+      },
+      {
+        name: "error_document",
+        label: "Error Document",
+        type: "string",
+        required: false,
+        default: "404.html"
+      },
+      {
+        name: "enable_cdn",
+        label: "Enable CDN",
+        type: "select",
+        required: false,
+        options: ["true", "false"],
+        default: "false"
+      }
+    ],
+    outputs: [
+      {
+        name: "primary_web_endpoint",
+        description: "Primary website URL"
+      },
+      {
+        name: "storage_account_name",
+        description: "Storage account name"
+      },
+      {
+        name: "resource_group_name",
+        description: "Resource group name"
+      },
+      {
+        name: "cdn_endpoint",
+        description: "CDN endpoint URL (if CDN enabled)"
+      }
+    ]
+  }
 ];
 
 /**

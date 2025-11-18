@@ -87,6 +87,14 @@ export async function estimateBlueprintCost(blueprintId, variables) {
       estimates.push(kvCost);
       break;
 
+    case "azure-static-site":
+      const staticSiteCost = await estimateStaticWebsiteCost(
+        location,
+        variables.enable_cdn === "true"
+      );
+      estimates.push(staticSiteCost);
+      break;
+
     default:
       estimates.push({
         resourceType: "Unknown",
@@ -177,6 +185,67 @@ async function estimateKeyVaultCost(location, sku) {
     breakdown: {
       operations: estimatedOperations,
       pricePerTenK: pricePerTenK
+    }
+  };
+}
+
+/**
+ * Estimate Static Website costs (Storage Account + optional CDN)
+ */
+async function estimateStaticWebsiteCost(location, enableCdn) {
+  const prices = await fetchAzurePricing({
+    serviceName: "Storage",
+    armRegionName: location
+  });
+
+  // Static websites use Standard tier with LRS replication
+  const skuFilter = "Standard LRS";
+  const baseStoragePrice = prices.find(
+    (p) =>
+      p.skuName && p.skuName.includes(skuFilter) &&
+      p.productName && p.productName.includes("Block Blob") &&
+      p.meterName && p.meterName.includes("Data Stored")
+  );
+
+  // Baseline estimate: 5 GB for a static website
+  const estimatedGB = 5;
+  const pricePerGB = baseStoragePrice ? baseStoragePrice.retailPrice : 0.02;
+  const storageCost = pricePerGB * estimatedGB;
+
+  // CDN pricing if enabled
+  let cdnCost = 0;
+  if (enableCdn) {
+    const cdnPrices = await fetchAzurePricing({
+      serviceName: "Content Delivery Network",
+      armRegionName: location
+    });
+
+    // Standard CDN tier pricing (data transfer out)
+    const cdnTransferPrice = cdnPrices.find(
+      (p) =>
+        p.skuName && p.skuName.includes("Standard") &&
+        p.meterName && p.meterName.includes("Data Transfer")
+    );
+
+    // Baseline estimate: 50 GB/month data transfer
+    const estimatedTransferGB = 50;
+    const pricePerTransferGB = cdnTransferPrice ? cdnTransferPrice.retailPrice : 0.087;
+    cdnCost = pricePerTransferGB * estimatedTransferGB;
+  }
+
+  const totalCost = storageCost + cdnCost;
+
+  return {
+    resourceType: "Static Website",
+    skuName: enableCdn ? "Storage (Standard LRS) + CDN (Standard)" : "Storage (Standard LRS)",
+    monthlyEstimate: parseFloat(totalCost.toFixed(2)),
+    currency: "USD",
+    note: `Estimated for ${estimatedGB}GB storage${enableCdn ? ` + 50GB CDN data transfer` : ""}. Actual costs vary by traffic and storage usage.`,
+    breakdown: {
+      storageGB: estimatedGB,
+      storageCost: parseFloat(storageCost.toFixed(2)),
+      cdnEnabled: enableCdn,
+      cdnCost: enableCdn ? parseFloat(cdnCost.toFixed(2)) : 0
     }
   };
 }
