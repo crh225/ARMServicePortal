@@ -1,7 +1,14 @@
 import React from "react";
 import EmptyState from "./EmptyState";
+import ResultRow from "./ResultRow";
+import StatusBadge from "./StatusBadge";
+import TerraformOutputs from "./TerraformOutputs";
+import ResourceActions from "./ResourceActions";
 import "../styles/JobDetail.css";
 
+/**
+ * Component for displaying job/PR details
+ */
 function JobDetail({ job, loading, error, onUpdate, onDelete, onPromote, promoteLoading }) {
   if (!job) {
     return (
@@ -12,174 +19,72 @@ function JobDetail({ job, loading, error, onUpdate, onDelete, onPromote, promote
     );
   }
 
-  const isDeployed = job.merged && job.status === "merged";
-  const canManageResource = isDeployed && job.resourceExists;
-
-  // Determine next environment for promotion
-  const environmentPath = {
-    dev: "qa",
-    qa: "staging",
-    staging: "prod",
-    prod: null
-  };
-  const nextEnvironment = environmentPath[job.environment];
-  const canPromote = isDeployed && nextEnvironment;
-
   return (
     <div className="result-card jobs-detail">
-      {canManageResource && (
-        <div className="resource-actions">
-          {canPromote && (
-            <button
-              className="resource-btn resource-btn--promote"
-              onClick={() => onPromote && onPromote(job)}
-              disabled={promoteLoading}
-            >
-              {promoteLoading ? "Promoting..." : `Promote to ${nextEnvironment}`}
-            </button>
-          )}
-          <button
-            className="resource-btn resource-btn--update"
-            onClick={() => onUpdate && onUpdate(job)}
-            disabled={promoteLoading}
-          >
-            Update Resource
-          </button>
-          <button
-            className="resource-btn resource-btn--delete"
-            onClick={() => onDelete && onDelete(job)}
-            disabled={promoteLoading}
-          >
-            Delete Resource
-          </button>
-        </div>
-      )}
+      <ResourceActions
+        job={job}
+        onPromote={onPromote}
+        onUpdate={onUpdate}
+        onDelete={onDelete}
+        promoteLoading={promoteLoading}
+      />
 
-      <div className="result-row">
-        <span className="result-label">Status</span>
-        <span className="result-value">
-          {job.status}
-        </span>
-      </div>
+      <ResultRow label="Status" value={job.status} />
 
-      <div className="result-row">
-        <span className="result-label">Plan</span>
-        <span
-          className={`badge badge--${
-            job.planStatus || "unknown"
-          }`}
-        >
-          {job.planStatus || "unknown"}
-        </span>
-      </div>
+      <ResultRow
+        label="Plan"
+        value={<StatusBadge status={job.planStatus} />}
+      />
 
-      <div className="result-row">
-        <span className="result-label">Apply</span>
-        <span
-          className={`badge badge--${
-            job.applyStatus || "unknown"
-          }`}
-        >
-          {job.applyStatus || "unknown"}
-        </span>
-      </div>
+      <ResultRow
+        label="Apply"
+        value={<StatusBadge status={job.applyStatus} />}
+      />
 
       {job.pullRequestUrl && (
-        <div className="result-row">
-          <span className="result-label">Pull Request</span>
-          <a
-            className="result-link"
-            href={job.pullRequestUrl}
-            target="_blank"
-            rel="noreferrer"
-          >
-            View on GitHub
-          </a>
-        </div>
+        <ResultRow
+          label="Pull Request"
+          value={
+            <a
+              className="result-link"
+              href={job.pullRequestUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              View on GitHub
+            </a>
+          }
+        />
       )}
 
-      {job.headRef && (
-        <div className="result-row">
-          <span className="result-label">Branch</span>
-          <span className="result-value">
-            {job.headRef}
-          </span>
-        </div>
-      )}
+      {job.headRef && <ResultRow label="Branch" value={job.headRef} />}
 
-      {job.author && (
-        <div className="result-row">
-          <span className="result-label">Author</span>
-          <span className="result-value">
-            {job.author}
-          </span>
-        </div>
-      )}
+      {job.author && <ResultRow label="Author" value={job.author} />}
 
-      {job.createdBy && (
-        <div className="result-row">
-          <span className="result-label">Created by</span>
-          <span className="result-value">
-            @{job.createdBy}
-          </span>
-        </div>
-      )}
+      {job.createdBy && <ResultRow label="Created by" value={`@${job.createdBy}`} />}
 
       {job.changedFiles !== undefined && (
-        <div className="result-row">
-          <span className="result-label">Changes</span>
-          <span className="result-value">
-            {job.changedFiles} file{job.changedFiles !== 1 ? 's' : ''}
-            {job.additions > 0 && <span style={{ color: '#22c55e' }}> +{job.additions}</span>}
-            {job.deletions > 0 && <span style={{ color: '#f87171' }}> -{job.deletions}</span>}
-          </span>
-        </div>
+        <ResultRow
+          label="Changes"
+          value={
+            <span className="result-value">
+              {job.changedFiles} file{job.changedFiles !== 1 ? 's' : ''}
+              {job.additions > 0 && <span style={{ color: '#22c55e' }}> +{job.additions}</span>}
+              {job.deletions > 0 && <span style={{ color: '#f87171' }}> -{job.deletions}</span>}
+            </span>
+          }
+        />
       )}
 
       {job.terraformModule && (
-        <div className="result-row result-row--stacked">
-          <span className="result-label">Terraform Module</span>
-          <pre className="terraform-code">
-            {job.terraformModule}
-          </pre>
-        </div>
+        <ResultRow
+          label="Terraform Module"
+          stacked
+          value={<pre className="terraform-code">{job.terraformModule}</pre>}
+        />
       )}
 
-      {loading && (
-        <div className="result-row">
-          <span className="result-label">Outputs</span>
-          <span className="result-value">
-            Loading outputs…
-          </span>
-        </div>
-      )}
-
-      {error && (
-        <div className="alert alert--error">
-          <strong>Error loading outputs:</strong>{" "}
-          {error}
-        </div>
-      )}
-
-      {job.outputs && !loading && (
-        <div className="result-row result-row--stacked">
-          <span className="result-label">Terraform Outputs</span>
-          <div className="result-value result-value--mono">
-            {Object.entries(job.outputs).map(
-              ([key, obj]) => (
-                <div key={key}>
-                  <strong>{key}</strong>:{" "}
-                  {typeof obj === "object" &&
-                  obj !== null &&
-                  "value" in obj
-                    ? String(obj.value)
-                    : String(obj)}
-                </div>
-              )
-            )}
-          </div>
-        </div>
-      )}
+      <TerraformOutputs outputs={job.outputs} loading={loading} error={error} />
     </div>
   );
 }
