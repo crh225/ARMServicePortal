@@ -29,6 +29,12 @@ export const BLUEPRINTS = [
         required: true,
         default: "eastus2"
       }
+    ],
+    outputs: [
+      {
+        name: "resource_group_name",
+        description: "The name of the created resource group"
+      }
     ]
   },
   {
@@ -80,6 +86,16 @@ export const BLUEPRINTS = [
         required: true,
         options: ["LRS","GRS","RAGRS","ZRS"],
         default: "LRS"
+      }
+    ],
+    outputs: [
+      {
+        name: "storage_account_name",
+        description: "The name of the created storage account"
+      },
+      {
+        name: "primary_blob_endpoint",
+        description: "The endpoint URL for blob storage"
       }
     ]
   },

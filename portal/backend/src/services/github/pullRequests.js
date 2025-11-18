@@ -109,14 +109,7 @@ export async function getGitHubRequestByNumber(prNumber) {
     status = "closed";
   }
 
-  const outputs = await fetchTerraformOutputs({
-    octokit,
-    owner: infraOwner,
-    repo: infraRepo,
-    prNumber
-  });
-
-  // Get the Terraform file path from PR files
+  // Get the Terraform file path from PR files first (to extract module name)
   const { data: files } = await octokit.pulls.listFiles({
     owner: infraOwner,
     repo: infraRepo,
@@ -133,6 +126,15 @@ export async function getGitHubRequestByNumber(prNumber) {
     const fileName = parts[parts.length - 1];
     moduleName = fileName.replace(/\.tf$/, "");
   }
+
+  // Fetch outputs filtered to this specific module
+  const outputs = await fetchTerraformOutputs({
+    octokit,
+    owner: infraOwner,
+    repo: infraRepo,
+    prNumber,
+    moduleName
+  });
 
   // Check if the Terraform file still exists on the base branch (for deployed resources)
   let resourceExists = false;
