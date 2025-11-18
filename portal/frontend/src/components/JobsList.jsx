@@ -1,6 +1,6 @@
 import React from "react";
 import EmptyState from "./EmptyState";
-import SkeletonLoader from "./SkeletonLoader";
+import JobListSkeleton from "./JobListSkeleton";
 import "../styles/JobsList.css";
 
 function JobsList({
@@ -14,21 +14,7 @@ function JobsList({
   onPageChange
 }) {
   if (jobsLoading) {
-    return (
-      <div className="jobs-list">
-        <div style={{ padding: "1rem" }}>
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} style={{ marginBottom: "1rem" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
-                <SkeletonLoader type="text" width="60%" />
-                <SkeletonLoader type="badge" width="80px" />
-              </div>
-              <SkeletonLoader type="text" width="40%" height="0.875rem" />
-            </div>
-          ))}
-        </div>
-      </div>
-    );
+    return <JobListSkeleton count={5} />;
   }
 
   if (jobsError) {
