@@ -235,6 +235,114 @@ export const BLUEPRINTS = [
         description: "CDN endpoint URL (if CDN enabled)"
       }
     ]
+  },
+  {
+    id: "azure-aci",
+    version: "1.0.0",
+    displayName: "Azure Container Instance",
+    description: "Deploy a containerized application using Azure Container Instances. Perfect for simple apps, batch jobs, and development environments.",
+    category: "Compute",
+    moduleSource: "../../modules/azure-aci",
+    variables: [
+      {
+        name: "project_name",
+        label: "Project Name",
+        type: "string",
+        required: true
+      },
+      {
+        name: "environment",
+        label: "Environment",
+        type: "select",
+        required: true,
+        options: ["dev", "qa", "staging", "prod"],
+        default: "dev"
+      },
+      {
+        name: "resource_group_name",
+        label: "Resource Group Name",
+        type: "string",
+        required: true
+      },
+      {
+        name: "location",
+        label: "Location",
+        type: "string",
+        required: true,
+        default: "eastus2"
+      },
+      {
+        name: "container_image",
+        label: "Container Image",
+        type: "string",
+        required: true,
+        default: "mcr.microsoft.com/azuredocs/aci-helloworld:latest"
+      },
+      {
+        name: "cpu_cores",
+        label: "CPU Cores",
+        type: "select",
+        required: true,
+        options: ["0.5", "1", "2", "4"],
+        default: "1"
+      },
+      {
+        name: "memory_gb",
+        label: "Memory (GB)",
+        type: "select",
+        required: true,
+        options: ["0.5", "1", "2", "4", "8"],
+        default: "1"
+      },
+      {
+        name: "port",
+        label: "Container Port",
+        type: "string",
+        required: false,
+        default: "80"
+      },
+      {
+        name: "ip_address_type",
+        label: "IP Address Type",
+        type: "select",
+        required: true,
+        options: ["Public", "Private", "None"],
+        default: "Public"
+      },
+      {
+        name: "restart_policy",
+        label: "Restart Policy",
+        type: "select",
+        required: false,
+        options: ["Always", "OnFailure", "Never"],
+        default: "Always"
+      },
+      {
+        name: "environment_variables",
+        label: "Environment Variables (JSON)",
+        type: "string",
+        required: false,
+        default: "{}"
+      }
+    ],
+    outputs: [
+      {
+        name: "container_group_name",
+        description: "Container group name"
+      },
+      {
+        name: "fqdn",
+        description: "Fully qualified domain name (if public IP enabled)"
+      },
+      {
+        name: "ip_address",
+        description: "IP address of the container"
+      },
+      {
+        name: "resource_group_name",
+        description: "Resource group name"
+      }
+    ]
   }
 ];
 

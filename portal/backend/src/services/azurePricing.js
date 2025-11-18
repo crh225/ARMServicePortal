@@ -95,6 +95,15 @@ export async function estimateBlueprintCost(blueprintId, variables) {
       estimates.push(staticSiteCost);
       break;
 
+    case "azure-aci":
+      const aciCost = await estimateAciCost(
+        location,
+        parseFloat(variables.cpu_cores || "1"),
+        parseFloat(variables.memory_gb || "1")
+      );
+      estimates.push(aciCost);
+      break;
+
     default:
       estimates.push({
         resourceType: "Unknown",
@@ -246,6 +255,54 @@ async function estimateStaticWebsiteCost(location, enableCdn) {
       storageCost: parseFloat(storageCost.toFixed(2)),
       cdnEnabled: enableCdn,
       cdnCost: enableCdn ? parseFloat(cdnCost.toFixed(2)) : 0
+    }
+  };
+}
+
+/**
+ * Estimate Azure Container Instance costs
+ */
+async function estimateAciCost(location, cpuCores, memoryGb) {
+  const prices = await fetchAzurePricing({
+    serviceName: "Container Instances",
+    armRegionName: location
+  });
+
+  // ACI pricing is per vCPU-second and per GB-second
+  const cpuPrice = prices.find(
+    (p) =>
+      p.meterName && p.meterName.includes("vCPU") &&
+      p.productName && p.productName.includes("Linux")
+  );
+
+  const memoryPrice = prices.find(
+    (p) =>
+      p.meterName && p.meterName.includes("Memory") &&
+      p.productName && p.productName.includes("Linux")
+  );
+
+  // Fallback pricing (approximate US East 2 rates)
+  const cpuPricePerSecond = cpuPrice ? cpuPrice.retailPrice : 0.0000125; // ~$0.0000125/vCPU-second
+  const memoryPricePerSecond = memoryPrice ? memoryPrice.retailPrice : 0.0000014; // ~$0.0000014/GB-second
+
+  // Calculate monthly cost assuming container runs 24/7
+  const secondsPerMonth = 30 * 24 * 60 * 60; // ~2,592,000 seconds
+  const monthlyCpuCost = cpuCores * cpuPricePerSecond * secondsPerMonth;
+  const monthlyMemoryCost = memoryGb * memoryPricePerSecond * secondsPerMonth;
+  const totalMonthlyCost = monthlyCpuCost + monthlyMemoryCost;
+
+  return {
+    resourceType: "Container Instance",
+    skuName: `${cpuCores} vCPU, ${memoryGb}GB RAM`,
+    monthlyEstimate: parseFloat(totalMonthlyCost.toFixed(2)),
+    currency: "USD",
+    note: `Estimated for continuous (24/7) operation. Actual costs vary based on runtime duration.`,
+    breakdown: {
+      cpuCores: cpuCores,
+      memoryGb: memoryGb,
+      cpuCostPerMonth: parseFloat(monthlyCpuCost.toFixed(2)),
+      memoryCostPerMonth: parseFloat(monthlyMemoryCost.toFixed(2)),
+      hoursPerMonth: 720
     }
   };
 }
