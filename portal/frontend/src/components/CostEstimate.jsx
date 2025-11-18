@@ -84,7 +84,9 @@ function CostEstimate({ blueprint, formValues }) {
                   <div className="cost-estimate__item-header">
                     <span className="cost-estimate__item-type">{item.resourceType}</span>
                     <span className="cost-estimate__item-price">
-                      ${item.monthlyEstimate.toFixed(2)}
+                      {item.monthlyEstimate !== null && item.monthlyEstimate !== undefined
+                        ? `$${item.monthlyEstimate.toFixed(2)}`
+                        : "N/A"}
                     </span>
                   </div>
                   {item.skuName && item.skuName !== "N/A" && (

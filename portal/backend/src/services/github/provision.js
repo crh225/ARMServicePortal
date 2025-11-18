@@ -3,6 +3,7 @@ import { getInstallationClient } from "./client.js";
 import { getGitHubConfig } from "./config.js";
 import { getBlueprintById } from "../../config/blueprints.js";
 import { renderTerraformModule } from "../../utils/terraformRenderer.js";
+import { isStack, renderStackTerraform } from "../../utils/stackRenderer.js";
 import { ensureBranch, commitFile, getFileContent } from "./utils/gitOperations.js";
 import { createPR, generatePRBody } from "./utils/prOperations.js";
 import { DEFAULT_BASE_BRANCH } from "../../config/githubConstants.js";
@@ -111,12 +112,17 @@ export async function createGitHubRequest({ environment, blueprintId, blueprintV
     baseSha
   });
 
-  // Render Terraform module
-  const tfContent = renderTerraformModule({
-    moduleName,
-    blueprint,
-    variables
-  });
+  // Render Terraform (handles both single blueprints and stacks)
+  let tfContent;
+  if (isStack(blueprint)) {
+    tfContent = renderStackTerraform(blueprint, variables, moduleName);
+  } else {
+    tfContent = renderTerraformModule({
+      moduleName,
+      blueprint,
+      variables
+    });
+  }
 
   const filePath = `infra/environments/${environment}/${moduleName}.tf`;
 

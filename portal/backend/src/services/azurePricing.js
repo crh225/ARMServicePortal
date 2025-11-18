@@ -52,11 +52,17 @@ export async function fetchAzurePricing(params) {
  * Estimate monthly cost for a blueprint deployment
  * @param {string} blueprintId - Blueprint ID
  * @param {Object} variables - Terraform variables
+ * @param {Object} blueprint - Optional blueprint object (for stacks)
  * @returns {Promise<Object>} - Cost estimate
  */
-export async function estimateBlueprintCost(blueprintId, variables) {
+export async function estimateBlueprintCost(blueprintId, variables, blueprint = null) {
   const location = variables.location || "eastus2";
   const estimates = [];
+
+  // Handle stack blueprints
+  if (blueprint && blueprint.type === "stack") {
+    return await estimateStackCost(blueprint, variables);
+  }
 
   switch (blueprintId) {
     case "azure-rg-basic":
@@ -304,5 +310,71 @@ async function estimateAciCost(location, cpuCores, memoryGb) {
       memoryCostPerMonth: parseFloat(monthlyMemoryCost.toFixed(2)),
       hoursPerMonth: 720
     }
+  };
+}
+
+/**
+ * Estimate cost for a stack blueprint (aggregates component costs)
+ */
+async function estimateStackCost(stack, variables) {
+  const location = variables.location || "eastus2";
+  const componentEstimates = [];
+
+  // Estimate cost for each component in the stack
+  for (const component of stack.components) {
+    // Resolve component variables (simple version - just use stack vars directly)
+    const componentVars = {};
+    for (const [key, value] of Object.entries(component.variables)) {
+      // Extract variable value, handling ${stack.varname} syntax
+      if (typeof value === "string" && value.startsWith("${stack.")) {
+        const varName = value.match(/\$\{stack\.([^}]+)\}/)?.[1];
+        if (varName && variables[varName] !== undefined) {
+          componentVars[key] = variables[varName];
+        }
+      } else {
+        componentVars[key] = value;
+      }
+    }
+
+    // Get the component's cost estimate
+    try {
+      const estimate = await estimateBlueprintCost(component.blueprint, componentVars);
+      componentEstimates.push({
+        componentId: component.id,
+        blueprintId: component.blueprint,
+        ...estimate
+      });
+    } catch (error) {
+      console.error(`Error estimating cost for component ${component.id}:`, error);
+      componentEstimates.push({
+        componentId: component.id,
+        blueprintId: component.blueprint,
+        estimates: [{
+          resourceType: `Component: ${component.id}`,
+          skuName: "N/A",
+          monthlyEstimate: 0,
+          currency: "USD",
+          note: "Cost estimation failed"
+        }],
+        totalMonthlyEstimate: 0
+      });
+    }
+  }
+
+  // Aggregate all component estimates
+  const allEstimates = componentEstimates.flatMap(ce => ce.estimates || []);
+  const totalEstimate = componentEstimates.reduce((sum, ce) => {
+    return sum + (ce.totalMonthlyEstimate || 0);
+  }, 0);
+
+  return {
+    blueprintId: stack.id,
+    location,
+    isStack: true,
+    componentEstimates,
+    estimates: allEstimates,
+    totalMonthlyEstimate: totalEstimate,
+    currency: "USD",
+    disclaimer: "Stack pricing is the sum of all component costs. Estimates are based on Azure retail pricing and may not reflect your actual costs due to discounts, reserved instances, or usage patterns."
   };
 }

@@ -161,7 +161,7 @@ export const BLUEPRINTS = [
   },
   {
     id: "azure-static-site",
-    version: "1.0.0",
+    version: "0.0.1",
     displayName: "Static Website",
     description: "Host a static website on Azure Storage with optional CDN support. Perfect for SPAs, documentation sites, and marketing pages.",
     category: "Web",
@@ -238,7 +238,7 @@ export const BLUEPRINTS = [
   },
   {
     id: "azure-aci",
-    version: "1.0.0",
+    version: "0.0.1",
     displayName: "Azure Container Instance",
     description: "Deploy a containerized application using Azure Container Instances. Perfect for simple apps, batch jobs, and development environments.",
     category: "Compute",
@@ -341,6 +341,160 @@ export const BLUEPRINTS = [
       {
         name: "resource_group_name",
         description: "Resource group name"
+      }
+    ]
+  },
+  {
+    id: "azure-webapp-stack",
+    version: "0.0.1",
+    displayName: "Full Stack Web Application",
+    description: "Complete application stack: Resource Group + Storage Account + Container Instance + Key Vault. Deploy an entire app environment in one request.",
+    category: "Stacks",
+    type: "stack",
+    components: [
+      {
+        id: "rg",
+        blueprint: "azure-rg-basic",
+        variables: {
+          project_name: "${stack.project_name}",
+          environment: "${stack.environment}",
+          location: "${stack.location}"
+        }
+      },
+      {
+        id: "storage",
+        blueprint: "azure-storage-basic",
+        dependsOn: ["rg"],
+        variables: {
+          project_name: "${stack.project_name}",
+          environment: "${stack.environment}",
+          resource_group_name: "${rg.resource_group_name}",
+          location: "${stack.location}",
+          account_tier: "Standard",
+          replication_type: "LRS"
+        }
+      },
+      {
+        id: "keyvault",
+        blueprint: "azure-key-vault-basic",
+        dependsOn: ["rg"],
+        variables: {
+          project_name: "${stack.project_name}",
+          environment: "${stack.environment}",
+          resource_group_name: "${rg.resource_group_name}",
+          location: "${stack.location}",
+          sku_name: "${stack.keyvault_sku}",
+          soft_delete_retention_days: "7",
+          purge_protection_enabled: "true"
+        }
+      },
+      {
+        id: "app",
+        blueprint: "azure-aci",
+        dependsOn: ["rg"],
+        variables: {
+          project_name: "${stack.project_name}",
+          environment: "${stack.environment}",
+          resource_group_name: "${rg.resource_group_name}",
+          location: "${stack.location}",
+          container_image: "${stack.container_image}",
+          cpu_cores: "${stack.cpu_cores}",
+          memory_gb: "${stack.memory_gb}",
+          port: "${stack.container_port}",
+          ip_address_type: "Public",
+          restart_policy: "Always",
+          environment_variables: "${stack.environment_variables}"
+        }
+      }
+    ],
+    variables: [
+      {
+        name: "project_name",
+        label: "Project Name",
+        type: "string",
+        required: true
+      },
+      {
+        name: "environment",
+        label: "Environment",
+        type: "select",
+        required: true,
+        options: ["dev", "qa", "staging", "prod"],
+        default: "dev"
+      },
+      {
+        name: "location",
+        label: "Location",
+        type: "string",
+        required: true,
+        default: "eastus2"
+      },
+      {
+        name: "container_image",
+        label: "Container Image",
+        type: "string",
+        required: true,
+        default: "mcr.microsoft.com/azuredocs/aci-helloworld:latest"
+      },
+      {
+        name: "cpu_cores",
+        label: "CPU Cores",
+        type: "select",
+        required: true,
+        options: ["0.5", "1", "2", "4"],
+        default: "1"
+      },
+      {
+        name: "memory_gb",
+        label: "Memory (GB)",
+        type: "select",
+        required: true,
+        options: ["1", "2", "4", "8"],
+        default: "2"
+      },
+      {
+        name: "container_port",
+        label: "Container Port",
+        type: "string",
+        required: false,
+        default: "80"
+      },
+      {
+        name: "keyvault_sku",
+        label: "Key Vault SKU",
+        type: "select",
+        required: true,
+        options: ["standard", "premium"],
+        default: "standard"
+      },
+      {
+        name: "environment_variables",
+        label: "Container Environment Variables (JSON)",
+        type: "string",
+        required: false,
+        default: "{}"
+      }
+    ],
+    outputs: [
+      {
+        name: "resource_group_name",
+        description: "Resource group name",
+        source: "rg.resource_group_name"
+      },
+      {
+        name: "storage_account_name",
+        description: "Storage account name",
+        source: "storage.storage_account_name"
+      },
+      {
+        name: "container_fqdn",
+        description: "Container FQDN",
+        source: "app.fqdn"
+      },
+      {
+        name: "container_ip",
+        description: "Container IP address",
+        source: "app.ip_address"
       }
     ]
   }

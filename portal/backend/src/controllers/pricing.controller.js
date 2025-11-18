@@ -21,7 +21,7 @@ export async function getCostEstimate(req, res) {
   }
 
   try {
-    const estimate = await estimateBlueprintCost(blueprintId, variables);
+    const estimate = await estimateBlueprintCost(blueprintId, variables, blueprint);
     res.json(estimate);
   } catch (err) {
     console.error("Error generating cost estimate:", err);
