@@ -1,0 +1,94 @@
+/* Skeleton Loader with Shimmer Animation */
+
+.skeleton-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.skeleton {
+  position: relative;
+  background: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+/* Shimmer effect */
+.skeleton__shimmer {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.4) 40%,
+    rgba(255, 255, 255, 0.6) 50%,
+    rgba(255, 255, 255, 0.4) 60%,
+    transparent 100%
+  );
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+@keyframes skeleton-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* Skeleton variants */
+.skeleton--text {
+  width: 100%;
+  height: 1rem;
+  border-radius: 4px;
+}
+
+.skeleton--title {
+  width: 60%;
+  height: 1.5rem;
+  border-radius: 4px;
+}
+
+.skeleton--card {
+  width: 100%;
+  height: 120px;
+  border-radius: 8px;
+}
+
+.skeleton--button {
+  width: 100px;
+  height: 36px;
+  border-radius: 4px;
+}
+
+.skeleton--input {
+  width: 100%;
+  height: 40px;
+  border-radius: 4px;
+}
+
+.skeleton--badge {
+  width: 80px;
+  height: 24px;
+  border-radius: 12px;
+}
+
+.skeleton--circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}

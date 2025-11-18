@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import api from "../services/api";
+import SkeletonLoader from "./SkeletonLoader";
 import "../styles/CostEstimate.css";
 
 function CostEstimate({ blueprint, formValues }) {
@@ -57,7 +58,13 @@ function CostEstimate({ blueprint, formValues }) {
 
       {loading && (
         <div className="cost-estimate__loading">
-          Calculating pricing...
+          <SkeletonLoader type="title" width="40%" />
+          <div style={{ marginTop: "1rem" }}>
+            <SkeletonLoader type="card" height="80px" />
+          </div>
+          <div style={{ marginTop: "1rem" }}>
+            <SkeletonLoader type="text" count={3} />
+          </div>
         </div>
       )}
 
