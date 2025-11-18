@@ -153,7 +153,8 @@ export function useBlueprints(updateResourceData, onClearUpdate) {
 
   // Handle blueprint selection
   const handleSelectBlueprint = (id) => {
-    const bp = state.blueprints.find((b) => b.id === id) || null;
+    // Allow null to deselect
+    const bp = id ? state.blueprints.find((b) => b.id === id) || null : null;
     const formValues = bp ? initializeFormValues(bp) : {};
 
     dispatch({

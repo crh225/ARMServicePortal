@@ -1,19 +1,55 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import EmptyState from "./EmptyState";
 import "../styles/BlueprintsList.css";
 
 function BlueprintsList({ blueprints, selectedBlueprint, onSelectBlueprint }) {
+  const [showAllBlueprints, setShowAllBlueprints] = useState(true);
+
+  // Reset to show all blueprints when selectedBlueprint becomes null (e.g., after PR creation)
+  useEffect(() => {
+    if (!selectedBlueprint) {
+      setShowAllBlueprints(true);
+      // Scroll to top when blueprint is cleared
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [selectedBlueprint]);
+
+  // When a blueprint is selected and we're not showing all, show only the selected one
+  const displayedBlueprints = showAllBlueprints || !selectedBlueprint
+    ? blueprints
+    : blueprints.filter(bp => bp.id === selectedBlueprint.id);
+
+  const handleBlueprintClick = (id) => {
+    onSelectBlueprint(id);
+    setShowAllBlueprints(false);
+  };
+
+  const handleStartOver = () => {
+    setShowAllBlueprints(true);
+    onSelectBlueprint(null);
+  };
+
   return (
     <div>
       <div>
-        <h2 className="panel-title">1. Choose a Blueprint</h2>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <h2 className="panel-title">1. Choose a Blueprint</h2>
+          {selectedBlueprint && !showAllBlueprints && (
+            <button
+              className="reset-btn"
+              onClick={handleStartOver}
+            >
+              ← Start Over
+            </button>
+          )}
+        </div>
         <p className="panel-help">
           These are your approved Terraform-backed building blocks.
         </p>
       </div>
 
       <div className="blueprint-list">
-        {blueprints.map((bp) => (
+        {displayedBlueprints.map((bp) => (
           <button
             key={bp.id}
             className={
@@ -22,7 +58,7 @@ function BlueprintsList({ blueprints, selectedBlueprint, onSelectBlueprint }) {
                 ? " blueprint-card--active"
                 : "")
             }
-            onClick={() => onSelectBlueprint(bp.id)}
+            onClick={() => handleBlueprintClick(bp.id)}
           >
             <div className="blueprint-header">
               <h3 className="blueprint-title">{bp.displayName}</h3>

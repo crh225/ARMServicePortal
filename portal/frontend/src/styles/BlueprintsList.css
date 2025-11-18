@@ -61,3 +61,21 @@
   font-size: 0.8rem;
   color: var(--text-muted);
 }
+
+.reset-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #64748b;
+  background: transparent;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.reset-btn:hover {
+  color: #334155;
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
