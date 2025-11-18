@@ -1,6 +1,6 @@
 /**
  * Fetch Terraform outputs from PR comments
- * Looks for comments starting with "TF_OUTPUTS:" and containing JSON
+ * Looks for Terraform output comments (supports dev, qa, staging, prod formats) containing JSON
  * Optionally filters to only outputs matching a specific module name prefix
  */
 export async function fetchTerraformOutputs({ octokit, owner, repo, prNumber, moduleName = null }) {
@@ -12,11 +12,19 @@ export async function fetchTerraformOutputs({ octokit, owner, repo, prNumber, mo
       per_page: 50
     });
 
+    // Look for Terraform output comments (supports multiple formats across environments)
+    // - Dev: "TF_OUTPUTS:"
+    // - QA: "**QA Terraform Outputs:**"
+    // - Staging: "**Staging Terraform Outputs:**"
+    // - Prod: "**Production Terraform Deployment Complete**"
     const tfComment = [...comments]
       .reverse()
       .find(
         (c) =>
-          typeof c.body === "string" && c.body.startsWith("TF_OUTPUTS:")
+          typeof c.body === "string" &&
+          (c.body.startsWith("TF_OUTPUTS:") ||
+           c.body.includes("Terraform Outputs:") ||
+           c.body.includes("Terraform Deployment Complete"))
       );
 
     if (!tfComment) {
@@ -43,7 +51,14 @@ export async function fetchTerraformOutputs({ octokit, owner, repo, prNumber, mo
         }
       }
 
-      return Object.keys(filteredOutputs).length > 0 ? filteredOutputs : null;
+      // If we found filtered outputs, return them
+      if (Object.keys(filteredOutputs).length > 0) {
+        return filteredOutputs;
+      }
+
+      // If no filtered outputs found, log for debugging and return null
+      console.warn(`No outputs found for module "${moduleName}" in PR #${prNumber}. Available outputs:`, Object.keys(allOutputs).join(', '));
+      return null;
     }
 
     return allOutputs;
