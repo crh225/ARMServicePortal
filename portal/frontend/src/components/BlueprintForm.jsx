@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import CostEstimate from "./CostEstimate";
 import "../styles/BlueprintForm.css";
 import { getEnvironmentConfig } from "../config/environmentConfig";
@@ -12,6 +12,15 @@ function BlueprintForm({
   isUpdating,
   policyErrors
 }) {
+  const formRef = useRef(null);
+
+  // Scroll form into view when blueprint changes
+  useEffect(() => {
+    if (blueprint && formRef.current) {
+      formRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [blueprint?.id]);
+
   if (!blueprint) return null;
 
   // Get environment value and warning configuration
@@ -19,7 +28,7 @@ function BlueprintForm({
   const envWarning = getEnvironmentConfig(environment);
 
   return (
-    <div className="panel panel--form">
+    <div ref={formRef} className="panel panel--form">
       <h2 className="panel-title">2. Parameters</h2>
       <p className="panel-help">
         Values will be written into a Terraform module file in GitHub.
