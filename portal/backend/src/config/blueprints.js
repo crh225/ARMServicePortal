@@ -165,7 +165,7 @@ export const BLUEPRINTS = [
     displayName: "Static Website",
     description: "Host a static website on Azure Storage with optional CDN support. Perfect for SPAs, documentation sites, and marketing pages.",
     category: "Web",
-    moduleSource: "../../infra/modules/azure-static-site",
+    moduleSource: "../../modules/azure-static-site",
     variables: [
       {
         name: "project_name",
