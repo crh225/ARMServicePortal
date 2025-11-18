@@ -36,13 +36,16 @@ export function useBlueprints(updateResourceData, onClearUpdate) {
 
   // Load blueprints on mount
   useEffect(() => {
-    api
-      .fetchBlueprints()
-      .then(setBlueprints)
-      .catch((err) => {
+    const loadBlueprints = async () => {
+      try {
+        const data = await api.fetchBlueprints();
+        setBlueprints(data);
+      } catch (err) {
         console.error(err);
         setError("Failed to load blueprints");
-      });
+      }
+    };
+    loadBlueprints();
   }, []);
 
   // Handle update resource data

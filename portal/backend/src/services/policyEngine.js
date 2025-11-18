@@ -2,53 +2,7 @@
  * Policy Engine - Validates and enforces resource policies
  */
 
-/**
- * Policy configuration
- */
-const POLICIES = {
-  // Naming convention policies
-  naming: {
-    enabled: true,
-    pattern: /^[a-z0-9-]+$/,
-    maxLength: 63,
-    message: "Resource names must be lowercase alphanumeric with hyphens only"
-  },
-
-  // Required tags
-  requiredTags: {
-    enabled: true,
-    tags: ["owner", "cost_center", "environment"],
-    message: "Missing required tags"
-  },
-
-  // Environment-specific policies
-  environments: {
-    dev: {
-      requiresApproval: false,
-      message: "Development environment - no approval required",
-      allowedHours: "24/7"
-    },
-    qa: {
-      requiresApproval: true,
-      approvalCount: 1,
-      message: "QA deployments require 1 approval",
-      allowedHours: "business hours"
-    },
-    staging: {
-      requiresApproval: true,
-      approvalCount: 1,
-      message: "Staging deployments require 1 approval and must match QA tested config",
-      allowedHours: "business hours"
-    },
-    prod: {
-      requiresApproval: true,
-      approvalCount: 2,
-      message: "Production deployments require 2 approvals",
-      allowedHours: "business hours",
-      requiresChangeControl: true
-    }
-  }
-};
+import { POLICIES } from "../config/policyConfig.js";
 
 /**
  * Validate a provision request against policies
@@ -175,28 +129,7 @@ export function generateResourceName(blueprintId, projectName, environment) {
  * Validate Azure resource naming rules for specific resource types
  */
 export function validateAzureNaming(resourceType, name) {
-  const rules = {
-    "resource-group": {
-      minLength: 1,
-      maxLength: 90,
-      pattern: /^[\w\-\.()]+$/,
-      message: "Resource group names can contain alphanumerics, underscores, parentheses, hyphens, periods"
-    },
-    "storage-account": {
-      minLength: 3,
-      maxLength: 24,
-      pattern: /^[a-z0-9]+$/,
-      message: "Storage account names must be lowercase alphanumeric only"
-    },
-    "key-vault": {
-      minLength: 3,
-      maxLength: 24,
-      pattern: /^[a-zA-Z][a-zA-Z0-9-]*[a-zA-Z0-9]$/,
-      message: "Key Vault names must start with a letter, end with letter or digit, and contain only alphanumerics and hyphens"
-    }
-  };
-
-  const rule = rules[resourceType];
+  const rule = POLICIES.azureNaming[resourceType];
   if (!rule) return { valid: true };
 
   const errors = [];
@@ -229,14 +162,6 @@ export function validatePromotion(sourceJob, targetEnvironment) {
   const errors = [];
   const warnings = [];
 
-  // Define valid promotion paths
-  const promotionPaths = {
-    dev: ["qa"],
-    qa: ["staging"],
-    staging: ["prod"],
-    prod: []
-  };
-
   const sourceEnv = sourceJob.environment;
 
   // Check if source environment is valid
@@ -249,8 +174,8 @@ export function validatePromotion(sourceJob, targetEnvironment) {
     return { valid: false, errors, warnings };
   }
 
-  // Check if promotion path is valid
-  const validTargets = promotionPaths[sourceEnv] || [];
+  // Check if promotion path is valid using config
+  const validTargets = POLICIES.promotionPaths[sourceEnv] || [];
   if (!validTargets.includes(targetEnvironment)) {
     errors.push({
       field: "environment",

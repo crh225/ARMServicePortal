@@ -74,7 +74,7 @@ export async function createPromotionPR(sourceJob, targetEnvironment) {
   const targetFilePath = targetEnvPath + baseFilename;
 
   // Create a new branch for the promotion
-  const promotionBranchName = `requests/${targetEnvironment}/${baseFilename.replace(".tf", "")}-promoted-${Date.now()}`;
+  let promotionBranchName = `requests/${targetEnvironment}/${baseFilename.replace(".tf", "")}-promoted-${Date.now()}`;
   const baseBranch = originalPR.base?.ref || "main";
 
   // Get the base branch reference

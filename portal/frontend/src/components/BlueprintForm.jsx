@@ -1,6 +1,7 @@
 import React from "react";
 import CostEstimate from "./CostEstimate";
 import "../styles/BlueprintForm.css";
+import { getEnvironmentConfig } from "../config/environmentConfig";
 
 function BlueprintForm({
   blueprint,
@@ -13,35 +14,9 @@ function BlueprintForm({
 }) {
   if (!blueprint) return null;
 
-  // Get environment value
+  // Get environment value and warning configuration
   const environment = formValues.environment || "dev";
-
-  // Environment-specific warnings
-  const getEnvironmentWarning = (env) => {
-    const warnings = {
-      qa: {
-        level: "warning",
-        icon: "⚠️",
-        title: "QA Environment",
-        message: "This deployment requires 1 approval before merging to main."
-      },
-      staging: {
-        level: "warning",
-        icon: "⚠️",
-        title: "Staging Environment",
-        message: "This deployment requires 1 approval and should match QA tested configuration."
-      },
-      prod: {
-        level: "critical",
-        icon: "🔴",
-        title: "Production Environment",
-        message: "This deployment requires 2 approvals and change control documentation."
-      }
-    };
-    return warnings[env] || null;
-  };
-
-  const envWarning = getEnvironmentWarning(environment);
+  const envWarning = getEnvironmentConfig(environment);
 
   return (
     <div className="panel panel--form">
@@ -53,7 +28,6 @@ function BlueprintForm({
       {envWarning && (
         <div className={`environment-warning environment-warning--${envWarning.level}`}>
           <div className="environment-warning__header">
-            <span className="environment-warning__icon">{envWarning.icon}</span>
             <span className="environment-warning__title">{envWarning.title}</span>
           </div>
           <div className="environment-warning__message">{envWarning.message}</div>
@@ -62,7 +36,7 @@ function BlueprintForm({
 
       {policyErrors && policyErrors.length > 0 && (
         <div className="policy-errors">
-          <div className="policy-errors__title">⚠️ Policy Violations</div>
+          <div className="policy-errors__title">Policy Violations</div>
           {policyErrors.map((error, idx) => (
             <div key={idx} className="policy-errors__item">
               <strong>{error.field}:</strong> {error.message}
