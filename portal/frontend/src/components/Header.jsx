@@ -7,11 +7,6 @@ function Header({ activeTab, onTabChange }) {
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
 
-  // Debug: Log user data
-  useEffect(() => {
-    console.log('Header - user data:', user);
-  }, [user]);
-
   useEffect(() => {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
