@@ -3,6 +3,57 @@ import { getInstallationClient } from "./client.js";
 import { getGitHubConfig } from "./config.js";
 import { getBlueprintById } from "../../config/blueprints.js";
 import { renderTerraformModule } from "../../utils/terraformRenderer.js";
+import { ensureBranch, commitFile, getFileContent } from "./utils/gitOperations.js";
+import { createPR, generatePRBody } from "./utils/prOperations.js";
+import { DEFAULT_BASE_BRANCH } from "../../config/githubConstants.js";
+
+/**
+ * Generate a unique branch name for provision request
+ */
+function generateBranchName(environment, blueprintId, moduleName, isUpdate) {
+  const shortId = crypto.randomBytes(4).toString("hex");
+  const safeBlueprint = blueprintId.replace(/[^a-zA-Z0-9_-]/g, "-");
+
+  if (isUpdate) {
+    return `requests/${environment}/${moduleName}-update-${shortId}`;
+  }
+  return `requests/${environment}/${safeBlueprint}-${shortId}`;
+}
+
+/**
+ * Generate module name (either provided or new)
+ */
+function getModuleName(blueprintId, providedModuleName) {
+  if (providedModuleName) {
+    return { moduleName: providedModuleName, isUpdate: true, shortId: null };
+  }
+
+  const shortId = crypto.randomBytes(4).toString("hex");
+  const safeBlueprint = blueprintId.replace(/[^a-zA-Z0-9_-]/g, "-");
+  const moduleName = `${safeBlueprint}_${shortId}`;
+
+  return { moduleName, isUpdate: false, shortId };
+}
+
+/**
+ * Get file SHA if updating existing file
+ */
+async function getExistingFileSha(octokit, owner, repo, filePath, baseBranch) {
+  try {
+    const fileData = await getFileContent(octokit, {
+      owner,
+      repo,
+      path: filePath,
+      ref: baseBranch
+    });
+    return fileData.sha;
+  } catch (err) {
+    if (err.status === 404) {
+      return null; // File doesn't exist
+    }
+    throw err;
+  }
+}
 
 /**
  * Creates a branch + Terraform module file + PR in the infrastructure repo
@@ -31,13 +82,13 @@ export async function createGitHubRequest({ environment, blueprintId, blueprintV
 
   const octokit = await getInstallationClient();
 
-  // 1) Get default branch SHA
+  // Get default branch SHA
   const { data: repo } = await octokit.repos.get({
     owner: infraOwner,
     repo: infraRepo
   });
 
-  const baseBranch = repo.default_branch || "main";
+  const baseBranch = repo.default_branch || DEFAULT_BASE_BRANCH;
 
   const { data: baseRef } = await octokit.git.getRef({
     owner: infraOwner,
@@ -47,26 +98,20 @@ export async function createGitHubRequest({ environment, blueprintId, blueprintV
 
   const baseSha = baseRef.object.sha;
 
-  // 2) Create a new branch
-  const shortId = crypto.randomBytes(4).toString("hex");
-  const safeBlueprint = blueprintId.replace(/[^a-zA-Z0-9_-]/g, "-");
+  // Determine module name and whether this is an update
+  const { moduleName, isUpdate, shortId } = getModuleName(blueprintId, providedModuleName);
 
-  // Use provided module name (for updates) or generate a new one
-  const moduleName = providedModuleName || `${safeBlueprint}_${shortId}`;
-  const isUpdate = Boolean(providedModuleName);
+  // Create branch
+  const branchName = generateBranchName(environment, blueprintId, moduleName, isUpdate);
 
-  const branchName = isUpdate
-    ? `requests/${environment}/${moduleName}-update-${shortId}`
-    : `requests/${environment}/${safeBlueprint}-${shortId}`;
-
-  await octokit.git.createRef({
+  await ensureBranch(octokit, {
     owner: infraOwner,
     repo: infraRepo,
-    ref: `refs/heads/${branchName}`,
-    sha: baseSha
+    branchName,
+    baseSha
   });
 
-  // 3) Render module block as a .tf file
+  // Render Terraform module
   const tfContent = renderTerraformModule({
     moduleName,
     blueprint,
@@ -75,33 +120,17 @@ export async function createGitHubRequest({ environment, blueprintId, blueprintV
 
   const filePath = `infra/environments/${environment}/${moduleName}.tf`;
 
-  // 4) Create or update file in the branch
-  let commitMessage;
-  let fileSha = null;
+  // Get existing file SHA if updating
+  const fileSha = isUpdate
+    ? await getExistingFileSha(octokit, infraOwner, infraRepo, filePath, baseBranch)
+    : null;
 
-  if (isUpdate) {
-    // For updates, get the existing file SHA from the base branch
-    try {
-      const { data: existingFile } = await octokit.repos.getContent({
-        owner: infraOwner,
-        repo: infraRepo,
-        path: filePath,
-        ref: baseBranch
-      });
-      fileSha = existingFile.sha;
-      commitMessage = `chore: update ${blueprintId} in ${environment} (${moduleName})`;
-    } catch (err) {
-      if (err.status === 404) {
-        // File doesn't exist on base branch, treat as new provision
-        commitMessage = `chore: request ${blueprintId} in ${environment} (${shortId})`;
-      } else {
-        throw err;
-      }
-    }
-  } else {
-    commitMessage = `chore: request ${blueprintId} in ${environment} (${shortId})`;
-  }
+  // Determine commit message
+  const commitMessage = isUpdate
+    ? `chore: update ${blueprintId} in ${environment} (${moduleName})`
+    : `chore: request ${blueprintId} in ${environment} (${shortId})`;
 
+  // Commit file
   const { data: file } = await octokit.repos.createOrUpdateFileContents({
     owner: infraOwner,
     repo: infraRepo,
@@ -112,16 +141,12 @@ export async function createGitHubRequest({ environment, blueprintId, blueprintV
     ...(fileSha && { sha: fileSha })
   });
 
-  // 5) Open a PR
+  // Create PR
   const title = isUpdate
     ? `Update ${blueprint.displayName} in ${environment} (${moduleName})`
     : `Provision ${blueprint.displayName} in ${environment} (${shortId})`;
 
-  const body = [
-    `Blueprint: \`${blueprintId}\``,
-    `Version: \`${blueprint.version}\``,
-    `Environment: \`${environment}\``,
-    createdBy ? `Created by: @${createdBy}` : "",
+  const description = [
     isUpdate ? `**Update**: Modifying existing resource \`${moduleName}\`` : "",
     "",
     "Rendered module:",
@@ -130,7 +155,15 @@ export async function createGitHubRequest({ environment, blueprintId, blueprintV
     "```"
   ].filter(Boolean).join("\n");
 
-  const { data: pr } = await octokit.pulls.create({
+  const body = generatePRBody({
+    blueprintId,
+    environment,
+    createdBy,
+    terraformModule: moduleName,
+    version: blueprint.version
+  }, description);
+
+  const pr = await createPR(octokit, {
     owner: infraOwner,
     repo: infraRepo,
     title,
