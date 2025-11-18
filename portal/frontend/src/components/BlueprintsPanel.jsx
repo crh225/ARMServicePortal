@@ -4,6 +4,7 @@ import BlueprintsList from "./BlueprintsList";
 import BlueprintForm from "./BlueprintForm";
 import ResultPanel from "./ResultPanel";
 import Terminal from "./Terminal";
+import AuthModal from "./AuthModal";
 
 /**
  * Container component for the Blueprints tab
@@ -18,9 +19,11 @@ function BlueprintsPanel({ updateResourceData, onClearUpdate }) {
     error,
     loading,
     policyErrors,
+    showAuthModal,
     handleSelectBlueprint,
     handleFormChange,
-    handleSubmit
+    handleSubmit,
+    handleCloseAuthModal
   } = useBlueprints(updateResourceData, onClearUpdate);
 
   return (
@@ -116,6 +119,8 @@ function BlueprintsPanel({ updateResourceData, onClearUpdate }) {
           </>
         )}
       </aside>
+
+      <AuthModal isOpen={showAuthModal} onClose={handleCloseAuthModal} />
     </>
   );
 }

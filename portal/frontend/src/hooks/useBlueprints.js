@@ -13,7 +13,8 @@ const initialState = {
   error: null,
   loading: false,
   moduleName: null,
-  policyErrors: null
+  policyErrors: null,
+  showAuthModal: false
 };
 
 /**
@@ -28,7 +29,9 @@ const ACTIONS = {
   SET_POLICY_ERRORS: 'SET_POLICY_ERRORS',
   SET_RESULT: 'SET_RESULT',
   LOAD_UPDATE_DATA: 'LOAD_UPDATE_DATA',
-  CLEAR_FEEDBACK: 'CLEAR_FEEDBACK'
+  CLEAR_FEEDBACK: 'CLEAR_FEEDBACK',
+  SHOW_AUTH_MODAL: 'SHOW_AUTH_MODAL',
+  HIDE_AUTH_MODAL: 'HIDE_AUTH_MODAL'
 };
 
 /**
@@ -99,6 +102,19 @@ function blueprintReducer(state, action) {
         result: null,
         error: null,
         policyErrors: null
+      };
+
+    case ACTIONS.SHOW_AUTH_MODAL:
+      return {
+        ...state,
+        showAuthModal: true,
+        loading: false
+      };
+
+    case ACTIONS.HIDE_AUTH_MODAL:
+      return {
+        ...state,
+        showAuthModal: false
       };
 
     default:
@@ -191,13 +207,23 @@ export function useBlueprints(updateResourceData, onClearUpdate) {
       );
 
       if (data.error) {
-        dispatch({
-          type: ACTIONS.SET_ERROR,
-          payload: {
-            error: data.error,
-            policyErrors: data.policyErrors || null
-          }
-        });
+        // Check if it's an authentication error
+        const isAuthError = data.error.toLowerCase().includes("unauthorized") ||
+          data.error.toLowerCase().includes("not authenticated") ||
+          data.error.toLowerCase().includes("authentication") ||
+          data.error.toLowerCase().includes("login required");
+
+        if (isAuthError) {
+          dispatch({ type: ACTIONS.SHOW_AUTH_MODAL });
+        } else {
+          dispatch({
+            type: ACTIONS.SET_ERROR,
+            payload: {
+              error: data.error,
+              policyErrors: data.policyErrors || null
+            }
+          });
+        }
       } else {
         dispatch({
           type: ACTIONS.SET_RESULT,
@@ -218,15 +244,30 @@ export function useBlueprints(updateResourceData, onClearUpdate) {
     } catch (err) {
       console.error(err);
       const errorMessage = err.message || "Failed to submit request";
-      const policyErrors = parsePolicyErrors(errorMessage);
 
-      dispatch({
-        type: ACTIONS.SET_ERROR,
-        payload: { error: errorMessage, policyErrors }
-      });
+      // Check if it's an authentication error
+      const isAuthError = errorMessage.toLowerCase().includes("unauthorized") ||
+        errorMessage.toLowerCase().includes("not authenticated") ||
+        errorMessage.toLowerCase().includes("authentication") ||
+        errorMessage.toLowerCase().includes("login required");
+
+      if (isAuthError) {
+        dispatch({ type: ACTIONS.SHOW_AUTH_MODAL });
+      } else {
+        const policyErrors = parsePolicyErrors(errorMessage);
+        dispatch({
+          type: ACTIONS.SET_ERROR,
+          payload: { error: errorMessage, policyErrors }
+        });
+      }
     } finally {
       dispatch({ type: ACTIONS.SET_LOADING, payload: false });
     }
+  };
+
+  // Handle closing auth modal
+  const handleCloseAuthModal = () => {
+    dispatch({ type: ACTIONS.HIDE_AUTH_MODAL });
   };
 
   return {
@@ -237,8 +278,10 @@ export function useBlueprints(updateResourceData, onClearUpdate) {
     error: state.error,
     loading: state.loading,
     policyErrors: state.policyErrors,
+    showAuthModal: state.showAuthModal,
     handleSelectBlueprint,
     handleFormChange,
-    handleSubmit
+    handleSubmit,
+    handleCloseAuthModal
   };
 }
