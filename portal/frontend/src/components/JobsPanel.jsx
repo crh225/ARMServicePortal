@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useJobs } from "../hooks/useJobs";
+import { useJobActions } from "../hooks/useJobActions.jsx";
 import JobsList from "./JobsList";
 import JobDetail from "./JobDetail";
+import JobFilters from "./JobFilters";
 import Modal from "./Modal";
 import ConfirmModal from "./ConfirmModal";
-import api from "../services/api";
 import "../styles/JobsList.css";
 
 /**
@@ -35,9 +36,18 @@ function JobsPanel({ isActive, onUpdateResource }) {
   const [environmentFilter, setEnvironmentFilter] = useState("all");
   const [blueprintFilter, setBlueprintFilter] = useState("all");
   const [jobIdFilter, setJobIdFilter] = useState(jobIdParam || "");
-  const [modalState, setModalState] = useState({ isOpen: false, type: "info", title: "", content: null });
-  const [confirmState, setConfirmState] = useState({ isOpen: false, job: null });
-  const [promoteLoading, setPromoteLoading] = useState(false);
+
+  // Use job actions hook for destroy/promote functionality
+  const {
+    modalState,
+    confirmState,
+    promoteLoading,
+    handleDelete,
+    confirmDelete,
+    handlePromote,
+    closeModal,
+    closeConfirm
+  } = useJobActions(refreshJobs);
 
   // Track if we've loaded jobs to prevent duplicate fetches
   const hasLoadedRef = useRef(false);
@@ -127,124 +137,6 @@ function JobsPanel({ isActive, onUpdateResource }) {
     }
   };
 
-  // Handle delete resource - show confirmation
-  const handleDelete = (job) => {
-    setConfirmState({ isOpen: true, job });
-  };
-
-  // Confirm delete resource
-  const confirmDelete = async () => {
-    const job = confirmState.job;
-    if (!job) return;
-
-    try {
-      const result = await api.destroyResource(job.number);
-      setModalState({
-        isOpen: true,
-        type: "success",
-        title: "Destroy PR Created",
-        content: (
-          <div>
-            <p><strong>PR #{result.pr.number}:</strong> {result.pr.title}</p>
-            <p>
-              <a href={result.pr.url} target="_blank" rel="noreferrer">
-                {result.pr.url}
-              </a>
-            </p>
-            <p>Merge this PR to destroy the deployed infrastructure.</p>
-          </div>
-        )
-      });
-      // Refresh jobs to show the new destroy PR
-      refreshJobs();
-    } catch (err) {
-      console.error("Error creating destroy PR:", err);
-      setModalState({
-        isOpen: true,
-        type: "error",
-        title: "Failed to Create Destroy PR",
-        content: (
-          <div>
-            <p>{err.message}</p>
-          </div>
-        )
-      });
-    }
-  };
-
-  // Handle promote resource
-  const handlePromote = async (job) => {
-    const environmentPath = {
-      dev: "qa",
-      qa: "staging",
-      staging: "prod",
-      prod: null
-    };
-    const targetEnv = environmentPath[job.environment];
-
-    if (!targetEnv) {
-      setModalState({
-        isOpen: true,
-        type: "error",
-        title: "Cannot Promote",
-        content: (
-          <div>
-            <p>Production is the final environment and cannot be promoted further.</p>
-          </div>
-        )
-      });
-      return;
-    }
-
-    setPromoteLoading(true);
-    try {
-      const result = await api.promoteResource(job.number);
-      setModalState({
-        isOpen: true,
-        type: "success",
-        title: "Promotion PR Created",
-        content: (
-          <div>
-            <p><strong>Environment Promotion:</strong> {result.sourceEnvironment} → {result.targetEnvironment}</p>
-            <p><strong>PR #{result.pr.number}:</strong> {result.pr.title}</p>
-            <p>
-              <a href={result.pr.url} target="_blank" rel="noreferrer">
-                {result.pr.url}
-              </a>
-            </p>
-            <p>This PR will deploy the resource configuration to {result.targetEnvironment}.</p>
-            {result.targetEnvironment === "staging" && (
-              <p style={{ marginTop: "8px", color: "#d97706" }}>
-                ⚠️ Requires 1 approval and QA validation.
-              </p>
-            )}
-            {result.targetEnvironment === "prod" && (
-              <p style={{ marginTop: "8px", color: "#dc2626" }}>
-                🔴 Requires 2 approvals and change control documentation.
-              </p>
-            )}
-          </div>
-        )
-      });
-      // Refresh jobs to show the new promotion PR
-      refreshJobs();
-    } catch (err) {
-      console.error("Error creating promotion PR:", err);
-      setModalState({
-        isOpen: true,
-        type: "error",
-        title: "Failed to Create Promotion PR",
-        content: (
-          <div>
-            <p>{err.message}</p>
-          </div>
-        )
-      });
-    } finally {
-      setPromoteLoading(false);
-    }
-  };
-
   return (
     <>
       <section className="panel panel--left">
@@ -255,73 +147,18 @@ function JobsPanel({ isActive, onUpdateResource }) {
           </p>
         </div>
 
-        <div className="job-filters">
-          <div className="job-filters-row">
-            <input
-              type="text"
-              className="job-id-input"
-              placeholder="Job ID..."
-              value={jobIdFilter}
-              onChange={(e) => setJobIdFilter(e.target.value)}
-            />
-            <div className="filter-pill-group">
-              <button
-                className={`filter-pill ${statusFilter === "all" ? "filter-pill--active" : ""}`}
-                onClick={() => setStatusFilter("all")}
-                disabled={!!jobIdFilter}
-              >
-                All
-              </button>
-              <button
-                className={`filter-pill ${statusFilter === "merged" ? "filter-pill--active" : ""}`}
-                onClick={() => setStatusFilter("merged")}
-                disabled={!!jobIdFilter}
-              >
-                Deployed
-              </button>
-              <button
-                className={`filter-pill ${statusFilter === "open" ? "filter-pill--active" : ""}`}
-                onClick={() => setStatusFilter("open")}
-                disabled={!!jobIdFilter}
-              >
-                Open
-              </button>
-              <button
-                className={`filter-pill ${statusFilter === "closed" ? "filter-pill--active" : ""}`}
-                onClick={() => setStatusFilter("closed")}
-                disabled={!!jobIdFilter}
-              >
-                Closed
-              </button>
-            </div>
-          </div>
-
-          <div className="job-filters-row">
-            <select
-              className="filter-select"
-              value={environmentFilter}
-              onChange={(e) => setEnvironmentFilter(e.target.value)}
-              disabled={!!jobIdFilter}
-            >
-              <option value="all">All Environments</option>
-              {environments.map(env => (
-                <option key={env} value={env}>{env}</option>
-              ))}
-            </select>
-
-            <select
-              className="filter-select"
-              value={blueprintFilter}
-              onChange={(e) => setBlueprintFilter(e.target.value)}
-              disabled={!!jobIdFilter}
-            >
-              <option value="all">All Blueprints</option>
-              {blueprints.map(bp => (
-                <option key={bp} value={bp}>{bp}</option>
-              ))}
-            </select>
-          </div>
-        </div>
+        <JobFilters
+          statusFilter={statusFilter}
+          onStatusFilterChange={setStatusFilter}
+          environmentFilter={environmentFilter}
+          onEnvironmentFilterChange={setEnvironmentFilter}
+          blueprintFilter={blueprintFilter}
+          onBlueprintFilterChange={setBlueprintFilter}
+          jobIdFilter={jobIdFilter}
+          onJobIdFilterChange={setJobIdFilter}
+          environments={environments}
+          blueprints={blueprints}
+        />
 
         <JobsList
           jobs={filteredPageJobs}
@@ -356,7 +193,7 @@ function JobsPanel({ isActive, onUpdateResource }) {
 
       <Modal
         isOpen={modalState.isOpen}
-        onClose={() => setModalState({ ...modalState, isOpen: false })}
+        onClose={closeModal}
         title={modalState.title}
         type={modalState.type}
       >
@@ -365,7 +202,7 @@ function JobsPanel({ isActive, onUpdateResource }) {
 
       <ConfirmModal
         isOpen={confirmState.isOpen}
-        onClose={() => setConfirmState({ isOpen: false, job: null })}
+        onClose={closeConfirm}
         onConfirm={confirmDelete}
         title="Delete Resource"
         message={
