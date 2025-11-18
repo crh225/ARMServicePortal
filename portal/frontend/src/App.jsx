@@ -14,7 +14,7 @@ import Footer from "./components/Footer";
  * Manages only top-level navigation state - all business logic is delegated to panel components
  */
 function App() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(() => {
     // Initialize from URL query parameter if present
     return searchParams.get("tab") || "blueprints";
@@ -27,11 +27,23 @@ function App() {
     if (tabFromUrl && tabFromUrl !== activeTab) {
       setActiveTab(tabFromUrl);
     }
-  }, [searchParams]);
+  }, [searchParams, activeTab]);
+
+  // Handle tab change and update URL
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set("tab", tab);
+    // Remove job parameter when switching tabs (unless staying on jobs tab)
+    if (tab !== "jobs" && newParams.has("job")) {
+      newParams.delete("job");
+    }
+    setSearchParams(newParams);
+  };
 
   const handleUpdateResource = (job) => {
     setUpdateResourceData(job);
-    setActiveTab("blueprints");
+    handleTabChange("blueprints");
   };
 
   return (
@@ -40,7 +52,7 @@ function App() {
       <Route path="*" element={
         <div className="app-root">
           <div className="app-shell">
-            <Header activeTab={activeTab} onTabChange={setActiveTab} />
+            <Header activeTab={activeTab} onTabChange={handleTabChange} />
 
             <main className="app-main">
               {activeTab === "blueprints" && (
