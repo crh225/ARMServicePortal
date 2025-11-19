@@ -4,7 +4,7 @@
  */
 
 import { queryArmPortalResources, queryResourcesByRequestId } from "../services/azureResourceGraph.js";
-import { getGitHubRequestByNumber } from "../services/github/pullRequests.js";
+import { getGitHubRequestByNumber, findPRByModuleName } from "../services/github/pullRequests.js";
 import { getSubscriptionCosts } from "../services/costService.js";
 
 /**
@@ -52,12 +52,29 @@ async function enrichResourcesWithPRs(resources, includeCosts = false) {
   const prResults = await Promise.all(prPromises);
   const prMap = new Map(prResults.map(({ prNumber, pr }) => [prNumber, pr]));
 
-  // For stack request IDs, create a mapping to look them up
-  // TODO: Implement proper PR lookup for stack components from infra repo
-  // For now, we'll mark these as orphan until we can look them up properly
+  // For stack request IDs, look up the PR that created each module
   const stackRequestIdMap = new Map();
-  stackRequestIds.forEach(requestId => {
-    stackRequestIdMap.set(requestId, null); // No PR data for now
+
+  // Look up PRs for stack components in parallel
+  const stackPrPromises = stackRequestIds.map(async requestId => {
+    try {
+      // Extract base module name (remove component suffix if present)
+      // e.g., "azure-webapp-stack_5b0d160a_rg" -> "azure-webapp-stack_5b0d160a"
+      const baseModuleName = requestId.includes('_')
+        ? requestId.split('_').slice(0, -1).join('_')  // Remove last component
+        : requestId;
+
+      const pr = await findPRByModuleName(baseModuleName);
+      return { requestId, pr };
+    } catch (error) {
+      console.error(`Failed to find PR for stack component ${requestId}:`, error);
+      return { requestId, pr: null };
+    }
+  });
+
+  const stackPrResults = await Promise.all(stackPrPromises);
+  stackPrResults.forEach(({ requestId, pr }) => {
+    stackRequestIdMap.set(requestId, pr);
   });
 
   // Optionally fetch costs (disabled by default for faster initial load)

@@ -240,3 +240,47 @@ export async function getGitHubRequestByNumber(prNumber) {
 
   return buildDetailedJob(pr, metadata, terraformFilePath, moduleName, outputs, resourceExists);
 }
+
+/**
+ * Find PR that created a specific module/stack by looking for the .tf file
+ * This is used for stack components where the request-id is the module name, not a PR number
+ */
+export async function findPRByModuleName(moduleName, environment = 'dev') {
+  const { infraOwner, infraRepo } = validateGitHubConfig();
+  const octokit = await getInstallationClient();
+
+  // Expected file path for this module
+  const expectedFilePath = `infra/environments/${environment}/${moduleName}.tf`;
+
+  try {
+    // List recent PRs that might have created this module
+    const { data: pulls } = await octokit.pulls.list({
+      owner: infraOwner,
+      repo: infraRepo,
+      state: "all",
+      per_page: 100,
+      sort: "created",
+      direction: "desc"
+    });
+
+    // Find PR that modified this specific file
+    for (const pr of pulls) {
+      const { data: files } = await octokit.pulls.listFiles({
+        owner: infraOwner,
+        repo: infraRepo,
+        pull_number: pr.number
+      });
+
+      const hasFile = files.some(f => f.filename === expectedFilePath);
+      if (hasFile) {
+        // Found the PR that created/modified this module
+        return getGitHubRequestByNumber(pr.number);
+      }
+    }
+
+    return null; // No PR found
+  } catch (error) {
+    console.error(`Failed to find PR for module ${moduleName}:`, error.message);
+    return null;
+  }
+}
