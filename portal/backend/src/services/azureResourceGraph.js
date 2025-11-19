@@ -23,10 +23,10 @@ export async function queryArmPortalResources(options = {}) {
     subscriptions = [] // Can be provided by frontend if needed
   } = options;
 
-  // Build KQL query
-  // Start with ResourceContainers (includes resource groups) and Resources
-  let query = "ResourceContainers | union Resources | where isnotempty(tags) and (isnotnull(tags['armportal-environment']) or isnotnull(tags['armportal-blueprint']) or isnotnull(tags['armportal-request-id']))";
+  // Build KQL query - get ALL resources and resource groups
+  let query = "ResourceContainers | union Resources";
 
+  // Apply filters if provided
   if (environment) {
     query += ` | where tags['armportal-environment'] =~ '${environment}'`;
   }

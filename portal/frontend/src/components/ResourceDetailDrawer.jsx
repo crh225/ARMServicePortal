@@ -28,44 +28,39 @@ function ResourceDetailDrawer({ resource, onClose }) {
   if (!resource) return null;
 
   return (
-    <div className="drawer-overlay" onClick={onClose}>
-      <div className="drawer-panel" onClick={(e) => e.stopPropagation()}>
-        {/* Header */}
-        <div className="drawer-header">
-          <div>
-            <h2 className="drawer-title">{resource.name}</h2>
-            <p className="drawer-subtitle">{getResourceTypeDisplay(resource.type)}</p>
-          </div>
-          <button className="drawer-close" onClick={onClose} aria-label="Close">
-            ×
-          </button>
+    <div className="resource-detail">
+      {/* Header with resource name */}
+      <div className="detail-header">
+        <div>
+          <h2 className="detail-title">{resource.name}</h2>
+          <p className="detail-subtitle">{getResourceTypeDisplay(resource.type)}</p>
         </div>
+      </div>
 
-        {/* Tabs */}
-        <div className="drawer-tabs">
-          <button
-            className={`drawer-tab ${activeTab === "details" ? "drawer-tab--active" : ""}`}
-            onClick={() => setActiveTab("details")}
-          >
-            Details
-          </button>
-          <button
-            className={`drawer-tab ${activeTab === "graph" ? "drawer-tab--active" : ""}`}
-            onClick={() => setActiveTab("graph")}
-          >
-            Graph
-          </button>
-        </div>
+      {/* Tabs */}
+      <div className="detail-tabs">
+        <button
+          className={`detail-tab ${activeTab === "details" ? "detail-tab--active" : ""}`}
+          onClick={() => setActiveTab("details")}
+        >
+          Details
+        </button>
+        <button
+          className={`detail-tab ${activeTab === "graph" ? "detail-tab--active" : ""}`}
+          onClick={() => setActiveTab("graph")}
+        >
+          Graph
+        </button>
+      </div>
 
-        {/* Content */}
-        <div className="drawer-content">
-          {activeTab === "details" && (
-            <DetailsTab resource={resource} />
-          )}
-          {activeTab === "graph" && (
-            <GraphTab resource={resource} />
-          )}
-        </div>
+      {/* Content */}
+      <div className="detail-content">
+        {activeTab === "details" && (
+          <DetailsTab resource={resource} />
+        )}
+        {activeTab === "graph" && (
+          <GraphTab resource={resource} />
+        )}
       </div>
     </div>
   );

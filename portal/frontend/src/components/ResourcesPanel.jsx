@@ -3,6 +3,7 @@ import { useResources } from "../hooks/useResources";
 import ResourcesTable from "./ResourcesTable";
 import ResourceDetailDrawer from "./ResourceDetailDrawer";
 import EmptyState from "./EmptyState";
+import SkeletonLoader from "./SkeletonLoader";
 import "../styles/ResourcesPanel.css";
 
 /**
@@ -54,10 +55,7 @@ function ResourcesPanel({ isActive }) {
             </p>
           </div>
         </div>
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <p>Loading resources from Azure...</p>
-        </div>
+        <SkeletonLoader count={5} />
       </div>
     );
   }
@@ -98,8 +96,8 @@ function ResourcesPanel({ isActive }) {
               View and manage Azure resources deployed through the ARM Portal.
             </p>
           </div>
-          <button className="btn-refresh" onClick={handleRefresh}>
-            Refresh
+          <button className="refresh-btn" onClick={handleRefresh} title="Refresh resources">
+            ↻
           </button>
         </div>
         <EmptyState
@@ -110,7 +108,27 @@ function ResourcesPanel({ isActive }) {
     );
   }
 
-  // Main view
+  // Detail view
+  if (selectedResource) {
+    return (
+      <div className="resources-panel">
+        <div className="resources-header">
+          <button className="back-btn" onClick={handleCloseDrawer} title="Back to resources">
+            ← Back to Resources
+          </button>
+          <button className="refresh-btn" onClick={handleRefresh} disabled={loading} title="Refresh resources">
+            ↻
+          </button>
+        </div>
+        <ResourceDetailDrawer
+          resource={selectedResource}
+          onClose={handleCloseDrawer}
+        />
+      </div>
+    );
+  }
+
+  // Main table view
   return (
     <div className="resources-panel">
       <div className="resources-header">
@@ -120,8 +138,8 @@ function ResourcesPanel({ isActive }) {
             View and manage Azure resources deployed through the ARM Portal.
           </p>
         </div>
-        <button className="btn-refresh" onClick={handleRefresh} disabled={loading}>
-          {loading ? "Refreshing..." : "Refresh"}
+        <button className="refresh-btn" onClick={handleRefresh} disabled={loading} title="Refresh resources">
+          ↻
         </button>
       </div>
 
@@ -132,13 +150,6 @@ function ResourcesPanel({ isActive }) {
           selectedResource={selectedResource}
         />
       </div>
-
-      {selectedResource && (
-        <ResourceDetailDrawer
-          resource={selectedResource}
-          onClose={handleCloseDrawer}
-        />
-      )}
     </div>
   );
 }
