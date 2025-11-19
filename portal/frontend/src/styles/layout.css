@@ -33,6 +33,11 @@
   z-index: 1;
 }
 
+/* Full width layout for Resources and Admin tabs */
+.app-main--full {
+  grid-template-columns: 1fr;
+}
+
 .panel {
   background: var(--bg-panel);
   border-radius: 22px;

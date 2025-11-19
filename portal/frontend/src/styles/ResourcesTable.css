@@ -1,0 +1,217 @@
+/* Resources Table - matches ARMPortal design system */
+
+.resources-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+}
+
+/* Filters Bar */
+.resources-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.filter-select {
+  padding: 6px 10px;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  border-radius: 6px;
+  background: #ffffff;
+  font-size: 0.78rem;
+  color: var(--text-main);
+  cursor: pointer;
+  transition: all 0.16s ease-out;
+  min-width: 140px;
+}
+
+.filter-select:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+.filter-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f3f4f6;
+}
+
+.filter-search {
+  flex: 1;
+  min-width: 180px;
+  padding: 6px 10px;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  border-radius: 6px;
+  font-size: 0.78rem;
+  color: var(--text-main);
+  background: #ffffff;
+  transition: all 0.16s ease-out;
+}
+
+.filter-search:hover {
+  border-color: var(--accent);
+}
+
+.filter-search:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+.filter-search::placeholder {
+  color: var(--text-soft);
+}
+
+/* Results Count */
+.resources-count {
+  margin-top: 4px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* Table Container */
+.resources-table-container {
+  flex: 1;
+  overflow: auto;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+}
+
+/* Table */
+.resources-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+}
+
+.resources-table thead {
+  background: #f9fafb;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.resources-table th {
+  padding: 10px 12px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.78rem;
+  color: #6b7280;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.3);
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.resources-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s, color 0.15s;
+}
+
+.resources-table th.sortable:hover {
+  background: #f3f4f6;
+  color: var(--text-main);
+}
+
+.resources-table tbody tr {
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+  transition: background 0.15s;
+  cursor: pointer;
+}
+
+.resources-table tbody tr:hover {
+  background: rgba(37, 99, 235, 0.04);
+}
+
+.resources-table tbody tr.selected {
+  background: rgba(37, 99, 235, 0.08);
+}
+
+.resources-table tbody tr.selected:hover {
+  background: rgba(37, 99, 235, 0.12);
+}
+
+.resources-table td {
+  padding: 10px 12px;
+  color: var(--text-main);
+}
+
+.resource-name {
+  font-weight: 500;
+  color: #111827;
+}
+
+.resource-type {
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+/* Status Badges - using job-status style */
+.status-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border: 1px solid rgba(148, 163, 184, 0.8);
+  white-space: nowrap;
+}
+
+.status-badge--managed {
+  color: #166534;
+  background: #dcfce7;
+  border-color: #22c55e;
+}
+
+.status-badge--stale {
+  color: #854d0e;
+  background: #fef3c7;
+  border-color: #fbbf24;
+}
+
+.status-badge--orphan {
+  color: #7f1d1d;
+  background: #fee2e2;
+  border-color: #f87171;
+}
+
+.status-badge--unmanaged {
+  color: var(--text-muted);
+  background: var(--bg-chip);
+  border-color: rgba(148, 163, 184, 0.6);
+}
+
+/* PR Link */
+.pr-link {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.84rem;
+  transition: color 0.15s;
+}
+
+.pr-link:hover {
+  color: var(--accent-strong);
+  text-decoration: underline;
+}
+
+/* Empty State */
+.empty-state {
+  padding: 40px 16px;
+  text-align: center;
+  color: var(--text-soft);
+  font-size: 0.84rem;
+  font-style: italic;
+}

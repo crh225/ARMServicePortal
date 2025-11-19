@@ -5,6 +5,7 @@ import "./styles/layout.css";
 import Header from "./components/Header";
 import BlueprintsPanel from "./components/BlueprintsPanel";
 import JobsPanel from "./components/JobsPanel";
+import ResourcesPanel from "./components/ResourcesPanel";
 import AdminPanel from "./components/AdminPanel";
 import AuthCallback from "./components/AuthCallback";
 import Footer from "./components/Footer";
@@ -54,7 +55,7 @@ function App() {
           <div className="app-shell">
             <Header activeTab={activeTab} onTabChange={handleTabChange} />
 
-            <main className="app-main">
+            <main className={`app-main ${(activeTab === "resources" || activeTab === "admin") ? "app-main--full" : ""}`}>
               {activeTab === "blueprints" && (
                 <BlueprintsPanel
                   updateResourceData={updateResourceData}
@@ -65,6 +66,11 @@ function App() {
                 <JobsPanel
                   isActive={true}
                   onUpdateResource={handleUpdateResource}
+                />
+              )}
+              {activeTab === "resources" && (
+                <ResourcesPanel
+                  isActive={true}
                 />
               )}
               {activeTab === "admin" && (

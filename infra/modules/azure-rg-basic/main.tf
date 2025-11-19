@@ -23,6 +23,12 @@ variable "location" {
   default     = "eastus2"
 }
 
+variable "tags" {
+  type        = map(string)
+  description = "Tags to apply to resources"
+  default     = {}
+}
+
 locals {
   rg_name = "${var.project_name}-${var.environment}-rg"
 }
@@ -30,6 +36,7 @@ locals {
 resource "azurerm_resource_group" "this" {
   name     = local.rg_name
   location = var.location
+  tags     = var.tags
 }
 
 output "resource_group_name" {

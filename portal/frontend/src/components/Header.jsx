@@ -53,6 +53,14 @@ function Header({ activeTab, onTabChange }) {
           </button>
           <button
             className={
+              "nav-pill" + (activeTab === "resources" ? " nav-pill--active" : "")
+            }
+            onClick={() => onTabChange("resources")}
+          >
+            Resources
+          </button>
+          <button
+            className={
               "nav-pill" + (activeTab === "admin" ? " nav-pill--active" : "")
             }
             onClick={() => onTabChange("admin")}

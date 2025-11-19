@@ -1,7 +1,8 @@
 /**
  * Render a Terraform module configuration with outputs
+ * Automatically adds ARM Portal tags for resource tracking
  */
-export function renderTerraformModule({ moduleName, blueprint, variables }) {
+export function renderTerraformModule({ moduleName, blueprint, variables, prNumber, owner }) {
   const lines = [
     `module "${moduleName}" {`,
     `  source       = "${blueprint.moduleSource}"`
@@ -9,11 +10,24 @@ export function renderTerraformModule({ moduleName, blueprint, variables }) {
 
   const allowedVarNames = (blueprint.variables || []).map((v) => v.name);
 
+  // Add regular variables
   for (const [k, v] of Object.entries(variables)) {
     if (!allowedVarNames.includes(k)) continue;
     const value = String(v).replace(/"/g, '\\"');
     lines.push(`  ${k} = "${value}"`);
   }
+
+  // Add ARM Portal tags for resource tracking
+  lines.push("");
+  lines.push("  # ARM Portal tracking tags");
+  lines.push("  tags = {");
+  lines.push(`    armportal-environment = "${variables.environment || 'dev'}"`);
+  lines.push(`    armportal-blueprint   = "${blueprint.id}"`);
+  lines.push(`    armportal-request-id  = "${prNumber || moduleName}"`);
+  if (owner) {
+    lines.push(`    armportal-owner       = "${owner}"`);
+  }
+  lines.push("  }");
 
   lines.push("}");
 
