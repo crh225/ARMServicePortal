@@ -52,9 +52,43 @@ variable "purge_protection_enabled" {
   default     = true
 }
 
+variable "tags" {
+  type        = map(string)
+  description = "Additional tags to apply to resources"
+  default     = {}
+}
+
+variable "request_id" {
+  type        = string
+  description = "ARM Portal request ID (PR number)"
+  default     = null
+}
+
+variable "owner" {
+  type        = string
+  description = "ARM Portal owner"
+  default     = "crh225"
+}
+
 locals {
   # Key Vault names must be 3–24 chars, alphanumeric, globally unique.
   kv_name_prefix = lower(replace("${var.project_name}${var.environment}", "/[^a-z0-9]/", ""))
+
+  # ARM Portal required tags
+  armportal_tags = {
+    "armportal-environment" = var.environment
+    "armportal-blueprint"   = "azure-key-vault-basic"
+    "armportal-owner"       = var.owner
+  }
+
+  # Add request-id only if provided
+  armportal_tags_with_request = var.request_id != null ? merge(
+    local.armportal_tags,
+    { "armportal-request-id" = var.request_id }
+  ) : local.armportal_tags
+
+  # Merge ARM Portal tags with user tags (user tags can override)
+  all_tags = merge(local.armportal_tags_with_request, var.tags)
 }
 
 resource "random_string" "suffix" {
@@ -78,7 +112,7 @@ resource "azurerm_key_vault" "this" {
   purge_protection_enabled    = var.purge_protection_enabled
   public_network_access_enabled = true
 
-  # You can add additional network rules / tags here later if needed
+  tags = local.all_tags
 }
 
 output "key_vault_name" {
