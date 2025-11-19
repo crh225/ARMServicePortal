@@ -13,8 +13,18 @@ export function renderTerraformModule({ moduleName, blueprint, variables, prNumb
   // Add regular variables
   for (const [k, v] of Object.entries(variables)) {
     if (!allowedVarNames.includes(k)) continue;
-    const value = String(v).replace(/"/g, '\\"');
-    lines.push(`  ${k} = "${value}"`);
+    const strValue = String(v);
+
+    // Check if this is a Terraform reference (module output, variable, local, etc.)
+    // Don't quote these - they need to be unquoted for Terraform to evaluate them
+    const isTerraformReference = strValue.match(/^(module\.|var\.|local\.|data\.)/);
+
+    if (isTerraformReference) {
+      lines.push(`  ${k} = ${strValue}`);
+    } else {
+      const value = strValue.replace(/"/g, '\\"');
+      lines.push(`  ${k} = "${value}"`);
+    }
   }
 
   // Add ARM Portal tags for resource tracking
