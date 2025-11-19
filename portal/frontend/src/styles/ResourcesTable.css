@@ -225,29 +225,6 @@
   margin-top: 12px;
 }
 
-.pagination-btn {
-  padding: 6px 14px;
-  border-radius: 8px;
-  border: 1px solid rgba(148, 163, 184, 0.5);
-  background: #ffffff;
-  color: var(--text-main);
-  font-size: 0.84rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.16s ease-out;
-}
-
-.pagination-btn:hover:not(:disabled) {
-  border-color: var(--accent);
-  background: rgba(37, 99, 235, 0.04);
-  color: var(--accent);
-}
-
-.pagination-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
 .pagination-info {
   font-size: 0.8rem;
   color: var(--text-muted);

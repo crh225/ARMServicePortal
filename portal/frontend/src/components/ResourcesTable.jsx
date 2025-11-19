@@ -311,21 +311,21 @@ function ResourcesTable({ resources, onSelectResource, selectedResource }) {
       {totalPages > 1 && (
         <div className="pagination">
           <button
-            className="pagination-btn"
+            className="nav-pill"
             onClick={() => setCurrentPage(currentPage - 1)}
             disabled={currentPage === 1}
           >
-            Previous
+            ← Prev
           </button>
           <span className="pagination-info">
             Page {currentPage} of {totalPages}
           </span>
           <button
-            className="pagination-btn"
+            className="nav-pill"
             onClick={() => setCurrentPage(currentPage + 1)}
             disabled={currentPage === totalPages}
           >
-            Next
+            Next →
           </button>
         </div>
       )}
