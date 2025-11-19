@@ -27,9 +27,11 @@ function extractPRNumbers(resources) {
 }
 
 /**
- * Enrich resources with GitHub PR data and cost information
+ * Enrich resources with GitHub PR data and optionally cost information
+ * @param {Array} resources - Resources to enrich
+ * @param {boolean} includeCosts - Whether to fetch cost data (default: false for faster response)
  */
-async function enrichResourcesWithPRs(resources) {
+async function enrichResourcesWithPRs(resources, includeCosts = false) {
   const prNumbers = extractPRNumbers(resources);
 
   // Fetch all PRs in parallel
@@ -42,37 +44,41 @@ async function enrichResourcesWithPRs(resources) {
   const prResults = await Promise.all(prPromises);
   const prMap = new Map(prResults.map(({ prNumber, pr }) => [prNumber, pr]));
 
-  // Get unique subscriptions for cost queries
-  const subscriptions = new Set();
-  resources.forEach(resource => {
-    if (resource.subscriptionId) {
-      subscriptions.add(resource.subscriptionId);
-    }
-  });
+  // Optionally fetch costs (disabled by default for faster initial load)
+  let allCostsMap = new Map();
+  let allRgTotals = new Map();
 
-  // Fetch costs for each subscription (more efficient, avoids rate limiting)
-  const costPromises = Array.from(subscriptions).map(async subscriptionId => {
-    const result = await getSubscriptionCosts(subscriptionId);
-    console.log(`Cost query for subscription ${subscriptionId}: ${result.costMap.size} resources, ${result.rgTotals.size} RGs`);
-    return { subscriptionId, costMap: result.costMap, rgTotals: result.rgTotals };
-  });
-
-  const costResults = await Promise.all(costPromises);
-  const allCostsMap = new Map(); // Individual resource costs
-  const allRgTotals = new Map(); // Total costs per RG per subscription
-
-  costResults.forEach(({ subscriptionId, costMap, rgTotals }) => {
-    // Store per-resource costs
-    costMap.forEach((cost, resourceId) => {
-      allCostsMap.set(resourceId, cost);
+  if (includeCosts) {
+    // Get unique subscriptions for cost queries
+    const subscriptions = new Set();
+    resources.forEach(resource => {
+      if (resource.subscriptionId) {
+        subscriptions.add(resource.subscriptionId);
+      }
     });
-    // Store RG totals with subscription prefix
-    rgTotals.forEach((cost, rgName) => {
-      const key = `${subscriptionId}|${rgName}`;
-      console.log(`Storing RG cost for key "${key}": $${cost}`);
-      allRgTotals.set(key, cost);
+
+    // Fetch costs for each subscription (more efficient, avoids rate limiting)
+    const costPromises = Array.from(subscriptions).map(async subscriptionId => {
+      const result = await getSubscriptionCosts(subscriptionId);
+      console.log(`Cost query for subscription ${subscriptionId}: ${result.costMap.size} resources, ${result.rgTotals.size} RGs`);
+      return { subscriptionId, costMap: result.costMap, rgTotals: result.rgTotals };
     });
-  });
+
+    const costResults = await Promise.all(costPromises);
+
+    costResults.forEach(({ subscriptionId, costMap, rgTotals }) => {
+      // Store per-resource costs
+      costMap.forEach((cost, resourceId) => {
+        allCostsMap.set(resourceId, cost);
+      });
+      // Store RG totals with subscription prefix
+      rgTotals.forEach((cost, rgName) => {
+        const key = `${subscriptionId}|${rgName}`;
+        console.log(`Storing RG cost for key "${key}": $${cost}`);
+        allRgTotals.set(key, cost);
+      });
+    });
+  }
 
   // Enrich each resource
   return resources.map(resource => {
@@ -160,7 +166,8 @@ export async function getResources(req, res) {
       resourceGroup,
       subscriptions,
       skip,
-      top
+      top,
+      includeCosts
     } = req.query;
 
     const options = {};
@@ -171,6 +178,9 @@ export async function getResources(req, res) {
       // Parse subscriptions if provided as comma-separated string
       options.subscriptions = subscriptions.split(",").map(s => s.trim());
     }
+
+    // Parse includeCosts parameter (default: false for faster initial load)
+    const shouldIncludeCosts = includeCosts === 'true';
 
     // Parse pagination parameters
     if (skip) {
@@ -190,8 +200,8 @@ export async function getResources(req, res) {
     // Query Azure Resource Graph
     const resources = await queryArmPortalResources(options);
 
-    // Enrich with GitHub PR data
-    const enrichedResources = await enrichResourcesWithPRs(resources);
+    // Enrich with GitHub PR data and optionally costs
+    const enrichedResources = await enrichResourcesWithPRs(resources, shouldIncludeCosts);
 
     // Note: Azure Resource Graph doesn't provide total count easily
     // We return the count of returned resources

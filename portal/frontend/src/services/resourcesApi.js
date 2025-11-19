@@ -8,10 +8,11 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 /**
  * Fetch all ARM Portal resources
  * @param {object} options - Query options
+ * @param {boolean} options.includeCosts - Whether to include cost data (slower)
  * @returns {Promise<object>} Response with resources array
  */
 export async function fetchAllResources(options = {}) {
-  const { environment, blueprintId, subscriptions } = options;
+  const { environment, blueprintId, subscriptions, includeCosts } = options;
 
   const params = new URLSearchParams();
   if (environment) params.append("environment", environment);
@@ -19,6 +20,7 @@ export async function fetchAllResources(options = {}) {
   if (subscriptions && subscriptions.length > 0) {
     params.append("subscriptions", subscriptions.join(","));
   }
+  if (includeCosts) params.append("includeCosts", "true");
 
   const url = `${API_BASE_URL}/api/resources${params.toString() ? `?${params.toString()}` : ""}`;
 

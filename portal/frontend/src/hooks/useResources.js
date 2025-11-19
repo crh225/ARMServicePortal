@@ -46,14 +46,15 @@ export function useResources() {
   const [error, setError] = useState(null);
 
   /**
-   * Fetch resources from backend
+   * Fetch resources from backend (progressive loading)
+   * First loads resources quickly without costs, then patches costs in
    */
   const fetchResources = useCallback(async (options = {}) => {
     setLoading(true);
     setError(null);
 
     try {
-      // Fetch from backend (backend handles Azure auth and GitHub enrichment)
+      // Phase 1: Fetch resources WITHOUT costs (fast - loads grid immediately)
       const response = await fetchAllResources(options);
 
       // Compute ownership status for each resource
@@ -63,11 +64,26 @@ export function useResources() {
         // cost and health are already provided by backend
       }));
 
+      // Show resources immediately
       setResources(enrichedResources);
+      setLoading(false);
+
+      // Phase 2: Fetch costs separately and patch them in (slower, updates grid progressively)
+      const costResponse = await fetchAllResources({ ...options, includeCosts: true });
+
+      // Update resources with cost data
+      const resourcesWithCosts = enrichedResources.map(resource => {
+        const resourceWithCost = costResponse.resources.find(r => r.id === resource.id);
+        return {
+          ...resource,
+          cost: resourceWithCost?.cost !== undefined ? resourceWithCost.cost : null
+        };
+      });
+
+      setResources(resourcesWithCosts);
     } catch (err) {
       console.error("Failed to fetch resources:", err);
       setError(err.message);
-    } finally {
       setLoading(false);
     }
   }, []);
