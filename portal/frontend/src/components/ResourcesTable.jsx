@@ -286,7 +286,7 @@ function ResourcesTable({ resources, onSelectResource, selectedResource }) {
                   <td>
                     {resource.prNumber ? (
                       <a
-                        href={resource.pr?.url}
+                        href={resource.pr?.pullRequestUrl || `https://github.com/crh225/ARMServicePortal/pull/${resource.prNumber}`}
                         target="_blank"
                         rel="noreferrer"
                         className="pr-link"
