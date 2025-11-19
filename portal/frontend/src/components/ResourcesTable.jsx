@@ -70,6 +70,10 @@ function ResourcesTable({ resources, onSelectResource, selectedResource }) {
   const [sortColumn, setSortColumn] = useState("name");
   const [sortDirection, setSortDirection] = useState("asc");
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
   // Extract unique filter options
   const filterOptions = useMemo(() => {
     const environments = new Set();
@@ -137,6 +141,20 @@ function ResourcesTable({ resources, onSelectResource, selectedResource }) {
 
     return filtered;
   }, [resources, environmentFilter, blueprintFilter, ownerFilter, ownershipFilter, searchQuery, sortColumn, sortDirection]);
+
+  // Paginate resources
+  const paginatedResources = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredResources.slice(startIndex, endIndex);
+  }, [filteredResources, currentPage, itemsPerPage]);
+
+  const totalPages = Math.ceil(filteredResources.length / itemsPerPage);
+
+  // Reset to page 1 when filters change
+  useMemo(() => {
+    setCurrentPage(1);
+  }, [environmentFilter, blueprintFilter, ownerFilter, ownershipFilter, searchQuery]);
 
   const handleSort = (column) => {
     if (sortColumn === column) {
@@ -210,9 +228,9 @@ function ResourcesTable({ resources, onSelectResource, selectedResource }) {
         />
       </div>
 
-      {/* Results Count */}
+      {/* Results Count and Pagination Info */}
       <div className="resources-count">
-        Showing {filteredResources.length} of {resources.length} resources
+        Showing {((currentPage - 1) * itemsPerPage) + 1}-{Math.min(currentPage * itemsPerPage, filteredResources.length)} of {filteredResources.length} resources
       </div>
 
       {/* Table */}
@@ -243,14 +261,14 @@ function ResourcesTable({ resources, onSelectResource, selectedResource }) {
             </tr>
           </thead>
           <tbody>
-            {filteredResources.length === 0 ? (
+            {paginatedResources.length === 0 ? (
               <tr>
                 <td colSpan="8" className="empty-state">
                   No resources found matching your filters
                 </td>
               </tr>
             ) : (
-              filteredResources.map((resource) => (
+              paginatedResources.map((resource) => (
                 <tr
                   key={resource.id}
                   onClick={() => onSelectResource(resource)}
@@ -288,6 +306,29 @@ function ResourcesTable({ resources, onSelectResource, selectedResource }) {
           </tbody>
         </table>
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="pagination">
+          <button
+            className="pagination-btn"
+            onClick={() => setCurrentPage(currentPage - 1)}
+            disabled={currentPage === 1}
+          >
+            Previous
+          </button>
+          <span className="pagination-info">
+            Page {currentPage} of {totalPages}
+          </span>
+          <button
+            className="pagination-btn"
+            onClick={() => setCurrentPage(currentPage + 1)}
+            disabled={currentPage === totalPages}
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 }

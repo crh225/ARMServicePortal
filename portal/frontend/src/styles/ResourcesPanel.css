@@ -81,6 +81,12 @@
   transform: none;
 }
 
+.refresh-btn--success {
+  border-color: #22c55e;
+  color: #22c55e;
+  background: #dcfce7;
+}
+
 /* Content */
 .resources-content {
   flex: 1;

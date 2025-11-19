@@ -22,6 +22,7 @@ function ResourcesPanel({ isActive }) {
 
   const [selectedResource, setSelectedResource] = useState(null);
   const [hasLoadedRef, setHasLoadedRef] = useState(false);
+  const [refreshSuccess, setRefreshSuccess] = useState(false);
 
   // Fetch resources when tab becomes active
   useEffect(() => {
@@ -31,8 +32,11 @@ function ResourcesPanel({ isActive }) {
     }
   }, [isActive, hasLoadedRef, fetchResources]);
 
-  const handleRefresh = () => {
-    refreshResources();
+  const handleRefresh = async () => {
+    await refreshResources();
+    // Show success indicator
+    setRefreshSuccess(true);
+    setTimeout(() => setRefreshSuccess(false), 1000);
   };
 
   const handleSelectResource = (resource) => {
@@ -116,9 +120,6 @@ function ResourcesPanel({ isActive }) {
           <button className="back-btn" onClick={handleCloseDrawer} title="Back to resources">
             ← Back to Resources
           </button>
-          <button className="refresh-btn" onClick={handleRefresh} disabled={loading} title="Refresh resources">
-            ↻
-          </button>
         </div>
         <ResourceDetailDrawer
           resource={selectedResource}
@@ -138,7 +139,12 @@ function ResourcesPanel({ isActive }) {
             View and manage Azure resources deployed through the ARM Portal.
           </p>
         </div>
-        <button className="refresh-btn" onClick={handleRefresh} disabled={loading} title="Refresh resources">
+        <button
+          className={`refresh-btn ${refreshSuccess ? 'refresh-btn--success' : ''}`}
+          onClick={handleRefresh}
+          disabled={loading}
+          title="Refresh resources"
+        >
           ↻
         </button>
       </div>
