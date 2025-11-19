@@ -59,10 +59,8 @@ export function useResources() {
       // Compute ownership status for each resource
       const enrichedResources = response.resources.map(resource => ({
         ...resource,
-        ownershipStatus: computeOwnershipStatus(resource),
-        // Placeholder for future cost feature
-        cost: null
-        // health is already provided by backend
+        ownershipStatus: computeOwnershipStatus(resource)
+        // cost and health are already provided by backend
       }));
 
       setResources(enrichedResources);

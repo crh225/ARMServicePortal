@@ -5,6 +5,7 @@
 
 import { queryArmPortalResources, queryResourcesByRequestId } from "../services/azureResourceGraph.js";
 import { getGitHubRequestByNumber } from "../services/github/pullRequests.js";
+import { getSubscriptionCosts } from "../services/costService.js";
 
 /**
  * Extract PR numbers from resources
@@ -26,7 +27,7 @@ function extractPRNumbers(resources) {
 }
 
 /**
- * Enrich resources with GitHub PR data
+ * Enrich resources with GitHub PR data and cost information
  */
 async function enrichResourcesWithPRs(resources) {
   const prNumbers = extractPRNumbers(resources);
@@ -41,6 +42,38 @@ async function enrichResourcesWithPRs(resources) {
   const prResults = await Promise.all(prPromises);
   const prMap = new Map(prResults.map(({ prNumber, pr }) => [prNumber, pr]));
 
+  // Get unique subscriptions for cost queries
+  const subscriptions = new Set();
+  resources.forEach(resource => {
+    if (resource.subscriptionId) {
+      subscriptions.add(resource.subscriptionId);
+    }
+  });
+
+  // Fetch costs for each subscription (more efficient, avoids rate limiting)
+  const costPromises = Array.from(subscriptions).map(async subscriptionId => {
+    const result = await getSubscriptionCosts(subscriptionId);
+    console.log(`Cost query for subscription ${subscriptionId}: ${result.costMap.size} resources, ${result.rgTotals.size} RGs`);
+    return { subscriptionId, costMap: result.costMap, rgTotals: result.rgTotals };
+  });
+
+  const costResults = await Promise.all(costPromises);
+  const allCostsMap = new Map(); // Individual resource costs
+  const allRgTotals = new Map(); // Total costs per RG per subscription
+
+  costResults.forEach(({ subscriptionId, costMap, rgTotals }) => {
+    // Store per-resource costs
+    costMap.forEach((cost, resourceId) => {
+      allCostsMap.set(resourceId, cost);
+    });
+    // Store RG totals with subscription prefix
+    rgTotals.forEach((cost, rgName) => {
+      const key = `${subscriptionId}|${rgName}`;
+      console.log(`Storing RG cost for key "${key}": $${cost}`);
+      allRgTotals.set(key, cost);
+    });
+  });
+
   // Enrich each resource
   return resources.map(resource => {
     const requestId = resource.tags?.["armportal-request-id"];
@@ -53,10 +86,33 @@ async function enrichResourcesWithPRs(resources) {
     let health = null;
 
     const resourceType = (resource.type || "").toLowerCase();
-    if (resourceType !== "microsoft.resources/subscriptions" &&
-        resourceType !== "microsoft.resources/resourcegroups") {
+    const isResourceGroup = resourceType === "microsoft.resources/resourcegroups";
+
+    if (resourceType !== "microsoft.resources/subscriptions" && !isResourceGroup) {
       provisioningState = resource.properties?.provisioningState || null;
       health = provisioningState;
+    }
+
+    // Get cost for this resource
+    let cost = null;
+    if (isResourceGroup) {
+      // For Resource Groups, use the total cost of all resources in that RG
+      const rgKey = `${resource.subscriptionId}|${resource.name}`;
+      cost = allRgTotals.get(rgKey);
+      // If we have cost data (even if 0), set it. Otherwise leave as null.
+      if (cost !== undefined) {
+        cost = cost || 0; // Ensure 0 is shown as 0, not null
+      } else {
+        cost = null; // No data available
+      }
+    } else {
+      // For regular resources, look up individual cost
+      const resourceCost = allCostsMap.get(resource.id.toLowerCase());
+      if (resourceCost !== undefined) {
+        cost = resourceCost || 0; // If cost is 0, show 0 (not null)
+      } else {
+        cost = null; // No cost data available
+      }
     }
 
     return {
@@ -79,6 +135,9 @@ async function enrichResourcesWithPRs(resources) {
       // Health information
       health,
       provisioningState,
+
+      // Cost information (last 30 days in USD)
+      cost,
 
       // Enriched data
       prNumber,

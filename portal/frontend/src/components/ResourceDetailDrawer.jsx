@@ -184,10 +184,19 @@ function DetailsTab({ resource }) {
         </div>
       )}
 
-      {/* Cost (Placeholder) */}
+      {/* Cost */}
       <div className="drawer-section">
-        <h3 className="section-title">Cost</h3>
-        <p className="placeholder-text">Cost tracking coming soon...</p>
+        <h3 className="section-title">Cost (Last 30 Days)</h3>
+        <div className="info-grid">
+          <div className="info-item">
+            <span className="info-label">Total Cost</span>
+            <span className="info-value">
+              {resource.cost !== null && resource.cost !== undefined
+                ? `$${resource.cost.toFixed(2)}`
+                : "—"}
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* Health */}

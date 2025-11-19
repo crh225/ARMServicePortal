@@ -310,7 +310,11 @@ function ResourcesTable({ resources, onSelectResource, selectedResource }) {
                       "—"
                     )}
                   </td>
-                  <td>{resource.cost ? `$${resource.cost}` : "—"}</td>
+                  <td>
+                    {resource.cost !== null && resource.cost !== undefined
+                      ? `$${resource.cost.toFixed(2)}`
+                      : "—"}
+                  </td>
                   <td>{getHealthDisplay(resource.health)}</td>
                 </tr>
               ))

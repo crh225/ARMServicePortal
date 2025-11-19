@@ -9,6 +9,7 @@
     "start": "node src/index.js"
   },
   "dependencies": {
+    "@azure/arm-costmanagement": "^1.0.0-beta.1",
     "@azure/arm-resourcegraph": "^4.2.1",
     "@azure/identity": "^4.13.0",
     "@octokit/app": "^15.1.2",
