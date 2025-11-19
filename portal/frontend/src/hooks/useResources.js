@@ -60,9 +60,9 @@ export function useResources() {
       const enrichedResources = response.resources.map(resource => ({
         ...resource,
         ownershipStatus: computeOwnershipStatus(resource),
-        // Placeholders for future features
-        cost: null,
-        health: null
+        // Placeholder for future cost feature
+        cost: null
+        // health is already provided by backend
       }));
 
       setResources(enrichedResources);
