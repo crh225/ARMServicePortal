@@ -65,26 +65,35 @@
   color: var(--text-main);
   font-size: 1.3rem;
   cursor: pointer;
-  transition: all 0.16s ease-out;
+  transition: color 0.16s ease-out, border-color 0.16s ease-out;
   line-height: 1;
 }
 
-.refresh-btn:hover:not(:disabled) {
+.refresh-btn:hover:not(:disabled):not(.refresh-btn--loading) {
   border-color: var(--accent);
   color: var(--accent);
-  transform: rotate(180deg);
 }
 
 .refresh-btn:disabled {
   opacity: 0.5;
   cursor: default;
-  transform: none;
+}
+
+.refresh-btn--loading {
+  border-color: var(--accent);
+  color: var(--accent);
+  animation: spin 0.8s linear infinite;
 }
 
 .refresh-btn--success {
   border-color: #22c55e;
   color: #22c55e;
-  background: #dcfce7;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Content */

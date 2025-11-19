@@ -140,7 +140,7 @@ function ResourcesPanel({ isActive }) {
           </p>
         </div>
         <button
-          className={`refresh-btn ${refreshSuccess ? 'refresh-btn--success' : ''}`}
+          className={`refresh-btn ${loading ? 'refresh-btn--loading' : ''} ${refreshSuccess ? 'refresh-btn--success' : ''}`}
           onClick={handleRefresh}
           disabled={loading}
           title="Refresh resources"
