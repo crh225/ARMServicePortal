@@ -43,9 +43,43 @@ variable "replication_type" {
   default     = "LRS"
 }
 
+variable "tags" {
+  type        = map(string)
+  description = "Additional tags to apply to resources"
+  default     = {}
+}
+
+variable "request_id" {
+  type        = string
+  description = "ARM Portal request ID (PR number)"
+  default     = null
+}
+
+variable "owner" {
+  type        = string
+  description = "ARM Portal owner"
+  default     = "crh225"
+}
+
 locals {
   # Make a safe prefix from project + environment
   sa_name_prefix = lower(replace("${var.project_name}${var.environment}", "/[^a-z0-9]/", ""))
+
+  # ARM Portal required tags
+  armportal_tags = {
+    "armportal-environment" = var.environment
+    "armportal-blueprint"   = "azure-storage-basic"
+    "armportal-owner"       = var.owner
+  }
+
+  # Add request-id only if provided
+  armportal_tags_with_request = var.request_id != null ? merge(
+    local.armportal_tags,
+    { "armportal-request-id" = var.request_id }
+  ) : local.armportal_tags
+
+  # Merge ARM Portal tags with user tags (user tags can override)
+  all_tags = merge(local.armportal_tags_with_request, var.tags)
 }
 
 resource "random_string" "suffix" {
@@ -63,12 +97,14 @@ resource "azurerm_storage_account" "this" {
   account_tier             = var.account_tier
   account_replication_type = var.replication_type
 
-  # `kind` is no longer a valid argument in azurerm v4.x – it’s computed.
+  # `kind` is no longer a valid argument in azurerm v4.x – it's computed.
   # Default behavior is effectively a general purpose v2 account.
   min_tls_version            = "TLS1_2"
   https_traffic_only_enabled = true
 
   allow_nested_items_to_be_public = true
+
+  tags = local.all_tags
 }
 
 output "storage_account_name" {

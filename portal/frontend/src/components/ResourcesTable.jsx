@@ -51,7 +51,7 @@ function getStatusDisplay(status) {
  * Get health status display with badge
  */
 function getHealthDisplay(health) {
-  if (!health) return <span className="health-badge health-badge--unknown">Unknown</span>;
+  if (!health) return "—";
 
   // Normalize health status to lowercase for comparison
   const status = health.toLowerCase();

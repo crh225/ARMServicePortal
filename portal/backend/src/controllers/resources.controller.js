@@ -48,8 +48,16 @@ async function enrichResourcesWithPRs(resources) {
     const pr = prNumber && !isNaN(prNumber) ? prMap.get(prNumber) : null;
 
     // Extract health/provisioning state from properties
-    const provisioningState = resource.properties?.provisioningState || null;
-    const health = provisioningState ? provisioningState : null;
+    // Note: Resource Groups and subscriptions don't have provisioningState
+    let provisioningState = null;
+    let health = null;
+
+    const resourceType = (resource.type || "").toLowerCase();
+    if (resourceType !== "microsoft.resources/subscriptions" &&
+        resourceType !== "microsoft.resources/resourcegroups") {
+      provisioningState = resource.properties?.provisioningState || null;
+      health = provisioningState;
+    }
 
     return {
       // Resource data
