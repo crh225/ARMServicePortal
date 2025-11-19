@@ -9,7 +9,17 @@ on:
       - main
     paths:
       - "infra/environments/dev/**"
-      
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Terraform action to run'
+        required: true
+        default: 'plan'
+        type: choice
+        options:
+          - plan
+          - apply
+
 concurrency:
   group: terraform-dev-state
   cancel-in-progress: false
@@ -40,8 +50,8 @@ jobs:
       - name: Terraform Init
         run: terraform init -input=false
 
-      - name: Terraform Plan (PRs only)
-        if: github.event_name == 'pull_request'
+      - name: Terraform Plan
+        if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'plan')
         id: terraform_plan
         continue-on-error: true
         env:
@@ -101,8 +111,8 @@ jobs:
               core.setFailed(`Terraform plan failed with outcome: ${outcome}`);
             }
 
-      - name: Terraform Apply (main only)
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      - name: Terraform Apply
+        if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply')
         id: terraform_apply
         continue-on-error: true
         env:
@@ -113,12 +123,12 @@ jobs:
           TF_VAR_github_app_private_key_base64: ${{ secrets.GH_APP_PRIVATE_KEY_BASE64 }}
         run: terraform apply -input=false -auto-approve
 
-      - name: Capture Terraform outputs (main only)
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      - name: Capture Terraform outputs
+        if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply')
         id: tfoutputs
         run: terraform output -json > tf-outputs.json
 
-      - name: Comment outputs + label apply status on associated PR (main only)
+      - name: Comment outputs + label apply status on associated PR
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/github-script@v7
         env:
