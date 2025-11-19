@@ -151,14 +151,8 @@ resource "azurerm_container_group" "this" {
       }
     }
 
-    # Environment variables from JSON
-    dynamic "environment_variables" {
-      for_each = local.env_vars
-      content {
-        name  = environment_variables.key
-        value = environment_variables.value
-      }
-    }
+    # Environment variables from JSON (map of key => value)
+    environment_variables = local.env_vars
   }
 
   tags = local.all_tags
