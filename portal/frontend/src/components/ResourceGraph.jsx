@@ -13,28 +13,41 @@ function ResourceGraph({ resource }) {
   const [error, setError] = useState(null);
   const canvasRef = useRef(null);
 
-  // Fetch resources related to this request
+  // Fetch resources related to this request or resource group
   useEffect(() => {
     async function fetchGraphData() {
-      if (!resource.requestId) {
-        setError("No request ID available for this resource");
-        return;
-      }
-
       setLoading(true);
       setError(null);
 
       try {
-        // Fetch from backend API
-        const response = await fetchResourcesByRequestId(resource.requestId);
-        const resources = response.resources;
+        let resources = [];
+        let centerNodeLabel = "";
+        let centerNodeId = "";
+
+        if (resource.requestId) {
+          // Fetch by request ID if available
+          const response = await fetchResourcesByRequestId(resource.requestId);
+          resources = response.resources;
+          centerNodeLabel = `Request #${resource.requestId}`;
+          centerNodeId = `request-${resource.requestId}`;
+        } else {
+          // Fallback: show resources in the same resource group
+          const response = await fetch(`/api/resources?resourceGroup=${encodeURIComponent(resource.resourceGroup)}`);
+          if (!response.ok) {
+            throw new Error(`Failed to fetch resources: ${response.statusText}`);
+          }
+          const data = await response.json();
+          resources = data.resources;
+          centerNodeLabel = resource.resourceGroup;
+          centerNodeId = `rg-${resource.resourceGroup}`;
+        }
 
         // Build graph data
         const nodes = [
           {
-            id: `request-${resource.requestId}`,
-            label: `Request #${resource.requestId}`,
-            type: "request",
+            id: centerNodeId,
+            label: centerNodeLabel,
+            type: resource.requestId ? "request" : "resourceGroup",
             x: 0,
             y: 0
           }
@@ -53,7 +66,7 @@ function ResourceGraph({ resource }) {
         });
 
         const edges = resources.map(r => ({
-          from: `request-${resource.requestId}`,
+          from: centerNodeId,
           to: r.id
         }));
 

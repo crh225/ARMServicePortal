@@ -74,17 +74,42 @@ async function enrichResourcesWithPRs(resources) {
 /**
  * GET /api/resources
  * Get all ARM Portal resources with GitHub enrichment
+ * Supports filtering by environment, blueprintId, resourceGroup, subscriptions
+ * Supports pagination with skip and top parameters
  */
 export async function getResources(req, res) {
   try {
-    const { environment, blueprintId, subscriptions } = req.query;
+    const {
+      environment,
+      blueprintId,
+      resourceGroup,
+      subscriptions,
+      skip,
+      top
+    } = req.query;
 
     const options = {};
     if (environment) options.environment = environment;
     if (blueprintId) options.blueprintId = blueprintId;
+    if (resourceGroup) options.resourceGroup = resourceGroup;
     if (subscriptions) {
       // Parse subscriptions if provided as comma-separated string
       options.subscriptions = subscriptions.split(",").map(s => s.trim());
+    }
+
+    // Parse pagination parameters
+    if (skip) {
+      const skipNum = parseInt(skip, 10);
+      if (!isNaN(skipNum) && skipNum >= 0) {
+        options.skip = skipNum;
+      }
+    }
+
+    if (top) {
+      const topNum = parseInt(top, 10);
+      if (!isNaN(topNum) && topNum > 0 && topNum <= 1000) {
+        options.top = topNum;
+      }
     }
 
     // Query Azure Resource Graph
@@ -93,9 +118,14 @@ export async function getResources(req, res) {
     // Enrich with GitHub PR data
     const enrichedResources = await enrichResourcesWithPRs(resources);
 
+    // Note: Azure Resource Graph doesn't provide total count easily
+    // We return the count of returned resources
+    // For true total count, would need a separate count query
     res.json({
       resources: enrichedResources,
-      count: enrichedResources.length
+      count: enrichedResources.length,
+      skip: options.skip || 0,
+      top: options.top || 1000
     });
   } catch (error) {
     console.error("Failed to fetch resources:", error);

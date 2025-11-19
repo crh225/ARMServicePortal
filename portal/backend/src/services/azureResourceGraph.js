@@ -20,7 +20,10 @@ export async function queryArmPortalResources(options = {}) {
     environment = null,
     blueprintId = null,
     requestId = null,
-    subscriptions = [] // Can be provided by frontend if needed
+    resourceGroup = null,
+    subscriptions = [], // Can be provided by frontend if needed
+    skip = 0, // For pagination
+    top = 1000 // Default limit
   } = options;
 
   // Build KQL query - get ALL resources and resource groups
@@ -39,8 +42,23 @@ export async function queryArmPortalResources(options = {}) {
     query += ` | where tags['armportal-request-id'] =~ '${requestId}'`;
   }
 
+  if (resourceGroup) {
+    query += ` | where resourceGroup =~ '${resourceGroup}'`;
+  }
+
   // Project relevant fields
   query += ` | project id, name, type, location, resourceGroup, subscriptionId, tags, properties`;
+
+  // Add sorting and pagination
+  query += ` | order by name asc`;
+
+  if (skip > 0) {
+    query += ` | skip ${skip}`;
+  }
+
+  if (top > 0 && top <= 1000) {
+    query += ` | limit ${top}`;
+  }
 
   try {
     const queryRequest = {
