@@ -73,6 +73,24 @@ variable "environment_variables" {
   default     = "{}"
 }
 
+variable "tags" {
+  type        = map(string)
+  description = "Additional tags to apply to resources"
+  default     = {}
+}
+
+variable "request_id" {
+  type        = string
+  description = "ARM Portal request ID (PR number)"
+  default     = null
+}
+
+variable "owner" {
+  type        = string
+  description = "ARM Portal owner"
+  default     = "crh225"
+}
+
 locals {
   container_name = lower(replace("${var.project_name}-${var.environment}", "/[^a-z0-9-]/", ""))
   dns_name_label = lower(replace("${var.project_name}-${var.environment}", "/[^a-z0-9-]/", ""))
@@ -82,6 +100,22 @@ locals {
 
   # Determine if IP address should be configured
   enable_ip = var.ip_address_type != "None"
+
+  # ARM Portal required tags
+  armportal_tags = {
+    "armportal-environment" = var.environment
+    "armportal-blueprint"   = "azure-aci"
+    "armportal-owner"       = var.owner
+  }
+
+  # Add request-id only if provided
+  armportal_tags_with_request = var.request_id != null ? merge(
+    local.armportal_tags,
+    { "armportal-request-id" = var.request_id }
+  ) : local.armportal_tags
+
+  # Merge ARM Portal tags with user tags (user tags can override)
+  all_tags = merge(local.armportal_tags_with_request, var.tags)
 }
 
 resource "random_string" "suffix" {
@@ -127,11 +161,7 @@ resource "azurerm_container_group" "this" {
     }
   }
 
-  tags = {
-    Environment = var.environment
-    Project     = var.project_name
-    ManagedBy   = "Terraform"
-  }
+  tags = local.all_tags
 }
 
 output "container_group_name" {

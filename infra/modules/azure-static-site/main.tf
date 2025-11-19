@@ -49,10 +49,44 @@ variable "enable_cdn" {
   default     = "false"
 }
 
+variable "tags" {
+  type        = map(string)
+  description = "Additional tags to apply to resources"
+  default     = {}
+}
+
+variable "request_id" {
+  type        = string
+  description = "ARM Portal request ID (PR number)"
+  default     = null
+}
+
+variable "owner" {
+  type        = string
+  description = "ARM Portal owner"
+  default     = "crh225"
+}
+
 locals {
   # Make a safe prefix from project + environment
   sa_name_prefix = lower(replace("${var.project_name}${var.environment}", "/[^a-z0-9]/", ""))
   enable_cdn_bool = var.enable_cdn == "true"
+
+  # ARM Portal required tags
+  armportal_tags = {
+    "armportal-environment" = var.environment
+    "armportal-blueprint"   = "azure-static-site"
+    "armportal-owner"       = var.owner
+  }
+
+  # Add request-id only if provided
+  armportal_tags_with_request = var.request_id != null ? merge(
+    local.armportal_tags,
+    { "armportal-request-id" = var.request_id }
+  ) : local.armportal_tags
+
+  # Merge ARM Portal tags with user tags (user tags can override)
+  all_tags = merge(local.armportal_tags_with_request, var.tags)
 }
 
 resource "random_string" "suffix" {
@@ -82,11 +116,7 @@ resource "azurerm_storage_account" "this" {
   # Allow public access for static website
   allow_nested_items_to_be_public = true
 
-  tags = {
-    Environment = var.environment
-    Project     = var.project_name
-    ManagedBy   = "Terraform"
-  }
+  tags = local.all_tags
 }
 
 # Optional CDN endpoint
@@ -97,11 +127,7 @@ resource "azurerm_cdn_profile" "this" {
   resource_group_name = var.resource_group_name
   sku                 = "Standard_Microsoft"
 
-  tags = {
-    Environment = var.environment
-    Project     = var.project_name
-    ManagedBy   = "Terraform"
-  }
+  tags = local.all_tags
 }
 
 resource "azurerm_cdn_endpoint" "this" {
@@ -119,11 +145,7 @@ resource "azurerm_cdn_endpoint" "this" {
   is_http_allowed  = false
   is_https_allowed = true
 
-  tags = {
-    Environment = var.environment
-    Project     = var.project_name
-    ManagedBy   = "Terraform"
-  }
+  tags = local.all_tags
 }
 
 output "storage_account_name" {
