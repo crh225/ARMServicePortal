@@ -48,11 +48,23 @@ function getStatusDisplay(status) {
 }
 
 /**
- * Get health status display
+ * Get health status display with badge
  */
 function getHealthDisplay(health) {
-  if (!health) return "—";
-  return health;
+  if (!health) return <span className="health-badge health-badge--unknown">Unknown</span>;
+
+  // Normalize health status to lowercase for comparison
+  const status = health.toLowerCase();
+
+  if (status === "succeeded") {
+    return <span className="health-badge health-badge--healthy">Healthy</span>;
+  } else if (status === "failed") {
+    return <span className="health-badge health-badge--unhealthy">Failed</span>;
+  } else if (status === "running" || status === "updating" || status === "provisioning") {
+    return <span className="health-badge health-badge--provisioning">Provisioning</span>;
+  } else {
+    return <span className="health-badge health-badge--unknown">{health}</span>;
+  }
 }
 
 /**

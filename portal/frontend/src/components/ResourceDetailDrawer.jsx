@@ -190,10 +190,29 @@ function DetailsTab({ resource }) {
         <p className="placeholder-text">Cost tracking coming soon...</p>
       </div>
 
-      {/* Health (Placeholder) */}
+      {/* Health */}
       <div className="drawer-section">
-        <h3 className="section-title">Health</h3>
-        <p className="placeholder-text">Health monitoring coming soon...</p>
+        <h3 className="section-title">Health Status</h3>
+        <div className="info-grid">
+          <div className="info-item">
+            <span className="info-label">Provisioning State</span>
+            <span className="info-value">
+              {resource.provisioningState ? (
+                <HealthBadge health={resource.provisioningState} />
+              ) : (
+                "—"
+              )}
+            </span>
+          </div>
+          {resource.health && (
+            <div className="info-item">
+              <span className="info-label">Overall Health</span>
+              <span className="info-value">
+                <HealthBadge health={resource.health} />
+              </span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Actions */}
@@ -274,6 +293,25 @@ function StatusBadge({ status }) {
   }
 
   return <span className={className}>{text}</span>;
+}
+
+/**
+ * Health Badge Component
+ */
+function HealthBadge({ health }) {
+  if (!health) return <span className="health-badge health-badge--unknown">Unknown</span>;
+
+  const status = health.toLowerCase();
+
+  if (status === "succeeded") {
+    return <span className="health-badge health-badge--healthy">Healthy</span>;
+  } else if (status === "failed") {
+    return <span className="health-badge health-badge--unhealthy">Failed</span>;
+  } else if (status === "running" || status === "updating" || status === "provisioning") {
+    return <span className="health-badge health-badge--provisioning">Provisioning</span>;
+  } else {
+    return <span className="health-badge health-badge--unknown">{health}</span>;
+  }
 }
 
 export default ResourceDetailDrawer;

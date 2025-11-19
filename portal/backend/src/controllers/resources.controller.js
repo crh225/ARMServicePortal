@@ -47,6 +47,10 @@ async function enrichResourcesWithPRs(resources) {
     const prNumber = requestId ? parseInt(requestId, 10) : null;
     const pr = prNumber && !isNaN(prNumber) ? prMap.get(prNumber) : null;
 
+    // Extract health/provisioning state from properties
+    const provisioningState = resource.properties?.provisioningState || null;
+    const health = provisioningState ? provisioningState : null;
+
     return {
       // Resource data
       id: resource.id,
@@ -63,6 +67,10 @@ async function enrichResourcesWithPRs(resources) {
       blueprintId: resource.tags?.["armportal-blueprint"] || null,
       requestId: resource.tags?.["armportal-request-id"] || null,
       owner: resource.tags?.["armportal-owner"] || null,
+
+      // Health information
+      health,
+      provisioningState,
 
       // Enriched data
       prNumber,
