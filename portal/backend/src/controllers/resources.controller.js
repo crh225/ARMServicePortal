@@ -55,26 +55,39 @@ async function enrichResourcesWithPRs(resources, includeCosts = false) {
   // For stack request IDs, look up the PR that created each module
   const stackRequestIdMap = new Map();
 
-  // Look up PRs for stack components in parallel
-  const stackPrPromises = stackRequestIds.map(async requestId => {
-    try {
-      // Extract base module name (remove component suffix if present)
-      // e.g., "azure-webapp-stack_5b0d160a_rg" -> "azure-webapp-stack_5b0d160a"
-      const baseModuleName = requestId.includes('_')
-        ? requestId.split('_').slice(0, -1).join('_')  // Remove last component
-        : requestId;
+  // Deduplicate by base module name to avoid redundant API calls
+  // Multiple components (e.g., "stack_abc_rg", "stack_abc_storage") share the same base ("stack_abc")
+  const baseModuleNameMap = new Map(); // base module name -> [component IDs]
+  stackRequestIds.forEach(requestId => {
+    const baseModuleName = requestId.includes('_')
+      ? requestId.split('_').slice(0, -1).join('_')  // Remove last component
+      : requestId;
 
+    if (!baseModuleNameMap.has(baseModuleName)) {
+      baseModuleNameMap.set(baseModuleName, []);
+    }
+    baseModuleNameMap.get(baseModuleName).push(requestId);
+  });
+
+  // Look up PRs for unique base module names only (not per component)
+  const uniqueBaseModulePromises = Array.from(baseModuleNameMap.keys()).map(async baseModuleName => {
+    try {
       const pr = await findPRByModuleName(baseModuleName);
-      return { requestId, pr };
+      return { baseModuleName, pr };
     } catch (error) {
-      console.error(`Failed to find PR for stack component ${requestId}:`, error);
-      return { requestId, pr: null };
+      console.error(`Failed to find PR for stack ${baseModuleName}:`, error);
+      return { baseModuleName, pr: null };
     }
   });
 
-  const stackPrResults = await Promise.all(stackPrPromises);
-  stackPrResults.forEach(({ requestId, pr }) => {
-    stackRequestIdMap.set(requestId, pr);
+  const basePrResults = await Promise.all(uniqueBaseModulePromises);
+
+  // Map the PR to all component IDs that share the same base module
+  basePrResults.forEach(({ baseModuleName, pr }) => {
+    const componentIds = baseModuleNameMap.get(baseModuleName);
+    componentIds.forEach(requestId => {
+      stackRequestIdMap.set(requestId, pr);
+    });
   });
 
   // Optionally fetch costs (disabled by default for faster initial load)

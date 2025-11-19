@@ -5,6 +5,15 @@ import { fetchTerraformOutputs } from "./terraform.js";
 import { fileExists } from "./utils/gitOperations.js";
 import { DEFAULT_BASE_BRANCH } from "../../config/githubConstants.js";
 
+// In-memory cache for module name to PR number mapping
+// This prevents excessive GitHub API calls when looking up the same module multiple times
+const modulePRCache = new Map();
+
+// Cache for module-to-PR index (built from scanning all recent PRs once)
+let moduleIndexCache = null;
+let moduleIndexCacheTime = null;
+const MODULE_INDEX_TTL = 5 * 60 * 1000; // 5 minutes
+
 /**
  * Validate GitHub configuration
  */
@@ -242,18 +251,18 @@ export async function getGitHubRequestByNumber(prNumber) {
 }
 
 /**
- * Find PR that created a specific module/stack by looking for the .tf file
- * This is used for stack components where the request-id is the module name, not a PR number
+ * Build an index of all module files to PR numbers
+ * This scans recent PRs ONCE and builds a lookup table
+ * Much more efficient than querying per-module
  */
-export async function findPRByModuleName(moduleName, environment = 'dev') {
+async function buildModuleIndex(environment = 'dev') {
   const { infraOwner, infraRepo } = validateGitHubConfig();
   const octokit = await getInstallationClient();
 
-  // Expected file path for this module
-  const expectedFilePath = `infra/environments/${environment}/${moduleName}.tf`;
+  const index = new Map(); // filepath -> PR number
 
   try {
-    // List recent PRs that might have created this module
+    // List recent PRs (limit to 100 to avoid excessive API usage)
     const { data: pulls } = await octokit.pulls.list({
       owner: infraOwner,
       repo: infraRepo,
@@ -263,24 +272,76 @@ export async function findPRByModuleName(moduleName, environment = 'dev') {
       direction: "desc"
     });
 
-    // Find PR that modified this specific file
-    for (const pr of pulls) {
-      const { data: files } = await octokit.pulls.listFiles({
-        owner: infraOwner,
-        repo: infraRepo,
-        pull_number: pr.number
-      });
+    // For each PR, get its files and index them
+    // Use Promise.all to fetch files in parallel (but this is still expensive)
+    const filePromises = pulls.map(async (pr) => {
+      try {
+        const { data: files } = await octokit.pulls.listFiles({
+          owner: infraOwner,
+          repo: infraRepo,
+          pull_number: pr.number
+        });
 
-      const hasFile = files.some(f => f.filename === expectedFilePath);
-      if (hasFile) {
-        // Found the PR that created/modified this module
-        return getGitHubRequestByNumber(pr.number);
+        // Index .tf files in the environment directory
+        files.forEach(file => {
+          if (file.filename.startsWith(`infra/environments/${environment}/`) &&
+              file.filename.endsWith('.tf')) {
+            // Only store the FIRST (most recent) PR that modified this file
+            if (!index.has(file.filename)) {
+              index.set(file.filename, pr.number);
+            }
+          }
+        });
+      } catch (err) {
+        console.error(`Failed to fetch files for PR #${pr.number}:`, err.message);
       }
-    }
+    });
 
-    return null; // No PR found
+    await Promise.all(filePromises);
+
+    console.log(`Built module index with ${index.size} module files from ${pulls.length} PRs`);
+    return index;
   } catch (error) {
-    console.error(`Failed to find PR for module ${moduleName}:`, error.message);
-    return null;
+    console.error('Failed to build module index:', error.message);
+    return new Map();
   }
+}
+
+/**
+ * Find PR that created a specific module/stack by looking for the .tf file
+ * This is used for stack components where the request-id is the module name, not a PR number
+ * Uses a cached index to minimize GitHub API calls
+ */
+export async function findPRByModuleName(moduleName, environment = 'dev') {
+  const cacheKey = `${environment}:${moduleName}`;
+
+  // Check individual cache first
+  if (modulePRCache.has(cacheKey)) {
+    const cachedPRNumber = modulePRCache.get(cacheKey);
+    if (cachedPRNumber === null) {
+      return null; // Previously failed to find PR
+    }
+    return getGitHubRequestByNumber(cachedPRNumber);
+  }
+
+  // Build or refresh module index if needed
+  const now = Date.now();
+  if (!moduleIndexCache || !moduleIndexCacheTime || (now - moduleIndexCacheTime > MODULE_INDEX_TTL)) {
+    moduleIndexCache = await buildModuleIndex(environment);
+    moduleIndexCacheTime = now;
+  }
+
+  // Look up in the index
+  const expectedFilePath = `infra/environments/${environment}/${moduleName}.tf`;
+  const prNumber = moduleIndexCache.get(expectedFilePath);
+
+  if (prNumber) {
+    // Cache and return
+    modulePRCache.set(cacheKey, prNumber);
+    return getGitHubRequestByNumber(prNumber);
+  }
+
+  // Not found - cache negative result
+  modulePRCache.set(cacheKey, null);
+  return null;
 }
