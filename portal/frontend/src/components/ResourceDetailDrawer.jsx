@@ -162,7 +162,7 @@ function DetailsTab({ resource }) {
             <div className="info-item">
               <span className="info-label">PR Number</span>
               <a
-                href={resource.pr.url}
+                href={resource.pr.pullRequestUrl || `https://github.com/crh225/ARMServicePortal/pull/${resource.prNumber}`}
                 target="_blank"
                 rel="noreferrer"
                 className="info-link"
@@ -210,7 +210,7 @@ function DetailsTab({ resource }) {
           </a>
           {resource.pr && (
             <a
-              href={resource.pr.url}
+              href={resource.pr.pullRequestUrl || `https://github.com/crh225/ARMServicePortal/pull/${resource.prNumber}`}
               target="_blank"
               rel="noreferrer"
               className="action-btn action-btn--secondary"
