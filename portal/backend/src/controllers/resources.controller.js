@@ -12,6 +12,7 @@ import { getSubscriptionCosts } from "../services/costService.js";
  */
 function extractPRNumbers(resources) {
   const prNumbers = new Set();
+  const stackRequestIds = new Set();
 
   resources.forEach(resource => {
     const requestId = resource.tags?.["armportal-request-id"];
@@ -19,11 +20,18 @@ function extractPRNumbers(resources) {
       const prNumber = parseInt(requestId, 10);
       if (!isNaN(prNumber)) {
         prNumbers.add(prNumber);
+      } else {
+        // If it's not a number, it might be a stack component ID or module name
+        // Store it to look up the PR from the infra repo
+        stackRequestIds.add(requestId);
       }
     }
   });
 
-  return Array.from(prNumbers);
+  return {
+    prNumbers: Array.from(prNumbers),
+    stackRequestIds: Array.from(stackRequestIds)
+  };
 }
 
 /**
@@ -32,7 +40,7 @@ function extractPRNumbers(resources) {
  * @param {boolean} includeCosts - Whether to fetch cost data (default: false for faster response)
  */
 async function enrichResourcesWithPRs(resources, includeCosts = false) {
-  const prNumbers = extractPRNumbers(resources);
+  const { prNumbers, stackRequestIds } = extractPRNumbers(resources);
 
   // Fetch all PRs in parallel
   const prPromises = prNumbers.map(prNumber =>
@@ -43,6 +51,14 @@ async function enrichResourcesWithPRs(resources, includeCosts = false) {
 
   const prResults = await Promise.all(prPromises);
   const prMap = new Map(prResults.map(({ prNumber, pr }) => [prNumber, pr]));
+
+  // For stack request IDs, create a mapping to look them up
+  // TODO: Implement proper PR lookup for stack components from infra repo
+  // For now, we'll mark these as orphan until we can look them up properly
+  const stackRequestIdMap = new Map();
+  stackRequestIds.forEach(requestId => {
+    stackRequestIdMap.set(requestId, null); // No PR data for now
+  });
 
   // Optionally fetch costs (disabled by default for faster initial load)
   let allCostsMap = new Map();
@@ -84,7 +100,14 @@ async function enrichResourcesWithPRs(resources, includeCosts = false) {
   return resources.map(resource => {
     const requestId = resource.tags?.["armportal-request-id"];
     const prNumber = requestId ? parseInt(requestId, 10) : null;
-    const pr = prNumber && !isNaN(prNumber) ? prMap.get(prNumber) : null;
+
+    // Try to get PR from direct PR number map, or from stack request ID map
+    let pr = null;
+    if (prNumber && !isNaN(prNumber)) {
+      pr = prMap.get(prNumber);
+    } else if (requestId && stackRequestIdMap.has(requestId)) {
+      pr = stackRequestIdMap.get(requestId);
+    }
 
     // Extract health/provisioning state from properties
     // Note: Resource Groups and subscriptions don't have provisioningState

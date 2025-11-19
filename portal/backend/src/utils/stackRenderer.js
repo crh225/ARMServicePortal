@@ -95,7 +95,10 @@ export function renderStackTerraform(stack, stackVariables, baseModuleName) {
     const terraformCode = renderTerraformModule({
       moduleName: module.moduleName,
       blueprint: module.blueprint,
-      variables: module.variables
+      variables: module.variables,
+      // Use the base stack module name as the request ID for all components
+      // This ensures PR lookup works for stack resources (can't parse component names as integers)
+      prNumber: baseModuleName
     });
     terraformBlocks.push(terraformCode);
   });
