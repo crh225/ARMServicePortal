@@ -18,6 +18,8 @@ function getStatusBadgeClass(status) {
   switch (status) {
     case OwnershipStatus.MANAGED:
       return "status-badge status-badge--managed";
+    case OwnershipStatus.PERMANENT:
+      return "status-badge status-badge--permanent";
     case OwnershipStatus.STALE:
       return "status-badge status-badge--stale";
     case OwnershipStatus.ORPHAN:
@@ -36,6 +38,8 @@ function getStatusDisplay(status) {
   switch (status) {
     case OwnershipStatus.MANAGED:
       return "Managed";
+    case OwnershipStatus.PERMANENT:
+      return "Permanent";
     case OwnershipStatus.STALE:
       return "Stale";
     case OwnershipStatus.ORPHAN:
@@ -249,6 +253,7 @@ function ResourcesTable({ resources, onSelectResource, selectedResource, costsLo
         >
           <option value="all">All Status</option>
           <option value={OwnershipStatus.MANAGED}>Managed</option>
+          <option value={OwnershipStatus.PERMANENT}>Permanent</option>
           <option value={OwnershipStatus.STALE}>Stale</option>
           <option value={OwnershipStatus.ORPHAN}>Orphan</option>
           <option value={OwnershipStatus.UNMANAGED}>Unmanaged</option>

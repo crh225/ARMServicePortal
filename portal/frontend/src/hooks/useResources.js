@@ -6,6 +6,7 @@ import { fetchAllResources } from "../services/resourcesApi";
  */
 export const OwnershipStatus = {
   MANAGED: "managed",     // Tag exists + matching PR found
+  PERMANENT: "permanent", // Tag exists with request-id = "permanent" (foundational infrastructure)
   STALE: "stale",         // Tag exists but PR was closed/cancelled
   ORPHAN: "orphan",       // Tagged resource but PR not found
   UNMANAGED: "unmanaged"  // No armportal-* tags at all
@@ -22,6 +23,12 @@ function computeOwnershipStatus(resource) {
 
   if (!hasArmPortalTag) {
     return OwnershipStatus.UNMANAGED;
+  }
+
+  // Check for permanent infrastructure (foundational resources like state backends)
+  const requestId = resource.tags?.["armportal-request-id"];
+  if (requestId === "permanent") {
+    return OwnershipStatus.PERMANENT;
   }
 
   if (!resource.pr) {

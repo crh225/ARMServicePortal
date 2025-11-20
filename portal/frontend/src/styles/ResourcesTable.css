@@ -271,6 +271,12 @@
   border-color: #22c55e;
 }
 
+.status-badge--permanent {
+  color: #581c87;
+  background: #f3e8ff;
+  border-color: #a855f7;
+}
+
 .status-badge--stale {
   color: #854d0e;
   background: #fef3c7;
