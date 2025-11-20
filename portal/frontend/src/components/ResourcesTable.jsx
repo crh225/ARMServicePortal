@@ -161,26 +161,66 @@ function ResourcesTable({ resources, onSelectResource, selectedResource, costsLo
     return filtered;
   }, [resources, environmentFilter, blueprintFilter, ownerFilter, ownershipFilter, searchQuery, sortColumn, sortDirection]);
 
-  // Calculate cost summary
+  // Calculate cost summary with breakdowns
   const costSummary = useMemo(() => {
     let totalCost = 0;
     let resourcesWithCost = 0;
     let resourcesNoCost = 0;
+    const costByEnvironment = {};
+    const costByBlueprint = {};
+    const costByOwnership = {};
+    let highestCostResource = null;
+    let highestCost = 0;
 
     filteredResources.forEach(resource => {
       if (resource.cost !== null && resource.cost !== undefined) {
         totalCost += resource.cost;
         resourcesWithCost++;
+
+        // Track highest cost resource
+        if (resource.cost > highestCost) {
+          highestCost = resource.cost;
+          highestCostResource = resource;
+        }
+
+        // Breakdown by environment
+        const env = resource.environment || "unknown";
+        costByEnvironment[env] = (costByEnvironment[env] || 0) + resource.cost;
+
+        // Breakdown by blueprint
+        const bp = resource.blueprintId || "unknown";
+        costByBlueprint[bp] = (costByBlueprint[bp] || 0) + resource.cost;
+
+        // Breakdown by ownership status
+        const status = resource.ownershipStatus || "unknown";
+        costByOwnership[status] = (costByOwnership[status] || 0) + resource.cost;
       } else {
         resourcesNoCost++;
       }
     });
 
+    // Calculate average cost
+    const avgCost = resourcesWithCost > 0 ? totalCost / resourcesWithCost : 0;
+
+    // Sort breakdowns
+    const topEnvironments = Object.entries(costByEnvironment)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 3);
+
+    const topBlueprints = Object.entries(costByBlueprint)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 3);
+
     return {
       totalCost,
+      avgCost,
       resourcesWithCost,
       resourcesNoCost,
-      hasAnyCost: resourcesWithCost > 0
+      hasAnyCost: resourcesWithCost > 0,
+      highestCostResource,
+      topEnvironments,
+      topBlueprints,
+      costByOwnership
     };
   }, [filteredResources]);
 
@@ -331,10 +371,23 @@ function ResourcesTable({ resources, onSelectResource, selectedResource, costsLo
       ) : costSummary.hasAnyCost ? (
         <div className="cost-summary">
           <div className="cost-summary-card">
-            <div className="cost-summary-main">
-              <div className="cost-summary-label">Total Monthly Cost</div>
-              <div className="cost-summary-amount">${costSummary.totalCost.toFixed(2)}</div>
+            <div className="cost-summary-header">
+              <div className="cost-summary-main">
+                <div className="cost-summary-label">Total Monthly Cost</div>
+                <div className="cost-summary-amount">${costSummary.totalCost.toFixed(2)}</div>
+              </div>
+              <div className="cost-summary-stats">
+                <div className="cost-stat">
+                  <div className="cost-stat-label">Average</div>
+                  <div className="cost-stat-value">${costSummary.avgCost.toFixed(2)}</div>
+                </div>
+                <div className="cost-stat">
+                  <div className="cost-stat-label">Highest</div>
+                  <div className="cost-stat-value">${costSummary.highestCostResource?.cost.toFixed(2) || '0.00'}</div>
+                </div>
+              </div>
             </div>
+
             <div className="cost-summary-details">
               <span className="cost-summary-detail">
                 {costSummary.resourcesWithCost} resource{costSummary.resourcesWithCost !== 1 ? 's' : ''} with cost
@@ -343,6 +396,51 @@ function ResourcesTable({ resources, onSelectResource, selectedResource, costsLo
                 <span className="cost-summary-detail cost-summary-detail--muted">
                   {costSummary.resourcesNoCost} without cost data
                 </span>
+              )}
+            </div>
+
+            {/* Breakdowns */}
+            <div className="cost-breakdowns">
+              {/* Top Environments */}
+              {costSummary.topEnvironments.length > 0 && (
+                <div className="cost-breakdown">
+                  <div className="cost-breakdown-title">Top Environments</div>
+                  <div className="cost-breakdown-items">
+                    {costSummary.topEnvironments.map(([env, cost]) => (
+                      <div key={env} className="cost-breakdown-item">
+                        <span className="cost-breakdown-label">{env}</span>
+                        <span className="cost-breakdown-value">${cost.toFixed(2)}</span>
+                        <div className="cost-breakdown-bar">
+                          <div
+                            className="cost-breakdown-bar-fill"
+                            style={{ width: `${(cost / costSummary.totalCost) * 100}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Top Blueprints */}
+              {costSummary.topBlueprints.length > 0 && (
+                <div className="cost-breakdown">
+                  <div className="cost-breakdown-title">Top Blueprints</div>
+                  <div className="cost-breakdown-items">
+                    {costSummary.topBlueprints.map(([bp, cost]) => (
+                      <div key={bp} className="cost-breakdown-item">
+                        <span className="cost-breakdown-label">{bp}</span>
+                        <span className="cost-breakdown-value">${cost.toFixed(2)}</span>
+                        <div className="cost-breakdown-bar">
+                          <div
+                            className="cost-breakdown-bar-fill"
+                            style={{ width: `${(cost / costSummary.totalCost) * 100}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
           </div>

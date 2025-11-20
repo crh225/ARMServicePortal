@@ -86,11 +86,18 @@
   border: 1px solid rgba(148, 163, 184, 0.2);
 }
 
+.cost-summary-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 10px;
+}
+
 .cost-summary-main {
   display: flex;
-  align-items: baseline;
-  gap: 12px;
-  margin-bottom: 10px;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .cost-summary-label {
@@ -112,10 +119,41 @@
   line-height: 1;
 }
 
+.cost-summary-stats {
+  display: flex;
+  gap: 16px;
+  padding-top: 4px;
+}
+
+.cost-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 70px;
+}
+
+.cost-stat-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.cost-stat-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #475569;
+  font-variant-numeric: tabular-nums;
+}
+
 .cost-summary-details {
   display: flex;
   gap: 16px;
   align-items: center;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.15);
 }
 
 .cost-summary-detail {
@@ -126,6 +164,74 @@
 
 .cost-summary-detail--muted {
   color: #94a3b8;
+}
+
+/* Cost Breakdowns */
+.cost-breakdowns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.cost-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cost-breakdown-title {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.cost-breakdown-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cost-breakdown-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  gap: 4px;
+  align-items: center;
+}
+
+.cost-breakdown-label {
+  font-size: 0.75rem;
+  color: #475569;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cost-breakdown-value {
+  font-size: 0.75rem;
+  color: #1e293b;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.cost-breakdown-bar {
+  grid-column: 1 / -1;
+  height: 4px;
+  background: rgba(148, 163, 184, 0.15);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.cost-breakdown-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+  border-radius: 2px;
+  transition: width 0.3s ease-out;
 }
 
 /* Cost Summary Skeleton */
