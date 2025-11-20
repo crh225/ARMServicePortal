@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { OwnershipStatus } from "../../hooks/useResources";
 import ResourceGraph from "./ResourceGraph";
+import LogsViewer from "./LogsViewer";
 import "../../styles/ResourceDetailDrawer.css";
 
 /**
@@ -51,6 +52,12 @@ function ResourceDetailDrawer({ resource, onClose }) {
         >
           Graph
         </button>
+        <button
+          className={`detail-tab ${activeTab === "logs" ? "detail-tab--active" : ""}`}
+          onClick={() => setActiveTab("logs")}
+        >
+          Logs
+        </button>
       </div>
 
       {/* Content */}
@@ -60,6 +67,9 @@ function ResourceDetailDrawer({ resource, onClose }) {
         )}
         {activeTab === "graph" && (
           <GraphTab resource={resource} />
+        )}
+        {activeTab === "logs" && (
+          <LogsTab resource={resource} />
         )}
       </div>
     </div>
@@ -268,6 +278,19 @@ function GraphTab({ resource }) {
       <div className="drawer-section">
         <h3 className="section-title">Resource Graph</h3>
         <ResourceGraph resource={resource} />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Logs Tab Content - Display resource logs
+ */
+function LogsTab({ resource }) {
+  return (
+    <div className="drawer-sections">
+      <div className="drawer-section">
+        <LogsViewer resource={resource} />
       </div>
     </div>
   );

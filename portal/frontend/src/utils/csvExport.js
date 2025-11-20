@@ -98,3 +98,46 @@ export function exportResourcesToCSV(resources) {
 
   downloadCSV(csvContent, filename);
 }
+
+/**
+ * Converts logs array to CSV string
+ * @param {Array} logs - Array of log objects
+ * @returns {string} CSV formatted string
+ */
+function convertLogsToCSV(logs) {
+  if (!logs || logs.length === 0) {
+    return "";
+  }
+
+  // Define CSV columns
+  const headers = ["Timestamp", "Level", "Source", "Message"];
+
+  // Build CSV rows
+  const rows = logs.map(log => {
+    return [
+      escapeCSVField(log.timestamp),
+      escapeCSVField(log.level),
+      escapeCSVField(log.source || ""),
+      escapeCSVField(log.message)
+    ].join(",");
+  });
+
+  // Combine headers and rows
+  return [headers.join(","), ...rows].join("\n");
+}
+
+/**
+ * Exports logs to CSV file
+ * @param {Array} logs - Array of logs to export
+ * @param {string} filename - Filename for download
+ */
+export function exportLogsToCSV(logs, filename) {
+  const csvContent = convertLogsToCSV(logs);
+
+  if (!csvContent) {
+    console.warn("No logs to export");
+    return;
+  }
+
+  downloadCSV(csvContent, filename);
+}

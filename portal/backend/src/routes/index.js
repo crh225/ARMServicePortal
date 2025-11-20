@@ -10,6 +10,7 @@ import authRoutes from "./auth.routes.js";
 import resourcesRoutes from "./resources.routes.js";
 import webhooksRoutes from "./webhooks.routes.js";
 import notificationsRoutes from "./notifications.routes.js";
+import logsRoutes from "./logs.routes.js";
 
 const router = express.Router();
 
@@ -25,5 +26,6 @@ router.use("/pricing", pricingRoutes);
 router.use("/resources", resourcesRoutes);
 router.use("/webhooks", webhooksRoutes);
 router.use("/notifications", notificationsRoutes);
+router.use("/logs", logsRoutes);
 
 export default router;
