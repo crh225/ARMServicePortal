@@ -87,7 +87,7 @@ export function expandStack(stack, stackVariables, baseModuleName) {
  * Render a stack as Terraform configuration
  * Returns the complete Terraform code for all modules in the stack
  */
-export function renderStackTerraform(stack, stackVariables, baseModuleName) {
+export function renderStackTerraform(stack, stackVariables, baseModuleName, prNumber = null) {
   const modules = expandStack(stack, stackVariables, baseModuleName);
   const terraformBlocks = [];
 
@@ -96,9 +96,8 @@ export function renderStackTerraform(stack, stackVariables, baseModuleName) {
       moduleName: module.moduleName,
       blueprint: module.blueprint,
       variables: module.variables,
-      // Use the base stack module name as the request ID for all components
-      // This ensures PR lookup works for stack resources (can't parse component names as integers)
-      prNumber: baseModuleName
+      // Use PR number if available, otherwise fall back to base module name
+      prNumber: prNumber || baseModuleName
     });
     terraformBlocks.push(terraformCode);
   });

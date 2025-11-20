@@ -12,7 +12,7 @@ import { getSubscriptionCosts } from "../services/costService.js";
  */
 function extractPRNumbers(resources) {
   const prNumbers = new Set();
-  const stackRequestIds = new Set();
+  const moduleNames = new Set();
 
   resources.forEach(resource => {
     const requestId = resource.tags?.["armportal-request-id"];
@@ -21,16 +21,16 @@ function extractPRNumbers(resources) {
       if (!isNaN(prNumber)) {
         prNumbers.add(prNumber);
       } else {
-        // If it's not a number, it might be a stack component ID or module name
+        // Legacy: module name (for resources created before PR number tagging)
         // Store it to look up the PR from the infra repo
-        stackRequestIds.add(requestId);
+        moduleNames.add(requestId);
       }
     }
   });
 
   return {
     prNumbers: Array.from(prNumbers),
-    stackRequestIds: Array.from(stackRequestIds)
+    moduleNames: Array.from(moduleNames)
   };
 }
 
@@ -40,7 +40,7 @@ function extractPRNumbers(resources) {
  * @param {boolean} includeCosts - Whether to fetch cost data (default: false for faster response)
  */
 async function enrichResourcesWithPRs(resources, includeCosts = false) {
-  const { prNumbers, stackRequestIds } = extractPRNumbers(resources);
+  const { prNumbers, moduleNames } = extractPRNumbers(resources);
 
   // Fetch all PRs in parallel
   const prPromises = prNumbers.map(prNumber =>
@@ -52,41 +52,41 @@ async function enrichResourcesWithPRs(resources, includeCosts = false) {
   const prResults = await Promise.all(prPromises);
   const prMap = new Map(prResults.map(({ prNumber, pr }) => [prNumber, pr]));
 
-  // For stack request IDs, look up the PR that created each module
-  const stackRequestIdMap = new Map();
+  // For legacy module names (resources created before PR number tagging), look up the PR
+  const moduleNameMap = new Map();
 
   // Deduplicate by base module name to avoid redundant API calls
   // Multiple components (e.g., "stack_abc_rg", "stack_abc_storage") share the same base ("stack_abc")
-  const baseModuleNameMap = new Map(); // base module name -> [component IDs]
-  stackRequestIds.forEach(requestId => {
-    const baseModuleName = requestId.includes('_')
-      ? requestId.split('_').slice(0, -1).join('_')  // Remove last component
-      : requestId;
+  const baseModuleNameMap = new Map(); // base module name -> [full module names]
+  moduleNames.forEach(moduleName => {
+    const baseModuleName = moduleName.includes('_')
+      ? moduleName.split('_').slice(0, -1).join('_')  // Remove last component (for stacks)
+      : moduleName;
 
     if (!baseModuleNameMap.has(baseModuleName)) {
       baseModuleNameMap.set(baseModuleName, []);
     }
-    baseModuleNameMap.get(baseModuleName).push(requestId);
+    baseModuleNameMap.get(baseModuleName).push(moduleName);
   });
 
-  // Look up PRs for unique base module names only (not per component)
+  // Look up PRs for unique base module names only (not per module)
   const uniqueBaseModulePromises = Array.from(baseModuleNameMap.keys()).map(async baseModuleName => {
     try {
       const pr = await findPRByModuleName(baseModuleName);
       return { baseModuleName, pr };
     } catch (error) {
-      console.error(`Failed to find PR for stack ${baseModuleName}:`, error);
+      console.error(`Failed to find PR for module ${baseModuleName}:`, error);
       return { baseModuleName, pr: null };
     }
   });
 
   const basePrResults = await Promise.all(uniqueBaseModulePromises);
 
-  // Map the PR to all component IDs that share the same base module
+  // Map the PR to all module names that share the same base
   basePrResults.forEach(({ baseModuleName, pr }) => {
-    const componentIds = baseModuleNameMap.get(baseModuleName);
-    componentIds.forEach(requestId => {
-      stackRequestIdMap.set(requestId, pr);
+    const moduleNamesForBase = baseModuleNameMap.get(baseModuleName);
+    moduleNamesForBase.forEach(moduleName => {
+      moduleNameMap.set(moduleName, pr);
     });
   });
 
@@ -131,12 +131,12 @@ async function enrichResourcesWithPRs(resources, includeCosts = false) {
     const requestId = resource.tags?.["armportal-request-id"];
     const prNumber = requestId ? parseInt(requestId, 10) : null;
 
-    // Try to get PR from direct PR number map, or from stack request ID map
+    // Try to get PR from direct PR number map, or from module name map (legacy)
     let pr = null;
     if (prNumber && !isNaN(prNumber)) {
       pr = prMap.get(prNumber);
-    } else if (requestId && stackRequestIdMap.has(requestId)) {
-      pr = stackRequestIdMap.get(requestId);
+    } else if (requestId && moduleNameMap.has(requestId)) {
+      pr = moduleNameMap.get(requestId);
     }
 
     // Extract health/provisioning state from properties

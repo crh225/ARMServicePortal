@@ -113,6 +113,8 @@ export async function createGitHubRequest({ environment, blueprintId, blueprintV
   });
 
   // Render Terraform (handles both single blueprints and stacks)
+  // Use moduleName as the request-id tag value for all resources
+  // This allows looking up resources by module name without needing PR number
   let tfContent;
   if (isStack(blueprint)) {
     tfContent = renderStackTerraform(blueprint, variables, moduleName);
@@ -120,7 +122,8 @@ export async function createGitHubRequest({ environment, blueprintId, blueprintV
     tfContent = renderTerraformModule({
       moduleName,
       blueprint,
-      variables
+      variables,
+      prNumber: moduleName  // Use module name instead of PR number for consistent tagging
     });
   }
 
@@ -176,6 +179,31 @@ export async function createGitHubRequest({ environment, blueprintId, blueprintV
     head: branchName,
     base: baseBranch,
     body
+  });
+
+  // Now update the Terraform file with the actual PR number
+  // Re-render with the PR number instead of module name
+  let tfContentWithPR;
+  if (isStack(blueprint)) {
+    tfContentWithPR = renderStackTerraform(blueprint, variables, moduleName, pr.number);
+  } else {
+    tfContentWithPR = renderTerraformModule({
+      moduleName,
+      blueprint,
+      variables,
+      prNumber: pr.number  // Use actual PR number now
+    });
+  }
+
+  // Update the file with the PR number
+  await octokit.repos.createOrUpdateFileContents({
+    owner: infraOwner,
+    repo: infraRepo,
+    path: filePath,
+    message: `chore: update request-id tag with PR number #${pr.number}`,
+    content: Buffer.from(tfContentWithPR, "utf8").toString("base64"),
+    branch: branchName,
+    sha: file.content.sha
   });
 
   return {

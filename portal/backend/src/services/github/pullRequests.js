@@ -251,9 +251,8 @@ export async function getGitHubRequestByNumber(prNumber) {
 }
 
 /**
- * Build an index of all module files to PR numbers
- * This scans recent PRs ONCE and builds a lookup table
- * Much more efficient than querying per-module
+ * Build an index of module names to PR numbers
+ * This parses PR branch names to extract module names (very efficient - just 1 API call!)
  */
 async function buildModuleIndex(environment = 'dev') {
   const { infraOwner, infraRepo } = validateGitHubConfig();
@@ -262,44 +261,46 @@ async function buildModuleIndex(environment = 'dev') {
   const index = new Map(); // filepath -> PR number
 
   try {
-    // List recent PRs (limit to 100 to avoid excessive API usage)
+    // List recent PRs (1 API call total!)
+    // Parse branch names to extract module names
     const { data: pulls } = await octokit.pulls.list({
       owner: infraOwner,
       repo: infraRepo,
       state: "all",
       per_page: 100,
-      sort: "created",
+      sort: "updated",  // Most recently updated first
       direction: "desc"
     });
 
-    // For each PR, get its files and index them
-    // Use Promise.all to fetch files in parallel (but this is still expensive)
-    const filePromises = pulls.map(async (pr) => {
-      try {
-        const { data: files } = await octokit.pulls.listFiles({
-          owner: infraOwner,
-          repo: infraRepo,
-          pull_number: pr.number
-        });
+    // Extract module names from PR branch names
+    // Branch format: requests/{env}/{blueprint}_{shortId} or requests/{env}/{moduleName}-update-{shortId}
+    pulls.forEach(pr => {
+      const headRef = pr.head && pr.head.ref ? pr.head.ref : "";
 
-        // Index .tf files in the environment directory
-        files.forEach(file => {
-          if (file.filename.startsWith(`infra/environments/${environment}/`) &&
-              file.filename.endsWith('.tf')) {
-            // Only store the FIRST (most recent) PR that modified this file
-            if (!index.has(file.filename)) {
-              index.set(file.filename, pr.number);
-            }
-          }
-        });
-      } catch (err) {
-        console.error(`Failed to fetch files for PR #${pr.number}:`, err.message);
+      if (headRef.startsWith(`requests/${environment}/`)) {
+        // Extract the module part from the branch name
+        const branchSuffix = headRef.replace(`requests/${environment}/`, '');
+
+        // For new provisions: blueprint_shortId
+        // For updates: moduleName-update-shortId
+        let moduleName;
+        if (branchSuffix.includes('-update-')) {
+          moduleName = branchSuffix.split('-update-')[0];
+        } else {
+          // For new provisions, the module name IS the branch suffix (blueprint_shortId)
+          moduleName = branchSuffix;
+        }
+
+        const expectedFilePath = `infra/environments/${environment}/${moduleName}.tf`;
+
+        // Only store the FIRST (most recent) PR for this file
+        if (!index.has(expectedFilePath)) {
+          index.set(expectedFilePath, pr.number);
+        }
       }
     });
 
-    await Promise.all(filePromises);
-
-    console.log(`Built module index with ${index.size} module files from ${pulls.length} PRs`);
+    console.log(`Built module index with ${index.size} modules from ${pulls.length} PRs (1 API call)`);
     return index;
   } catch (error) {
     console.error('Failed to build module index:', error.message);
