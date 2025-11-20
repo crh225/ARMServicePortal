@@ -94,16 +94,12 @@ function parseBranchInfo(branchName) {
  * POST /api/webhooks/github
  * Handle GitHub workflow_run webhook events
  */
-router.post("/github", express.json({
-  verify: (req, res, buf) => {
-    // Store raw body for signature verification
-    req.rawBody = buf.toString('utf8');
-  }
-}), async (req, res) => {
+router.post("/github", async (req, res) => {
   try {
-    // Verify webhook signature
+    // Verify webhook signature using the stringified body
     const signature = req.headers['x-hub-signature-256'];
-    const isValid = verifyGitHubSignature(req.rawBody, signature);
+    const payload = JSON.stringify(req.body);
+    const isValid = verifyGitHubSignature(payload, signature);
 
     if (!isValid) {
       console.error("Invalid webhook signature");
