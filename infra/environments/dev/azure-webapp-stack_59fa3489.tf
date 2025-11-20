@@ -26,6 +26,9 @@ module "azure-webapp-stack_59fa3489_storage" {
   account_tier        = "Standard"
   replication_type    = "LRS"
 
+  # Enable diagnostic settings
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.aca.id
+
   # ARM Portal tracking tags
   tags = {
     armportal-environment = "dev"
@@ -52,6 +55,9 @@ module "azure-webapp-stack_59fa3489_keyvault" {
   sku_name                   = "standard"
   soft_delete_retention_days = "7"
   purge_protection_enabled   = "true"
+
+  # Enable diagnostic settings
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.aca.id
 
   # ARM Portal tracking tags
   tags = {
