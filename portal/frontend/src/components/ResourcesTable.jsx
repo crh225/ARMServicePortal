@@ -70,7 +70,7 @@ function getHealthDisplay(health) {
 /**
  * ResourcesTable component with filters and sorting
  */
-function ResourcesTable({ resources, onSelectResource, selectedResource }) {
+function ResourcesTable({ resources, onSelectResource, selectedResource, costsLoading }) {
   // Filter states
   const [environmentFilter, setEnvironmentFilter] = useState("all");
   const [blueprintFilter, setBlueprintFilter] = useState("all");
@@ -264,7 +264,22 @@ function ResourcesTable({ resources, onSelectResource, selectedResource }) {
       </div>
 
       {/* Cost Summary */}
-      {costSummary.hasAnyCost && (
+      {costsLoading ? (
+        <div className="cost-summary">
+          <div className="cost-summary-card cost-summary-card--loading">
+            <div className="cost-summary-main">
+              <div className="cost-summary-label">Total Monthly Cost</div>
+              <div className="cost-summary-skeleton">
+                <div className="skeleton-bar skeleton-bar--large"></div>
+              </div>
+            </div>
+            <div className="cost-summary-details">
+              <div className="skeleton-bar skeleton-bar--small"></div>
+              <div className="skeleton-bar skeleton-bar--small"></div>
+            </div>
+          </div>
+        </div>
+      ) : costSummary.hasAnyCost ? (
         <div className="cost-summary">
           <div className="cost-summary-card">
             <div className="cost-summary-main">
@@ -283,7 +298,7 @@ function ResourcesTable({ resources, onSelectResource, selectedResource }) {
             </div>
           </div>
         </div>
-      )}
+      ) : null}
 
       {/* Results Count and Pagination Info */}
       <div className="resources-count">

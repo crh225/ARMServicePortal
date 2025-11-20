@@ -128,6 +128,43 @@
   color: #94a3b8;
 }
 
+/* Cost Summary Skeleton */
+.cost-summary-skeleton {
+  min-width: 120px;
+}
+
+.skeleton-bar {
+  height: 16px;
+  background: linear-gradient(
+    90deg,
+    rgba(148, 163, 184, 0.15) 0%,
+    rgba(148, 163, 184, 0.25) 50%,
+    rgba(148, 163, 184, 0.15) 100%
+  );
+  background-size: 200% 100%;
+  border-radius: 6px;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+.skeleton-bar--large {
+  height: 28px;
+  width: 100px;
+}
+
+.skeleton-bar--small {
+  height: 12px;
+  width: 140px;
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
 /* Results Count */
 .resources-count {
   margin-top: 4px;
