@@ -356,15 +356,53 @@ function ResourcesTable({ resources, onSelectResource, selectedResource, costsLo
       {costsLoading ? (
         <div className="cost-summary">
           <div className="cost-summary-card cost-summary-card--loading">
-            <div className="cost-summary-main">
-              <div className="cost-summary-label">Total Monthly Cost</div>
-              <div className="cost-summary-skeleton">
-                <div className="skeleton-bar skeleton-bar--large"></div>
+            <div className="cost-summary-header">
+              <div className="cost-summary-main">
+                <div className="cost-summary-label">Total Monthly Cost</div>
+                <div className="skeleton-bar skeleton-bar--xlarge"></div>
+              </div>
+              <div className="cost-summary-stats">
+                <div className="cost-stat">
+                  <div className="cost-stat-label">Average</div>
+                  <div className="skeleton-bar skeleton-bar--medium"></div>
+                </div>
+                <div className="cost-stat">
+                  <div className="cost-stat-label">Highest</div>
+                  <div className="skeleton-bar skeleton-bar--medium"></div>
+                </div>
               </div>
             </div>
             <div className="cost-summary-details">
               <div className="skeleton-bar skeleton-bar--small"></div>
               <div className="skeleton-bar skeleton-bar--small"></div>
+            </div>
+            <div className="cost-breakdowns">
+              <div className="cost-breakdown">
+                <div className="cost-breakdown-title">Top Environments</div>
+                <div className="cost-breakdown-items">
+                  <div className="skeleton-breakdown-item">
+                    <div className="skeleton-bar skeleton-bar--small"></div>
+                    <div className="skeleton-bar skeleton-bar--bar"></div>
+                  </div>
+                  <div className="skeleton-breakdown-item">
+                    <div className="skeleton-bar skeleton-bar--small"></div>
+                    <div className="skeleton-bar skeleton-bar--bar"></div>
+                  </div>
+                </div>
+              </div>
+              <div className="cost-breakdown">
+                <div className="cost-breakdown-title">Top Blueprints</div>
+                <div className="cost-breakdown-items">
+                  <div className="skeleton-breakdown-item">
+                    <div className="skeleton-bar skeleton-bar--small"></div>
+                    <div className="skeleton-bar skeleton-bar--bar"></div>
+                  </div>
+                  <div className="skeleton-breakdown-item">
+                    <div className="skeleton-bar skeleton-bar--small"></div>
+                    <div className="skeleton-bar skeleton-bar--bar"></div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -154,23 +154,19 @@ async function enrichResourcesWithPRs(resources, includeCosts = false) {
 
     // Get cost for this resource
     let cost = null;
-    if (isResourceGroup) {
-      // For Resource Groups, use the total cost of all resources in that RG
-      const rgKey = `${resource.subscriptionId}|${resource.name}`;
-      cost = allRgTotals.get(rgKey);
-      // If we have cost data (even if 0), set it. Otherwise leave as null.
-      if (cost !== undefined) {
-        cost = cost || 0; // Ensure 0 is shown as 0, not null
+    if (includeCosts) {
+      // Only set cost values if cost fetching was requested
+      if (isResourceGroup) {
+        // For Resource Groups, use the total cost of all resources in that RG
+        const rgKey = `${resource.subscriptionId}|${resource.name}`;
+        cost = allRgTotals.get(rgKey);
+        // If cost query was run but RG not found, it means $0.00 (no resources with cost)
+        cost = cost !== undefined ? cost : 0;
       } else {
-        cost = null; // No data available
-      }
-    } else {
-      // For regular resources, look up individual cost
-      const resourceCost = allCostsMap.get(resource.id.toLowerCase());
-      if (resourceCost !== undefined) {
-        cost = resourceCost || 0; // If cost is 0, show 0 (not null)
-      } else {
-        cost = null; // No cost data available
+        // For regular resources, look up individual cost
+        const resourceCost = allCostsMap.get(resource.id.toLowerCase());
+        // If cost query was run but resource not found, it means $0.00 (no cost incurred)
+        cost = resourceCost !== undefined ? resourceCost : 0;
       }
     }
 

@@ -235,12 +235,7 @@
 }
 
 /* Cost Summary Skeleton */
-.cost-summary-skeleton {
-  min-width: 120px;
-}
-
 .skeleton-bar {
-  height: 16px;
   background: linear-gradient(
     90deg,
     rgba(148, 163, 184, 0.15) 0%,
@@ -252,14 +247,36 @@
   animation: skeleton-shimmer 1.5s ease-in-out infinite;
 }
 
-.skeleton-bar--large {
-  height: 28px;
-  width: 100px;
+.skeleton-bar--xlarge {
+  height: 32px;
+  width: 140px;
+  margin-top: 4px;
+}
+
+.skeleton-bar--medium {
+  height: 20px;
+  width: 80px;
+  margin-top: 2px;
 }
 
 .skeleton-bar--small {
   height: 12px;
-  width: 140px;
+  width: 120px;
+}
+
+.skeleton-bar--bar {
+  height: 4px;
+  width: 100%;
+  margin-top: 4px;
+  grid-column: 1 / -1;
+}
+
+.skeleton-breakdown-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  gap: 4px;
+  margin-bottom: 8px;
 }
 
 @keyframes skeleton-shimmer {
