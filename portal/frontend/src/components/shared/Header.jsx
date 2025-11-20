@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
+import NotificationBell from "./NotificationBell";
 import "../../styles/Header.css";
 
-function Header({ activeTab, onTabChange }) {
+function Header({ activeTab, onTabChange, notifications, unreadCount, onMarkAsRead, onNavigate, onMarkAllAsRead }) {
   const { user, logout } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
@@ -68,6 +69,15 @@ function Header({ activeTab, onTabChange }) {
             Admin
           </button>
         </nav>
+        {notifications && (
+          <NotificationBell
+            notifications={notifications}
+            unreadCount={unreadCount}
+            onMarkAsRead={onMarkAsRead}
+            onNavigate={onNavigate}
+            onMarkAllAsRead={onMarkAllAsRead}
+          />
+        )}
         {user && (
           <div className="user-menu" ref={dropdownRef}>
             <button

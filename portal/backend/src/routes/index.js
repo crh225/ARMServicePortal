@@ -8,6 +8,8 @@ import promoteRoutes from "./promote.routes.js";
 import pricingRoutes from "./pricing.routes.js";
 import authRoutes from "./auth.routes.js";
 import resourcesRoutes from "./resources.routes.js";
+import webhooksRoutes from "./webhooks.routes.js";
+import notificationsRoutes from "./notifications.routes.js";
 
 const router = express.Router();
 
@@ -21,5 +23,7 @@ router.use("/destroy", destroyRoutes);
 router.use("/promote", promoteRoutes);
 router.use("/pricing", pricingRoutes);
 router.use("/resources", resourcesRoutes);
+router.use("/webhooks", webhooksRoutes);
+router.use("/notifications", notificationsRoutes);
 
 export default router;

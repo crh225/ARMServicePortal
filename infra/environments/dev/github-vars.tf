@@ -23,3 +23,9 @@ variable "github_app_private_key_base64" {
   description = "Base64-encoded GitHub App private key"
   sensitive   = true
 }
+
+variable "github_webhook_secret" {
+  type        = string
+  description = "GitHub webhook secret for signature verification"
+  sensitive   = true
+}

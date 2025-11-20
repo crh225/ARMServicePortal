@@ -78,6 +78,12 @@ resource "azurerm_container_app" "backend" {
     value = var.github_app_private_key_base64
   }
 
+  # GitHub webhook secret as secret (sensitive)
+  secret {
+    name  = "gh-webhook-secret"
+    value = var.github_webhook_secret
+  }
+
   registry {
     server               = azurerm_container_registry.backend_acr.login_server
     username             = azurerm_container_registry.backend_acr.admin_username
@@ -160,6 +166,12 @@ resource "azurerm_container_app" "backend" {
       env {
         name        = "GH_APP_PRIVATE_KEY_BASE64"
         secret_name = "gh-app-private-key"
+      }
+
+      # GitHub webhook secret from secret
+      env {
+        name        = "GITHUB_WEBHOOK_SECRET"
+        secret_name = "gh-webhook-secret"
       }
     }
   }

@@ -3,9 +3,14 @@
   --bg-elevated: #ffffff;
   --bg-panel: #ffffff;
   --bg-chip: rgba(148, 163, 184, 0.12);
+  --bg-primary: #ffffff;
+  --bg-secondary: #ffffff;
+  --bg-hover: rgba(148, 163, 184, 0.12);
+  --bg-hover-subtle: rgba(148, 163, 184, 0.06);
 
   --border-subtle: rgba(148, 163, 184, 0.45);
   --border-strong: rgba(148, 163, 184, 0.8);
+  --border-default: rgba(148, 163, 184, 0.45);
 
   --accent: #2563eb;
   --accent-soft: rgba(37, 99, 235, 0.12);
@@ -16,8 +21,17 @@
   --text-main: #0f172a;
   --text-muted: #6b7280;
   --text-soft: #9ca3af;
+  --text-primary: #0f172a;
+  --text-secondary: #6b7280;
+  --text-tertiary: #9ca3af;
 
   --danger: #b91c1c;
+
+  /* Additional semantic colors */
+  --color-primary: #2563eb;
+  --color-success: #16a34a;
+  --color-danger: #dc2626;
+  --color-info: #0891b2;
 
   --radius-xl: 28px;
   --radius-lg: 18px;

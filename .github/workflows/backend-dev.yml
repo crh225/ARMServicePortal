@@ -87,7 +87,9 @@ jobs:
           az containerapp secret set \
             --name $CONTAINER_APP_NAME \
             --resource-group $RESOURCE_GROUP \
-            --secrets gh-oauth-secret="${{ secrets.GH_OAUTH_CLIENT_SECRET }}"
+            --secrets \
+              gh-oauth-secret="${{ secrets.GH_OAUTH_CLIENT_SECRET }}" \
+              gh-webhook-secret="${{ secrets.GH_WEBHOOK_SECRET }}"
 
       - name: Update Container App image and environment variables
         run: |
@@ -106,5 +108,6 @@ jobs:
               GH_APP_PRIVATE_KEY_BASE64="${{ secrets.GH_APP_PRIVATE_KEY_BASE64 }}" \
               GH_OAUTH_CLIENT_ID="${{ secrets.GH_OAUTH_CLIENT_ID }}" \
               GH_OAUTH_CLIENT_SECRET=secretref:gh-oauth-secret \
+              GITHUB_WEBHOOK_SECRET=secretref:gh-webhook-secret \
               APP_URL="https://armportal-api-dev.kindisland-0c7a7c9a.eastus2.azurecontainerapps.io" \
               FRONTEND_URL="https://armportalfec4ji.z20.web.core.windows.net"
