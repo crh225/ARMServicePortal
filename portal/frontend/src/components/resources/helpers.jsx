@@ -11,6 +11,67 @@ export function getResourceTypeDisplay(type) {
 }
 
 /**
+ * Get resource type icon SVG
+ */
+export function getResourceTypeIcon(type) {
+  if (!type) {
+    // Default icon
+    return (
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" className="resource-type-icon">
+        <path d="M8 0L0 4v8l8 4 8-4V4L8 0zm0 2.5L13 5 8 7.5 3 5l5-2.5zM2 6.5L7 9v6.5L2 13V6.5zm12 0v6.5l-5 2.5V9l5-2.5z"/>
+      </svg>
+    );
+  }
+
+  const typeLower = type.toLowerCase();
+
+  // Virtual Machine
+  if (typeLower.includes("virtualmachine")) {
+    return (
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" className="resource-type-icon">
+        <path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2zm2-1a1 1 0 0 0-1 1v1h14V2a1 1 0 0 0-1-1H2zM1 5v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V5H1zm2 2h2v2H3V7zm3 0h2v2H6V7zm3 0h2v2H9V7z"/>
+      </svg>
+    );
+  }
+
+  // Storage Accounts
+  if (typeLower.includes("storageaccount")) {
+    return (
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" className="resource-type-icon">
+        <path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2zm2-1a1 1 0 0 0-1 1v3h14V2a1 1 0 0 0-1-1H2zM1 6v2h14V6H1zm0 3v2h14V9H1zm0 3v2a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2H1z"/>
+      </svg>
+    );
+  }
+
+  // Container Apps, Container Groups
+  if (typeLower.includes("container")) {
+    return (
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" className="resource-type-icon">
+        <path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2zm2-1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H2z"/>
+        <path d="M3 4h10v1H3V4zm0 3h10v1H3V7zm0 3h10v1H3v-1z"/>
+      </svg>
+    );
+  }
+
+  // Registries
+  if (typeLower.includes("registr")) {
+    return (
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" className="resource-type-icon">
+        <path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2zm2-1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H4z"/>
+        <path d="M5 4h6v1H5V4zm0 2h6v1H5V6zm0 2h6v1H5V8zm0 2h6v1H5v-1z"/>
+      </svg>
+    );
+  }
+
+  // Default icon
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" className="resource-type-icon">
+      <path d="M8 0L0 4v8l8 4 8-4V4L8 0zm0 2.5L13 5 8 7.5 3 5l5-2.5zM2 6.5L7 9v6.5L2 13V6.5zm12 0v6.5l-5 2.5V9l5-2.5z"/>
+    </svg>
+  );
+}
+
+/**
  * Get status badge class
  */
 export function getStatusBadgeClass(status) {

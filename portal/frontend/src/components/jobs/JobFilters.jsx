@@ -16,6 +16,19 @@ function JobFilters({
   environments,
   blueprints
 }) {
+  const hasActiveFilters =
+    statusFilter !== "all" ||
+    environmentFilter !== "all" ||
+    blueprintFilter !== "all" ||
+    jobIdFilter !== "";
+
+  const handleClearFilters = () => {
+    onStatusFilterChange("all");
+    onEnvironmentFilterChange("all");
+    onBlueprintFilterChange("all");
+    onJobIdFilterChange("");
+  };
+
   return (
     <div className="job-filters">
       <div className="job-filters-row">
@@ -82,6 +95,16 @@ function JobFilters({
             <option key={bp} value={bp}>{bp}</option>
           ))}
         </select>
+
+        {hasActiveFilters && (
+          <button
+            className="filter-clear-btn"
+            onClick={handleClearFilters}
+            title="Clear all filters"
+          >
+            ✕ Clear
+          </button>
+        )}
       </div>
     </div>
   );

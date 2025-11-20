@@ -19,6 +19,21 @@ function ResourcesFilters({
   searchQuery,
   setSearchQuery
 }) {
+  const hasActiveFilters =
+    environmentFilter !== "all" ||
+    blueprintFilter !== "all" ||
+    ownerFilter !== "all" ||
+    ownershipFilter !== "all" ||
+    searchQuery !== "";
+
+  const handleClearFilters = () => {
+    setEnvironmentFilter("all");
+    setBlueprintFilter("all");
+    setOwnerFilter("all");
+    setOwnershipFilter("all");
+    setSearchQuery("");
+  };
+
   return (
     <div className="resources-filters">
       <select
@@ -74,6 +89,16 @@ function ResourcesFilters({
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
       />
+
+      {hasActiveFilters && (
+        <button
+          className="filter-clear-btn"
+          onClick={handleClearFilters}
+          title="Clear all filters"
+        >
+          ✕ Clear
+        </button>
+      )}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import CostSummaryCard from "./CostSummaryCard";
 import ResourcesFilters from "./ResourcesFilters";
 import ResourcesTableView from "./ResourcesTableView";
@@ -9,7 +9,7 @@ import "../../styles/ResourcesTable.css";
 /**
  * ResourcesTable component with filters and sorting
  */
-function ResourcesTable({ resources, onSelectResource, selectedResource, costsLoading }) {
+function ResourcesTable({ resources, onSelectResource, selectedResource, costsLoading, onFilteredResourcesChange }) {
   // Filter states
   const [environmentFilter, setEnvironmentFilter] = useState("all");
   const [blueprintFilter, setBlueprintFilter] = useState("all");
@@ -192,6 +192,13 @@ function ResourcesTable({ resources, onSelectResource, selectedResource, costsLo
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
   };
+
+  // Notify parent component of filtered resources changes
+  useEffect(() => {
+    if (onFilteredResourcesChange) {
+      onFilteredResourcesChange(filteredResources);
+    }
+  }, [filteredResources, onFilteredResourcesChange]);
 
   return (
     <div className="resources-container">

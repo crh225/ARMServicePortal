@@ -1,3 +1,17 @@
+/* Resource Type Icon */
+.resource-type-container {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.resource-type-icon {
+  width: 14px;
+  height: 14px;
+  color: #64748b;
+  flex-shrink: 0;
+}
+
 /* Status Badges - using job-status style */
 .status-badge {
   display: inline-block;
@@ -53,6 +67,25 @@
 .pr-link:hover {
   color: var(--accent-strong);
   text-decoration: underline;
+}
+
+/* Cost Warning */
+.cost-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cost-warning {
+  display: inline-flex;
+  align-items: center;
+  color: #f59e0b;
+  cursor: help;
+}
+
+.cost-warning svg {
+  width: 14px;
+  height: 14px;
 }
 
 /* Health Badges */
