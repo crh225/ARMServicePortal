@@ -1,8 +1,8 @@
 module "azure-webapp-stack_59fa3489_rg" {
   source       = "../../modules/azure-rg-basic"
   project_name = "test-11-19-25-9"
-  environment = "dev"
-  location = "eastus2"
+  environment  = "dev"
+  location     = "eastus2"
 
   # ARM Portal tracking tags
   tags = {
@@ -18,13 +18,13 @@ output "azure-webapp-stack_59fa3489_rg_resource_group_name" {
 }
 
 module "azure-webapp-stack_59fa3489_storage" {
-  source       = "../../modules/azure-storage-basic"
-  project_name = "test-11-19-25-9"
-  environment = "dev"
+  source              = "../../modules/azure-storage-basic"
+  project_name        = "test-11-19-25-9"
+  environment         = "dev"
   resource_group_name = module.azure-webapp-stack_59fa3489_rg.resource_group_name
-  location = "eastus2"
-  account_tier = "Standard"
-  replication_type = "LRS"
+  location            = "eastus2"
+  account_tier        = "Standard"
+  replication_type    = "LRS"
 
   # ARM Portal tracking tags
   tags = {
@@ -44,14 +44,14 @@ output "azure-webapp-stack_59fa3489_storage_primary_blob_endpoint" {
 }
 
 module "azure-webapp-stack_59fa3489_keyvault" {
-  source       = "../../modules/azure-key-vault-basic"
-  project_name = "test-11-19-25-9"
-  environment = "dev"
-  resource_group_name = module.azure-webapp-stack_59fa3489_rg.resource_group_name
-  location = "eastus2"
-  sku_name = "standard"
+  source                     = "../../modules/azure-key-vault-basic"
+  project_name               = "test-11-19-25-9"
+  environment                = "dev"
+  resource_group_name        = module.azure-webapp-stack_59fa3489_rg.resource_group_name
+  location                   = "eastus2"
+  sku_name                   = "standard"
   soft_delete_retention_days = "7"
-  purge_protection_enabled = "true"
+  purge_protection_enabled   = "true"
 
   # ARM Portal tracking tags
   tags = {
@@ -62,17 +62,17 @@ module "azure-webapp-stack_59fa3489_keyvault" {
 }
 
 module "azure-webapp-stack_59fa3489_app" {
-  source       = "../../modules/azure-aci"
-  project_name = "test-11-19-25-9"
-  environment = "dev"
-  resource_group_name = module.azure-webapp-stack_59fa3489_rg.resource_group_name
-  location = "eastus2"
-  container_image = "mcr.microsoft.com/azuredocs/aci-helloworld:latest"
-  cpu_cores = "0.5"
-  memory_gb = "1"
-  port = "80"
-  ip_address_type = "Public"
-  restart_policy = "Always"
+  source                = "../../modules/azure-aci"
+  project_name          = "test-11-19-25-9"
+  environment           = "dev"
+  resource_group_name   = module.azure-webapp-stack_59fa3489_rg.resource_group_name
+  location              = "eastus2"
+  container_image       = "mcr.microsoft.com/azuredocs/aci-helloworld:latest"
+  cpu_cores             = "0.5"
+  memory_gb             = "1"
+  port                  = "80"
+  ip_address_type       = "Public"
+  restart_policy        = "Always"
   environment_variables = "{}"
 
   # ARM Portal tracking tags

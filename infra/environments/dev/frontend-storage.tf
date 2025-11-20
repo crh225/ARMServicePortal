@@ -12,7 +12,7 @@ resource "azurerm_storage_account" "frontend" {
   account_tier             = "Standard"
   account_replication_type = "LRS"
 
-  https_traffic_only_enabled    = true
+  https_traffic_only_enabled      = true
   allow_nested_items_to_be_public = true
 
   static_website {
