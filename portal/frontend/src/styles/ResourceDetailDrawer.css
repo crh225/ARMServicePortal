@@ -100,6 +100,27 @@
   gap: 14px;
 }
 
+.info-grid--two-cols {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.info-grid--three-cols {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+@media (max-width: 1024px) {
+  .info-grid--three-cols {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .info-grid--two-cols,
+  .info-grid--three-cols {
+    grid-template-columns: 1fr;
+  }
+}
+
 .info-item {
   display: flex;
   flex-direction: column;

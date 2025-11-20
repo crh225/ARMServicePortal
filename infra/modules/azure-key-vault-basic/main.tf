@@ -70,6 +70,12 @@ variable "owner" {
   default     = "crh225"
 }
 
+variable "log_analytics_workspace_id" {
+  type        = string
+  description = "Log Analytics workspace ID for diagnostic settings"
+  default     = null
+}
+
 locals {
   # Key Vault names must be 3–24 chars, alphanumeric, globally unique.
   kv_name_prefix = lower(replace("${var.project_name}${var.environment}", "/[^a-z0-9]/", ""))
@@ -113,6 +119,26 @@ resource "azurerm_key_vault" "this" {
   public_network_access_enabled = true
 
   tags = local.all_tags
+}
+
+# Diagnostic settings to send audit logs to Log Analytics
+resource "azurerm_monitor_diagnostic_setting" "keyvault_logs" {
+  count                      = var.log_analytics_workspace_id != null ? 1 : 0
+  name                       = "keyvault-logs-to-log-analytics"
+  target_resource_id         = azurerm_key_vault.this.id
+  log_analytics_workspace_id = var.log_analytics_workspace_id
+
+  enabled_log {
+    category = "AuditEvent"
+  }
+
+  enabled_log {
+    category = "AzurePolicyEvaluationDetails"
+  }
+
+  metric {
+    category = "AllMetrics"
+  }
 }
 
 output "key_vault_name" {

@@ -61,6 +61,12 @@ variable "owner" {
   default     = "crh225"
 }
 
+variable "log_analytics_workspace_id" {
+  type        = string
+  description = "Log Analytics workspace ID for diagnostic settings"
+  default     = null
+}
+
 locals {
   # Make a safe prefix from project + environment
   sa_name_prefix = lower(replace("${var.project_name}${var.environment}", "/[^a-z0-9]/", ""))
@@ -105,6 +111,99 @@ resource "azurerm_storage_account" "this" {
   allow_nested_items_to_be_public = true
 
   tags = local.all_tags
+}
+
+# Diagnostic settings to send logs to Log Analytics
+resource "azurerm_monitor_diagnostic_setting" "blob_logs" {
+  count                      = var.log_analytics_workspace_id != null ? 1 : 0
+  name                       = "blob-logs-to-log-analytics"
+  target_resource_id         = "${azurerm_storage_account.this.id}/blobServices/default/"
+  log_analytics_workspace_id = var.log_analytics_workspace_id
+
+  enabled_log {
+    category = "StorageRead"
+  }
+
+  enabled_log {
+    category = "StorageWrite"
+  }
+
+  enabled_log {
+    category = "StorageDelete"
+  }
+
+  metric {
+    category = "Transaction"
+  }
+}
+
+resource "azurerm_monitor_diagnostic_setting" "queue_logs" {
+  count                      = var.log_analytics_workspace_id != null ? 1 : 0
+  name                       = "queue-logs-to-log-analytics"
+  target_resource_id         = "${azurerm_storage_account.this.id}/queueServices/default/"
+  log_analytics_workspace_id = var.log_analytics_workspace_id
+
+  enabled_log {
+    category = "StorageRead"
+  }
+
+  enabled_log {
+    category = "StorageWrite"
+  }
+
+  enabled_log {
+    category = "StorageDelete"
+  }
+
+  metric {
+    category = "Transaction"
+  }
+}
+
+resource "azurerm_monitor_diagnostic_setting" "table_logs" {
+  count                      = var.log_analytics_workspace_id != null ? 1 : 0
+  name                       = "table-logs-to-log-analytics"
+  target_resource_id         = "${azurerm_storage_account.this.id}/tableServices/default/"
+  log_analytics_workspace_id = var.log_analytics_workspace_id
+
+  enabled_log {
+    category = "StorageRead"
+  }
+
+  enabled_log {
+    category = "StorageWrite"
+  }
+
+  enabled_log {
+    category = "StorageDelete"
+  }
+
+  metric {
+    category = "Transaction"
+  }
+}
+
+resource "azurerm_monitor_diagnostic_setting" "file_logs" {
+  count                      = var.log_analytics_workspace_id != null ? 1 : 0
+  name                       = "file-logs-to-log-analytics"
+  target_resource_id         = "${azurerm_storage_account.this.id}/fileServices/default/"
+  log_analytics_workspace_id = var.log_analytics_workspace_id
+
+  enabled_log {
+    category = "StorageRead"
+  }
+
+  enabled_log {
+    category = "StorageWrite"
+  }
+
+  enabled_log {
+    category = "StorageDelete"
+  }
+
+  metric {
+    category = "Transaction"
+  }
 }
 
 output "storage_account_name" {

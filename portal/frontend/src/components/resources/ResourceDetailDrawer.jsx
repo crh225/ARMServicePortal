@@ -82,21 +82,21 @@ function ResourceDetailDrawer({ resource, onClose }) {
 function DetailsTab({ resource }) {
   return (
     <div className="drawer-sections">
-      {/* General Info */}
+      {/* General Info - Two column grid */}
       <div className="drawer-section">
         <h3 className="section-title">General Information</h3>
-        <div className="info-grid">
+        <div className="info-grid info-grid--two-cols">
           <div className="info-item">
             <span className="info-label">Name</span>
             <span className="info-value">{resource.name}</span>
           </div>
           <div className="info-item">
-            <span className="info-label">Type</span>
-            <span className="info-value">{resource.type}</span>
-          </div>
-          <div className="info-item">
             <span className="info-label">Location</span>
             <span className="info-value">{resource.location}</span>
+          </div>
+          <div className="info-item">
+            <span className="info-label">Type</span>
+            <span className="info-value">{resource.type}</span>
           </div>
           <div className="info-item">
             <span className="info-label">Resource Group</span>
@@ -120,10 +120,10 @@ function DetailsTab({ resource }) {
         </div>
       </div>
 
-      {/* Portal Info */}
+      {/* Portal Info - Three column grid */}
       <div className="drawer-section">
         <h3 className="section-title">ARM Portal Information</h3>
-        <div className="info-grid">
+        <div className="info-grid info-grid--three-cols">
           <div className="info-item">
             <span className="info-label">Environment</span>
             <span className="info-value">{resource.environment || "—"}</span>
@@ -164,55 +164,18 @@ function DetailsTab({ resource }) {
         </div>
       )}
 
-      {/* PR Info */}
-      {resource.pr && (
-        <div className="drawer-section">
-          <h3 className="section-title">Pull Request</h3>
-          <div className="info-grid">
-            <div className="info-item">
-              <span className="info-label">PR Number</span>
-              <a
-                href={resource.pr.pullRequestUrl || `https://github.com/crh225/ARMServicePortal/pull/${resource.prNumber}`}
-                target="_blank"
-                rel="noreferrer"
-                className="info-link"
-              >
-                #{resource.prNumber}
-              </a>
-            </div>
-            <div className="info-item">
-              <span className="info-label">PR Title</span>
-              <span className="info-value">{resource.pr.title}</span>
-            </div>
-            <div className="info-item">
-              <span className="info-label">PR Status</span>
-              <span className="info-value">
-                {resource.pr.merged ? "Merged" : resource.pr.status}
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Cost */}
+      {/* Combined Cost, Health, and PR Row */}
       <div className="drawer-section">
-        <h3 className="section-title">Cost (Last 30 Days)</h3>
-        <div className="info-grid">
+        <h3 className="section-title">Status & Metrics</h3>
+        <div className="info-grid info-grid--three-cols">
           <div className="info-item">
-            <span className="info-label">Total Cost</span>
+            <span className="info-label">Cost (30 Days)</span>
             <span className="info-value">
               {resource.cost !== null && resource.cost !== undefined
                 ? `$${resource.cost.toFixed(2)}`
                 : "—"}
             </span>
           </div>
-        </div>
-      </div>
-
-      {/* Health */}
-      <div className="drawer-section">
-        <h3 className="section-title">Health Status</h3>
-        <div className="info-grid">
           <div className="info-item">
             <span className="info-label">Provisioning State</span>
             <span className="info-value">
@@ -230,6 +193,31 @@ function DetailsTab({ resource }) {
                 <HealthBadge health={resource.health} />
               </span>
             </div>
+          )}
+          {resource.pr && (
+            <>
+              <div className="info-item">
+                <span className="info-label">PR Number</span>
+                <a
+                  href={resource.pr.pullRequestUrl || `https://github.com/crh225/ARMServicePortal/pull/${resource.prNumber}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="info-link"
+                >
+                  #{resource.prNumber}
+                </a>
+              </div>
+              <div className="info-item">
+                <span className="info-label">PR Status</span>
+                <span className="info-value">
+                  {resource.pr.merged ? "Merged" : resource.pr.status}
+                </span>
+              </div>
+              <div className="info-item">
+                <span className="info-label">PR Title</span>
+                <span className="info-value">{resource.pr.title}</span>
+              </div>
+            </>
           )}
         </div>
       </div>
