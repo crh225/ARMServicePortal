@@ -1,0 +1,326 @@
+import React, { useState } from "react";
+import { OwnershipStatus } from "../../hooks/useResources";
+import ResourceGraph from "./ResourceGraph";
+import "../../styles/ResourceDetailDrawer.css";
+
+/**
+ * Get Azure Portal URL for a resource
+ */
+function getAzurePortalUrl(resource) {
+  return `https://portal.azure.com/#@/resource${resource.id}`;
+}
+
+/**
+ * Get display-friendly resource type
+ */
+function getResourceTypeDisplay(type) {
+  if (!type) return "Unknown";
+  const parts = type.split("/");
+  return parts[parts.length - 1];
+}
+
+/**
+ * Resource Detail Drawer with tabs
+ */
+function ResourceDetailDrawer({ resource, onClose }) {
+  const [activeTab, setActiveTab] = useState("details");
+
+  if (!resource) return null;
+
+  return (
+    <div className="resource-detail">
+      {/* Header with resource name */}
+      <div className="detail-header">
+        <div>
+          <h2 className="detail-title">{resource.name}</h2>
+          <p className="detail-subtitle">{getResourceTypeDisplay(resource.type)}</p>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="detail-tabs">
+        <button
+          className={`detail-tab ${activeTab === "details" ? "detail-tab--active" : ""}`}
+          onClick={() => setActiveTab("details")}
+        >
+          Details
+        </button>
+        <button
+          className={`detail-tab ${activeTab === "graph" ? "detail-tab--active" : ""}`}
+          onClick={() => setActiveTab("graph")}
+        >
+          Graph
+        </button>
+      </div>
+
+      {/* Content */}
+      <div className="detail-content">
+        {activeTab === "details" && (
+          <DetailsTab resource={resource} />
+        )}
+        {activeTab === "graph" && (
+          <GraphTab resource={resource} />
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Details Tab Content
+ */
+function DetailsTab({ resource }) {
+  return (
+    <div className="drawer-sections">
+      {/* General Info */}
+      <div className="drawer-section">
+        <h3 className="section-title">General Information</h3>
+        <div className="info-grid">
+          <div className="info-item">
+            <span className="info-label">Name</span>
+            <span className="info-value">{resource.name}</span>
+          </div>
+          <div className="info-item">
+            <span className="info-label">Type</span>
+            <span className="info-value">{resource.type}</span>
+          </div>
+          <div className="info-item">
+            <span className="info-label">Location</span>
+            <span className="info-value">{resource.location}</span>
+          </div>
+          <div className="info-item">
+            <span className="info-label">Resource Group</span>
+            <span className="info-value">{resource.resourceGroup}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Azure IDs */}
+      <div className="drawer-section">
+        <h3 className="section-title">Azure Resource Identifiers</h3>
+        <div className="info-grid">
+          <div className="info-item">
+            <span className="info-label">Resource ID</span>
+            <code className="info-code">{resource.id}</code>
+          </div>
+          <div className="info-item">
+            <span className="info-label">Subscription ID</span>
+            <code className="info-code">{resource.subscriptionId}</code>
+          </div>
+        </div>
+      </div>
+
+      {/* Portal Info */}
+      <div className="drawer-section">
+        <h3 className="section-title">ARM Portal Information</h3>
+        <div className="info-grid">
+          <div className="info-item">
+            <span className="info-label">Environment</span>
+            <span className="info-value">{resource.environment || "—"}</span>
+          </div>
+          <div className="info-item">
+            <span className="info-label">Blueprint</span>
+            <span className="info-value">{resource.blueprintId || "—"}</span>
+          </div>
+          <div className="info-item">
+            <span className="info-label">Owner</span>
+            <span className="info-value">{resource.owner || "—"}</span>
+          </div>
+          <div className="info-item">
+            <span className="info-label">Request ID</span>
+            <span className="info-value">{resource.requestId || "—"}</span>
+          </div>
+          <div className="info-item">
+            <span className="info-label">Ownership Status</span>
+            <span className="info-value">
+              <StatusBadge status={resource.ownershipStatus} />
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Tags */}
+      {Object.keys(resource.tags).length > 0 && (
+        <div className="drawer-section">
+          <h3 className="section-title">Tags</h3>
+          <div className="tags-list">
+            {Object.entries(resource.tags).map(([key, value]) => (
+              <div key={key} className="tag-item">
+                <span className="tag-key">{key}</span>
+                <span className="tag-value">{value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* PR Info */}
+      {resource.pr && (
+        <div className="drawer-section">
+          <h3 className="section-title">Pull Request</h3>
+          <div className="info-grid">
+            <div className="info-item">
+              <span className="info-label">PR Number</span>
+              <a
+                href={resource.pr.pullRequestUrl || `https://github.com/crh225/ARMServicePortal/pull/${resource.prNumber}`}
+                target="_blank"
+                rel="noreferrer"
+                className="info-link"
+              >
+                #{resource.prNumber}
+              </a>
+            </div>
+            <div className="info-item">
+              <span className="info-label">PR Title</span>
+              <span className="info-value">{resource.pr.title}</span>
+            </div>
+            <div className="info-item">
+              <span className="info-label">PR Status</span>
+              <span className="info-value">
+                {resource.pr.merged ? "Merged" : resource.pr.status}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cost */}
+      <div className="drawer-section">
+        <h3 className="section-title">Cost (Last 30 Days)</h3>
+        <div className="info-grid">
+          <div className="info-item">
+            <span className="info-label">Total Cost</span>
+            <span className="info-value">
+              {resource.cost !== null && resource.cost !== undefined
+                ? `$${resource.cost.toFixed(2)}`
+                : "—"}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Health */}
+      <div className="drawer-section">
+        <h3 className="section-title">Health Status</h3>
+        <div className="info-grid">
+          <div className="info-item">
+            <span className="info-label">Provisioning State</span>
+            <span className="info-value">
+              {resource.provisioningState ? (
+                <HealthBadge health={resource.provisioningState} />
+              ) : (
+                "—"
+              )}
+            </span>
+          </div>
+          {resource.health && (
+            <div className="info-item">
+              <span className="info-label">Overall Health</span>
+              <span className="info-value">
+                <HealthBadge health={resource.health} />
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="drawer-section">
+        <h3 className="section-title">Actions</h3>
+        <div className="action-buttons">
+          <a
+            href={getAzurePortalUrl(resource)}
+            target="_blank"
+            rel="noreferrer"
+            className="action-btn action-btn--primary"
+          >
+            Open in Azure Portal
+          </a>
+          {resource.pr && (
+            <a
+              href={resource.pr.pullRequestUrl || `https://github.com/crh225/ARMServicePortal/pull/${resource.prNumber}`}
+              target="_blank"
+              rel="noreferrer"
+              className="action-btn action-btn--secondary"
+            >
+              Open PR in GitHub
+            </a>
+          )}
+          <button
+            className="action-btn action-btn--secondary"
+            disabled
+            title="Cleanup PR generation coming soon"
+          >
+            Generate Cleanup PR (Coming Soon)
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Graph Tab Content - Force-directed graph visualization
+ */
+function GraphTab({ resource }) {
+  return (
+    <div className="drawer-sections">
+      <div className="drawer-section">
+        <h3 className="section-title">Resource Graph</h3>
+        <ResourceGraph resource={resource} />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Status Badge Component
+ */
+function StatusBadge({ status }) {
+  let className = "status-badge";
+  let text = "";
+
+  switch (status) {
+    case OwnershipStatus.MANAGED:
+      className += " status-badge--managed";
+      text = "Managed";
+      break;
+    case OwnershipStatus.STALE:
+      className += " status-badge--stale";
+      text = "Stale";
+      break;
+    case OwnershipStatus.ORPHAN:
+      className += " status-badge--orphan";
+      text = "Orphan";
+      break;
+    case OwnershipStatus.UNMANAGED:
+      className += " status-badge--unmanaged";
+      text = "Unmanaged";
+      break;
+    default:
+      text = "Unknown";
+  }
+
+  return <span className={className}>{text}</span>;
+}
+
+/**
+ * Health Badge Component
+ */
+function HealthBadge({ health }) {
+  if (!health) return <span className="health-badge health-badge--unknown">Unknown</span>;
+
+  const status = health.toLowerCase();
+
+  if (status === "succeeded") {
+    return <span className="health-badge health-badge--healthy">Healthy</span>;
+  } else if (status === "failed") {
+    return <span className="health-badge health-badge--unhealthy">Failed</span>;
+  } else if (status === "running" || status === "updating" || status === "provisioning") {
+    return <span className="health-badge health-badge--provisioning">Provisioning</span>;
+  } else {
+    return <span className="health-badge health-badge--unknown">{health}</span>;
+  }
+}
+
+export default ResourceDetailDrawer;

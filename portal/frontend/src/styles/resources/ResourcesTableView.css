@@ -1,0 +1,88 @@
+/* Table Container */
+.resources-table-container {
+  flex: 1;
+  overflow: auto;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+}
+
+/* Table */
+.resources-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+}
+
+.resources-table thead {
+  background: #f9fafb;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.resources-table th {
+  padding: 10px 12px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.78rem;
+  color: #6b7280;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.3);
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.resources-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s, color 0.15s;
+}
+
+.resources-table th.sortable:hover {
+  background: #f3f4f6;
+  color: var(--text-main);
+}
+
+.resources-table tbody tr {
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+  transition: background 0.15s;
+  cursor: pointer;
+}
+
+.resources-table tbody tr:hover {
+  background: rgba(37, 99, 235, 0.04);
+}
+
+.resources-table tbody tr.selected {
+  background: rgba(37, 99, 235, 0.08);
+}
+
+.resources-table tbody tr.selected:hover {
+  background: rgba(37, 99, 235, 0.12);
+}
+
+.resources-table td {
+  padding: 10px 12px;
+  color: var(--text-main);
+}
+
+.resource-name {
+  font-weight: 500;
+  color: #111827;
+}
+
+.resource-type {
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+/* Empty State */
+.empty-state {
+  padding: 40px 16px;
+  text-align: center;
+  color: var(--text-soft);
+  font-size: 0.84rem;
+  font-style: italic;
+}

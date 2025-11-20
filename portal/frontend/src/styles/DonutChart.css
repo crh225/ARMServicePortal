@@ -1,0 +1,11 @@
+/* Donut Chart Component */
+
+.donut-chart {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.donut-chart-canvas {
+  display: block;
+}

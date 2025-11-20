@@ -2,13 +2,13 @@ import React, { useState, useEffect } from "react";
 import { Routes, Route, useSearchParams } from "react-router-dom";
 import "./styles/variables.css";
 import "./styles/layout.css";
-import Header from "./components/Header";
-import BlueprintsPanel from "./components/BlueprintsPanel";
-import JobsPanel from "./components/JobsPanel";
-import ResourcesPanel from "./components/ResourcesPanel";
-import AdminPanel from "./components/AdminPanel";
-import AuthCallback from "./components/AuthCallback";
-import Footer from "./components/Footer";
+import Header from "./components/shared/Header";
+import BlueprintsPanel from "./components/blueprints/BlueprintsPanel";
+import JobsPanel from "./components/jobs/JobsPanel";
+import ResourcesPanel from "./components/resources/ResourcesPanel";
+import AdminPanel from "./components/admin/AdminPanel";
+import AuthCallback from "./components/shared/AuthCallback";
+import Footer from "./components/shared/Footer";
 
 /**
  * Main App component

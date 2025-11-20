@@ -1,0 +1,61 @@
+/* Filters Bar */
+.resources-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.filter-select {
+  padding: 6px 10px;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  border-radius: 6px;
+  background: #ffffff;
+  font-size: 0.78rem;
+  color: var(--text-main);
+  cursor: pointer;
+  transition: all 0.16s ease-out;
+  min-width: 140px;
+}
+
+.filter-select:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+.filter-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f3f4f6;
+}
+
+.filter-search {
+  flex: 1;
+  min-width: 180px;
+  padding: 6px 10px;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  border-radius: 6px;
+  font-size: 0.78rem;
+  color: var(--text-main);
+  background: #ffffff;
+  transition: all 0.16s ease-out;
+}
+
+.filter-search:hover {
+  border-color: var(--accent);
+}
+
+.filter-search:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+.filter-search::placeholder {
+  color: var(--text-soft);
+}
