@@ -9,7 +9,6 @@ const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.join(__dirname, "..", ".env") });
 
 import express from "express";
-import bodyParser from "body-parser";
 import cors from "cors";
 import apiRoutes from "./routes/index.js";
 import { requestLogger } from "./middleware/requestLogger.js";
@@ -18,7 +17,14 @@ import { errorHandler } from "./middleware/errorHandler.js";
 const app = express();
 
 // Middleware
-app.use(bodyParser.json());
+// Capture raw body for webhook signature verification
+app.use(express.json({
+  verify: (req, _res, buf, encoding) => {
+    if (req.url.startsWith('/api/webhooks')) {
+      req.rawBody = buf.toString(encoding || 'utf8');
+    }
+  }
+}));
 app.use(cors());
 app.use(requestLogger);
 

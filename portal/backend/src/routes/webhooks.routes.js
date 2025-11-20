@@ -96,9 +96,15 @@ function parseBranchInfo(branchName) {
  */
 router.post("/github", async (req, res) => {
   try {
-    // Verify webhook signature using the stringified body
+    // Verify webhook signature using the raw body
     const signature = req.headers['x-hub-signature-256'];
-    const payload = JSON.stringify(req.body);
+    const payload = req.rawBody;
+
+    if (!payload) {
+      console.error("No raw body available for signature verification");
+      return res.status(400).json({ error: "Invalid request body" });
+    }
+
     const isValid = verifyGitHubSignature(payload, signature);
 
     if (!isValid) {
