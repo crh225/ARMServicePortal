@@ -15,6 +15,7 @@ function ResourcesPanel({ isActive }) {
   const {
     resources,
     loading,
+    costsLoading,
     error,
     fetchResources,
     refreshResources
@@ -154,6 +155,7 @@ function ResourcesPanel({ isActive }) {
           resources={resources}
           onSelectResource={handleSelectResource}
           selectedResource={selectedResource}
+          costsLoading={costsLoading}
         />
       </div>
     </div>

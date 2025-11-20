@@ -154,6 +154,29 @@ function ResourcesTable({ resources, onSelectResource, selectedResource }) {
     return filtered;
   }, [resources, environmentFilter, blueprintFilter, ownerFilter, ownershipFilter, searchQuery, sortColumn, sortDirection]);
 
+  // Calculate cost summary
+  const costSummary = useMemo(() => {
+    let totalCost = 0;
+    let resourcesWithCost = 0;
+    let resourcesNoCost = 0;
+
+    filteredResources.forEach(resource => {
+      if (resource.cost !== null && resource.cost !== undefined) {
+        totalCost += resource.cost;
+        resourcesWithCost++;
+      } else {
+        resourcesNoCost++;
+      }
+    });
+
+    return {
+      totalCost,
+      resourcesWithCost,
+      resourcesNoCost,
+      hasAnyCost: resourcesWithCost > 0
+    };
+  }, [filteredResources]);
+
   // Paginate resources
   const paginatedResources = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -239,6 +262,28 @@ function ResourcesTable({ resources, onSelectResource, selectedResource }) {
           onChange={(e) => setSearchQuery(e.target.value)}
         />
       </div>
+
+      {/* Cost Summary */}
+      {costSummary.hasAnyCost && (
+        <div className="cost-summary">
+          <div className="cost-summary-card">
+            <div className="cost-summary-main">
+              <div className="cost-summary-label">Total Monthly Cost</div>
+              <div className="cost-summary-amount">${costSummary.totalCost.toFixed(2)}</div>
+            </div>
+            <div className="cost-summary-details">
+              <span className="cost-summary-detail">
+                {costSummary.resourcesWithCost} resource{costSummary.resourcesWithCost !== 1 ? 's' : ''} with cost
+              </span>
+              {costSummary.resourcesNoCost > 0 && (
+                <span className="cost-summary-detail cost-summary-detail--muted">
+                  {costSummary.resourcesNoCost} without cost data
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Results Count and Pagination Info */}
       <div className="resources-count">

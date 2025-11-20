@@ -69,6 +69,65 @@
   color: var(--text-soft);
 }
 
+/* Cost Summary */
+.cost-summary {
+  margin-top: 8px;
+}
+
+.cost-summary-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 18px 22px;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.05),
+    0 4px 12px rgba(0, 0, 0, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.cost-summary-main {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.cost-summary-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.cost-summary-amount {
+  font-size: 1.85rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #1e40af 0%, #2563eb 50%, #3b82f6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.cost-summary-details {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.cost-summary-detail {
+  font-size: 0.75rem;
+  color: #475569;
+  font-weight: 500;
+}
+
+.cost-summary-detail--muted {
+  color: #94a3b8;
+}
+
 /* Results Count */
 .resources-count {
   margin-top: 4px;

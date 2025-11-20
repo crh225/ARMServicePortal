@@ -43,6 +43,7 @@ function computeOwnershipStatus(resource) {
 export function useResources() {
   const [resources, setResources] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [costsLoading, setCostsLoading] = useState(false);
   const [error, setError] = useState(null);
 
   /**
@@ -69,6 +70,7 @@ export function useResources() {
       setLoading(false);
 
       // Phase 2: Fetch costs separately and patch them in (slower, updates grid progressively)
+      setCostsLoading(true);
       const costResponse = await fetchAllResources({ ...options, includeCosts: true });
 
       // Update resources with cost data
@@ -81,10 +83,12 @@ export function useResources() {
       });
 
       setResources(resourcesWithCosts);
+      setCostsLoading(false);
     } catch (err) {
       console.error("Failed to fetch resources:", err);
       setError(err.message);
       setLoading(false);
+      setCostsLoading(false);
     }
   }, []);
 
@@ -98,6 +102,7 @@ export function useResources() {
   return {
     resources,
     loading,
+    costsLoading,
     error,
     fetchResources,
     refreshResources
