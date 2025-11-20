@@ -8,7 +8,7 @@ module "azure-webapp-stack_59fa3489_rg" {
   tags = {
     armportal-environment = "dev"
     armportal-blueprint   = "azure-rg-basic"
-    armportal-request-id  = "azure-webapp-stack_59fa3489"
+    armportal-request-id  = "81"
   }
 }
 
@@ -30,7 +30,7 @@ module "azure-webapp-stack_59fa3489_storage" {
   tags = {
     armportal-environment = "dev"
     armportal-blueprint   = "azure-storage-basic"
-    armportal-request-id  = "azure-webapp-stack_59fa3489"
+    armportal-request-id  = "81"
   }
 }
 
@@ -57,7 +57,7 @@ module "azure-webapp-stack_59fa3489_keyvault" {
   tags = {
     armportal-environment = "dev"
     armportal-blueprint   = "azure-key-vault-basic"
-    armportal-request-id  = "azure-webapp-stack_59fa3489"
+    armportal-request-id  = "81"
   }
 }
 
@@ -79,7 +79,7 @@ module "azure-webapp-stack_59fa3489_app" {
   tags = {
     armportal-environment = "dev"
     armportal-blueprint   = "azure-aci"
-    armportal-request-id  = "azure-webapp-stack_59fa3489"
+    armportal-request-id  = "81"
   }
 }
 
