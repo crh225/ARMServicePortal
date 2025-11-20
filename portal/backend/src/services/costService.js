@@ -5,6 +5,10 @@
 
 import { CostManagementClient } from "@azure/arm-costmanagement";
 import { DefaultAzureCredential } from "@azure/identity";
+import { cache } from "../utils/cache.js";
+
+// Cache TTL: 30 minutes
+const COST_CACHE_TTL = 30 * 60 * 1000;
 
 /**
  * Get cost for a specific resource over the last 30 days
@@ -66,12 +70,23 @@ export async function getResourceCost(resourceId) {
 }
 
 /**
- * Get costs for all resources in a subscription
+ * Get costs for all resources in a subscription (with caching)
  * More efficient than querying per-resource-group (avoids rate limiting)
  * @param {string} subscriptionId - Azure subscription ID
  * @returns {Promise<Object>} Object with costMap (resource ID to cost) and rgTotals (RG name to total cost)
  */
 export async function getSubscriptionCosts(subscriptionId) {
+  const cacheKey = `cost:subscription:${subscriptionId}`;
+
+  // Check cache first
+  const cached = cache.get(cacheKey);
+  if (cached) {
+    console.log(`[Cache HIT] Using cached costs for subscription ${subscriptionId}`);
+    return cached;
+  }
+
+  console.log(`[Cache MISS] Fetching fresh costs for subscription ${subscriptionId}`);
+
   try {
     const credential = new DefaultAzureCredential();
     const client = new CostManagementClient(credential);
@@ -136,7 +151,13 @@ export async function getSubscriptionCosts(subscriptionId) {
       }
     }
 
-    return { costMap, rgTotals };
+    const costData = { costMap, rgTotals };
+
+    // Cache the result for 30 minutes
+    cache.set(cacheKey, costData, COST_CACHE_TTL);
+    console.log(`[Cache STORED] Cached costs for subscription ${subscriptionId} (TTL: 30min)`);
+
+    return costData;
   } catch (error) {
     console.error(`Failed to fetch costs for subscription ${subscriptionId}:`, error.message);
     return { costMap: new Map(), rgTotals: new Map() };

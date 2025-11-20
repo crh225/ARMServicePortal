@@ -4,6 +4,10 @@ import { parseBlueprintMetadataFromBody, mapStatusFromLabels } from "../../utils
 import { fetchTerraformOutputs } from "./terraform.js";
 import { fileExists } from "./utils/gitOperations.js";
 import { DEFAULT_BASE_BRANCH } from "../../config/githubConstants.js";
+import { cache } from "../../utils/cache.js";
+
+// Cache TTL: 1 hour for PR data
+const PR_CACHE_TTL = 60 * 60 * 1000;
 
 // In-memory cache for module name to PR number mapping
 // This prevents excessive GitHub API calls when looking up the same module multiple times
@@ -202,9 +206,20 @@ export async function listGitHubRequests({ environment } = {}) {
 }
 
 /**
- * Get detailed information for a specific pull request
+ * Get detailed information for a specific pull request (with caching)
  */
 export async function getGitHubRequestByNumber(prNumber) {
+  const cacheKey = `pr:details:${prNumber}`;
+
+  // Check cache first
+  const cached = cache.get(cacheKey);
+  if (cached) {
+    console.log(`[Cache HIT] Using cached PR data for #${prNumber}`);
+    return cached;
+  }
+
+  console.log(`[Cache MISS] Fetching fresh PR data for #${prNumber}`);
+
   const { infraOwner, infraRepo } = validateGitHubConfig();
   const octokit = await getInstallationClient();
 
@@ -247,7 +262,13 @@ export async function getGitHubRequestByNumber(prNumber) {
     Boolean(pr.merged_at)
   );
 
-  return buildDetailedJob(pr, metadata, terraformFilePath, moduleName, outputs, resourceExists);
+  const prData = buildDetailedJob(pr, metadata, terraformFilePath, moduleName, outputs, resourceExists);
+
+  // Cache the result for 1 hour
+  cache.set(cacheKey, prData, PR_CACHE_TTL);
+  console.log(`[Cache STORED] Cached PR #${prNumber} (TTL: 1hr)`);
+
+  return prData;
 }
 
 /**
