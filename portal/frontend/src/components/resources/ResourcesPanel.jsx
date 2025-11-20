@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useResources } from "../../hooks/useResources";
 import ResourcesTable from "./ResourcesTable";
 import ResourceDetailDrawer from "./ResourceDetailDrawer";
@@ -12,6 +13,7 @@ import "../../styles/ResourcesPanel.css";
  * Backend uses Container App's managed identity for Azure authentication
  */
 function ResourcesPanel({ isActive }) {
+  const [searchParams, setSearchParams] = useSearchParams();
   const {
     resources,
     loading,
@@ -33,6 +35,19 @@ function ResourcesPanel({ isActive }) {
     }
   }, [isActive, hasLoadedRef, fetchResources]);
 
+  // Sync selected resource with URL parameter
+  useEffect(() => {
+    const resourceParam = searchParams.get("resource");
+    if (resourceParam && resources.length > 0) {
+      const resource = resources.find(r => r.name === resourceParam);
+      if (resource) {
+        setSelectedResource(resource);
+      }
+    } else if (!resourceParam && selectedResource) {
+      setSelectedResource(null);
+    }
+  }, [searchParams, resources, selectedResource]);
+
   const handleRefresh = async () => {
     await refreshResources();
     // Show success indicator
@@ -42,10 +57,18 @@ function ResourcesPanel({ isActive }) {
 
   const handleSelectResource = (resource) => {
     setSelectedResource(resource);
+    // Update URL with resource parameter
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set("resource", resource.name);
+    setSearchParams(newParams);
   };
 
   const handleCloseDrawer = () => {
     setSelectedResource(null);
+    // Remove resource parameter from URL
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete("resource");
+    setSearchParams(newParams);
   };
 
   // Loading state
