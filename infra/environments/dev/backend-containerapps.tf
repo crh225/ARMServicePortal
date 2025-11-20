@@ -108,25 +108,25 @@ resource "azurerm_container_app" "backend" {
 
       # Liveness probe - check if container is running
       liveness_probe {
-        transport = "HTTP"
-        path      = "/api/health"
-        port      = 4000
+        transport        = "HTTP"
+        path             = "/api/health"
+        port             = 4000
         interval_seconds = 30
       }
 
       # Readiness probe - check if container is ready to receive traffic
       readiness_probe {
-        transport = "HTTP"
-        path      = "/api/health"
-        port      = 4000
+        transport        = "HTTP"
+        path             = "/api/health"
+        port             = 4000
         interval_seconds = 10
       }
 
       # Startup probe - give app time to start before health checks
       startup_probe {
-        transport = "HTTP"
-        path      = "/api/health"
-        port      = 4000
+        transport        = "HTTP"
+        path             = "/api/health"
+        port             = 4000
         interval_seconds = 5
       }
 
