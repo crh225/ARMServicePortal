@@ -11,6 +11,13 @@ resource "azurerm_container_registry" "backend_acr" {
   location            = "eastus2"
   sku                 = "Basic"
   admin_enabled       = true
+
+  tags = {
+    armportal-environment = "dev"
+    armportal-blueprint   = "backend-infrastructure"
+    armportal-request-id  = "permanent"
+    armportal-owner       = "platform-team"
+  }
 }
 
 resource "azurerm_log_analytics_workspace" "aca" {
@@ -19,6 +26,13 @@ resource "azurerm_log_analytics_workspace" "aca" {
   resource_group_name = module.azure-rg-basic_b0802fb2.resource_group_name
   sku                 = "PerGB2018"
   retention_in_days   = 30
+
+  tags = {
+    armportal-environment = "dev"
+    armportal-blueprint   = "backend-infrastructure"
+    armportal-request-id  = "permanent"
+    armportal-owner       = "platform-team"
+  }
 }
 
 resource "azurerm_container_app_environment" "backend" {
@@ -26,6 +40,13 @@ resource "azurerm_container_app_environment" "backend" {
   location                   = "eastus2"
   resource_group_name        = module.azure-rg-basic_b0802fb2.resource_group_name
   log_analytics_workspace_id = azurerm_log_analytics_workspace.aca.id
+
+  tags = {
+    armportal-environment = "dev"
+    armportal-blueprint   = "backend-infrastructure"
+    armportal-request-id  = "permanent"
+    armportal-owner       = "platform-team"
+  }
 }
 
 resource "azurerm_container_app" "backend" {
@@ -33,6 +54,13 @@ resource "azurerm_container_app" "backend" {
   resource_group_name          = module.azure-rg-basic_b0802fb2.resource_group_name
   container_app_environment_id = azurerm_container_app_environment.backend.id
   revision_mode                = "Single"
+
+  tags = {
+    armportal-environment = "dev"
+    armportal-blueprint   = "backend-infrastructure"
+    armportal-request-id  = "permanent"
+    armportal-owner       = "platform-team"
+  }
 
   identity {
     type = "SystemAssigned"

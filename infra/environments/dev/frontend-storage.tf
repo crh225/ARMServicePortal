@@ -19,6 +19,13 @@ resource "azurerm_storage_account" "frontend" {
     index_document     = "index.html"
     error_404_document = "index.html"
   }
+
+  tags = {
+    armportal-environment = "dev"
+    armportal-blueprint   = "frontend-infrastructure"
+    armportal-request-id  = "permanent"
+    armportal-owner       = "platform-team"
+  }
 }
 
 output "frontend_static_website_url" {
