@@ -8,7 +8,7 @@ module "azure-rg-basic_d75404d6" {
   tags = {
     armportal-environment = "dev"
     armportal-blueprint   = "azure-rg-basic"
-    armportal-request-id  = "azure-rg-basic_d75404d6"
+    armportal-request-id  = "92"
   }
 }
 
