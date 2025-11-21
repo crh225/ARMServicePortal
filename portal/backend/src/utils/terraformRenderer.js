@@ -50,6 +50,10 @@ export function renderTerraformModule({ moduleName, blueprint, variables, prNumb
       if (output.description) {
         lines.push(`  description = "${output.description}"`);
       }
+      // Check if output description contains "(sensitive)" to mark it as sensitive
+      if (output.description && output.description.toLowerCase().includes("sensitive")) {
+        lines.push(`  sensitive   = true`);
+      }
       lines.push("}");
     });
   }
