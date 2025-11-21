@@ -63,6 +63,18 @@ export function getResourceTypeIcon(type) {
     );
   }
 
+  // Databases (PostgreSQL, MySQL, SQL, etc.)
+  if (typeLower.includes("database") || typeLower.includes("postgre") || typeLower.includes("mysql") || typeLower.includes("sql")) {
+    return (
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" className="resource-type-icon">
+        <path d="M8 1c2.5 0 4.5 0.7 4.5 1.5v11c0 0.8-2 1.5-4.5 1.5S3.5 14.3 3.5 13.5v-11C3.5 1.7 5.5 1 8 1z"/>
+        <ellipse cx="8" cy="2.5" rx="4.5" ry="1.5"/>
+        <ellipse cx="8" cy="6" rx="4.5" ry="1.5" opacity="0.6"/>
+        <ellipse cx="8" cy="9.5" rx="4.5" ry="1.5" opacity="0.4"/>
+      </svg>
+    );
+  }
+
   // Default icon
   return (
     <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" className="resource-type-icon">
