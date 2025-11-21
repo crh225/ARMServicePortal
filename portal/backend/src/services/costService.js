@@ -7,8 +7,8 @@ import { CostManagementClient } from "@azure/arm-costmanagement";
 import { DefaultAzureCredential } from "@azure/identity";
 import { cache } from "../utils/cache.js";
 
-// Cache TTL: 30 minutes
-const COST_CACHE_TTL = 30 * 60 * 1000;
+// Cache TTL: 1 hour
+const COST_CACHE_TTL = 60 * 60 * 1000;
 
 /**
  * Get cost for a specific resource over the last 30 days
@@ -153,9 +153,9 @@ export async function getSubscriptionCosts(subscriptionId) {
 
     const costData = { costMap, rgTotals };
 
-    // Cache the result for 30 minutes
+    // Cache the result for 1 hour
     cache.set(cacheKey, costData, COST_CACHE_TTL);
-    console.log(`[Cache STORED] Cached costs for subscription ${subscriptionId} (TTL: 30min)`);
+    console.log(`[Cache STORED] Cached costs for subscription ${subscriptionId} (TTL: 1hr)`);
 
     return costData;
   } catch (error) {
