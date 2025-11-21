@@ -70,11 +70,12 @@ function parsePRNumber(workflowRun) {
 }
 
 /**
- * Parse blueprint and environment from branch name
+ * Parse blueprint and environment from branch name or workflow name
  * @param {string} branchName - The branch name
+ * @param {string} workflowName - The workflow name
  * @returns {object} Object with environment and blueprint
  */
-function parseBranchInfo(branchName) {
+function parseBranchInfo(branchName, workflowName) {
   // Expected format: requests/{env}/{blueprint}-{hash}
   const match = branchName?.match(/requests\/([^/]+)\/(.+)-(\w+)$/);
   if (match) {
@@ -82,6 +83,22 @@ function parseBranchInfo(branchName) {
       environment: match[1],
       blueprint: match[2]
     };
+  }
+
+  // Handle workflows running on main branch (backend-dev, frontend-dev, etc.)
+  if (branchName === 'main' && workflowName) {
+    // Extract environment from workflow name (e.g., "Backend Dev" -> "dev")
+    const envMatch = workflowName.match(/(Dev|Staging|Prod|QA)/i);
+    const env = envMatch ? envMatch[1].toLowerCase() : 'unknown';
+
+    // Extract blueprint type from workflow name
+    if (workflowName.toLowerCase().includes('backend')) {
+      return { environment: env, blueprint: 'backend' };
+    } else if (workflowName.toLowerCase().includes('frontend')) {
+      return { environment: env, blueprint: 'frontend' };
+    } else if (workflowName.toLowerCase().includes('terraform')) {
+      return { environment: env, blueprint: 'terraform' };
+    }
   }
 
   return {
@@ -135,7 +152,7 @@ router.post("/github", async (req, res) => {
 
     // Parse job details
     const prNumber = parsePRNumber(workflow_run);
-    const { environment, blueprint } = parseBranchInfo(workflow_run.head_branch);
+    const { environment, blueprint } = parseBranchInfo(workflow_run.head_branch, workflow_run.name);
 
     // Create notification based on conclusion
     let notificationType;
