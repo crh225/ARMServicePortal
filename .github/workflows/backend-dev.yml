@@ -110,4 +110,5 @@ jobs:
               GH_OAUTH_CLIENT_SECRET=secretref:gh-oauth-secret \
               GITHUB_WEBHOOK_SECRET=secretref:gh-webhook-secret \
               APP_URL="https://armportal-api-dev.kindisland-0c7a7c9a.eastus2.azurecontainerapps.io" \
-              FRONTEND_URL="https://armportalfec4ji.z20.web.core.windows.net"
+              FRONTEND_URL="https://armportalfec4ji.z20.web.core.windows.net" \
+              LOG_ANALYTICS_WORKSPACE_ID="c200dcd8-f350-4895-99c0-1a0828fe7384"
