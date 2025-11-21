@@ -8,13 +8,15 @@ import JobFilters from "./JobFilters";
 import Modal from "../shared/Modal";
 import ConfirmModal from "../shared/ConfirmModal";
 import "../../styles/JobsList.css";
+import "../../styles/JobDetail.css";
 
 /**
  * Container component for the Jobs tab
  * Handles all jobs-related logic and state
+ * Now works like GitHub Actions with list and detail views
  */
 function JobsPanel({ isActive, onUpdateResource }) {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const {
     jobs,
     allJobs,
@@ -30,8 +32,11 @@ function JobsPanel({ isActive, onUpdateResource }) {
     loadJobDetail
   } = useJobs();
 
-  // Initialize filters - set to "all" if job ID is in URL
+  // Check if we're viewing a specific job
   const jobIdParam = searchParams.get("job");
+  const isViewingDetail = !!jobIdParam;
+
+  // Initialize filters - set to "all" if job ID is in URL
   const [statusFilter, setStatusFilter] = useState(jobIdParam ? "all" : "merged");
   const [environmentFilter, setEnvironmentFilter] = useState("all");
   const [blueprintFilter, setBlueprintFilter] = useState("all");
@@ -116,19 +121,33 @@ function JobsPanel({ isActive, onUpdateResource }) {
   const startIndex = (filteredCurrentPage - 1) * pageSize;
   const filteredPageJobs = filteredJobs.slice(startIndex, startIndex + pageSize);
 
-  // Auto-select first filtered job when filters change or jobs load
+  // Load job detail when job ID is in URL
   useEffect(() => {
-    // If selected job is not in filtered list, select first filtered job
-    if (filteredJobs.length > 0) {
-      const isSelectedJobInFilteredList = selectedJob && filteredJobs.some(j => j.number === selectedJob.number);
-      if (!isSelectedJobInFilteredList) {
-        loadJobDetail(filteredJobs[0]);
+    if (jobIdParam && allJobs.length > 0) {
+      const jobId = parseInt(jobIdParam, 10);
+      if (!isNaN(jobId)) {
+        const job = allJobs.find(j => j.number === jobId);
+        if (job) {
+          loadJobDetail(job);
+        }
       }
-    } else if (selectedJob) {
-      // No filtered jobs but we have a selected job - clear it
-      loadJobDetail(null);
     }
-  }, [filteredJobs, selectedJob, loadJobDetail]);
+  }, [jobIdParam, allJobs, loadJobDetail]);
+
+  // Handle job selection - update URL and load detail
+  const handleSelectJob = (job) => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set("job", job.number.toString());
+    setSearchParams(newParams);
+    loadJobDetail(job);
+  };
+
+  // Handle back to list - remove job param from URL
+  const handleBackToList = () => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete("job");
+    setSearchParams(newParams);
+  };
 
   // Handle update resource
   const handleUpdate = (job) => {
@@ -139,57 +158,69 @@ function JobsPanel({ isActive, onUpdateResource }) {
 
   return (
     <>
-      <section className="panel panel--left">
-        <div>
-          <h2 className="panel-title">Jobs</h2>
-          <p className="panel-help">
-            Recent self-service requests created as GitHub pull requests.
-          </p>
+      {!isViewingDetail ? (
+        // List View
+        <div className="panel panel--full">
+          <div>
+            <h2 className="panel-title">Jobs</h2>
+            <p className="panel-help">
+              Recent self-service requests created as GitHub pull requests.
+            </p>
+          </div>
+
+          <JobFilters
+            statusFilter={statusFilter}
+            onStatusFilterChange={setStatusFilter}
+            environmentFilter={environmentFilter}
+            onEnvironmentFilterChange={setEnvironmentFilter}
+            blueprintFilter={blueprintFilter}
+            onBlueprintFilterChange={setBlueprintFilter}
+            jobIdFilter={jobIdFilter}
+            onJobIdFilterChange={setJobIdFilter}
+            environments={environments}
+            blueprints={blueprints}
+          />
+
+          <JobsList
+            jobs={filteredPageJobs}
+            selectedJob={null}
+            onSelectJob={handleSelectJob}
+            jobsLoading={jobsLoading}
+            jobsError={jobsError}
+            currentPage={filteredCurrentPage}
+            totalPages={filteredTotalPages}
+            onPageChange={setJobsPage}
+          />
         </div>
+      ) : (
+        // Detail View
+        <div className="panel panel--full">
+          {/* Breadcrumb */}
+          <div className="job-breadcrumb">
+            <button className="breadcrumb-link" onClick={handleBackToList}>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M9.78 12.78a.75.75 0 0 1-1.06 0L4.47 8.53a.75.75 0 0 1 0-1.06l4.25-4.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042L6.06 8l3.72 3.72a.75.75 0 0 1 0 1.06Z"></path>
+              </svg>
+              Jobs
+            </button>
+            <span className="breadcrumb-separator">/</span>
+            <span className="breadcrumb-current">
+              {selectedJob ? `#${selectedJob.number}` : "Loading..."}
+            </span>
+          </div>
 
-        <JobFilters
-          statusFilter={statusFilter}
-          onStatusFilterChange={setStatusFilter}
-          environmentFilter={environmentFilter}
-          onEnvironmentFilterChange={setEnvironmentFilter}
-          blueprintFilter={blueprintFilter}
-          onBlueprintFilterChange={setBlueprintFilter}
-          jobIdFilter={jobIdFilter}
-          onJobIdFilterChange={setJobIdFilter}
-          environments={environments}
-          blueprints={blueprints}
-        />
-
-        <JobsList
-          jobs={filteredPageJobs}
-          selectedJob={selectedJob}
-          onSelectJob={loadJobDetail}
-          jobsLoading={jobsLoading}
-          jobsError={jobsError}
-          currentPage={filteredCurrentPage}
-          totalPages={filteredTotalPages}
-          onPageChange={setJobsPage}
-        />
-      </section>
-
-      <aside className="panel panel--right">
-        <div>
-          <h2 className="panel-title">Job Details</h2>
-          <p className="panel-help">
-            View pull request status and Terraform outputs.
-          </p>
+          {/* Job Detail */}
+          <JobDetail
+            job={selectedJob}
+            loading={jobDetailLoading}
+            error={jobDetailError}
+            onUpdate={handleUpdate}
+            onDelete={handleDelete}
+            onPromote={handlePromote}
+            promoteLoading={promoteLoading}
+          />
         </div>
-
-        <JobDetail
-          job={selectedJob}
-          loading={jobDetailLoading}
-          error={jobDetailError}
-          onUpdate={handleUpdate}
-          onDelete={handleDelete}
-          onPromote={handlePromote}
-          promoteLoading={promoteLoading}
-        />
-      </aside>
+      )}
 
       <Modal
         isOpen={modalState.isOpen}

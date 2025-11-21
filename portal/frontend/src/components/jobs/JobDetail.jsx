@@ -25,71 +25,103 @@ function JobDetail({ job, loading, error, onUpdate, onDelete, onPromote, promote
   }
 
   return (
-    <div className="result-card jobs-detail">
-      <ResourceActions
-        job={job}
-        onPromote={onPromote}
-        onUpdate={onUpdate}
-        onDelete={onDelete}
-        promoteLoading={promoteLoading}
-      />
+    <div className="job-detail-container">
+      {/* Header Section */}
+      <div className="job-detail-header">
+        <div className="job-detail-title-section">
+          <h1 className="job-detail-title">
+            {job.title || job.blueprintId || "Provision request"}
+          </h1>
+          <div className="job-detail-meta">
+            <StatusBadge status={job.status} />
+            <span className="job-detail-meta-item">#{job.number}</span>
+            {job.environment && (
+              <span className="job-detail-meta-item">env: {job.environment}</span>
+            )}
+            {job.createdBy && (
+              <span className="job-detail-meta-item">@{job.createdBy}</span>
+            )}
+          </div>
+        </div>
 
-      <ResultRow label="Status" value={job.status} />
-
-      <ResultRow
-        label="Plan"
-        value={<StatusBadge status={job.planStatus} />}
-      />
-
-      <ResultRow
-        label="Apply"
-        value={<StatusBadge status={job.applyStatus} />}
-      />
-
-      {job.pullRequestUrl && (
-        <ResultRow
-          label="Pull Request"
-          value={
-            <a
-              className="result-link"
-              href={job.pullRequestUrl}
-              target="_blank"
-              rel="noreferrer"
-            >
-              View on GitHub
-            </a>
-          }
+        <ResourceActions
+          job={job}
+          onPromote={onPromote}
+          onUpdate={onUpdate}
+          onDelete={onDelete}
+          promoteLoading={promoteLoading}
         />
-      )}
+      </div>
 
-      {job.headRef && <ResultRow label="Branch" value={job.headRef} />}
+      {/* Main Content */}
+      <div className="job-detail-content">
+        {/* Status and Details - Side by Side */}
+        <div className="job-detail-row">
+          {/* Status Section */}
+          <div className="job-detail-section">
+            <h2 className="job-detail-section-title">Status</h2>
+            <div className="job-detail-section-content">
+              <ResultRow label="PR Status" value={job.status} />
+              <ResultRow label="Plan" value={<StatusBadge status={job.planStatus} />} />
+              <ResultRow label="Apply" value={<StatusBadge status={job.applyStatus} />} />
+            </div>
+          </div>
 
-      {job.author && <ResultRow label="Author" value={job.author} />}
+          {/* Details Section */}
+          <div className="job-detail-section">
+            <h2 className="job-detail-section-title">Details</h2>
+            <div className="job-detail-section-content">
+              {job.pullRequestUrl && (
+                <ResultRow
+                  label="Pull Request"
+                  value={
+                    <a
+                      className="result-link"
+                      href={job.pullRequestUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      View on GitHub →
+                    </a>
+                  }
+                />
+              )}
+              {job.headRef && <ResultRow label="Branch" value={job.headRef} />}
+              {job.author && <ResultRow label="Author" value={job.author} />}
+              {job.changedFiles !== undefined && (
+                <ResultRow
+                  label="Changes"
+                  value={
+                    <span className="result-value">
+                      {job.changedFiles} file{job.changedFiles !== 1 ? 's' : ''}
+                      {job.additions > 0 && <span style={{ color: '#22c55e' }}> +{job.additions}</span>}
+                      {job.deletions > 0 && <span style={{ color: '#f87171' }}> -{job.deletions}</span>}
+                    </span>
+                  }
+                />
+              )}
+            </div>
+          </div>
+        </div>
 
-      {job.createdBy && <ResultRow label="Created by" value={`@${job.createdBy}`} />}
+        {/* Terraform Module Section */}
+        {job.terraformModule && (
+          <div className="job-detail-section">
+            <h2 className="job-detail-section-title">Terraform Module</h2>
+            <div className="job-detail-section-content">
+              <pre className="terraform-code">{job.terraformModule}</pre>
+            </div>
+          </div>
+        )}
 
-      {job.changedFiles !== undefined && (
-        <ResultRow
-          label="Changes"
-          value={
-            <span className="result-value">
-              {job.changedFiles} file{job.changedFiles !== 1 ? 's' : ''}
-              {job.additions > 0 && <span style={{ color: '#22c55e' }}> +{job.additions}</span>}
-              {job.deletions > 0 && <span style={{ color: '#f87171' }}> -{job.deletions}</span>}
-            </span>
-          }
-        />
-      )}
-
-      {job.terraformModule && (
-        <ResultRow
-          label="Terraform Module"
-          stacked
-          value={<pre className="terraform-code">{job.terraformModule}</pre>}
-        />
-      )}
-
-      <TerraformOutputs outputs={job.outputs} loading={loading} error={error} />
+        {/* Terraform Outputs Section */}
+        <div className="job-detail-section">
+          <h2 className="job-detail-section-title">Terraform Outputs</h2>
+          <div className="job-detail-section-content">
+            <TerraformOutputs outputs={job.outputs} loading={loading} error={error} />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

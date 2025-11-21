@@ -52,7 +52,7 @@ function JobFilters({
             onClick={() => onStatusFilterChange("merged")}
             disabled={!!jobIdFilter}
           >
-            Deployed
+            Merged
           </button>
           <button
             className={`filter-pill ${statusFilter === "open" ? "filter-pill--active" : ""}`}
