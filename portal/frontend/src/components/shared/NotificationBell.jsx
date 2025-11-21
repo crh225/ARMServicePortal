@@ -155,14 +155,6 @@ function NotificationBell({ notifications, unreadCount, onMarkAsRead, onNavigate
               ))
             )}
           </div>
-
-          {notifications.length > 10 && (
-            <div className="notification-dropdown-footer">
-              <button className="notification-dropdown-view-all">
-                View all notifications
-              </button>
-            </div>
-          )}
         </div>
       )}
     </div>

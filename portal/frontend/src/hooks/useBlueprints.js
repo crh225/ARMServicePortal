@@ -7,6 +7,7 @@ import { parseTerraformVariables, initializeFormValues, parsePolicyErrors } from
  */
 const initialState = {
   blueprints: [],
+  blueprintsLoading: true,
   selectedBlueprint: null,
   formValues: {},
   result: null,
@@ -40,7 +41,7 @@ const ACTIONS = {
 function blueprintReducer(state, action) {
   switch (action.type) {
     case ACTIONS.SET_BLUEPRINTS:
-      return { ...state, blueprints: action.payload };
+      return { ...state, blueprints: action.payload, blueprintsLoading: false };
 
     case ACTIONS.SELECT_BLUEPRINT:
       return {
@@ -269,6 +270,7 @@ export function useBlueprints(updateResourceData, onClearUpdate) {
 
   return {
     blueprints: state.blueprints,
+    blueprintsLoading: state.blueprintsLoading,
     selectedBlueprint: state.selectedBlueprint,
     formValues: state.formValues,
     result: state.result,

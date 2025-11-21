@@ -1,6 +1,7 @@
 import React from "react";
 import { useBlueprints } from "../../hooks/useBlueprints";
 import BlueprintsList from "./BlueprintsList";
+import BlueprintsListSkeleton from "./BlueprintsListSkeleton";
 import BlueprintForm from "./BlueprintForm";
 import CostEstimate from "./CostEstimate";
 import ResultPanel from "../jobs/ResultPanel";
@@ -13,6 +14,7 @@ import AuthModal from "../shared/AuthModal";
 function BlueprintsPanel({ updateResourceData, onClearUpdate }) {
   const {
     blueprints,
+    blueprintsLoading,
     selectedBlueprint,
     formValues,
     result,
@@ -31,11 +33,15 @@ function BlueprintsPanel({ updateResourceData, onClearUpdate }) {
       {/* Show blueprint list full-width when no blueprint is selected */}
       {!selectedBlueprint && !updateResourceData && (
         <div className="panel panel--full">
-          <BlueprintsList
-            blueprints={blueprints}
-            selectedBlueprint={selectedBlueprint}
-            onSelectBlueprint={handleSelectBlueprint}
-          />
+          {blueprintsLoading ? (
+            <BlueprintsListSkeleton />
+          ) : (
+            <BlueprintsList
+              blueprints={blueprints}
+              selectedBlueprint={selectedBlueprint}
+              onSelectBlueprint={handleSelectBlueprint}
+            />
+          )}
         </div>
       )}
 
