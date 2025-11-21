@@ -345,6 +345,137 @@ export const BLUEPRINTS = [
     ]
   },
   {
+    id: "azure-postgres-flexible",
+    version: "0.0.1",
+    displayName: "PostgreSQL Flexible Server",
+    description: "Managed PostgreSQL database with automatic backups, high availability options, and enterprise security. Perfect for web apps, microservices, and data-driven applications.",
+    category: "Database",
+    moduleSource: "../../modules/azure-postgres-flexible",
+    variables: [
+      {
+        name: "project_name",
+        label: "Project Name",
+        type: "string",
+        required: true
+      },
+      {
+        name: "environment",
+        label: "Environment",
+        type: "select",
+        required: true,
+        options: ["dev", "qa", "staging", "prod"],
+        default: "dev"
+      },
+      {
+        name: "resource_group_name",
+        label: "Resource Group Name",
+        type: "string",
+        required: true
+      },
+      {
+        name: "location",
+        label: "Location",
+        type: "string",
+        required: true,
+        default: "eastus2"
+      },
+      {
+        name: "postgres_version",
+        label: "PostgreSQL Version",
+        type: "select",
+        required: true,
+        options: ["11", "12", "13", "14", "15", "16"],
+        default: "16"
+      },
+      {
+        name: "sku_name",
+        label: "SKU",
+        type: "select",
+        required: true,
+        options: [
+          "B_Standard_B1ms",
+          "B_Standard_B2s",
+          "GP_Standard_D2s_v3",
+          "GP_Standard_D4s_v3",
+          "MO_Standard_E2s_v3"
+        ],
+        default: "B_Standard_B1ms"
+      },
+      {
+        name: "storage_mb",
+        label: "Storage Size (MB)",
+        type: "select",
+        required: true,
+        options: ["32768", "65536", "131072", "262144", "524288", "1048576"],
+        default: "32768"
+      },
+      {
+        name: "backup_retention_days",
+        label: "Backup Retention (days)",
+        type: "select",
+        required: false,
+        options: ["7", "14", "21", "28", "35"],
+        default: "7"
+      },
+      {
+        name: "geo_redundant_backup",
+        label: "Geo-Redundant Backup",
+        type: "select",
+        required: false,
+        options: ["true", "false"],
+        default: "false"
+      },
+      {
+        name: "admin_username",
+        label: "Admin Username",
+        type: "string",
+        required: false,
+        default: "psqladmin"
+      },
+      {
+        name: "high_availability_mode",
+        label: "High Availability",
+        type: "select",
+        required: false,
+        options: ["disabled", "SameZone", "ZoneRedundant"],
+        default: "disabled"
+      },
+      {
+        name: "database_name",
+        label: "Database Name",
+        type: "string",
+        required: false,
+        default: "appdb"
+      }
+    ],
+    outputs: [
+      {
+        name: "server_name",
+        description: "PostgreSQL server name"
+      },
+      {
+        name: "server_fqdn",
+        description: "Server fully qualified domain name"
+      },
+      {
+        name: "database_name",
+        description: "Database name"
+      },
+      {
+        name: "admin_username",
+        description: "Administrator username"
+      },
+      {
+        name: "admin_password",
+        description: "Administrator password (sensitive)"
+      },
+      {
+        name: "connection_string",
+        description: "PostgreSQL connection string (sensitive)"
+      }
+    ]
+  },
+  {
     id: "azure-webapp-stack",
     version: "0.0.1",
     displayName: "Full Stack Web Application",

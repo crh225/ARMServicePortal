@@ -110,6 +110,16 @@ export async function estimateBlueprintCost(blueprintId, variables, blueprint = 
       estimates.push(aciCost);
       break;
 
+    case "azure-postgres-flexible":
+      const postgresCost = await estimatePostgresCost(
+        location,
+        variables.sku_name || "B_Standard_B1ms",
+        parseInt(variables.storage_mb || "32768"),
+        variables.high_availability_mode || "disabled"
+      );
+      estimates.push(postgresCost);
+      break;
+
     default:
       estimates.push({
         resourceType: "Unknown",
@@ -309,6 +319,80 @@ async function estimateAciCost(location, cpuCores, memoryGb) {
       cpuCostPerMonth: parseFloat(monthlyCpuCost.toFixed(2)),
       memoryCostPerMonth: parseFloat(monthlyMemoryCost.toFixed(2)),
       hoursPerMonth: 720
+    }
+  };
+}
+
+/**
+ * Estimate PostgreSQL Flexible Server costs
+ */
+async function estimatePostgresCost(location, skuName, storageMb, highAvailability) {
+  const prices = await fetchAzurePricing({
+    serviceName: "Azure Database for PostgreSQL",
+    armRegionName: location
+  });
+
+  // Parse SKU name (e.g., "B_Standard_B1ms" -> tier: Burstable, sku: B1ms)
+  const skuParts = skuName.split("_");
+  const tier = skuParts[0]; // B, GP, or MO
+  const actualSku = skuParts.slice(2).join("_"); // e.g., B1ms, D2s_v3
+
+  // Find compute pricing
+  const computePrice = prices.find(
+    (p) =>
+      p.productName && p.productName.includes("Flexible Server") &&
+      p.skuName && p.skuName.includes(actualSku) &&
+      p.meterName && p.meterName.includes("vCore")
+  );
+
+  // Find storage pricing
+  const storagePrice = prices.find(
+    (p) =>
+      p.productName && p.productName.includes("Flexible Server") &&
+      p.meterName && p.meterName.includes("Storage")
+  );
+
+  // Fallback pricing based on tier (approximate rates)
+  let computePricePerHour = 0.0205; // Default for B_Standard_B1ms
+  if (computePrice) {
+    computePricePerHour = computePrice.retailPrice;
+  } else {
+    // Approximate pricing by tier
+    if (tier === "GP") computePricePerHour = 0.16; // GP_Standard_D2s_v3 approx
+    else if (tier === "MO") computePricePerHour = 0.25; // MO_Standard_E2s_v3 approx
+  }
+
+  const storagePricePerGbMonth = storagePrice ? storagePrice.retailPrice : 0.115; // ~$0.115/GB/month
+
+  // Calculate monthly costs
+  const hoursPerMonth = 730; // Standard month
+  const storageGb = storageMb / 1024;
+
+  const monthlyComputeCost = computePricePerHour * hoursPerMonth;
+  const monthlyStorageCost = storagePricePerGbMonth * storageGb;
+
+  // High availability doubles the compute cost
+  const haMultiplier = (highAvailability !== "disabled") ? 2 : 1;
+  const totalComputeCost = monthlyComputeCost * haMultiplier;
+
+  const totalMonthlyCost = totalComputeCost + monthlyStorageCost;
+
+  const haNote = highAvailability !== "disabled"
+    ? ` with ${highAvailability} high availability (2x compute cost)`
+    : "";
+
+  return {
+    resourceType: "PostgreSQL Flexible Server",
+    skuName: skuName,
+    monthlyEstimate: parseFloat(totalMonthlyCost.toFixed(2)),
+    currency: "USD",
+    note: `${storageGb.toFixed(0)}GB storage${haNote}. Includes compute + storage. Excludes backup storage and IOPS costs.`,
+    breakdown: {
+      sku: skuName,
+      computeCostPerMonth: parseFloat(totalComputeCost.toFixed(2)),
+      storageCostPerMonth: parseFloat(monthlyStorageCost.toFixed(2)),
+      storageGb: storageGb,
+      highAvailability: highAvailability
     }
   };
 }
