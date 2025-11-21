@@ -4,7 +4,8 @@ import { useResources } from "../../hooks/useResources";
 import ResourcesTable from "./ResourcesTable";
 import ResourceDetailDrawer from "./ResourceDetailDrawer";
 import EmptyState from "../shared/EmptyState";
-import SkeletonLoader from "../shared/SkeletonLoader";
+import CostSummaryCard from "./CostSummaryCard";
+import ResourcesGridSkeleton from "./ResourcesGridSkeleton";
 import { exportResourcesToCSV } from "../../utils/csvExport";
 import "../../styles/ResourcesPanel.css";
 
@@ -95,7 +96,12 @@ function ResourcesPanel({ isActive }) {
             </p>
           </div>
         </div>
-        <SkeletonLoader count={5} />
+        <div className="resources-content">
+          <div className="resources-container">
+            <CostSummaryCard costsLoading={true} />
+            <ResourcesGridSkeleton />
+          </div>
+        </div>
       </div>
     );
   }

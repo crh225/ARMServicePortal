@@ -295,7 +295,7 @@
 
 .job-meta {
   display: grid;
-  grid-template-columns: minmax(300px, 450px) minmax(150px, 250px) minmax(80px, 100px);
+  grid-template-columns: minmax(300px, 450px) minmax(175px, 250px) minmax(200px, 100px);
   align-items: center;
   gap: 16px;
   font-size: 0.8125rem;
@@ -318,7 +318,7 @@
 .job-meta-right {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: end;
 }
 
 /* Mobile responsive layout */
