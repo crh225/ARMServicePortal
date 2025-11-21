@@ -71,6 +71,8 @@ function ResourcesPanel({ isActive }) {
     const newParams = new URLSearchParams(searchParams);
     newParams.set("resource", resource.name);
     setSearchParams(newParams);
+    // Scroll to top when opening resource details
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleCloseDrawer = () => {

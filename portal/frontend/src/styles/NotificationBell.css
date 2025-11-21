@@ -295,10 +295,11 @@
 @media (max-width: 640px) {
   .notification-dropdown {
     position: fixed;
-    top: auto;
+    top: 60px;
     right: 8px;
     left: 8px;
     width: auto;
     max-width: none;
+    bottom: auto;
   }
 }
