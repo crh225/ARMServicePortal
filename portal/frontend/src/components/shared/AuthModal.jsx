@@ -1,11 +1,18 @@
-import React from "react";
+import { useAuth } from "../../contexts/AuthContext";
 import "../../styles/AuthModal.css";
 
 /**
  * Modal that prompts users to authenticate
  */
 function AuthModal({ isOpen, onClose }) {
+  const { login } = useAuth();
+
   if (!isOpen) return null;
+
+  const handleLogin = () => {
+    onClose();
+    login();
+  };
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -30,9 +37,9 @@ function AuthModal({ isOpen, onClose }) {
           <button className="modal-btn modal-btn--secondary" onClick={onClose}>
             Continue Exploring
           </button>
-          <a href="/?tab=admin" className="modal-btn modal-btn--primary">
-            Go to Login
-          </a>
+          <button className="modal-btn modal-btn--primary" onClick={handleLogin}>
+            Login with GitHub
+          </button>
         </div>
       </div>
     </div>

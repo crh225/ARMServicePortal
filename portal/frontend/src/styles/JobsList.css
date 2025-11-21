@@ -294,7 +294,8 @@
 }
 
 .job-meta {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(300px, 450px) minmax(150px, 250px) minmax(80px, 100px);
   align-items: center;
   gap: 16px;
   font-size: 0.8125rem;
@@ -302,23 +303,36 @@
 }
 
 .job-meta-left {
-  flex: 0 0 auto;
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .job-meta-center {
-  flex: 1;
   display: flex;
-  justify-content: center;
+  align-items: center;
+  justify-content: flex-start;
 }
 
 .job-meta-right {
-  flex: 0 0 auto;
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+}
+
+/* Mobile responsive layout */
+@media (max-width: 768px) {
+  .job-meta {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .job-meta-left,
+  .job-meta-center,
+  .job-meta-right {
+    justify-content: flex-start;
+  }
 }
 
 .jobs-pagination {

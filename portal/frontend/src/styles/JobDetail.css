@@ -95,6 +95,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
+  align-items: start;
 }
 
 .job-detail-section {
@@ -128,14 +129,32 @@
 }
 
 .job-detail-section-content .terraform-code {
-  margin: 16px;
-  border-radius: 6px;
+  margin: 0;
+  border-radius: 0;
 }
 
 /* Responsive - stack on smaller screens */
 @media (max-width: 768px) {
   .job-detail-row {
     grid-template-columns: 1fr;
+  }
+
+  .job-detail-header {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .resource-actions {
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .job-detail-title {
+    font-size: 1.25rem;
+  }
+
+  .job-breadcrumb {
+    flex-wrap: wrap;
   }
 }
 

@@ -64,6 +64,10 @@ function JobDetail({ job, loading, error, onUpdate, onDelete, onPromote, promote
               <ResultRow label="PR Status" value={job.status} />
               <ResultRow label="Plan" value={<StatusBadge status={job.planStatus} />} />
               <ResultRow label="Apply" value={<StatusBadge status={job.applyStatus} />} />
+              <ResultRow
+                label="Created At"
+                value={job.createdAt ? new Date(job.createdAt).toLocaleString() : "Unknown"}
+              />
             </div>
           </div>
 
