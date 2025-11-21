@@ -44,6 +44,11 @@ export function AuthProvider({ children }) {
 
   const login = async () => {
     try {
+      // Save current tab before redirecting to login
+      const searchParams = new URLSearchParams(window.location.search);
+      const currentTab = searchParams.get("tab") || "blueprints";
+      sessionStorage.setItem("returnTab", currentTab);
+
       // Get GitHub OAuth URL from backend
       const response = await fetch(`${API_BASE_URL}/api/auth/github`);
       const data = await response.json();

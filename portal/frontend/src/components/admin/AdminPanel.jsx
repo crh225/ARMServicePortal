@@ -57,7 +57,6 @@ function AdminPanel() {
             <li>Approval workflows</li>
             <li>Audit logs</li>
             <li>Resource usage statistics</li>
-            <li>Cost tracking</li>
           </ul>
         </div>
       </div>
