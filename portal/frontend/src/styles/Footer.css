@@ -1,10 +1,18 @@
 /* Footer */
 
 .app-footer {
-  margin-top: 16px;
-  padding-top: 10px;
-  border-top: 1px solid var(--border-subtle);
+  width: 100%;
+  margin-top: auto;
+  padding: 24px;
+  border-top: 1px solid var(--border-default);
+  background: var(--bg-primary);
+}
+
+.app-footer span {
+  display: block;
+  max-width: 1280px;
+  margin: 0 auto;
   font-size: 0.75rem;
-  color: var(--text-soft);
-  text-align: right;
+  color: var(--text-tertiary);
+  text-align: center;
 }

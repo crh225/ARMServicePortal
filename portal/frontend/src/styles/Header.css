@@ -1,14 +1,26 @@
 /* Header */
 
 .app-header {
-  display: flex;
-  justify-content: space-between;
-  gap: 24px;
-  align-items: flex-start;
-  padding-bottom: 18px;
-  border-bottom: 1px solid var(--border-subtle);
+  width: 100%;
+  border-bottom: 1px solid var(--border-default);
+  background: var(--bg-primary);
   position: relative;
   z-index: 100;
+}
+
+.header-container {
+  max-width: 1280px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 16px 24px 0;
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  margin-bottom: 16px;
 }
 
 .logo-row {
@@ -18,81 +30,67 @@
   margin-bottom: 4px;
 }
 
-.logo-badge {
-  width: 34px;
-  height: 34px;
-  border-radius: 999px;
-  background: radial-gradient(circle at 20% 10%, #eff6ff, #2563eb);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 0.9rem;
-  color: #f9fafb;
-  box-shadow:
-    0 0 0 1px rgba(15, 23, 42, 0.1),
-    0 10px 22px rgba(148, 163, 184, 0.55);
-}
-
 .logo-text {
-  font-size: 1.35rem;
+  font-size: 1.25rem;
   font-weight: 600;
-  letter-spacing: 0.03em;
-  color: #111827;
+  color: var(--text-primary);
 }
 
 .app-subtitle {
   margin: 4px 0 0;
-  font-size: 0.9rem;
-  color: var(--text-muted);
+  font-size: 0.875rem;
+  color: var(--text-secondary);
   max-width: 520px;
+  line-height: 1.4;
 }
 
-/* Nav */
+/* Header Actions */
 
-.header-right {
+.header-actions {
   display: flex;
   align-items: center;
   gap: 16px;
 }
 
+/* Nav */
+
 .app-nav {
-  display: inline-flex;
-  padding: 4px;
-  gap: 4px;
-  background: #e5e7eb;
-  border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.7);
-  backdrop-filter: blur(8px);
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid transparent;
+  margin: 0 -24px;
+  padding: 0 24px;
 }
 
-.nav-pill {
+.nav-tab {
   border: none;
   background: transparent;
-  color: var(--text-soft);
-  font-size: 0.78rem;
-  padding: 6px 13px;
-  border-radius: 999px;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 8px 16px;
   cursor: pointer;
-  transition: all 0.16s ease-out;
+  position: relative;
+  transition: color 0.2s ease;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
 }
 
-.nav-pill--active {
-  background: #ffffff;
-  color: var(--text-main);
-  box-shadow:
-    0 0 0 1px rgba(148, 163, 184, 0.8),
-    0 8px 18px rgba(148, 163, 184, 0.35);
+.nav-tab:hover:not(.nav-tab--active) {
+  color: var(--text-primary);
+  background-color: var(--bg-hover-subtle);
+  border-radius: 6px 6px 0 0;
 }
 
-.nav-pill:hover:not(.nav-pill--active):not(:disabled) {
-  background: rgba(255, 255, 255, 0.8);
-  color: var(--text-main);
+.nav-tab--active {
+  color: var(--text-primary);
+  border-bottom-color: #f97316;
 }
 
-.nav-pill:disabled {
+.nav-tab:disabled {
   cursor: default;
-  opacity: 0.55;
+  opacity: 0.5;
+  color: var(--text-tertiary);
 }
 
 /* User Menu */
@@ -183,20 +181,61 @@
   background: #fee2e2;
 }
 
+/* Login Button */
+
+.login-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--border-default);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.login-btn:hover {
+  background: var(--bg-hover-subtle);
+  border-color: #d0d7de;
+  color: var(--text-primary);
+}
+
+.login-btn svg {
+  flex-shrink: 0;
+}
+
 @media (max-width: 768px) {
-  .app-header {
+  .header-container {
+    padding: 12px 16px 0;
+  }
+
+  .header-top {
     flex-direction: column;
-    align-items: flex-start;
     gap: 12px;
   }
 
-  .header-right {
+  .header-actions {
     width: 100%;
-    justify-content: space-between;
+    justify-content: flex-end;
   }
 
   .app-nav {
-    align-self: stretch;
-    justify-content: flex-start;
+    margin: 0 -16px;
+    padding: 0 16px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .app-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .nav-tab {
+    white-space: nowrap;
   }
 }

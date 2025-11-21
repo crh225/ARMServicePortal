@@ -77,9 +77,6 @@ function blueprintReducer(state, action) {
       return {
         ...state,
         result: action.payload,
-        selectedBlueprint: null,
-        formValues: {},
-        moduleName: null,
         loading: false,
         error: null,
         policyErrors: null

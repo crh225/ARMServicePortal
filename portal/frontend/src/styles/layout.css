@@ -3,31 +3,28 @@
 .app-root {
   min-height: 100vh;
   display: flex;
-  align-items: stretch;
-  justify-content: center;
-  padding: 24px;
+  flex-direction: column;
+  background: var(--bg-primary);
 }
 
 .app-shell {
   width: 100%;
-  max-width: 1200px;
-  background:white;
-  border-radius: 28px;
-  box-shadow: var(--shadow-soft);
-  padding: 20px 22px;
   display: flex;
   flex-direction: column;
   position: relative;
-  overflow: hidden;
+  flex: 1;
 }
 
 /* Main layout */
 
 .app-main {
+  max-width: 1280px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 24px;
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(0, 1.6fr);
-  gap: 18px;
-  margin-top: 18px;
+  gap: 24px;
   position: relative;
   z-index: 1;
 }
@@ -38,41 +35,49 @@
 }
 
 .panel {
-  background: var(--bg-panel);
-  border-radius: 22px;
-  border: 1px solid var(--border-subtle);
-  padding: 16px 16px 18px;
+  background: transparent;
+  border-radius: 0;
+  border: none;
+  padding: 0;
+}
+
+.panel--full {
+  grid-column: 1 / -1;
 }
 
 .panel--left {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 32px;
 }
 
 .panel--form {
-  margin-top: 14px;
-  background: #f9fafb;
+  margin-top: 0;
+  padding-top: 32px;
+  border-top: 1px solid var(--border-default);
+  background: transparent;
 }
 
 .panel--right {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 32px;
 }
 
 .panel-title {
-  margin: 0 0 4px;
-  font-size: 0.9rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #111827;
+  margin: 0 0 8px;
+  font-size: 1rem;
+  letter-spacing: 0;
+  text-transform: none;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .panel-help {
   margin: 0;
-  font-size: 0.8rem;
-  color: var(--text-muted);
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
 }
 
 /* Responsive */
@@ -84,12 +89,8 @@
 }
 
 @media (max-width: 768px) {
-  .app-root {
-    padding: 14px;
-  }
-
-  .app-shell {
-    border-radius: 20px;
-    padding: 14px;
+  .app-main {
+    padding: 16px;
+    gap: 16px;
   }
 }

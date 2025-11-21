@@ -1,5 +1,4 @@
 import React, { useEffect, useRef } from "react";
-import CostEstimate from "./CostEstimate";
 import "../../styles/BlueprintForm.css";
 import { getEnvironmentConfig } from "../../config/environmentConfig";
 
@@ -10,7 +9,9 @@ function BlueprintForm({
   onSubmit,
   loading,
   isUpdating,
-  policyErrors
+  policyErrors,
+  onClearSelection,
+  hasResult
 }) {
   const formRef = useRef(null);
 
@@ -28,11 +29,29 @@ function BlueprintForm({
   const envWarning = getEnvironmentConfig(environment);
 
   return (
-    <div ref={formRef} className="panel panel--form">
-      <h2 className="panel-title">2. Parameters</h2>
-      <p className="panel-help">
-        Values will be written into a Terraform module file in GitHub.
-      </p>
+    <div ref={formRef}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px" }}>
+        <div>
+          <h2 className="panel-title">{blueprint.displayName}</h2>
+          <p className="panel-help">{blueprint.description}</p>
+        </div>
+        {onClearSelection && (
+          <button
+            className="reset-btn"
+            onClick={() => onClearSelection(null)}
+          >
+            {hasResult ? "Create Blueprint" : "← Start Over"}
+          </button>
+        )}
+      </div>
+
+      <div className="panel panel--form">
+        <div>
+          <h2 className="panel-title">Configure Parameters</h2>
+          <p className="panel-help">
+            Specify values for your Terraform module deployment.
+          </p>
+        </div>
 
       {envWarning && (
         <div className={`environment-warning environment-warning--${envWarning.level}`}>
@@ -91,24 +110,7 @@ function BlueprintForm({
           </div>
         ))}
       </div>
-
-      <CostEstimate blueprint={blueprint} formValues={formValues} />
-
-      <button
-        className="primary-btn"
-        onClick={onSubmit}
-        disabled={loading}
-      >
-        {loading
-          ? (isUpdating ? "Updating Blueprint..." : "Creating GitHub PR...")
-          : (isUpdating ? "Update Blueprint" : "Create GitHub PR")
-        }
-      </button>
-
-      <p className="hint-text">
-        The portal never applies Terraform directly. It just opens a
-        reviewed PR in your repo.
-      </p>
+      </div>
     </div>
   );
 }

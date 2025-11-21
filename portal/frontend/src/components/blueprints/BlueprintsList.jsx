@@ -24,27 +24,12 @@ function BlueprintsList({ blueprints, selectedBlueprint, onSelectBlueprint }) {
     setShowAllBlueprints(false);
   };
 
-  const handleStartOver = () => {
-    setShowAllBlueprints(true);
-    onSelectBlueprint(null);
-  };
-
   return (
     <div>
-      <div>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h2 className="panel-title">1. Choose a Blueprint</h2>
-          {selectedBlueprint && !showAllBlueprints && (
-            <button
-              className="reset-btn"
-              onClick={handleStartOver}
-            >
-              ← Start Over
-            </button>
-          )}
-        </div>
+      <div style={{ marginBottom: "16px" }}>
+        <h2 className="panel-title">Choose a Blueprint</h2>
         <p className="panel-help">
-          These are your approved Terraform-backed building blocks.
+          Select an approved Terraform module to deploy.
         </p>
       </div>
 

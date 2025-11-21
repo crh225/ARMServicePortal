@@ -1,9 +1,9 @@
 /* Cost Estimate Component */
 
 .cost-estimate {
-  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-  border: 1px solid #bae6fd;
-  border-radius: 8px;
+  background: var(--bg-hover-subtle);
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
   padding: 16px;
   margin-top: 16px;
   transition: opacity 0.2s ease-in-out;
@@ -14,9 +14,9 @@
 }
 
 .cost-estimate__title {
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   font-weight: 600;
-  color: #0369a1;
+  color: var(--text-primary);
   margin: 0 0 12px 0;
 }
 
@@ -49,38 +49,38 @@
 }
 
 .cost-estimate__amount {
-  font-size: 2rem;
+  font-size: 1.75rem;
   font-weight: 700;
-  color: #0369a1;
+  color: var(--text-primary);
   line-height: 1;
 }
 
 .cost-estimate__currency {
-  font-size: 0.9rem;
-  color: #64748b;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
   font-weight: 500;
 }
 
 .cost-estimate__breakdown {
-  border-top: 1px solid #bae6fd;
+  border-top: 1px solid var(--border-default);
   padding-top: 12px;
   margin-top: 12px;
 }
 
 .cost-estimate__breakdown-title {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 600;
-  color: #0369a1;
+  color: var(--text-secondary);
   margin-bottom: 8px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
 .cost-estimate__item {
-  background: white;
-  border: 1px solid #e0f2fe;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
   border-radius: 6px;
-  padding: 10px;
+  padding: 10px 12px;
   margin-bottom: 8px;
 }
 
@@ -97,35 +97,35 @@
 
 .cost-estimate__item-type {
   font-weight: 600;
-  font-size: 0.85rem;
-  color: #1e293b;
+  font-size: 0.8125rem;
+  color: var(--text-primary);
 }
 
 .cost-estimate__item-price {
   font-weight: 700;
-  font-size: 0.9rem;
-  color: #0369a1;
+  font-size: 0.875rem;
+  color: var(--text-primary);
 }
 
 .cost-estimate__item-sku {
   font-size: 0.75rem;
-  color: #64748b;
+  color: var(--text-secondary);
   margin-bottom: 4px;
 }
 
 .cost-estimate__item-note {
   font-size: 0.75rem;
-  color: #64748b;
+  color: var(--text-secondary);
   font-style: italic;
   line-height: 1.4;
 }
 
 .cost-estimate__disclaimer {
   margin-top: 12px;
-  padding: 8px;
-  background: #fff7ed;
-  border: 1px solid #fed7aa;
-  border-radius: 4px;
+  padding: 10px 12px;
+  background: #fffbeb;
+  border: 1px solid #fbbf24;
+  border-radius: 6px;
   font-size: 0.75rem;
   color: #92400e;
   line-height: 1.5;
