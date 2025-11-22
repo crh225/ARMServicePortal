@@ -173,6 +173,12 @@ resource "azurerm_container_app" "backend" {
         name        = "GITHUB_WEBHOOK_SECRET"
         secret_name = "gh-webhook-secret"
       }
+
+      # Frontend URL for CORS
+      env {
+        name  = "FRONTEND_URL"
+        value = "https://portal.chrishouse.io"
+      }
     }
   }
 }
