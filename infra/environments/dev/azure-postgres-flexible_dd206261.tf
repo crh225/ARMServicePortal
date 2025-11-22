@@ -17,7 +17,7 @@ module "azure-postgres-flexible_dd206261" {
   tags = {
     armportal-environment = "dev"
     armportal-blueprint   = "azure-postgres-flexible"
-    armportal-request-id  = "azure-postgres-flexible_dd206261"
+    armportal-request-id  = "102"
   }
 }
 
