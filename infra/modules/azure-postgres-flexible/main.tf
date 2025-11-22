@@ -64,7 +64,7 @@ variable "geo_redundant_backup" {
 variable "admin_username" {
   type        = string
   description = "Administrator username for PostgreSQL"
-  default     = "psqladmin"
+  default     = null
 }
 
 variable "high_availability_mode" {
@@ -107,6 +107,9 @@ locals {
   # Make a safe prefix from project + environment
   server_name_prefix = lower(replace("${var.project_name}-${var.environment}", "/[^a-z0-9-]/", ""))
 
+  # Generate admin username if not provided (for security - not hardcoded)
+  admin_username = var.admin_username != null ? var.admin_username : "admin_${random_string.suffix.result}"
+
   # ARM Portal required tags
   armportal_tags = {
     "armportal-environment" = var.environment
@@ -142,7 +145,7 @@ resource "azurerm_postgresql_flexible_server" "this" {
   location            = var.location
 
   version                      = var.postgres_version
-  administrator_login          = var.admin_username
+  administrator_login          = local.admin_username
   administrator_password       = random_password.admin_password.result
 
   sku_name   = var.sku_name
@@ -210,8 +213,9 @@ output "database_name" {
 }
 
 output "admin_username" {
-  value       = var.admin_username
+  value       = local.admin_username
   description = "The administrator username"
+  sensitive   = true
 }
 
 output "admin_password" {
@@ -221,7 +225,7 @@ output "admin_password" {
 }
 
 output "connection_string" {
-  value       = "postgresql://${var.admin_username}:${random_password.admin_password.result}@${azurerm_postgresql_flexible_server.this.fqdn}:5432/${azurerm_postgresql_flexible_server_database.this.name}?sslmode=require"
+  value       = "postgresql://${local.admin_username}:${random_password.admin_password.result}@${azurerm_postgresql_flexible_server.this.fqdn}:5432/${azurerm_postgresql_flexible_server_database.this.name}?sslmode=require"
   description = "PostgreSQL connection string"
   sensitive   = true
 }
