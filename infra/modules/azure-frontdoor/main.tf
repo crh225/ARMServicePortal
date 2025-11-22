@@ -168,12 +168,20 @@ resource "azurerm_cdn_frontdoor_custom_domain" "this" {
   }
 }
 
-# Associate custom domain with route
-resource "azurerm_cdn_frontdoor_custom_domain_association" "this" {
-  count                          = var.custom_domain != null ? 1 : 0
-  cdn_frontdoor_custom_domain_id = azurerm_cdn_frontdoor_custom_domain.this[0].id
-  cdn_frontdoor_route_ids        = [azurerm_cdn_frontdoor_route.this.id]
-}
+# NOTE: Custom domain association must be done AFTER DNS validation is complete.
+# The validation requires you to:
+# 1. Add TXT record: _dnsauth.<your-domain> with the validation_token from outputs
+# 2. Add CNAME record: <your-domain> pointing to the frontdoor_endpoint_hostname
+# 3. Wait for Azure to validate (5-15 minutes)
+# 4. Then manually associate the custom domain with the route in Azure Portal
+#
+# Uncomment this resource after DNS validation is complete:
+#
+# resource "azurerm_cdn_frontdoor_custom_domain_association" "this" {
+#   count                          = var.custom_domain != null ? 1 : 0
+#   cdn_frontdoor_custom_domain_id = azurerm_cdn_frontdoor_custom_domain.this[0].id
+#   cdn_frontdoor_route_ids        = [azurerm_cdn_frontdoor_route.this.id]
+# }
 
 output "frontdoor_endpoint_hostname" {
   value       = azurerm_cdn_frontdoor_endpoint.this.host_name

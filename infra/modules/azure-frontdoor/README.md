@@ -49,9 +49,30 @@ After the Front Door is deployed, you'll get outputs from Terraform:
    - Target: The Front Door endpoint hostname (e.g., `ep-armportal-prod-abc123.azurefd.net`)
    - Proxy: **DNS Only** (disable Cloudflare proxy)
 
-### Step 3: Wait for HTTPS Provisioning
+### Step 3: Wait for DNS Validation
 
 - Azure will automatically validate your domain (may take 5-15 minutes)
+- Check validation status in Azure Portal: Front Door > Custom domains
+- Wait for the domain status to show "Approved" or "Validated"
+
+### Step 4: Associate Custom Domain with Route
+
+After DNS validation is complete, you need to manually associate the custom domain:
+
+**Option A: Azure Portal (Recommended)**
+1. Go to Azure Portal > Front Door profile
+2. Navigate to "Custom domains"
+3. Click on your custom domain (e.g., `portal.chrishouse.io`)
+4. Click "Associate" and select your route (e.g., `route-portal-afd-dev`)
+5. Click "Save"
+
+**Option B: Terraform (Advanced)**
+1. Uncomment the `azurerm_cdn_frontdoor_custom_domain_association` resource in `main.tf`
+2. Run `terraform apply` again
+3. This will associate the custom domain with the route
+
+### Step 5: Wait for HTTPS Provisioning
+
 - Azure will provision a managed TLS certificate (may take up to 60 minutes)
 - Once complete, your site will be available at `https://portal.chrishouse.io`
 
