@@ -75,6 +75,16 @@ export function getResourceTypeIcon(type) {
     );
   }
 
+  // CDN / Front Door
+  if (typeLower.includes("cdn") || typeLower.includes("frontdoor")) {
+    return (
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" className="resource-type-icon">
+        <path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zM1 8a7 7 0 0 1 13.97-.748L10.28 8.5a3 3 0 0 0-2.03-2.78l1.38-2.4A7.03 7.03 0 0 1 14.97 8H11.5a3 3 0 0 0-2.78-2.03l-1.38 2.4a3 3 0 1 0 3.14 3.14l2.4 1.38A7.03 7.03 0 0 1 8 14.97V11.5a3 3 0 0 0 2.03-2.78l2.4-1.38A7.03 7.03 0 0 1 15 8H1z"/>
+        <circle cx="8" cy="8" r="2"/>
+      </svg>
+    );
+  }
+
   // Default icon
   return (
     <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" className="resource-type-icon">

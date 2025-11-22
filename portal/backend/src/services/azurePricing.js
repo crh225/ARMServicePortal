@@ -120,6 +120,15 @@ export async function estimateBlueprintCost(blueprintId, variables, blueprint = 
       estimates.push(postgresCost);
       break;
 
+    case "azure-frontdoor":
+      const frontDoorCost = await estimateFrontDoorCost(
+        location,
+        variables.sku_name || "Standard_AzureFrontDoor",
+        variables.custom_domain ? true : false
+      );
+      estimates.push(frontDoorCost);
+      break;
+
     default:
       estimates.push({
         resourceType: "Unknown",
@@ -393,6 +402,62 @@ async function estimatePostgresCost(location, skuName, storageMb, highAvailabili
       storageCostPerMonth: parseFloat(monthlyStorageCost.toFixed(2)),
       storageGb: storageGb,
       highAvailability: highAvailability
+    }
+  };
+}
+
+/**
+ * Estimate Azure Front Door costs
+ */
+async function estimateFrontDoorCost(location, skuName, hasCustomDomain) {
+  const prices = await fetchAzurePricing({
+    serviceName: "Azure Front Door Service",
+    armRegionName: location
+  });
+
+  // Front Door pricing structure:
+  // - Base fee (per profile/month)
+  // - Data transfer out (per GB)
+  // - Requests (per 10k requests)
+  // - Custom domain HTTPS (per domain/month)
+
+  // Determine SKU tier
+  const isPremium = skuName.includes("Premium");
+
+  // Base monthly fee (fallback to known rates if API doesn't return)
+  // Standard: ~$35/month, Premium: ~$330/month
+  const baseFeeMonthly = isPremium ? 330 : 35;
+
+  // Estimated data transfer out: 100GB/month
+  const estimatedDataTransferGB = 100;
+  const dataTransferPricePerGB = isPremium ? 0.01 : 0.01; // ~$0.01/GB for first 10TB
+
+  // Estimated requests: 1 million/month
+  const estimatedRequests = 1000000;
+  const requestsPer10k = estimatedRequests / 10000;
+  const requestPricePer10k = 0.0075; // ~$0.0075 per 10k requests
+
+  // Calculate costs
+  const dataTransferCost = estimatedDataTransferGB * dataTransferPricePerGB;
+  const requestCost = requestsPer10k * requestPricePer10k;
+  const customDomainCost = hasCustomDomain ? 0 : 0; // Custom domains are free with Front Door
+
+  const totalMonthlyCost = baseFeeMonthly + dataTransferCost + requestCost + customDomainCost;
+
+  return {
+    resourceType: "Azure Front Door",
+    skuName: skuName,
+    monthlyEstimate: parseFloat(totalMonthlyCost.toFixed(2)),
+    currency: "USD",
+    note: `${isPremium ? "Premium" : "Standard"} tier with estimated ${estimatedDataTransferGB}GB data transfer and ${(estimatedRequests / 1000000).toFixed(1)}M requests/month. ${hasCustomDomain ? "Includes custom domain with free managed certificate." : ""}`,
+    breakdown: {
+      baseFee: baseFeeMonthly,
+      dataTransferGB: estimatedDataTransferGB,
+      dataTransferCost: parseFloat(dataTransferCost.toFixed(2)),
+      requestsPerMonth: estimatedRequests,
+      requestCost: parseFloat(requestCost.toFixed(2)),
+      customDomain: hasCustomDomain,
+      customDomainCost: customDomainCost
     }
   };
 }
