@@ -133,13 +133,20 @@ const api = {
 
   /**
    * Fetch all deployed resources
+   * Note: By default, cost data is NOT fetched to improve performance
+   * Pass includeCosts=true query param to fetch actual cost data
    */
-  async fetchResources() {
-    const response = await fetch(`${API_BASE_URL}/api/resources`);
+  async fetchResources(includeCosts = true) {
+    const url = new URL(`${API_BASE_URL}/api/resources`);
+    url.searchParams.set("includeCosts", includeCosts.toString());
+
+    const response = await fetch(url);
     if (!response.ok) {
       throw new Error("Failed to load resources");
     }
-    return response.json();
+    const data = await response.json();
+    // API returns { resources: [], count, skip, top } - extract just the resources array
+    return Array.isArray(data) ? data : (data.resources || []);
   }
 };
 

@@ -26,8 +26,8 @@ function AdminPanel() {
       ]);
 
       setDashboardData({
-        resources: resources || [],
-        jobs: jobs || [],
+        resources: Array.isArray(resources) ? resources : [],
+        jobs: Array.isArray(jobs) ? jobs : [],
         loading: false,
         error: null
       });
@@ -44,9 +44,14 @@ function AdminPanel() {
   const calculateMetrics = () => {
     const { resources, jobs } = dashboardData;
 
+    // Only count ARM Portal managed resources (those with armportal-* tags)
+    const managedResources = resources.filter(r =>
+      r.tags && Object.keys(r.tags).some(key => key.startsWith("armportal"))
+    );
+
     // Resource metrics
-    const totalResources = resources.length;
-    const healthyResources = resources.filter(r =>
+    const totalResources = managedResources.length;
+    const healthyResources = managedResources.filter(r =>
       r.health?.toLowerCase() === "healthy" || r.health?.toLowerCase() === "succeeded"
     ).length;
 
@@ -58,16 +63,25 @@ function AdminPanel() {
 
     const successRate = totalJobs > 0 ? Math.round((successfulJobs / totalJobs) * 100) : 0;
 
-    // Cost metrics
-    const totalEstimatedCost = resources.reduce((sum, resource) => {
-      const cost = parseFloat(resource.estimatedMonthlyCost) || 0;
-      return sum + cost;
-    }, 0);
+    // Cost metrics - prioritize actual costs over estimated
+    let totalActualCost = 0;
+    let totalEstimatedCost = 0;
+    let resourcesWithCost = 0;
+    let resourcesWithEstimatedCost = 0;
 
-    const totalActualCost = resources.reduce((sum, resource) => {
-      const cost = parseFloat(resource.actualMonthlyCost) || 0;
-      return sum + cost;
-    }, 0);
+    managedResources.forEach(resource => {
+      // Actual cost (from Cost Management API)
+      if (resource.cost !== null && resource.cost !== undefined) {
+        totalActualCost += resource.cost;
+        resourcesWithCost++;
+      }
+
+      // Estimated monthly cost (from SKU/capacity)
+      if (resource.estimatedMonthlyCost !== null && resource.estimatedMonthlyCost !== undefined) {
+        totalEstimatedCost += resource.estimatedMonthlyCost;
+        resourcesWithEstimatedCost++;
+      }
+    });
 
     return {
       totalResources,
@@ -78,7 +92,9 @@ function AdminPanel() {
       failedJobs,
       successRate,
       totalEstimatedCost,
-      totalActualCost
+      totalActualCost,
+      hasActualCosts: resourcesWithCost > 0,
+      hasEstimatedCosts: resourcesWithEstimatedCost > 0
     };
   };
 
@@ -190,13 +206,13 @@ function AdminPanel() {
               </div>
               <div className="metric-content">
                 <div className="metric-value">
-                  ${metrics.totalActualCost > 0
+                  ${metrics.hasActualCosts
                     ? metrics.totalActualCost.toFixed(2)
                     : metrics.totalEstimatedCost.toFixed(2)}
                 </div>
                 <div className="metric-label">Monthly Cost</div>
                 <div className="metric-subtitle">
-                  {metrics.totalActualCost > 0 ? "Actual" : "Estimated"}
+                  {metrics.hasActualCosts ? "Actual (last 30 days)" : "Estimated"}
                 </div>
               </div>
             </div>
@@ -227,7 +243,9 @@ function AdminPanel() {
                   <div className="activity-content">
                     <div className="activity-title">{job.title}</div>
                     <div className="activity-meta">
-                      PR #{job.number} • {job.status} • {new Date(job.created_at).toLocaleDateString()}
+                      PR #{job.number} • {job.status}
+                      {job.created_at && ` • ${new Date(job.created_at).toLocaleDateString()}`}
+                      {job.createdAt && !job.created_at && ` • ${new Date(job.createdAt).toLocaleDateString()}`}
                     </div>
                   </div>
                 </div>
