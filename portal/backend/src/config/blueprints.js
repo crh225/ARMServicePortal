@@ -375,9 +375,10 @@ export const BLUEPRINTS = [
       {
         name: "location",
         label: "Location",
-        type: "string",
+        type: "select",
         required: true,
-        default: "eastus2"
+        options: ["eastus", "eastus2", "westus", "westus2", "centralus", "northcentralus", "southcentralus", "westcentralus"],
+        default: "eastus"
       },
       {
         name: "postgres_version",
@@ -427,10 +428,9 @@ export const BLUEPRINTS = [
       },
       {
         name: "admin_username",
-        label: "Admin Username",
+        label: "Admin Username (leave blank for auto-generated)",
         type: "string",
-        required: false,
-        default: "psqladmin"
+        required: false
       },
       {
         name: "high_availability_mode",
