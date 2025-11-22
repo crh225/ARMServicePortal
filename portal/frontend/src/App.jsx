@@ -74,12 +74,9 @@ function App() {
   // Handle tab change and update URL
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    const newParams = new URLSearchParams(searchParams);
+    // Clear all query strings and only set the tab parameter
+    const newParams = new URLSearchParams();
     newParams.set("tab", tab);
-    // Remove job parameter when switching tabs (unless staying on jobs tab)
-    if (tab !== "jobs" && newParams.has("job")) {
-      newParams.delete("job");
-    }
     setSearchParams(newParams);
   };
 

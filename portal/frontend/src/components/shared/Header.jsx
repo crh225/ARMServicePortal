@@ -29,7 +29,9 @@ function Header({ activeTab, onTabChange, notifications, unreadCount, onMarkAsRe
         <div className="header-top">
           <div>
             <div className="logo-row">
-              <span className="logo-text">Cloud Self-Service Portal</span>
+              <span className="logo-text" onClick={() => onTabChange("blueprints")} style={{ cursor: "pointer" }}>
+                Cloud Self-Service Portal
+              </span>
             </div>
             <p className="app-subtitle">
               Provision approved Azure resources through GitOps + Terraform.
