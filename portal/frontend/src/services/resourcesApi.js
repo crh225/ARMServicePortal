@@ -62,3 +62,30 @@ export async function fetchResourcesByRequestId(requestId) {
     throw error;
   }
 }
+
+/**
+ * Fetch resource groups filtered by environment tag
+ * @param {string} environment - Environment to filter by (optional)
+ * @returns {Promise<Array<string>>} Array of resource group names
+ */
+export async function fetchResourceGroups(environment = null) {
+  const params = new URLSearchParams();
+  if (environment) params.append("environment", environment);
+
+  const url = `${API_BASE_URL}/api/resources/resource-groups${params.toString() ? `?${params.toString()}` : ""}`;
+
+  try {
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.details || errorData.error || `HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.resourceGroups || [];
+  } catch (error) {
+    console.error("Failed to fetch resource groups:", error);
+    throw error;
+  }
+}

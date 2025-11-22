@@ -161,7 +161,7 @@ export const BLUEPRINTS = [
   },
   {
     id: "azure-static-site",
-    version: "0.0.1",
+    version: "1.0.0",
     displayName: "Static Website",
     description: "Host a static website on Azure Storage with optional CDN support. Perfect for SPAs, documentation sites, and marketing pages.",
     category: "Web",
@@ -238,7 +238,7 @@ export const BLUEPRINTS = [
   },
   {
     id: "azure-aci",
-    version: "0.0.1",
+    version: "1.0.0",
     displayName: "Azure Container Instance",
     description: "Deploy a containerized application using Azure Container Instances. Perfect for simple apps, batch jobs, and development environments.",
     category: "Compute",
@@ -477,7 +477,7 @@ export const BLUEPRINTS = [
   },
   {
     id: "azure-webapp-stack",
-    version: "0.0.1",
+    version: "1.0.0",
     displayName: "Full Stack Web Application",
     description: "Complete application stack: Resource Group + Storage Account + Container Instance + Key Vault. Deploy an entire app environment in one request.",
     category: "Stacks",

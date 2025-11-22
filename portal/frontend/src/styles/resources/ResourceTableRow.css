@@ -71,9 +71,24 @@
 
 /* Cost Warning */
 .cost-value {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.estimated-cost {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.actual-cost {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 400;
 }
 
 .cost-warning {
@@ -81,6 +96,7 @@
   align-items: center;
   color: #f59e0b;
   cursor: help;
+  margin-left: 4px;
 }
 
 .cost-warning svg {

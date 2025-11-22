@@ -3,9 +3,10 @@
  * Handles Azure Resource Graph queries and resource enrichment
  */
 
-import { queryArmPortalResources, queryResourcesByRequestId } from "../services/azureResourceGraph.js";
+import { queryArmPortalResources, queryResourcesByRequestId, queryResourceGroupsByEnvironment } from "../services/azureResourceGraph.js";
 import { getGitHubRequestByNumber, findPRByModuleName } from "../services/github/pullRequests.js";
 import { getSubscriptionCosts } from "../services/costService.js";
+import { estimateResourceCost } from "../services/resourceCostEstimator.js";
 
 /**
  * Extract PR numbers from resources
@@ -126,6 +127,22 @@ async function enrichResourcesWithPRs(resources, includeCosts = false) {
     });
   }
 
+  // Estimate costs for all resources (run in parallel)
+  const estimatedCostsPromises = resources.map(async resource => {
+    try {
+      const estimate = await estimateResourceCost(resource);
+      return { id: resource.id, estimatedCost: estimate };
+    } catch (error) {
+      console.error(`Failed to estimate cost for ${resource.id}:`, error);
+      return { id: resource.id, estimatedCost: null };
+    }
+  });
+
+  const estimatedCostsResults = await Promise.all(estimatedCostsPromises);
+  const estimatedCostsMap = new Map(
+    estimatedCostsResults.map(({ id, estimatedCost }) => [id, estimatedCost])
+  );
+
   // Enrich each resource
   return resources.map(resource => {
     const requestId = resource.tags?.["armportal-request-id"];
@@ -152,7 +169,7 @@ async function enrichResourcesWithPRs(resources, includeCosts = false) {
       health = provisioningState;
     }
 
-    // Get cost for this resource
+    // Get actual cost for this resource (from Cost Management API)
     let cost = null;
     if (includeCosts) {
       // Only set cost values if cost fetching was requested
@@ -169,6 +186,9 @@ async function enrichResourcesWithPRs(resources, includeCosts = false) {
         cost = resourceCost !== undefined ? resourceCost : 0;
       }
     }
+
+    // Get estimated monthly cost based on provisioned capacity
+    const estimatedMonthlyCost = estimatedCostsMap.get(resource.id);
 
     return {
       // Resource data
@@ -191,8 +211,11 @@ async function enrichResourcesWithPRs(resources, includeCosts = false) {
       health,
       provisioningState,
 
-      // Cost information (last 30 days in USD)
+      // Cost information (last 30 days actual usage in USD)
       cost,
+
+      // Estimated monthly cost based on provisioned capacity (SKU, size, etc.)
+      estimatedMonthlyCost,
 
       // Enriched data
       prNumber,
@@ -293,6 +316,32 @@ export async function getResourcesByRequest(req, res) {
     console.error(`Failed to fetch resources for request ${req.params.requestId}:`, error);
     res.status(500).json({
       error: "Failed to fetch resources",
+      details: error.message
+    });
+  }
+}
+
+/**
+ * GET /api/resource-groups
+ * Get resource groups filtered by environment tag
+ * Query params: environment (optional)
+ */
+export async function getResourceGroups(req, res) {
+  try {
+    const { environment } = req.query;
+
+    // Query resource groups from Azure Resource Graph
+    const resourceGroups = await queryResourceGroupsByEnvironment(environment);
+
+    res.json({
+      resourceGroups,
+      count: resourceGroups.length,
+      environment: environment || null
+    });
+  } catch (error) {
+    console.error("Failed to fetch resource groups:", error);
+    res.status(500).json({
+      error: "Failed to fetch resource groups",
       details: error.message
     });
   }

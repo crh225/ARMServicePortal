@@ -10,6 +10,13 @@ import { ResourceGraphClient } from "@azure/arm-resourcegraph";
 const credential = new DefaultAzureCredential();
 const client = new ResourceGraphClient(credential);
 
+// Cache for resource groups query (3 minute TTL)
+const resourceGroupsCache = {
+  data: null,
+  timestamp: null,
+  ttl: 3 * 60 * 1000 // 3 minutes in milliseconds
+};
+
 /**
  * Query Azure Resource Graph for ARM Portal resources
  * @param {object} options - Query options
@@ -97,6 +104,53 @@ export async function queryArmPortalResources(options = {}) {
  */
 export async function queryResourcesByRequestId(requestId) {
   return await queryArmPortalResources({ requestId });
+}
+
+/**
+ * Query resource groups, optionally filtered by environment tag or name pattern
+ * @param {string} environment - Environment to filter by (e.g., "dev", "qa", "prod")
+ * @param {Array<string>} subscriptions - Optional list of subscription IDs
+ * @returns {Promise<Array>} Array of resource group names
+ */
+export async function queryResourceGroupsByEnvironment(environment = null, subscriptions = []) {
+  // Use the same union pattern as queryArmPortalResources for consistency
+  // Filter for resource groups only
+  const query = "ResourceContainers | union Resources | where type =~ 'microsoft.resources/subscriptions/resourcegroups' | project name | order by name asc";
+
+  try {
+    const queryRequest = {
+      query,
+      options: {
+        resultFormat: "objectArray"
+      }
+    };
+
+    // Add subscriptions if provided, otherwise use default subscription
+    if (subscriptions && subscriptions.length > 0) {
+      queryRequest.subscriptions = subscriptions;
+    } else {
+      const defaultSubscription = process.env.AZURE_SUBSCRIPTION_ID || "f989de0f-8697-4a05-8c34-b82c941767c0";
+      queryRequest.subscriptions = [defaultSubscription];
+    }
+
+    const result = await client.resources(queryRequest);
+    const allResourceGroups = (result.data || []).map(rg => rg.name);
+
+    // Filter by environment on the backend if provided
+    if (environment) {
+      return allResourceGroups.filter(name => {
+        const lowerName = name.toLowerCase();
+        const lowerEnv = environment.toLowerCase();
+        // Match if name contains -env- or ends with -env
+        return lowerName.includes(`-${lowerEnv}-`) || lowerName.endsWith(`-${lowerEnv}`);
+      });
+    }
+
+    return allResourceGroups;
+  } catch (error) {
+    console.error("Resource Groups query failed:", error);
+    throw new Error(`Failed to query resource groups: ${error.message}`);
+  }
 }
 
 /**

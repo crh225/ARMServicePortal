@@ -96,16 +96,25 @@ function ResourcesTable({ resources, onSelectResource, selectedResource, costsLo
   // Calculate cost summary with breakdowns
   const costSummary = useMemo(() => {
     let totalCost = 0;
+    let totalEstimatedCost = 0;
     let resourcesWithCost = 0;
+    let resourcesWithEstimatedCost = 0;
     let resourcesNoCost = 0;
     const costByEnvironment = {};
     const costByBlueprint = {};
     const costByOwnership = {};
     const costByProduct = {};
+    const estimatedCostByEnvironment = {};
+    const estimatedCostByBlueprint = {};
+    const estimatedCostByOwnership = {};
+    const estimatedCostByProduct = {};
     let highestCostResource = null;
     let highestCost = 0;
+    let highestEstimatedCostResource = null;
+    let highestEstimatedCost = 0;
 
     filteredResources.forEach(resource => {
+      // Actual cost
       if (resource.cost !== null && resource.cost !== undefined) {
         totalCost += resource.cost;
         resourcesWithCost++;
@@ -131,13 +140,46 @@ function ResourcesTable({ resources, onSelectResource, selectedResource, costsLo
         // Breakdown by product (resource type)
         const product = getResourceTypeDisplay(resource.type);
         costByProduct[product] = (costByProduct[product] || 0) + resource.cost;
-      } else {
+      }
+
+      // Estimated monthly cost
+      if (resource.estimatedMonthlyCost !== null && resource.estimatedMonthlyCost !== undefined) {
+        totalEstimatedCost += resource.estimatedMonthlyCost;
+        resourcesWithEstimatedCost++;
+
+        // Track highest estimated cost resource
+        if (resource.estimatedMonthlyCost > highestEstimatedCost) {
+          highestEstimatedCost = resource.estimatedMonthlyCost;
+          highestEstimatedCostResource = resource;
+        }
+
+        // Breakdown by environment
+        const env = resource.environment || "unknown";
+        estimatedCostByEnvironment[env] = (estimatedCostByEnvironment[env] || 0) + resource.estimatedMonthlyCost;
+
+        // Breakdown by blueprint
+        const bp = resource.blueprintId || "unknown";
+        estimatedCostByBlueprint[bp] = (estimatedCostByBlueprint[bp] || 0) + resource.estimatedMonthlyCost;
+
+        // Breakdown by ownership status
+        const status = resource.ownershipStatus || "unknown";
+        estimatedCostByOwnership[status] = (estimatedCostByOwnership[status] || 0) + resource.estimatedMonthlyCost;
+
+        // Breakdown by product (resource type)
+        const product = getResourceTypeDisplay(resource.type);
+        estimatedCostByProduct[product] = (estimatedCostByProduct[product] || 0) + resource.estimatedMonthlyCost;
+      }
+
+      // Count resources without any cost info
+      if ((resource.cost === null || resource.cost === undefined) &&
+          (resource.estimatedMonthlyCost === null || resource.estimatedMonthlyCost === undefined)) {
         resourcesNoCost++;
       }
     });
 
-    // Calculate average cost
+    // Calculate average costs
     const avgCost = resourcesWithCost > 0 ? totalCost / resourcesWithCost : 0;
+    const avgEstimatedCost = resourcesWithEstimatedCost > 0 ? totalEstimatedCost / resourcesWithEstimatedCost : 0;
 
     // Sort breakdowns
     const topEnvironments = Object.entries(costByEnvironment)
@@ -152,17 +194,38 @@ function ResourcesTable({ resources, onSelectResource, selectedResource, costsLo
       .sort(([, a], [, b]) => b - a)
       .slice(0, 4);
 
+    const topEstimatedEnvironments = Object.entries(estimatedCostByEnvironment)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 3);
+
+    const topEstimatedBlueprints = Object.entries(estimatedCostByBlueprint)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 3);
+
+    const topEstimatedProducts = Object.entries(estimatedCostByProduct)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 4);
+
     return {
       totalCost,
+      totalEstimatedCost,
       avgCost,
+      avgEstimatedCost,
       resourcesWithCost,
+      resourcesWithEstimatedCost,
       resourcesNoCost,
       hasAnyCost: resourcesWithCost > 0,
+      hasAnyEstimatedCost: resourcesWithEstimatedCost > 0,
       highestCostResource,
+      highestEstimatedCostResource,
       topEnvironments,
       topBlueprints,
       topProducts,
-      costByOwnership
+      topEstimatedEnvironments,
+      topEstimatedBlueprints,
+      topEstimatedProducts,
+      costByOwnership,
+      estimatedCostByOwnership
     };
   }, [filteredResources]);
 

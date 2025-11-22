@@ -4,9 +4,18 @@
  */
 
 import express from "express";
-import { getResources, getResourcesByRequest } from "../controllers/resources.controller.js";
+import { getResources, getResourcesByRequest, getResourceGroups } from "../controllers/resources.controller.js";
 
 const router = express.Router();
+
+/**
+ * GET /api/resource-groups
+ * Get resource groups filtered by environment tag
+ * Query params:
+ *   - environment: Filter by environment tag (optional)
+ * IMPORTANT: This route must come before /:requestId to avoid conflicts
+ */
+router.get("/resource-groups", getResourceGroups);
 
 /**
  * GET /api/resources

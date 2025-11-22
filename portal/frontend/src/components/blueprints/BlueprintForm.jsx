@@ -1,6 +1,7 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import "../../styles/BlueprintForm.css";
 import { getEnvironmentConfig } from "../../config/environmentConfig";
+import { fetchResourceGroups } from "../../services/resourcesApi";
 
 function BlueprintForm({
   blueprint,
@@ -14,6 +15,33 @@ function BlueprintForm({
   hasResult
 }) {
   const formRef = useRef(null);
+  const [resourceGroups, setResourceGroups] = useState([]);
+  const [loadingResourceGroups, setLoadingResourceGroups] = useState(false);
+
+  // Get environment value and warning configuration
+  const environment = formValues.environment || "dev";
+  const envWarning = getEnvironmentConfig(environment);
+
+  // Fetch resource groups when environment changes
+  const loadResourceGroups = useCallback(async (env) => {
+    if (!env) return;
+
+    setLoadingResourceGroups(true);
+    try {
+      const rgs = await fetchResourceGroups(env);
+      setResourceGroups(rgs);
+    } catch (error) {
+      console.error("Failed to load resource groups:", error);
+      setResourceGroups([]);
+    } finally {
+      setLoadingResourceGroups(false);
+    }
+  }, []);
+
+  // Load resource groups when environment changes
+  useEffect(() => {
+    loadResourceGroups(environment);
+  }, [environment, loadResourceGroups]);
 
   // Scroll form into view when blueprint changes
   useEffect(() => {
@@ -23,10 +51,6 @@ function BlueprintForm({
   }, [blueprint?.id]);
 
   if (!blueprint) return null;
-
-  // Get environment value and warning configuration
-  const environment = formValues.environment || "dev";
-  const envWarning = getEnvironmentConfig(environment);
 
   return (
     <div ref={formRef}>
@@ -74,41 +98,60 @@ function BlueprintForm({
       )}
 
       <div className="form-grid">
-        {(blueprint.variables || []).map((v) => (
-          <div key={v.name} className="form-field">
-            <label className="field-label">
-              {v.label}
-              {v.required && (
-                <span className="field-required">*</span>
+        {(blueprint.variables || []).map((v) => {
+          // Check if this is a resource_group_name field
+          const isResourceGroupField = v.name === "resource_group_name";
+          const shouldUseDynamicDropdown = isResourceGroupField && resourceGroups.length > 0;
+
+          return (
+            <div key={v.name} className="form-field">
+              <label className="field-label">
+                {v.label}
+                {v.required && (
+                  <span className="field-required">*</span>
+                )}
+                {isResourceGroupField && loadingResourceGroups && (
+                  <span className="field-loading"> (loading...)</span>
+                )}
+              </label>
+              {v.type === "select" || shouldUseDynamicDropdown ? (
+                <select
+                  className="field-input"
+                  value={formValues[v.name] || ""}
+                  onChange={(e) => onChange(v.name, e.target.value)}
+                  disabled={loadingResourceGroups && isResourceGroupField}
+                >
+                  <option value="">-- Select --</option>
+                  {shouldUseDynamicDropdown ? (
+                    resourceGroups.map((rg) => (
+                      <option key={rg} value={rg}>
+                        {rg}
+                      </option>
+                    ))
+                  ) : (
+                    (v.options || []).map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
+                    ))
+                  )}
+                </select>
+              ) : (
+                <input
+                  className="field-input"
+                  type="text"
+                  value={formValues[v.name] || ""}
+                  onChange={(e) =>
+                    onChange(v.name, e.target.value)
+                  }
+                  disabled={isUpdating && v.name === "project_name"}
+                  title={isUpdating && v.name === "project_name" ? "Resource name cannot be changed when updating" : ""}
+                  placeholder={isResourceGroupField ? "Or type a resource group name" : ""}
+                />
               )}
-            </label>
-            {v.type === "select" ? (
-              <select
-                className="field-input"
-                value={formValues[v.name] || ""}
-                onChange={(e) => onChange(v.name, e.target.value)}
-              >
-                <option value="">-- Select --</option>
-                {(v.options || []).map((opt) => (
-                  <option key={opt} value={opt}>
-                    {opt}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <input
-                className="field-input"
-                type="text"
-                value={formValues[v.name] || ""}
-                onChange={(e) =>
-                  onChange(v.name, e.target.value)
-                }
-                disabled={isUpdating && v.name === "project_name"}
-                title={isUpdating && v.name === "project_name" ? "Resource name cannot be changed when updating" : ""}
-              />
-            )}
-          </div>
-        ))}
+            </div>
+          );
+        })}
       </div>
       </div>
     </div>
