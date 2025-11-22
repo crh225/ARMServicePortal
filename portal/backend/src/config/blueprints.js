@@ -237,6 +237,73 @@ export const BLUEPRINTS = [
     ]
   },
   {
+    id: "azure-frontdoor",
+    version: "1.0.0",
+    displayName: "Azure Front Door",
+    description: "Creates Azure Front Door with custom domain support, HTTPS, and CDN capabilities. Perfect for serving static websites with custom domains.",
+    category: "Networking",
+    moduleSource: "../../modules/azure-frontdoor",
+    variables: [
+      {
+        name: "project_name",
+        label: "Project Name",
+        type: "string",
+        required: true
+      },
+      {
+        name: "environment",
+        label: "Environment",
+        type: "select",
+        required: true,
+        options: ["dev", "qa", "staging", "prod"],
+        default: "dev"
+      },
+      {
+        name: "resource_group_name",
+        label: "Resource Group Name",
+        type: "string",
+        required: true
+      },
+      {
+        name: "origin_hostname",
+        label: "Origin Hostname",
+        type: "string",
+        required: true,
+        placeholder: "example: mystorageaccount.z20.web.core.windows.net"
+      },
+      {
+        name: "custom_domain",
+        label: "Custom Domain (optional)",
+        type: "string",
+        required: false,
+        placeholder: "example: portal.chrishouse.io"
+      },
+      {
+        name: "sku_name",
+        label: "SKU",
+        type: "select",
+        required: false,
+        options: ["Standard_AzureFrontDoor", "Premium_AzureFrontDoor"],
+        default: "Standard_AzureFrontDoor"
+      }
+    ],
+    outputs: [
+      {
+        name: "frontdoor_endpoint_hostname",
+        description: "Front Door endpoint hostname"
+      },
+      {
+        name: "custom_domain_validation_token",
+        description: "Validation token for custom domain (add as TXT record: _dnsauth.yourdomain.com)"
+      },
+      {
+        name: "custom_domain_name",
+        description: "Custom domain name"
+      }
+    ],
+    estimatedMonthlyCost: 36.50
+  },
+  {
     id: "azure-aci",
     version: "1.0.0",
     displayName: "Azure Container Instance",
