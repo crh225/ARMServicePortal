@@ -152,6 +152,11 @@ resource "azurerm_cdn_frontdoor_route" "this" {
   forwarding_protocol    = "HttpsOnly"
   link_to_default_domain = true
   https_redirect_enabled = true
+
+  # WORKAROUND: Ignore custom_domains changes since association is managed manually
+  lifecycle {
+    ignore_changes = [cdn_frontdoor_custom_domain_ids]
+  }
 }
 
 # Custom Domain (if provided)
