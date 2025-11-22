@@ -108,7 +108,8 @@ locals {
   server_name_prefix = lower(replace("${var.project_name}-${var.environment}", "/[^a-z0-9-]/", ""))
 
   # Generate admin username if not provided (for security - not hardcoded)
-  admin_username = var.admin_username != null ? var.admin_username : "admin_${random_string.suffix.result}"
+  # Use coalesce to ensure we never have an empty string
+  admin_username = coalesce(var.admin_username, "admin_${random_string.suffix.result}")
 
   # ARM Portal required tags
   armportal_tags = {
