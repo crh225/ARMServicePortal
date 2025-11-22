@@ -129,6 +129,17 @@ const api = {
     }
 
     return response.json();
+  },
+
+  /**
+   * Fetch all deployed resources
+   */
+  async fetchResources() {
+    const response = await fetch(`${API_BASE_URL}/api/resources`);
+    if (!response.ok) {
+      throw new Error("Failed to load resources");
+    }
+    return response.json();
   }
 };
 

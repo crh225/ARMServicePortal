@@ -75,14 +75,14 @@ function CostSummaryCard({ costSummary, costsLoading }) {
         <div className="cost-summary-header">
           <div className="cost-summary-main">
             <div className="cost-summary-label">
-              {costSummary.hasAnyEstimatedCost ? 'Estimated Monthly Cost' : 'Total Monthly Cost'}
+              {costSummary.hasAnyCost ? 'Total Monthly Cost' : 'Estimated Monthly Cost'}
             </div>
             <div className="cost-summary-amount">
-              ${costSummary.hasAnyEstimatedCost ? costSummary.totalEstimatedCost.toFixed(2) : costSummary.totalCost.toFixed(2)}
+              ${costSummary.hasAnyCost ? costSummary.totalCost.toFixed(2) : costSummary.totalEstimatedCost.toFixed(2)}
             </div>
-            {costSummary.hasAnyCost && costSummary.hasAnyEstimatedCost && (
+            {!costSummary.hasAnyCost && costSummary.hasAnyEstimatedCost && (
               <div className="cost-summary-sublabel">
-                Actual (last 30 days): ${costSummary.totalCost.toFixed(2)}
+                Estimated (no actual usage yet)
               </div>
             )}
           </div>
@@ -90,33 +90,22 @@ function CostSummaryCard({ costSummary, costsLoading }) {
             <div className="cost-stat">
               <div className="cost-stat-label">Average</div>
               <div className="cost-stat-value">
-                ${costSummary.hasAnyEstimatedCost ? costSummary.avgEstimatedCost.toFixed(2) : costSummary.avgCost.toFixed(2)}
+                ${costSummary.hasAnyCost ? costSummary.avgCost.toFixed(2) : costSummary.avgEstimatedCost.toFixed(2)}
               </div>
             </div>
             <div className="cost-stat">
               <div className="cost-stat-label">Highest</div>
               <div className="cost-stat-value">
-                ${costSummary.hasAnyEstimatedCost
-                  ? (costSummary.highestEstimatedCostResource?.estimatedMonthlyCost.toFixed(2) || '0.00')
-                  : (costSummary.highestCostResource?.cost.toFixed(2) || '0.00')}
+                ${costSummary.hasAnyCost
+                  ? (costSummary.highestCostResource?.cost.toFixed(2) || '0.00')
+                  : (costSummary.highestEstimatedCostResource?.estimatedMonthlyCost.toFixed(2) || '0.00')}
               </div>
             </div>
           </div>
         </div>
 
         <div className="cost-summary-details">
-          {costSummary.hasAnyEstimatedCost ? (
-            <>
-              <span className="cost-summary-detail">
-                {costSummary.resourcesWithEstimatedCost} resource{costSummary.resourcesWithEstimatedCost !== 1 ? 's' : ''} with estimated cost
-              </span>
-              {costSummary.hasAnyCost && (
-                <span className="cost-summary-detail cost-summary-detail--muted">
-                  {costSummary.resourcesWithCost} with actual usage cost
-                </span>
-              )}
-            </>
-          ) : (
+          {costSummary.hasAnyCost ? (
             <>
               <span className="cost-summary-detail">
                 {costSummary.resourcesWithCost} resource{costSummary.resourcesWithCost !== 1 ? 's' : ''} with cost
@@ -127,11 +116,17 @@ function CostSummaryCard({ costSummary, costsLoading }) {
                 </span>
               )}
             </>
+          ) : (
+            <>
+              <span className="cost-summary-detail">
+                {costSummary.resourcesWithEstimatedCost} resource{costSummary.resourcesWithEstimatedCost !== 1 ? 's' : ''} with estimated cost
+              </span>
+            </>
           )}
         </div>
 
         <CostProductsChart
-          topProducts={costSummary.hasAnyEstimatedCost ? costSummary.topEstimatedProducts : costSummary.topProducts}
+          topProducts={costSummary.hasAnyCost ? costSummary.topProducts : costSummary.topEstimatedProducts}
         />
         <CostBreakdowns costSummary={costSummary} />
       </div>
