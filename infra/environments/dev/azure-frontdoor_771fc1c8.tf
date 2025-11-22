@@ -11,7 +11,7 @@ module "azure-frontdoor_771fc1c8" {
   tags = {
     armportal-environment = "dev"
     armportal-blueprint   = "azure-frontdoor"
-    armportal-request-id  = "azure-frontdoor_771fc1c8"
+    armportal-request-id  = "112"
   }
 }
 
