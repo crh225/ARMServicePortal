@@ -1,7 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import api from "../../services/api";
 import "../../styles/AdminPanel.css";
+
+// Cache for dashboard data (5 minutes)
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+let dashboardCache = null;
+let cacheTimestamp = null;
 
 function AdminPanel() {
   const { user, loading, isAuthenticated, login, logout } = useAuth();
@@ -11,6 +16,7 @@ function AdminPanel() {
     loading: true,
     error: null
   });
+  const [userFilter, setUserFilter] = useState("all");
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -18,19 +24,43 @@ function AdminPanel() {
     }
   }, [isAuthenticated]);
 
-  const loadDashboardData = async () => {
+  const loadDashboardData = async (forceRefresh = false) => {
+    // Check cache first
+    if (!forceRefresh && dashboardCache && cacheTimestamp) {
+      const cacheAge = Date.now() - cacheTimestamp;
+      if (cacheAge < CACHE_DURATION) {
+        console.log(`Using cached dashboard data (${Math.round(cacheAge / 1000)}s old)`);
+        setDashboardData({
+          ...dashboardCache,
+          loading: false,
+          error: null
+        });
+        return;
+      }
+    }
+
     try {
       const [resources, jobs] = await Promise.all([
         api.fetchResources(),
         api.fetchJobs()
       ]);
 
-      setDashboardData({
+      const data = {
         resources: Array.isArray(resources) ? resources : [],
         jobs: Array.isArray(jobs) ? jobs : [],
         loading: false,
         error: null
-      });
+      };
+
+      // Update cache
+      dashboardCache = {
+        resources: data.resources,
+        jobs: data.jobs
+      };
+      cacheTimestamp = Date.now();
+      console.log("Dashboard data cached");
+
+      setDashboardData(data);
     } catch (err) {
       console.error("Failed to load dashboard data:", err);
       setDashboardData(prev => ({
@@ -41,8 +71,28 @@ function AdminPanel() {
     }
   };
 
+  // Extract unique users from resources
+  const availableUsers = useMemo(() => {
+    const users = new Set();
+    dashboardData.resources.forEach(resource => {
+      if (resource.owner) {
+        users.add(resource.owner);
+      }
+    });
+    return Array.from(users).sort();
+  }, [dashboardData.resources]);
+
+  // Filter resources by user
+  const filteredResources = useMemo(() => {
+    if (userFilter === "all") {
+      return dashboardData.resources;
+    }
+    return dashboardData.resources.filter(r => r.owner === userFilter);
+  }, [dashboardData.resources, userFilter]);
+
   const calculateMetrics = () => {
-    const { resources, jobs } = dashboardData;
+    const { jobs } = dashboardData;
+    const resources = filteredResources;
 
     // Only count ARM Portal managed resources (those with armportal-* tags)
     const managedResources = resources.filter(r =>
@@ -148,6 +198,37 @@ function AdminPanel() {
         <div className="error-state">{dashboardData.error}</div>
       ) : (
         <>
+          {/* User Filter */}
+          {availableUsers.length > 0 && (
+            <div className="admin-filters">
+              <div className="filter-group">
+                <label htmlFor="user-filter">Filter by User:</label>
+                <select
+                  id="user-filter"
+                  value={userFilter}
+                  onChange={(e) => setUserFilter(e.target.value)}
+                  className="filter-select"
+                >
+                  <option value="all">All Users ({dashboardData.resources.filter(r =>
+                    r.tags && Object.keys(r.tags).some(key => key.startsWith("armportal"))
+                  ).length} resources)</option>
+                  {availableUsers.map(owner => {
+                    const count = dashboardData.resources.filter(r =>
+                      r.owner === owner &&
+                      r.tags &&
+                      Object.keys(r.tags).some(key => key.startsWith("armportal"))
+                    ).length;
+                    return (
+                      <option key={owner} value={owner}>
+                        {owner} ({count} resources)
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+            </div>
+          )}
+
           <div className="dashboard-metrics">
             {/* Resources Card */}
             <div className="metric-card metric-card--resources">
