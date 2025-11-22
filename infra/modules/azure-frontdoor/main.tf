@@ -175,11 +175,11 @@ resource "azurerm_cdn_frontdoor_custom_domain" "this" {
 # 3. Wait for Azure to validate (5-15 minutes)
 # 4. Then manually associate the custom domain with the route in Azure Portal
 
-resource "azurerm_cdn_frontdoor_custom_domain_association" "this" {
-  count                          = var.custom_domain != null ? 1 : 0
-  cdn_frontdoor_custom_domain_id = azurerm_cdn_frontdoor_custom_domain.this[0].id
-  cdn_frontdoor_route_ids        = [azurerm_cdn_frontdoor_route.this.id]
-}
+#resource "azurerm_cdn_frontdoor_custom_domain_association" "this" {
+#  count                          = var.custom_domain != null ? 1 : 0
+#  cdn_frontdoor_custom_domain_id = azurerm_cdn_frontdoor_custom_domain.this[0].id
+#  cdn_frontdoor_route_ids        = [azurerm_cdn_frontdoor_route.this.id]
+#}
 
 output "frontdoor_endpoint_hostname" {
   value       = azurerm_cdn_frontdoor_endpoint.this.host_name
