@@ -1,0 +1,260 @@
+.backups-list-card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.backups-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.backups-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #1e293b;
+}
+
+.backups-controls {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.env-filter {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 0.875rem;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.env-filter:hover {
+  border-color: #cbd5e1;
+}
+
+.env-filter:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.btn-refresh {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #fff;
+  color: #64748b;
+  cursor: pointer;
+  font-size: 1.125rem;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-refresh:hover {
+  background: #f8fafc;
+  color: #334155;
+  transform: rotate(180deg);
+}
+
+.backups-table-container {
+  overflow-x: auto;
+  margin-bottom: 1rem;
+}
+
+.backups-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.backups-table thead {
+  background: #f8fafc;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.backups-table th {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: #475569;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.backups-table td {
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+}
+
+.backups-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.backups-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Environment badges */
+.env-badge {
+  display: inline-block;
+  padding: 0.25rem 0.625rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.env-dev {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.env-qa {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.env-staging {
+  background: #fce7f3;
+  color: #9f1239;
+}
+
+.env-prod {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* Backup type badges */
+.backup-type-badge {
+  display: inline-block;
+  padding: 0.25rem 0.625rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.backup-type-auto {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.backup-type-restore {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+.backup-type-unknown {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+/* Cell styling */
+.timestamp-cell,
+.created-cell {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.git-sha-cell .git-sha {
+  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+  font-size: 0.75rem;
+  background: #f1f5f9;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  color: #475569;
+}
+
+.git-sha-cell .text-muted {
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.size-cell {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+.backups-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 1rem;
+  border-top: 1px solid #f1f5f9;
+  font-size: 0.875rem;
+}
+
+.backups-count {
+  font-weight: 500;
+  color: #334155;
+}
+
+.text-muted {
+  color: #94a3b8;
+}
+
+/* States */
+.loading-state,
+.error-state,
+.empty-state {
+  padding: 2rem;
+  text-align: center;
+  color: #64748b;
+}
+
+.error-state {
+  color: #dc2626;
+  background: #fef2f2;
+  border-radius: 6px;
+}
+
+.empty-state {
+  background: #f8fafc;
+  border-radius: 6px;
+  border: 1px dashed #e2e8f0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .backups-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .backups-controls {
+    width: 100%;
+  }
+
+  .env-filter {
+    flex: 1;
+  }
+
+  .backups-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .backups-table {
+    font-size: 0.75rem;
+  }
+
+  .backups-table th,
+  .backups-table td {
+    padding: 0.5rem;
+  }
+}

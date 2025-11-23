@@ -4,6 +4,7 @@ import api from "../../services/api";
 import AdminDashboardSkeleton from "./AdminDashboardSkeleton";
 import DashboardMetrics from "./DashboardMetrics";
 import RecentActivityList from "./RecentActivityList";
+import BackupsList from "./BackupsList";
 import AdminUserFilter from "./AdminUserFilter";
 import "../../styles/AdminPanel.css";
 
@@ -113,11 +114,13 @@ function AdminPanel() {
 
     // Job metrics
     const totalJobs = jobs.length;
-    const successfulJobs = jobs.filter(j => j.status === "merged" || j.status === "closed").length;
+    const successfulJobs = jobs.filter(j => j.status === "merged").length;
     const activeJobs = jobs.filter(j => j.status === "open").length;
-    const failedJobs = jobs.filter(j => j.status === "failed").length;
+    const failedJobs = jobs.filter(j => j.status === "closed" || j.status === "failed").length;
 
-    const successRate = totalJobs > 0 ? Math.round((successfulJobs / totalJobs) * 100) : 0;
+    // Success rate only includes completed jobs (successful + failed), not active/open jobs
+    const completedJobs = successfulJobs + failedJobs;
+    const successRate = completedJobs > 0 ? Math.round((successfulJobs / completedJobs) * 100) : 0;
 
     // Cost metrics - prioritize actual costs over estimated
     let totalActualCost = 0;
@@ -217,8 +220,14 @@ function AdminPanel() {
           {/* Dashboard Metrics */}
           <DashboardMetrics metrics={metrics} />
 
-          {/* Recent Activity */}
-          <RecentActivityList jobs={dashboardData.jobs} />
+          {/* Activity and Backups Section */}
+          <div className="admin-section-grid">
+            {/* Recent Activity */}
+            <RecentActivityList jobs={dashboardData.jobs} />
+
+            {/* Terraform Backups */}
+            <BackupsList />
+          </div>
         </>
       )}
     </div>

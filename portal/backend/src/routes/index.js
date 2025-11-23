@@ -12,6 +12,7 @@ import webhooksRoutes from "./webhooks.routes.js";
 import notificationsRoutes from "./notifications.routes.js";
 import logsRoutes from "./logs.routes.js";
 import subscriptionsRoutes from "./subscriptions.routes.js";
+import backupsRoutes from "./backups.routes.js";
 
 const router = express.Router();
 
@@ -29,5 +30,6 @@ router.use("/webhooks", webhooksRoutes);
 router.use("/notifications", notificationsRoutes);
 router.use("/logs", logsRoutes);
 router.use("/subscriptions", subscriptionsRoutes);
+router.use("/backups", backupsRoutes);
 
 export default router;
