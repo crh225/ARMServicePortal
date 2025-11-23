@@ -168,29 +168,3 @@ resource "azurerm_storage_container" "tfstate_prod" {
   container_access_type = "private"
 }
 
-# Grant Container App managed identity permission to list storage account keys
-# This is required for the backups API to fetch Terraform state backups
-
-resource "azurerm_role_assignment" "backend_tfstate_dev" {
-  scope                = azurerm_storage_account.tfstate_dev.id
-  role_definition_name = "Storage Account Key Operator Service Role"
-  principal_id         = azurerm_container_app.backend.identity[0].principal_id
-}
-
-resource "azurerm_role_assignment" "backend_tfstate_qa" {
-  scope                = azurerm_storage_account.tfstate_qa.id
-  role_definition_name = "Storage Account Key Operator Service Role"
-  principal_id         = azurerm_container_app.backend.identity[0].principal_id
-}
-
-resource "azurerm_role_assignment" "backend_tfstate_staging" {
-  scope                = azurerm_storage_account.tfstate_staging.id
-  role_definition_name = "Storage Account Key Operator Service Role"
-  principal_id         = azurerm_container_app.backend.identity[0].principal_id
-}
-
-resource "azurerm_role_assignment" "backend_tfstate_prod" {
-  scope                = azurerm_storage_account.tfstate_prod.id
-  role_definition_name = "Storage Account Key Operator Service Role"
-  principal_id         = azurerm_container_app.backend.identity[0].principal_id
-}
