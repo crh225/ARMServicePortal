@@ -57,7 +57,7 @@ az storage blob list \
   --account-name "$STORAGE_ACCOUNT" \
   --container-name "$CONTAINER_NAME" \
   --prefix "$BACKUP_PREFIX" \
-  --auth-mode login \
+  --auth-mode key \
   --query "[].{Name:name, Created:properties.creationTime, Size:properties.contentLength}" \
   --output table
 

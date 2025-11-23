@@ -71,7 +71,7 @@ if ! az storage blob exists \
   --account-name "$STORAGE_ACCOUNT" \
   --container-name "$CONTAINER_NAME" \
   --name "$BACKUP_BLOB" \
-  --auth-mode login \
+  --auth-mode key \
   --output tsv | grep -q "True"; then
   echo "✗ Error: Backup blob not found: $BACKUP_BLOB"
   echo ""
@@ -91,7 +91,7 @@ az storage blob copy start \
   --destination-blob "$PRE_RESTORE_BACKUP" \
   --source-container "$CONTAINER_NAME" \
   --source-blob "$STATE_BLOB" \
-  --auth-mode login \
+  --auth-mode key \
   --output none
 
 # Wait for pre-restore backup to complete
@@ -105,7 +105,7 @@ az storage blob copy start \
   --destination-blob "$STATE_BLOB" \
   --source-container "$CONTAINER_NAME" \
   --source-blob "$BACKUP_BLOB" \
-  --auth-mode login \
+  --auth-mode key \
   --output none
 
 # Wait for restore to complete
@@ -120,7 +120,7 @@ while [ "$STATUS" = "pending" ] && [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
     --account-name "$STORAGE_ACCOUNT" \
     --container-name "$CONTAINER_NAME" \
     --name "$STATE_BLOB" \
-    --auth-mode login \
+    --auth-mode key \
     --query "properties.copy.status" \
     --output tsv 2>/dev/null || echo "pending")
 

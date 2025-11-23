@@ -65,8 +65,8 @@ if ! az storage blob exists \
   --account-name "$STORAGE_ACCOUNT" \
   --container-name "$CONTAINER_NAME" \
   --name "$STATE_BLOB" \
-  --auth-mode login \
-  --output tsv | grep -q "True"; then
+  --auth-mode key \
+  --output tsv 2>/dev/null | grep -q "True"; then
   echo "Warning: State file does not exist yet. This may be the first apply."
   echo "Skipping backup."
   exit 0
@@ -80,7 +80,7 @@ az storage blob copy start \
   --destination-blob "$BACKUP_BLOB" \
   --source-container "$CONTAINER_NAME" \
   --source-blob "$STATE_BLOB" \
-  --auth-mode login \
+  --auth-mode key \
   --output none
 
 # Wait for copy to complete
@@ -95,7 +95,7 @@ while [ "$STATUS" = "pending" ] && [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
     --account-name "$STORAGE_ACCOUNT" \
     --container-name "$CONTAINER_NAME" \
     --name "$BACKUP_BLOB" \
-    --auth-mode login \
+    --auth-mode key \
     --query "properties.copy.status" \
     --output tsv 2>/dev/null || echo "pending")
 
