@@ -34,6 +34,24 @@ jobs:
         working-directory: portal/frontend
         run: npm ci
 
+      - name: Run tests with coverage
+        working-directory: portal/frontend
+        run: npm run test:coverage
+
+      - name: Coverage Summary Comment
+        if: github.event_name == 'pull_request'
+        uses: romeovs/lcov-reporter-action@v0.3.1
+        with:
+          lcov-file: ./portal/frontend/coverage/lcov.info
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: portal/frontend/coverage/
+          retention-days: 30
+
       - name: Build
         working-directory: portal/frontend
         env:
