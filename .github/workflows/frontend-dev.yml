@@ -13,7 +13,8 @@ on:
 
 permissions:
   id-token: write
-  contents: read     
+  contents: read
+  pull-requests: write     
 
 jobs:
   build-and-deploy:
