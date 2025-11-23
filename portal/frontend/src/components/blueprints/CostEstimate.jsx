@@ -15,7 +15,6 @@ function CostEstimate({ blueprint, formValues }) {
       return;
     }
 
-    // Debounce the API call
     const timer = setTimeout(() => {
       fetchEstimate();
     }, 500);
