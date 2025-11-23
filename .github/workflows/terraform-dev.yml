@@ -112,6 +112,21 @@ jobs:
               core.setFailed(`Terraform plan failed with outcome: ${outcome}`);
             }
 
+      - name: Azure Login for State Backup
+        if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply')
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Backup Terraform State
+        if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply')
+        id: backup_state
+        run: |
+          chmod +x ../../scripts/backup-tfstate.sh
+          ../../scripts/backup-tfstate.sh dev
+
       - name: Terraform Apply
         if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply')
         id: terraform_apply
@@ -135,6 +150,9 @@ jobs:
         uses: actions/github-script@v7
         env:
           APPLY_OUTCOME: ${{ steps.terraform_apply.outcome }}
+          BACKUP_BLOB: ${{ steps.backup_state.outputs.backup_blob }}
+          BACKUP_TIMESTAMP: ${{ steps.backup_state.outputs.backup_timestamp }}
+          BACKUP_GIT_SHA: ${{ steps.backup_state.outputs.backup_git_sha }}
         with:
           script: |
             const fs = require('fs');
@@ -209,26 +227,43 @@ jobs:
                 labels: [applyLabel],
               });
 
-              // 2b) Comment TF outputs if we have them
+              // 2b) Comment backup info and TF outputs
+              const backupBlob = process.env.BACKUP_BLOB || 'N/A';
+              const backupTimestamp = process.env.BACKUP_TIMESTAMP || 'N/A';
+              const backupGitSha = process.env.BACKUP_GIT_SHA || 'N/A';
+
+              let body = '## Terraform Apply Result\n\n';
+              body += `**Status:** ${applyOutcome === 'success' ? '✅ Success' : '❌ Failed'}\n\n`;
+
+              // Add backup info
+              body += '### State Backup\n';
+              if (backupBlob !== 'N/A') {
+                body += `- **Backup Created:** ${backupTimestamp}\n`;
+                body += `- **Git SHA:** ${backupGitSha}\n`;
+                body += `- **Blob Path:** \`${backupBlob}\`\n\n`;
+                body += 'To restore this backup if needed:\n';
+                body += '```bash\n';
+                body += `./infra/scripts/restore-tfstate.sh dev ${backupBlob.split('/').pop()}\n`;
+                body += '```\n\n';
+              } else {
+                body += 'No backup created (first apply or state does not exist yet)\n\n';
+              }
+
+              // Add TF outputs if we have them
               if (outputs) {
                 const pretty = JSON.stringify(outputs, null, 2);
-                const body = [
-                  'TF_OUTPUTS:',
-                  '',
-                  '```json',
-                  pretty,
-                  '```'
-                ].join('\n');
-
-                await github.rest.issues.createComment({
-                  owner,
-                  repo,
-                  issue_number,
-                  body,
-                });
-              } else {
-                core.info('No outputs to comment.');
+                body += '### Terraform Outputs\n\n';
+                body += '```json\n';
+                body += pretty + '\n';
+                body += '```\n';
               }
+
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number,
+                body,
+              });
             }
 
             // 3) Fail workflow if apply failed
