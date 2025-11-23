@@ -147,6 +147,18 @@ const api = {
     const data = await response.json();
     // API returns { resources: [], count, skip, top } - extract just the resources array
     return Array.isArray(data) ? data : (data.resources || []);
+  },
+
+  /**
+   * Fetch all accessible Azure subscriptions
+   */
+  async fetchSubscriptions() {
+    const response = await fetch(`${API_BASE_URL}/api/subscriptions`);
+    if (!response.ok) {
+      throw new Error("Failed to load subscriptions");
+    }
+    const data = await response.json();
+    return data.subscriptions || [];
   }
 };
 

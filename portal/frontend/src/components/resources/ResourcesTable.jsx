@@ -11,6 +11,7 @@ import "../../styles/ResourcesTable.css";
  */
 function ResourcesTable({ resources, onSelectResource, selectedResource, costsLoading, onFilteredResourcesChange }) {
   // Filter states
+  const [subscriptionFilter, setSubscriptionFilter] = useState("all");
   const [environmentFilter, setEnvironmentFilter] = useState("all");
   const [blueprintFilter, setBlueprintFilter] = useState("all");
   const [ownerFilter, setOwnerFilter] = useState("all");
@@ -27,17 +28,20 @@ function ResourcesTable({ resources, onSelectResource, selectedResource, costsLo
 
   // Extract unique filter options
   const filterOptions = useMemo(() => {
+    const subscriptions = new Set();
     const environments = new Set();
     const blueprints = new Set();
     const owners = new Set();
 
     resources.forEach(resource => {
+      if (resource.subscriptionId) subscriptions.add(resource.subscriptionId);
       if (resource.environment) environments.add(resource.environment);
       if (resource.blueprintId) blueprints.add(resource.blueprintId);
       if (resource.owner) owners.add(resource.owner);
     });
 
     return {
+      subscriptions: Array.from(subscriptions).sort(),
       environments: Array.from(environments).sort(),
       blueprints: Array.from(blueprints).sort(),
       owners: Array.from(owners).sort()
@@ -49,6 +53,9 @@ function ResourcesTable({ resources, onSelectResource, selectedResource, costsLo
     let filtered = resources;
 
     // Apply filters
+    if (subscriptionFilter !== "all") {
+      filtered = filtered.filter(r => r.subscriptionId === subscriptionFilter);
+    }
     if (environmentFilter !== "all") {
       filtered = filtered.filter(r => r.environment === environmentFilter);
     }
@@ -91,7 +98,7 @@ function ResourcesTable({ resources, onSelectResource, selectedResource, costsLo
     });
 
     return filtered;
-  }, [resources, environmentFilter, blueprintFilter, ownerFilter, ownershipFilter, searchQuery, sortColumn, sortDirection]);
+  }, [resources, subscriptionFilter, environmentFilter, blueprintFilter, ownerFilter, ownershipFilter, searchQuery, sortColumn, sortDirection]);
 
   // Calculate cost summary using custom hook
   const costSummary = useCostSummary(filteredResources);
@@ -108,7 +115,7 @@ function ResourcesTable({ resources, onSelectResource, selectedResource, costsLo
   // Reset to page 1 when filters change
   useMemo(() => {
     setCurrentPage(1);
-  }, [environmentFilter, blueprintFilter, ownerFilter, ownershipFilter, searchQuery]);
+  }, [subscriptionFilter, environmentFilter, blueprintFilter, ownerFilter, ownershipFilter, searchQuery]);
 
   const handleSort = (column) => {
     if (sortColumn === column) {
@@ -134,6 +141,8 @@ function ResourcesTable({ resources, onSelectResource, selectedResource, costsLo
     <div className="resources-container">
       <ResourcesFilters
         filterOptions={filterOptions}
+        subscriptionFilter={subscriptionFilter}
+        setSubscriptionFilter={setSubscriptionFilter}
         environmentFilter={environmentFilter}
         setEnvironmentFilter={setEnvironmentFilter}
         blueprintFilter={blueprintFilter}

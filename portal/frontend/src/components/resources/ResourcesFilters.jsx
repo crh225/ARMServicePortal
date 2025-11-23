@@ -16,6 +16,8 @@ function ResourcesFilters({
   setOwnerFilter,
   ownershipFilter,
   setOwnershipFilter,
+  subscriptionFilter,
+  setSubscriptionFilter,
   searchQuery,
   setSearchQuery
 }) {
@@ -24,6 +26,7 @@ function ResourcesFilters({
     blueprintFilter !== "all" ||
     ownerFilter !== "all" ||
     ownershipFilter !== "all" ||
+    subscriptionFilter !== "all" ||
     searchQuery !== "";
 
   const handleClearFilters = () => {
@@ -31,11 +34,23 @@ function ResourcesFilters({
     setBlueprintFilter("all");
     setOwnerFilter("all");
     setOwnershipFilter("all");
+    setSubscriptionFilter("all");
     setSearchQuery("");
   };
 
   return (
     <div className="resources-filters">
+      <select
+        className="filter-select"
+        value={subscriptionFilter}
+        onChange={(e) => setSubscriptionFilter(e.target.value)}
+      >
+        <option value="all">All Subscriptions</option>
+        {filterOptions.subscriptions.map(sub => (
+          <option key={sub} value={sub}>{sub}</option>
+        ))}
+      </select>
+
       <select
         className="filter-select"
         value={environmentFilter}

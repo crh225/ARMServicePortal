@@ -75,18 +75,15 @@ export async function queryArmPortalResources(options = {}) {
       }
     };
 
-    // Add subscriptions if provided, otherwise use default subscription
+    // Add subscriptions if provided, otherwise query ALL accessible subscriptions
     if (subscriptions && subscriptions.length > 0) {
       queryRequest.subscriptions = subscriptions;
-    } else {
-      // When running locally, we need to specify the subscription explicitly
-      // Get from environment variable or use the known subscription ID
-      const defaultSubscription = process.env.AZURE_SUBSCRIPTION_ID || "f989de0f-8697-4a05-8c34-b82c941767c0";
-      queryRequest.subscriptions = [defaultSubscription];
     }
+    // Note: If subscriptions array is not provided, Azure Resource Graph will automatically
+    // query ALL subscriptions accessible by the managed identity
 
     console.log("Executing Azure Resource Graph query:", query);
-    console.log("Subscriptions:", queryRequest.subscriptions);
+    console.log("Subscriptions:", queryRequest.subscriptions || "ALL accessible subscriptions");
 
     const result = await client.resources(queryRequest);
     console.log("Query result:", result);
@@ -137,13 +134,12 @@ export async function queryResourceGroupsByEnvironment(environment = null, subsc
         }
       };
 
-      // Add subscriptions if provided, otherwise use default subscription
+      // Add subscriptions if provided, otherwise query ALL accessible subscriptions
       if (subscriptions && subscriptions.length > 0) {
         queryRequest.subscriptions = subscriptions;
-      } else {
-        const defaultSubscription = process.env.AZURE_SUBSCRIPTION_ID || "f989de0f-8697-4a05-8c34-b82c941767c0";
-        queryRequest.subscriptions = [defaultSubscription];
       }
+      // Note: If subscriptions array is not provided, Azure Resource Graph will automatically
+      // query ALL subscriptions accessible by the managed identity
 
       const result = await client.resources(queryRequest);
       allResourceGroups = (result.data || []).map(rg => rg.name);
