@@ -238,7 +238,7 @@ export const BLUEPRINTS = [
   },
   {
     id: "azure-frontdoor",
-    version: "1.0.0",
+    version: "0.0.1",
     displayName: "Azure Front Door",
     description: "Creates Azure Front Door with custom domain support, HTTPS, and CDN capabilities. Perfect for serving static websites with custom domains.",
     category: "Networking",

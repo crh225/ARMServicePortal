@@ -225,8 +225,7 @@ Deploy to Azure Static Web Apps or Storage Static Website.
 - Done: Cost estimation integration
 - Done: workflows with approval gates
 - Done: Blueprint versioning
-- Notifications
-- Multi-cloud support
+- Done: Notifications
 
 ---
 

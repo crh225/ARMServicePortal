@@ -65,11 +65,11 @@
 ### Cost Management
 - [ ] Integrate Infracost for cost estimates
 - [X] Show estimated monthly cost before submit
-- [ ] Cost dashboard by environment
+- [X] Cost dashboard by environment
 - [ ] Budget alerts
 
 ### Observability
-- [ ] Deployment success/failure metrics
+- [X] Deployment success/failure metrics
 - [ ] Resource health dashboard
 - [ ] Audit log of all changes
 - [ ] Integration with monitoring tools
@@ -115,14 +115,13 @@
 - [ ] Deployment guide
 
 ### Performance
-- [ ] Caching layer for GitHub API
+- [X] Caching layer for GitHub API
 - [ ] Pagination for large job lists
-- [ ] Optimistic UI updates
+- [X] Optimistic UI updates
 - [ ] Background job processing
 
 ## Ideas for Future Consideration
 
-- Multi-cloud support (AWS, GCP)
 - Infrastructure import (existing resources)
 - Disaster recovery automation
 - Resource tagging enforcement
