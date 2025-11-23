@@ -128,7 +128,7 @@ describe("terraformParser", () => {
 
       // Should parse the assignments it can recognize
       expect(result.name).toBe("example-rg");
-      expect(result.location).toBe("East");
+      expect(result.location).toBe("East US");
       expect(result.default).toBe("dev");
     });
 

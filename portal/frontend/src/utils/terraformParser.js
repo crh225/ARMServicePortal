@@ -18,7 +18,8 @@ export function parseTerraformVariables(terraformModule) {
 
   while ((match = regex.exec(terraformModule)) !== null) {
     const key = match[1] || match[3];
-    const value = match[2] || match[4];
+    // Use nullish coalescing to preserve empty strings
+    const value = match[2] !== undefined ? match[2] : match[4];
     variables[key] = value;
   }
 
@@ -38,7 +39,8 @@ export function initializeFormValues(blueprint) {
 
   const initial = {};
   blueprint.variables.forEach((v) => {
-    initial[v.name] = v.default || "";
+    // Use nullish coalescing to preserve 0, false, and empty string defaults
+    initial[v.name] = v.default !== undefined ? v.default : "";
   });
 
   return initial;
