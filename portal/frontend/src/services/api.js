@@ -159,6 +159,23 @@ const api = {
     }
     const data = await response.json();
     return data.subscriptions || [];
+  },
+
+  /**
+   * Fetch Terraform state backups
+   * @param {string} [environment] - Optional environment filter (dev, qa, staging, prod)
+   */
+  async fetchBackups(environment = null) {
+    const url = environment
+      ? `${API_BASE_URL}/api/backups/${environment}`
+      : `${API_BASE_URL}/api/backups`;
+
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error("Failed to load backups");
+    }
+    const data = await response.json();
+    return data.backups || [];
   }
 };
 
