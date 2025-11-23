@@ -4,6 +4,8 @@
  * Marked as PERMANENT - should never be destroyed
  */
 
+
+
 # Dev environment tfstate
 resource "azurerm_resource_group" "tfstate_dev" {
   name     = "rg-armportal-tfstate-dev"
@@ -166,5 +168,44 @@ resource "azurerm_storage_container" "tfstate_prod" {
   name                  = "tfstate"
   storage_account_name  = azurerm_storage_account.tfstate_prod.name
   container_access_type = "private"
+}
+
+# Get current client config
+data "azurerm_client_config" "current" {}
+
+# NOTE: The Terraform service principal needs "User Access Administrator" role
+# to create role assignments. This must be granted manually once via Azure Portal:
+#
+# 1. Go to: Subscriptions → Your Subscription → Access Control (IAM)
+# 2. Add role assignment: "User Access Administrator"
+# 3. Assign to: Service Principal with object ID from error message
+#
+# After this one-time setup, Terraform will manage all role assignments.
+
+# Grant Container App managed identity permission to list storage account keys
+# This is required for the backups API to fetch Terraform state backups
+
+resource "azurerm_role_assignment" "backend_tfstate_dev" {
+  scope                = azurerm_storage_account.tfstate_dev.id
+  role_definition_name = "Storage Account Key Operator Service Role"
+  principal_id         = azurerm_container_app.backend.identity[0].principal_id
+}
+
+resource "azurerm_role_assignment" "backend_tfstate_qa" {
+  scope                = azurerm_storage_account.tfstate_qa.id
+  role_definition_name = "Storage Account Key Operator Service Role"
+  principal_id         = azurerm_container_app.backend.identity[0].principal_id
+}
+
+resource "azurerm_role_assignment" "backend_tfstate_staging" {
+  scope                = azurerm_storage_account.tfstate_staging.id
+  role_definition_name = "Storage Account Key Operator Service Role"
+  principal_id         = azurerm_container_app.backend.identity[0].principal_id
+}
+
+resource "azurerm_role_assignment" "backend_tfstate_prod" {
+  scope                = azurerm_storage_account.tfstate_prod.id
+  role_definition_name = "Storage Account Key Operator Service Role"
+  principal_id         = azurerm_container_app.backend.identity[0].principal_id
 }
 
