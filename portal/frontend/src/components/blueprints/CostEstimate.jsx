@@ -52,7 +52,7 @@ function CostEstimate({ blueprint, formValues }) {
     <div className={`cost-estimate ${updating ? "cost-estimate--updating" : ""}`}>
       <h3 className="cost-estimate__title">
         💰 Estimated Monthly Cost
-        {updating && <span className="cost-estimate__updating-indicator"> (updating...)</span>}
+        {updating && <span className="cost-estimate__updating-indicator"> (Updating...)</span>}
       </h3>
 
       {loading && (
