@@ -47,7 +47,7 @@ function ResourcesFilters({
       >
         <option value="all">All Subscriptions</option>
         {filterOptions.subscriptions.map(sub => (
-          <option key={sub} value={sub}>{sub}</option>
+          <option key={sub.id} value={sub.id}>{sub.name}</option>
         ))}
       </select>
 

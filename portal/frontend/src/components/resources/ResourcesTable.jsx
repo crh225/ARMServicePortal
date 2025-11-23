@@ -9,7 +9,7 @@ import "../../styles/ResourcesTable.css";
 /**
  * ResourcesTable component with filters and sorting
  */
-function ResourcesTable({ resources, onSelectResource, selectedResource, costsLoading, onFilteredResourcesChange }) {
+function ResourcesTable({ resources, subscriptions, onSelectResource, selectedResource, costsLoading, onFilteredResourcesChange }) {
   // Filter states
   const [subscriptionFilter, setSubscriptionFilter] = useState("all");
   const [environmentFilter, setEnvironmentFilter] = useState("all");
@@ -28,25 +28,34 @@ function ResourcesTable({ resources, onSelectResource, selectedResource, costsLo
 
   // Extract unique filter options
   const filterOptions = useMemo(() => {
-    const subscriptions = new Set();
+    const subscriptionIds = new Set();
     const environments = new Set();
     const blueprints = new Set();
     const owners = new Set();
 
     resources.forEach(resource => {
-      if (resource.subscriptionId) subscriptions.add(resource.subscriptionId);
+      if (resource.subscriptionId) subscriptionIds.add(resource.subscriptionId);
       if (resource.environment) environments.add(resource.environment);
       if (resource.blueprintId) blueprints.add(resource.blueprintId);
       if (resource.owner) owners.add(resource.owner);
     });
 
+    // Map subscription IDs to their names
+    const subscriptionOptions = Array.from(subscriptionIds).map(id => {
+      const subscription = subscriptions.find(sub => sub.id === id);
+      return {
+        id,
+        name: subscription ? subscription.name : id
+      };
+    }).sort((a, b) => a.name.localeCompare(b.name));
+
     return {
-      subscriptions: Array.from(subscriptions).sort(),
+      subscriptions: subscriptionOptions,
       environments: Array.from(environments).sort(),
       blueprints: Array.from(blueprints).sort(),
       owners: Array.from(owners).sort()
     };
-  }, [resources]);
+  }, [resources, subscriptions]);
 
   // Filter and sort resources
   const filteredResources = useMemo(() => {

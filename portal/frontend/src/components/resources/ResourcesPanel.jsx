@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useResources } from "../../hooks/useResources";
+import api from "../../services/api";
 import ResourcesTable from "./ResourcesTable";
 import ResourceDetailDrawer from "./ResourceDetailDrawer";
 import EmptyState from "../shared/EmptyState";
@@ -28,7 +29,21 @@ function ResourcesPanel({ isActive }) {
   const [selectedResource, setSelectedResource] = useState(null);
   const [hasLoadedRef, setHasLoadedRef] = useState(false);
   const [refreshSuccess, setRefreshSuccess] = useState(false);
+  const [subscriptions, setSubscriptions] = useState([]);
   const filteredResourcesRef = useRef([]);
+
+  // Fetch subscriptions when component mounts
+  useEffect(() => {
+    const loadSubscriptions = async () => {
+      try {
+        const subs = await api.fetchSubscriptions();
+        setSubscriptions(subs);
+      } catch (err) {
+        console.error("Failed to fetch subscriptions:", err);
+      }
+    };
+    loadSubscriptions();
+  }, []);
 
   // Fetch resources when tab becomes active
   useEffect(() => {
@@ -225,6 +240,7 @@ function ResourcesPanel({ isActive }) {
       <div className="resources-content">
         <ResourcesTable
           resources={resources}
+          subscriptions={subscriptions}
           onSelectResource={handleSelectResource}
           selectedResource={selectedResource}
           costsLoading={costsLoading}
