@@ -24,6 +24,10 @@ concurrency:
   group: terraform-dev-state
   cancel-in-progress: false
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   terraform:
     runs-on: ubuntu-latest
