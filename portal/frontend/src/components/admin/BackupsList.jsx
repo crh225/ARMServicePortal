@@ -217,7 +217,7 @@ function BackupsList() {
           {filteredBackups.length} backup{filteredBackups.length !== 1 ? "s" : ""} (most recent)
         </span>
         <span className="text-muted">
-          Backups are created automatically before each Terraform apply • Retained for 30 days
+         Retained for 30 days
         </span>
       </div>
     </div>
