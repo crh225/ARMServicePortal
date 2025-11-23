@@ -5,6 +5,10 @@ on:
     branches: [ main ]
     paths:
       - "portal/frontend/**"
+  pull_request:
+    branches: [ main ]
+    paths:
+      - "portal/frontend/**"
   workflow_dispatch:
 
 permissions:
@@ -59,6 +63,7 @@ jobs:
         run: npm run build
 
       - name: Azure login
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
@@ -66,6 +71,7 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Upload static site to Storage
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           az storage blob upload-batch \
             --account-name ${{ secrets.AZURE_FRONTEND_STORAGE_ACCOUNT }} \
