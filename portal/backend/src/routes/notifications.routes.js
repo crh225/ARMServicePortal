@@ -1,14 +1,26 @@
+/**
+ * Notifications Routes 
+ */
 import express from "express";
+import { mediator } from "../infrastructure/di/mediatorContainer.js";
 import {
-  getNotifications,
-  getNotificationById,
-  markNotificationAsRead,
-  markAllNotificationsAsRead,
-  deleteNotification,
-  clearAllNotifications
+  createGetNotificationsHandler,
+  createGetNotificationByIdHandler,
+  createMarkNotificationAsReadHandler,
+  createMarkAllNotificationsAsReadHandler,
+  createDeleteNotificationHandler,
+  createClearAllNotificationsHandler
 } from "../controllers/notifications.controller.js";
 
 const router = express.Router();
+
+// Create handlers with mediator
+const getNotificationsHandler = createGetNotificationsHandler(mediator);
+const getNotificationByIdHandler = createGetNotificationByIdHandler(mediator);
+const markNotificationAsReadHandler = createMarkNotificationAsReadHandler(mediator);
+const markAllNotificationsAsReadHandler = createMarkAllNotificationsAsReadHandler(mediator);
+const deleteNotificationHandler = createDeleteNotificationHandler(mediator);
+const clearAllNotificationsHandler = createClearAllNotificationsHandler(mediator);
 
 /**
  * GET /api/notifications
@@ -17,36 +29,36 @@ const router = express.Router();
  * - limit: number of notifications to return (default: 50)
  * - unread: 'true' to get only unread notifications
  */
-router.get("/", getNotifications);
+router.get("/", getNotificationsHandler);
 
 /**
  * GET /api/notifications/:id
  * Get a specific notification by ID
  */
-router.get("/:id", getNotificationById);
+router.get("/:id", getNotificationByIdHandler);
 
 /**
  * POST /api/notifications/:id/read
  * Mark a specific notification as read
  */
-router.post("/:id/read", markNotificationAsRead);
+router.post("/:id/read", markNotificationAsReadHandler);
 
 /**
  * POST /api/notifications/mark-all-read
  * Mark all notifications as read
  */
-router.post("/mark-all-read", markAllNotificationsAsRead);
+router.post("/mark-all-read", markAllNotificationsAsReadHandler);
 
 /**
  * DELETE /api/notifications/:id
  * Delete a specific notification
  */
-router.delete("/:id", deleteNotification);
+router.delete("/:id", deleteNotificationHandler);
 
 /**
  * DELETE /api/notifications
  * Clear all notifications
  */
-router.delete("/", clearAllNotifications);
+router.delete("/", clearAllNotificationsHandler);
 
 export default router;

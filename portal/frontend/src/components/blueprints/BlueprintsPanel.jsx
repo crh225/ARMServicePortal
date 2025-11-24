@@ -63,7 +63,7 @@ function BlueprintsPanel({ updateResourceData, onClearUpdate }) {
           </section>
 
           <aside className="panel panel--right">
-            {updateResourceData && !result ? (
+            {updateResourceData && !result && (
               <>
                 <div>
                   <h2 className="panel-title">Updating Resource</h2>
@@ -128,39 +128,37 @@ function BlueprintsPanel({ updateResourceData, onClearUpdate }) {
                   )}
                 </div>
               </>
-            ) : (
+            )}
+
+            {/* Show cost estimate when blueprint is selected */}
+            {selectedBlueprint && !result && !error && (
+              <CostEstimate blueprint={selectedBlueprint} formValues={formValues} />
+            )}
+
+            {/* Show Create/Update PR button when not showing results */}
+            {selectedBlueprint && !result && !error && (
               <>
-                {/* Show cost estimate when blueprint is selected */}
-                {selectedBlueprint && (
-                  <CostEstimate blueprint={selectedBlueprint} formValues={formValues} />
-                )}
+                <button
+                  className="primary-btn primary-btn--large"
+                  onClick={handleSubmit}
+                  disabled={loading}
+                >
+                  {loading
+                    ? updateResourceData ? "Updating GitHub PR..." : "Creating GitHub PR..."
+                    : updateResourceData ? "Update GitHub PR" : "Create GitHub PR"
+                  }
+                </button>
 
-                {/* Show Create PR button or results */}
-                {selectedBlueprint && !result && !error && (
-                  <>
-                    <button
-                      className="primary-btn primary-btn--large"
-                      onClick={handleSubmit}
-                      disabled={loading}
-                    >
-                      {loading
-                        ? "Creating GitHub PR..."
-                        : "Create GitHub PR"
-                      }
-                    </button>
-
-                    <p className="hint-text">
-                      The portal never applies Terraform directly. It just opens a
-                      reviewed PR in your repo.
-                    </p>
-                  </>
-                )}
-
-                {/* Show results after PR creation - below where the button was */}
-                {(result || error) && (
-                  <ResultPanel result={result} error={error} />
-                )}
+                <p className="hint-text">
+                  The portal never applies Terraform directly. It just opens a
+                  reviewed PR in your repo.
+                </p>
               </>
+            )}
+
+            {/* Show results after PR creation/update */}
+            {(result || error) && (
+              <ResultPanel result={result} error={error} />
             )}
           </aside>
         </>

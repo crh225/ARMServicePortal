@@ -1,56 +1,33 @@
-import {
-  listGitHubRequests,
-  getGitHubRequestByNumber
-} from "../services/githubProvision.js";
+/**
+ * Jobs Controller
+ * Handles HTTP requests for jobs/requests
+ * Error handling, validation, and logging are handled by pipeline behaviors
+ */
+import { asyncHandler } from "../middleware/asyncHandler.js";
+import { GetAllJobsQuery } from "../application/jobs/queries/GetAllJobsQuery.js";
+import { GetJobByIdQuery } from "../application/jobs/queries/GetJobByIdQuery.js";
 
 /**
+ * GET /api/jobs
  * List all jobs with optional environment filter
  */
-export async function listJobs(req, res) {
-  try {
+export function createListJobsHandler(mediator) {
+  return asyncHandler(async (req, res) => {
     const { environment } = req.query;
-    const jobs = await listGitHubRequests({
-      environment:
-        typeof environment === "string" && environment.length > 0
-          ? environment
-          : undefined
-    });
-
-    res.json(jobs);
-  } catch (err) {
-    console.error("Error in listJobs controller:", err);
-    res.status(500).json({
-      error: "Failed to list jobs",
-      details: err.message
-    });
-  }
+    const query = new GetAllJobsQuery({ environment });
+    const result = await mediator.send(query);
+    return res.json(result);
+  });
 }
 
 /**
+ * GET /api/jobs/:id
  * Get detailed information for a specific job
  */
-export async function getJobById(req, res) {
-  const id = Number(req.params.id);
-
-  if (!Number.isInteger(id)) {
-    return res.status(400).json({
-      error: "Invalid job id"
-    });
-  }
-
-  try {
-    const job = await getGitHubRequestByNumber(id);
-    res.json(job);
-  } catch (err) {
-    console.error("Error in getJobById controller:", err);
-    if (err.status === 404) {
-      return res.status(404).json({
-        error: "Job not found"
-      });
-    }
-    res.status(500).json({
-      error: "Failed to fetch job",
-      details: err.message
-    });
-  }
+export function createGetJobByIdHandler(mediator) {
+  return asyncHandler(async (req, res) => {
+    const query = new GetJobByIdQuery(req.params.id);
+    const result = await mediator.send(query);
+    return res.json(result);
+  });
 }

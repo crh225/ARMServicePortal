@@ -1,21 +1,14 @@
-import { getLatestBlueprints, getBlueprintVersions } from "../config/blueprints.js";
-
 /**
- * Get the catalog of available blueprints
- * Returns only the latest version of each blueprint
- * Filters out internal fields like moduleSource
+ * Catalog Controller
+ * Error handling, validation, and logging are handled by pipeline behaviors
  */
-export function getCatalog(req, res) {
-  const latestBlueprints = getLatestBlueprints();
+import { asyncHandler } from "../middleware/asyncHandler.js";
+import { GetBlueprintCatalogQuery } from "../application/blueprints/queries/GetBlueprintCatalogQuery.js";
 
-  // Add available versions to each blueprint and filter out internal fields
-  const publicBlueprints = latestBlueprints.map((bp) => {
-    const { moduleSource, ...rest } = bp;
-    return {
-      ...rest,
-      availableVersions: getBlueprintVersions(bp.id)
-    };
+export function createGetCatalogHandler(mediator) {
+  return asyncHandler(async (req, res) => {
+    const query = new GetBlueprintCatalogQuery();
+    const publicBlueprints = await mediator.send(query);
+    return res.json(publicBlueprints);
   });
-
-  res.json(publicBlueprints);
 }
