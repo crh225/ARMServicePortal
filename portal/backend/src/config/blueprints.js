@@ -23,10 +23,17 @@ export const BLUEPRINTS = [
         default: "dev"
       },
       {
+        name: "subscription_id",
+        label: "Azure Subscription",
+        type: "string",
+        required: true
+      },
+      {
         name: "location",
         label: "Location",
-        type: "string",
+        type: "select",
         required: true,
+        options: ["eastus", "eastus2", "westus", "westus2", "westus3", "centralus", "northcentralus", "southcentralus", "westcentralus"],
         default: "eastus2"
       }
     ],
@@ -59,6 +66,12 @@ export const BLUEPRINTS = [
         default: "dev"
       },
       {
+        name: "subscription_id",
+        label: "Azure Subscription",
+        type: "string",
+        required: true
+      },
+      {
         name: "resource_group_name",
         label: "Resource Group Name",
         type: "string",
@@ -67,8 +80,9 @@ export const BLUEPRINTS = [
       {
         name: "location",
         label: "Location",
-        type: "string",
+        type: "select",
         required: true,
+        options: ["eastus", "eastus2", "westus", "westus2", "westus3", "centralus", "northcentralus", "southcentralus", "westcentralus"],
         default: "eastus2"
       },
       {
@@ -122,6 +136,12 @@ export const BLUEPRINTS = [
         default: "dev"
       },
       {
+        name: "subscription_id",
+        label: "Azure Subscription",
+        type: "string",
+        required: true
+      },
+      {
         name: "resource_group_name",
         label: "Resource Group Name",
         type: "string",
@@ -130,8 +150,9 @@ export const BLUEPRINTS = [
       {
         name: "location",
         label: "Location",
-        type: "string",
+        type: "select",
         required: true,
+        options: ["eastus", "eastus2", "westus", "westus2", "westus3", "centralus", "northcentralus", "southcentralus", "westcentralus"],
         default: "eastus2"
       },
       {
@@ -182,6 +203,12 @@ export const BLUEPRINTS = [
         default: "dev"
       },
       {
+        name: "subscription_id",
+        label: "Azure Subscription",
+        type: "string",
+        required: true
+      },
+      {
         name: "resource_group_name",
         label: "Resource Group Name",
         type: "string",
@@ -190,8 +217,9 @@ export const BLUEPRINTS = [
       {
         name: "location",
         label: "Location",
-        type: "string",
+        type: "select",
         required: true,
+        options: ["eastus", "eastus2", "westus", "westus2", "westus3", "centralus", "northcentralus", "southcentralus", "westcentralus"],
         default: "eastus2"
       },
       {
@@ -257,6 +285,12 @@ export const BLUEPRINTS = [
         required: true,
         options: ["dev", "qa", "staging", "prod"],
         default: "dev"
+      },
+      {
+        name: "subscription_id",
+        label: "Azure Subscription",
+        type: "string",
+        required: true
       },
       {
         name: "resource_group_name",
@@ -326,6 +360,12 @@ export const BLUEPRINTS = [
         default: "dev"
       },
       {
+        name: "subscription_id",
+        label: "Azure Subscription",
+        type: "string",
+        required: true
+      },
+      {
         name: "resource_group_name",
         label: "Resource Group Name",
         type: "string",
@@ -334,8 +374,9 @@ export const BLUEPRINTS = [
       {
         name: "location",
         label: "Location",
-        type: "string",
+        type: "select",
         required: true,
+        options: ["eastus", "eastus2", "westus", "westus2", "westus3", "centralus", "northcentralus", "southcentralus", "westcentralus"],
         default: "eastus2"
       },
       {
@@ -434,6 +475,12 @@ export const BLUEPRINTS = [
         default: "dev"
       },
       {
+        name: "subscription_id",
+        label: "Azure Subscription",
+        type: "string",
+        required: true
+      },
+      {
         name: "resource_group_name",
         label: "Resource Group Name",
         type: "string",
@@ -444,8 +491,8 @@ export const BLUEPRINTS = [
         label: "Location",
         type: "select",
         required: true,
-        options: ["eastus", "eastus2", "westus", "westus2", "centralus", "northcentralus", "southcentralus", "westcentralus"],
-        default: "eastus"
+        options: ["eastus", "eastus2", "westus", "westus2", "westus3", "centralus", "northcentralus", "southcentralus", "westcentralus"],
+        default: "eastus2"
       },
       {
         name: "postgres_version",
@@ -621,10 +668,17 @@ export const BLUEPRINTS = [
         default: "dev"
       },
       {
+        name: "subscription_id",
+        label: "Azure Subscription",
+        type: "string",
+        required: true
+      },
+      {
         name: "location",
         label: "Location",
-        type: "string",
+        type: "select",
         required: true,
+        options: ["eastus", "eastus2", "westus", "westus2", "westus3", "centralus", "northcentralus", "southcentralus", "westcentralus"],
         default: "eastus2"
       },
       {
