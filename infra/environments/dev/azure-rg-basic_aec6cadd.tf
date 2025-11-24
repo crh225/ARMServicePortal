@@ -9,7 +9,7 @@ module "azure-rg-basic_aec6cadd" {
   tags = {
     armportal-environment = "dev"
     armportal-blueprint   = "azure-rg-basic"
-    armportal-request-id  = "azure-rg-basic_aec6cadd"
+    armportal-request-id  = "132"
   }
 }
 
