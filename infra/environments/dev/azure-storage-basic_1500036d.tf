@@ -3,7 +3,7 @@ module "azure-storage-basic_1500036d" {
   project_name = "112525-asa-basic"
   environment = "dev"
   resource_group_name = "test9991-dev-rg"
-  location = "eastus2"
+  location = "eastus"
   account_tier = "Standard"
   replication_type = "LRS"
 
@@ -11,7 +11,7 @@ module "azure-storage-basic_1500036d" {
   tags = {
     armportal-environment = "dev"
     armportal-blueprint   = "azure-storage-basic"
-    armportal-request-id  = "128"
+    armportal-request-id  = "azure-storage-basic_1500036d"
   }
 }
 
