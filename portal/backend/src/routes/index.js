@@ -13,6 +13,7 @@ import notificationsRoutes from "./notifications.routes.js";
 import logsRoutes from "./logs.routes.js";
 import subscriptionsRoutes from "./subscriptions.routes.js";
 import backupsRoutes from "./backups.routes.js";
+import terraformRoutes from "./terraform.routes.js";
 
 const router = express.Router();
 
@@ -31,5 +32,6 @@ router.use("/notifications", notificationsRoutes);
 router.use("/logs", logsRoutes);
 router.use("/subscriptions", subscriptionsRoutes);
 router.use("/backups", backupsRoutes);
+router.use("/terraform", terraformRoutes);
 
 export default router;

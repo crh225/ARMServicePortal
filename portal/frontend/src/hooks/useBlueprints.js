@@ -198,9 +198,14 @@ export function useBlueprints(updateResourceData, onClearUpdate) {
     dispatch({ type: ACTIONS.CLEAR_FEEDBACK });
 
     try {
+      // Filter out subscription_id for now - it's not a Terraform variable
+      // The Azure provider gets subscription from ARM_SUBSCRIPTION_ID env var
+      // todo: refactor that. haha
+      const { subscription_id, ...terraformVariables } = state.formValues;
+
       const data = await api.provisionBlueprint(
         state.selectedBlueprint.id,
-        state.formValues,
+        terraformVariables,
         state.moduleName
       );
 

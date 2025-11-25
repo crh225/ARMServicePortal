@@ -4,6 +4,9 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
  * API service layer for all backend communication
  */
 const api = {
+  // In-memory cache for API responses
+  _cache: {},
+
   /**
    * Fetch all available blueprints from the catalog
    */
@@ -151,14 +154,33 @@ const api = {
 
   /**
    * Fetch all accessible Azure subscriptions
+   * Cached for 5 minutes to avoid repeated API calls
    */
   async fetchSubscriptions() {
+    const CACHE_KEY = 'subscriptions_cache';
+    const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+    // Check cache first
+    const cached = this._cache[CACHE_KEY];
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      return cached.data;
+    }
+
+    // Fetch fresh data
     const response = await fetch(`${API_BASE_URL}/api/subscriptions`);
     if (!response.ok) {
       throw new Error("Failed to load subscriptions");
     }
     const data = await response.json();
-    return data.subscriptions || [];
+    const subscriptions = data.subscriptions || [];
+
+    // Store in cache
+    this._cache[CACHE_KEY] = {
+      data: subscriptions,
+      timestamp: Date.now()
+    };
+
+    return subscriptions;
   },
 
   /**
@@ -176,6 +198,26 @@ const api = {
     }
     const data = await response.json();
     return data.backups || [];
+  },
+
+  /**
+   * Generate Terraform code for an Azure resource
+   * @param {string} resourceId - Azure resource ID
+   * @returns {Promise<object>} Generated Terraform code and metadata
+   */
+  async generateTerraformCode(resourceId) {
+    const response = await fetch(`${API_BASE_URL}/api/terraform/generate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ resourceId })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || "Failed to generate Terraform code");
+    }
+
+    return response.json();
   }
 };
 

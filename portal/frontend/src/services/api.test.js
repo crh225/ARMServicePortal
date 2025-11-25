@@ -27,6 +27,8 @@ describe("api", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
+    // Clear the in-memory cache
+    api._cache = {};
   });
 
   afterEach(() => {

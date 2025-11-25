@@ -1,12 +1,18 @@
+/**
+ * Catalog Routes 
+ */
 import express from "express";
-import { getCatalog } from "../controllers/catalog.controller.js";
+import { mediator } from "../infrastructure/di/mediatorContainer.js";
+import { createGetCatalogHandler } from "../controllers/catalog.controller.js";
 
 const router = express.Router();
+
+const getCatalogHandler = createGetCatalogHandler(mediator);
 
 /**
  * GET /api/catalog
  * Returns the list of available blueprints
  */
-router.get("/", getCatalog);
+router.get("/", getCatalogHandler);
 
 export default router;

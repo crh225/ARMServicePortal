@@ -96,7 +96,6 @@ tsconfig.tsbuildinfo
 # LOGS
 ########################################
 
-logs/
 *.log
 *.csv
 *.pid

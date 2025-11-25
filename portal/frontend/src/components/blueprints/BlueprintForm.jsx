@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import "../../styles/BlueprintForm.css";
 import { getEnvironmentConfig } from "../../config/environmentConfig";
 import { fetchResourceGroups } from "../../services/resourcesApi";
+import api from "../../services/api";
 
 function BlueprintForm({
   blueprint,
@@ -17,10 +18,34 @@ function BlueprintForm({
   const formRef = useRef(null);
   const [resourceGroups, setResourceGroups] = useState([]);
   const [loadingResourceGroups, setLoadingResourceGroups] = useState(false);
+  const [subscriptions, setSubscriptions] = useState([]);
+  const [loadingSubscriptions, setLoadingSubscriptions] = useState(false);
 
   // Get environment value and warning configuration
   const environment = formValues.environment || "dev";
   const envWarning = getEnvironmentConfig(environment);
+
+  // Fetch subscriptions on component mount
+  useEffect(() => {
+    const loadSubscriptions = async () => {
+      setLoadingSubscriptions(true);
+      try {
+        const subs = await api.fetchSubscriptions();
+        setSubscriptions(subs);
+
+        // Auto-select first subscription if none selected and only one available
+        if (!formValues.subscription_id && subs.length === 1) {
+          onChange("subscription_id", subs[0].id);
+        }
+      } catch (error) {
+        console.error("Failed to load subscriptions:", error);
+        setSubscriptions([]);
+      } finally {
+        setLoadingSubscriptions(false);
+      }
+    };
+    loadSubscriptions();
+  }, []); // Only run once on mount
 
   // Fetch resource groups when environment changes
   const loadResourceGroups = useCallback(async (env) => {
@@ -99,9 +124,12 @@ function BlueprintForm({
 
       <div className="form-grid">
         {(blueprint.variables || []).map((v) => {
-          // Check if this is a resource_group_name field
+          // Check if this is a resource_group_name or subscription_id field
           const isResourceGroupField = v.name === "resource_group_name";
-          const shouldUseDynamicDropdown = isResourceGroupField && resourceGroups.length > 0;
+          const isSubscriptionField = v.name === "subscription_id";
+          const shouldUseDynamicDropdown =
+            (isResourceGroupField && resourceGroups.length > 0) ||
+            (isSubscriptionField && subscriptions.length > 0);
 
           return (
             <div key={v.name} className="form-field">
@@ -113,16 +141,28 @@ function BlueprintForm({
                 {isResourceGroupField && loadingResourceGroups && (
                   <span className="field-loading"> (loading...)</span>
                 )}
+                {isSubscriptionField && loadingSubscriptions && (
+                  <span className="field-loading"> (loading...)</span>
+                )}
               </label>
               {v.type === "select" || shouldUseDynamicDropdown ? (
                 <select
                   className="field-input"
                   value={formValues[v.name] || ""}
                   onChange={(e) => onChange(v.name, e.target.value)}
-                  disabled={loadingResourceGroups && isResourceGroupField}
+                  disabled={
+                    (loadingResourceGroups && isResourceGroupField) ||
+                    (loadingSubscriptions && isSubscriptionField)
+                  }
                 >
                   <option value="">-- Select --</option>
-                  {shouldUseDynamicDropdown ? (
+                  {isSubscriptionField && shouldUseDynamicDropdown ? (
+                    subscriptions.map((sub) => (
+                      <option key={sub.id} value={sub.id}>
+                        {sub.name}
+                      </option>
+                    ))
+                  ) : shouldUseDynamicDropdown ? (
                     resourceGroups.map((rg) => (
                       <option key={rg} value={rg}>
                         {rg}
@@ -146,7 +186,7 @@ function BlueprintForm({
                   }
                   disabled={isUpdating && v.name === "project_name"}
                   title={isUpdating && v.name === "project_name" ? "Resource name cannot be changed when updating" : ""}
-                  placeholder={isResourceGroupField ? "Or type a resource group name" : ""}
+                  placeholder={isResourceGroupField ? "Or type a resource group name" : isSubscriptionField ? "Or paste a subscription ID" : ""}
                 />
               )}
             </div>

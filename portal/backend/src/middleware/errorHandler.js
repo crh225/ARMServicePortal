@@ -8,8 +8,30 @@ export function errorHandler(err, req, res, next) {
   const statusCode = err.statusCode || err.status || 500;
   const message = err.message || "Internal Server Error";
 
-  res.status(statusCode).json({
-    error: message,
-    ...(process.env.NODE_ENV === "development" && { stack: err.stack })
-  });
+  // Build response object with all available error properties
+  const response = {
+    error: message
+  };
+
+  // Add validation errors if present
+  if (err.errors) {
+    response.errors = err.errors;
+  }
+
+  // Add policy errors if present
+  if (err.policyErrors) {
+    response.policyErrors = err.policyErrors;
+  }
+
+  // Add policy warnings if present
+  if (err.policyWarnings) {
+    response.policyWarnings = err.policyWarnings;
+  }
+
+  // Add stack trace in development mode
+  if (process.env.NODE_ENV === "development" && err.stack) {
+    response.stack = err.stack;
+  }
+
+  res.status(statusCode).json(response);
 }
