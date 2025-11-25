@@ -27,7 +27,7 @@ export class GenerateTerraformCodeHandler extends IRequestHandler {
       }
 
       // Generate Terraform code
-      const result = generateTerraformCode(resource);
+      const result = generateTerraformCode(resource, query.useModules);
 
       if (!result.success) {
         const error = new Error(result.error);

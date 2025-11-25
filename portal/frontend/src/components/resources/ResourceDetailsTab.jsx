@@ -72,6 +72,7 @@ function ResourceDetailsTab({ resource }) {
   const [terraformCode, setTerraformCode] = useState(null);
   const [terraformError, setTerraformError] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [useModules, setUseModules] = useState(true);
 
   const handleGenerateTerraform = async () => {
     setGeneratingTerraform(true);
@@ -79,7 +80,7 @@ function ResourceDetailsTab({ resource }) {
     setTerraformCode(null);
 
     try {
-      const result = await api.generateTerraformCode(resource.id);
+      const result = await api.generateTerraformCode(resource.id, useModules);
       setTerraformCode(result);
     } catch (error) {
       console.error("Failed to generate Terraform code:", error);
@@ -266,13 +267,36 @@ function ResourceDetailsTab({ resource }) {
             </a>
           )}
           {resource.ownershipStatus === "unmanaged" && (
-            <button
-              className="action-btn action-btn--secondary"
-              onClick={handleGenerateTerraform}
-              disabled={generatingTerraform}
-            >
-              {generatingTerraform ? "Generating..." : "Generate Terraform Code"}
-            </button>
+            <>
+              <button
+                className="action-btn action-btn--secondary"
+                onClick={handleGenerateTerraform}
+                disabled={generatingTerraform}
+              >
+                {generatingTerraform ? "Generating..." : "Generate Terraform Code"}
+              </button>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "8px" }}>
+                <input
+                  type="checkbox"
+                  id="useModules"
+                  checked={useModules}
+                  onChange={(e) => setUseModules(e.target.checked)}
+                  disabled={generatingTerraform}
+                  style={{ cursor: generatingTerraform ? "not-allowed" : "pointer" }}
+                />
+                <label
+                  htmlFor="useModules"
+                  style={{
+                    fontSize: "0.875rem",
+                    color: "#374151",
+                    cursor: generatingTerraform ? "not-allowed" : "pointer",
+                    userSelect: "none"
+                  }}
+                >
+                  Use blueprint modules (recommended for managed resources)
+                </label>
+              </div>
+            </>
           )}
         </div>
       </div>
@@ -285,11 +309,42 @@ function ResourceDetailsTab({ resource }) {
             <p style={{ fontSize: "0.875rem", color: "#6b7280", marginBottom: "8px" }}>
               Review and customize the generated code before applying:
             </p>
-            <ul style={{ fontSize: "0.875rem", color: "#6b7280", paddingLeft: "20px", marginBottom: "12px" }}>
-              {terraformCode.notes?.map((note, idx) => (
-                <li key={idx}>{note}</li>
-              ))}
-            </ul>
+            <div style={{
+              fontSize: "0.875rem",
+              color: "#374151",
+              marginBottom: "12px",
+              lineHeight: "1.6"
+            }}>
+              {terraformCode.notes?.map((note, idx) => {
+                // Skip empty strings (used for spacing in backend)
+                if (!note || note.trim() === "") {
+                  return <br key={idx} />;
+                }
+
+                // Render commands in monospace
+                if (note.match(/^\d+\.\s*terraform\s/) || note.startsWith("terraform ")) {
+                  return (
+                    <div key={idx} style={{
+                      fontFamily: "monospace",
+                      backgroundColor: "#f3f4f6",
+                      padding: "4px 8px",
+                      borderRadius: "3px",
+                      marginTop: "4px",
+                      marginBottom: "4px"
+                    }}>
+                      {note}
+                    </div>
+                  );
+                }
+
+                // Regular notes as bullet points
+                return (
+                  <div key={idx} style={{ marginLeft: "0px", marginBottom: "4px" }}>
+                    • {note}
+                  </div>
+                );
+              })}
+            </div>
             <button
               className="action-btn action-btn--secondary"
               onClick={handleCopyToClipboard}
