@@ -60,11 +60,16 @@ resource "azurerm_container_group" "elk" {
       protocol = "TCP"
     }
 
+    # Use command to pass Elasticsearch settings as JVM properties
+    commands = [
+      "/bin/bash",
+      "-c",
+      "bin/elasticsearch -Ediscovery.type=single-node -Expack.security.enabled=true -Expack.ml.enabled=false"
+    ]
+
     environment_variables = {
       "ES_JAVA_OPTS"       = "-Xms${var.elasticsearch_heap_size} -Xmx${var.elasticsearch_heap_size}"
       "ELASTIC_USERNAME"   = "elastic"
-      "DISCOVERY_TYPE"     = "single-node"
-      "XPACK_SECURITY_ENABLED" = "true"
     }
 
     secure_environment_variables = {
