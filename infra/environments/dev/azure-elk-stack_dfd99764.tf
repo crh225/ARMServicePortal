@@ -15,7 +15,7 @@ module "azure-elk-stack_dfd99764" {
   tags = {
     armportal-environment = "dev"
     armportal-blueprint   = "azure-elk-stack"
-    armportal-request-id  = "azure-elk-stack_dfd99764"
+    armportal-request-id  = "150"
   }
 }
 
