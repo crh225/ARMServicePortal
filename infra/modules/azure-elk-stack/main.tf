@@ -28,6 +28,12 @@ locals {
   kibana_port        = 5601
   logstash_port      = 5044
 
+  # Handle suffix - only add hyphen if suffix is not empty (for resource names)
+  name_suffix = var.suffix != "" ? "-${var.suffix}" : ""
+
+  # Storage account suffix without hyphen (storage account names can't have hyphens)
+  storage_suffix = var.suffix
+
   common_tags = merge(var.tags, {
     "component" = "elk-stack"
   })
@@ -35,11 +41,11 @@ locals {
 
 # Container Group for ELK Stack
 resource "azurerm_container_group" "elk" {
-  name                = "aci-elk-${var.environment}-${var.suffix}"
+  name                = "aci-elk-${var.environment}${local.name_suffix}"
   location            = var.location
   resource_group_name = var.resource_group_name
   os_type             = "Linux"
-  dns_name_label      = "elk-${var.environment}-${var.suffix}"
+  dns_name_label      = "elk-${var.environment}${local.name_suffix}"
   ip_address_type     = "Public"
 
   # Elasticsearch Container
@@ -137,7 +143,7 @@ resource "azurerm_container_group" "elk" {
 
 # Storage Account for ELK persistence
 resource "azurerm_storage_account" "elk" {
-  name                     = "elksa${var.environment}${var.suffix}"
+  name                     = "elksa${var.environment}${local.storage_suffix}"
   resource_group_name      = var.resource_group_name
   location                 = var.location
   account_tier             = "Standard"
