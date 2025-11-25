@@ -33,15 +33,18 @@ class ElasticsearchTransport extends Transport {
       this.emit('logged', info);
     });
 
-    // Prepare log entry
+    // Prepare log entry - spread info first so explicit fields override
     const logEntry = {
+      ...info,
       '@timestamp': new Date().toISOString(),
-      message: info.message,
-      level: info.level,
-      service: info.service,
-      environment: info.environment,
-      ...info
+      level: info.level || 'info',
+      message: info.message
     };
+
+    // Remove Winston internal fields that shouldn't go to ES
+    delete logEntry[Symbol.for('level')];
+    delete logEntry[Symbol.for('splat')];
+    delete logEntry[Symbol.for('message')];
 
     // Send immediately to Elasticsearch
     if (!this.client) {
@@ -166,7 +169,8 @@ const originalConsole = {
 // Override console.log to also log to Winston
 console.log = (...args) => {
   originalConsole.log(...args);
-  logger.info(args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : String(arg)).join(' '));
+  const message = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : String(arg)).join(' ');
+  logger.info(message);
 };
 
 // Override console.info
@@ -192,5 +196,8 @@ console.debug = (...args) => {
   originalConsole.debug(...args);
   logger.debug(args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : String(arg)).join(' '));
 };
+
+// Test that console interception is working
+originalConsole.log('→ Console interception is active');
 
 export default logger;
