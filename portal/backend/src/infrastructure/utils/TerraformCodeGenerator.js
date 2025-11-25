@@ -507,9 +507,10 @@ function generateModuleImportBlock(moduleName, tfResourceType, resourceLabel, az
 /**
  * Generate complete Terraform code for an Azure resource
  * @param {object} resource - Azure resource from Resource Graph
+ * @param {boolean} useModules - If true, use blueprint modules when available; if false, generate raw resources (default: true)
  * @returns {object|null} Generated Terraform code or null if unsupported
  */
-export function generateTerraformCode(resource) {
+export function generateTerraformCode(resource, useModules = true) {
   const tfResourceType = mapAzureTypeToTerraform(resource.type);
 
   if (!tfResourceType) {
@@ -527,8 +528,8 @@ export function generateTerraformCode(resource) {
   let resourceConfig;
   let notes;
 
-  // Check if we have a blueprint for this resource type
-  if (blueprintId) {
+  // Check if we should use blueprint modules AND we have a blueprint for this resource type
+  if (useModules && blueprintId) {
     const moduleName = `${blueprintId}_${resourceName}`;
 
     // For module-based imports, the import targets the resource inside the module
