@@ -81,7 +81,7 @@ variable "kibana_cpu" {
 variable "kibana_memory" {
   description = "Memory in GB for Kibana container"
   type        = number
-  default     = 2
+  default     = 4
 }
 
 variable "create_nsg" {
