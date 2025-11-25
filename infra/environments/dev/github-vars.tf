@@ -29,3 +29,9 @@ variable "github_webhook_secret" {
   description = "GitHub webhook secret for signature verification"
   sensitive   = true
 }
+
+variable "elasticsearch_api_key" {
+  type        = string
+  description = "Elasticsearch API key for log shipping"
+  sensitive   = true
+}

@@ -36,7 +36,6 @@ function TerraformOutputs({ outputs, loading, error }) {
 
   return (
     <ResultRow
-      label="Terraform Outputs"
       stacked
       value={<div className="result-value result-value--mono">{outputElements}</div>}
     />
