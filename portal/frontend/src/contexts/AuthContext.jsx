@@ -30,6 +30,19 @@ export function AuthProvider({ children }) {
       if (response.ok) {
         const data = await response.json();
         setUser(data.user);
+
+        // Identify user in LogRocket
+        if (window.LogRocket && typeof window.LogRocket.identify === 'function') {
+          try {
+            window.LogRocket.identify(data.user.id.toString(), {
+              name: data.user.name,
+              login: data.user.login,
+              email: data.user.email
+            });
+          } catch (e) {
+            console.error("Failed to identify user in LogRocket:", e);
+          }
+        }
       } else {
         // Token invalid or expired
         logout();
