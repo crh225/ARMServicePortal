@@ -590,173 +590,12 @@ export const BLUEPRINTS = [
     ]
   },
   {
-    id: "azure-webapp-stack",
+    id: "azure-elastic-managed",
     version: "1.0.0",
-    displayName: "Full Stack Web Application",
-    description: "Complete application stack: Resource Group + Storage Account + Container Instance + Key Vault. Deploy an entire app environment in one request.",
-    category: "Stacks",
-    type: "stack",
-    components: [
-      {
-        id: "rg",
-        blueprint: "azure-rg-basic",
-        variables: {
-          project_name: "${stack.project_name}",
-          environment: "${stack.environment}",
-          location: "${stack.location}"
-        }
-      },
-      {
-        id: "storage",
-        blueprint: "azure-storage-basic",
-        dependsOn: ["rg"],
-        variables: {
-          project_name: "${stack.project_name}",
-          environment: "${stack.environment}",
-          resource_group_name: "${rg.resource_group_name}",
-          location: "${stack.location}",
-          account_tier: "Standard",
-          replication_type: "LRS"
-        }
-      },
-      {
-        id: "keyvault",
-        blueprint: "azure-key-vault-basic",
-        dependsOn: ["rg"],
-        variables: {
-          project_name: "${stack.project_name}",
-          environment: "${stack.environment}",
-          resource_group_name: "${rg.resource_group_name}",
-          location: "${stack.location}",
-          sku_name: "${stack.keyvault_sku}",
-          soft_delete_retention_days: "7",
-          purge_protection_enabled: "true"
-        }
-      },
-      {
-        id: "app",
-        blueprint: "azure-aci",
-        dependsOn: ["rg"],
-        variables: {
-          project_name: "${stack.project_name}",
-          environment: "${stack.environment}",
-          resource_group_name: "${rg.resource_group_name}",
-          location: "${stack.location}",
-          container_image: "${stack.container_image}",
-          cpu_cores: "${stack.cpu_cores}",
-          memory_gb: "${stack.memory_gb}",
-          port: "${stack.container_port}",
-          ip_address_type: "Public",
-          restart_policy: "Always",
-          environment_variables: "${stack.environment_variables}"
-        }
-      }
-    ],
-    variables: [
-      {
-        name: "project_name",
-        label: "Project Name",
-        type: "string",
-        required: true
-      },
-      {
-        name: "environment",
-        label: "Environment",
-        type: "select",
-        required: true,
-        options: ["dev", "qa", "staging", "prod"],
-        default: "dev"
-      },
-      {
-        name: "subscription_id",
-        label: "Azure Subscription",
-        type: "string",
-        required: true
-      },
-      {
-        name: "location",
-        label: "Location",
-        type: "select",
-        required: true,
-        options: ["eastus", "eastus2", "westus", "westus2", "westus3", "centralus", "northcentralus", "southcentralus", "westcentralus"],
-        default: "eastus2"
-      },
-      {
-        name: "container_image",
-        label: "Container Image",
-        type: "string",
-        required: true,
-        default: "mcr.microsoft.com/azuredocs/aci-helloworld:latest"
-      },
-      {
-        name: "cpu_cores",
-        label: "CPU Cores",
-        type: "select",
-        required: true,
-        options: ["0.5", "1", "2", "4"],
-        default: "1"
-      },
-      {
-        name: "memory_gb",
-        label: "Memory (GB)",
-        type: "select",
-        required: true,
-        options: ["1", "2", "4", "8"],
-        default: "2"
-      },
-      {
-        name: "container_port",
-        label: "Container Port",
-        type: "string",
-        required: false,
-        default: "80"
-      },
-      {
-        name: "keyvault_sku",
-        label: "Key Vault SKU",
-        type: "select",
-        required: true,
-        options: ["standard", "premium"],
-        default: "standard"
-      },
-      {
-        name: "environment_variables",
-        label: "Container Environment Variables (JSON)",
-        type: "string",
-        required: false,
-        default: "{}"
-      }
-    ],
-    outputs: [
-      {
-        name: "resource_group_name",
-        description: "Resource group name",
-        source: "rg.resource_group_name"
-      },
-      {
-        name: "storage_account_name",
-        description: "Storage account name",
-        source: "storage.storage_account_name"
-      },
-      {
-        name: "container_fqdn",
-        description: "Container FQDN",
-        source: "app.fqdn"
-      },
-      {
-        name: "container_ip",
-        description: "Container IP address",
-        source: "app.ip_address"
-      }
-    ]
-  },
-  {
-    id: "azure-elk-stack",
-    version: "0.0.1",
-    displayName: "ELK Stack (Logging)",
-    description: "Complete ELK (Elasticsearch, Logstash, Kibana) stack for centralized logging. Auto-configured for Node.js applications with Winston or Pino. Password auto-generated for security.",
-    category: "Monitoring",
-    moduleSource: "../../modules/azure-elk-stack",
+    displayName: "Azure Elastic (Managed)",
+    description: "Fully managed Elasticsearch cluster with Kibana and Logstash. No infrastructure management required - Elastic handles updates, security, and scaling.",
+    category: "Analytics & Monitoring",
+    moduleSource: "../../modules/azure-elastic-managed",
     variables: [
       {
         name: "project_name",
@@ -793,72 +632,49 @@ export const BLUEPRINTS = [
         default: "eastus2"
       },
       {
-        name: "elk_version",
-        label: "ELK Version",
-        type: "select",
-        required: false,
-        options: ["8.11.0", "8.12.0", "8.13.0"],
-        default: "8.11.0"
+        name: "elastic_email",
+        label: "Elastic Cloud Email",
+        type: "string",
+        required: true,
+        placeholder: "admin@example.com"
       },
       {
-        name: "elasticsearch_cpu",
-        label: "Elasticsearch CPU Cores",
+        name: "sku_name",
+        label: "SKU / Pricing Tier",
         type: "select",
         required: false,
-        options: ["1", "2", "4"],
-        default: "2"
+        options: ["ess-consumption-2024_Monthly"],
+        default: "ess-consumption-2024_Monthly"
       },
       {
-        name: "elasticsearch_memory",
-        label: "Elasticsearch Memory (GB)",
+        name: "monitoring_enabled",
+        label: "Enable Monitoring",
         type: "select",
         required: false,
-        options: ["2", "4", "8"],
-        default: "4"
-      },
-      {
-        name: "elasticsearch_heap_size",
-        label: "Elasticsearch Heap Size",
-        type: "select",
-        required: false,
-        options: ["1g", "2g", "4g"],
-        default: "2g"
-      },
-      {
-        name: "logstash_cpu",
-        label: "Logstash CPU Cores",
-        type: "select",
-        required: false,
-        options: ["0.5", "1", "2"],
-        default: "1"
-      },
-      {
-        name: "logstash_memory",
-        label: "Logstash Memory (GB)",
-        type: "select",
-        required: false,
-        options: ["1", "2", "4"],
-        default: "2"
+        options: ["true", "false"],
+        default: "true"
       }
     ],
     outputs: [
       {
-        name: "kibana_url",
-        description: "URL to access Kibana dashboard"
+        name: "elasticsearch_endpoint",
+        description: "Elasticsearch API endpoint for data ingestion and queries"
       },
       {
-        name: "logstash_host",
-        description: "Logstash host for Node.js applications"
+        name: "kibana_endpoint",
+        description: "Kibana web interface for visualization and management"
       },
       {
-        name: "logstash_port",
-        description: "Logstash port for Node.js applications (5044)"
+        name: "elastic_deployment_id",
+        description: "Azure resource ID of the Elastic deployment"
       },
       {
-        name: "elasticsearch_password",
-        description: "Auto-generated Elasticsearch password (sensitive)"
+        name: "elastic_cloud_deployment_id",
+        description: "Elastic Cloud deployment identifier",
+        sensitive: true
       }
-    ]
+    ],
+    estimatedMonthlyCost: 95
   }
 ];
 
