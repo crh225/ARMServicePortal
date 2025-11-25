@@ -85,6 +85,20 @@ export function getResourceTypeIcon(type) {
     );
   }
 
+  // Elasticsearch / ELK Stack
+  if (typeLower.includes("elk") || typeLower.includes("elastic") || typeLower.includes("kibana") || typeLower.includes("logstash")) {
+    return (
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" className="resource-type-icon">
+        <path d="M2 1h12a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z"/>
+        <path d="M2 6h12a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1z" opacity="0.7"/>
+        <path d="M2 11h12a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1z" opacity="0.5"/>
+        <circle cx="13" cy="3" r="1.5" fill="#00BFB3"/>
+        <circle cx="13" cy="8" r="1.5" fill="#FEC514"/>
+        <circle cx="13" cy="13" r="1.5" fill="#EF5098"/>
+      </svg>
+    );
+  }
+
   // Default icon
   return (
     <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" className="resource-type-icon">

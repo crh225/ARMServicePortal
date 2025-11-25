@@ -749,6 +749,116 @@ export const BLUEPRINTS = [
         source: "app.ip_address"
       }
     ]
+  },
+  {
+    id: "azure-elk-stack",
+    version: "0.0.1",
+    displayName: "ELK Stack (Logging)",
+    description: "Complete ELK (Elasticsearch, Logstash, Kibana) stack for centralized logging. Auto-configured for Node.js applications with Winston or Pino. Password auto-generated for security.",
+    category: "Monitoring",
+    moduleSource: "../../modules/azure-elk-stack",
+    variables: [
+      {
+        name: "project_name",
+        label: "Project Name",
+        type: "string",
+        required: true
+      },
+      {
+        name: "environment",
+        label: "Environment",
+        type: "select",
+        required: true,
+        options: ["dev", "qa", "staging", "prod"],
+        default: "dev"
+      },
+      {
+        name: "subscription_id",
+        label: "Azure Subscription",
+        type: "string",
+        required: true
+      },
+      {
+        name: "resource_group_name",
+        label: "Resource Group Name",
+        type: "string",
+        required: true
+      },
+      {
+        name: "location",
+        label: "Location",
+        type: "select",
+        required: true,
+        options: ["eastus", "eastus2", "westus", "westus2", "westus3", "centralus", "northcentralus", "southcentralus", "westcentralus"],
+        default: "eastus2"
+      },
+      {
+        name: "elk_version",
+        label: "ELK Version",
+        type: "select",
+        required: false,
+        options: ["8.11.0", "8.12.0", "8.13.0"],
+        default: "8.11.0"
+      },
+      {
+        name: "elasticsearch_cpu",
+        label: "Elasticsearch CPU Cores",
+        type: "select",
+        required: false,
+        options: ["1", "2", "4"],
+        default: "2"
+      },
+      {
+        name: "elasticsearch_memory",
+        label: "Elasticsearch Memory (GB)",
+        type: "select",
+        required: false,
+        options: ["2", "4", "8"],
+        default: "4"
+      },
+      {
+        name: "elasticsearch_heap_size",
+        label: "Elasticsearch Heap Size",
+        type: "select",
+        required: false,
+        options: ["1g", "2g", "4g"],
+        default: "2g"
+      },
+      {
+        name: "logstash_cpu",
+        label: "Logstash CPU Cores",
+        type: "select",
+        required: false,
+        options: ["0.5", "1", "2"],
+        default: "1"
+      },
+      {
+        name: "logstash_memory",
+        label: "Logstash Memory (GB)",
+        type: "select",
+        required: false,
+        options: ["1", "2", "4"],
+        default: "2"
+      }
+    ],
+    outputs: [
+      {
+        name: "kibana_url",
+        description: "URL to access Kibana dashboard"
+      },
+      {
+        name: "logstash_host",
+        description: "Logstash host for Node.js applications"
+      },
+      {
+        name: "logstash_port",
+        description: "Logstash port for Node.js applications (5044)"
+      },
+      {
+        name: "elasticsearch_password",
+        description: "Auto-generated Elasticsearch password (sensitive)"
+      }
+    ]
   }
 ];
 

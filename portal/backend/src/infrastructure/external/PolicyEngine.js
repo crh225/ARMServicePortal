@@ -19,9 +19,12 @@ export function validatePolicies(request) {
   const autoFilled = {};
 
   // Validate required fields from blueprint
+  // Exclude non-Terraform variables that are handled at provider/environment level
+  const NON_TERRAFORM_VARS = ['subscription_id'];
+
   if (request.blueprint && request.blueprint.variables) {
     request.blueprint.variables.forEach(varDef => {
-      if (varDef.required) {
+      if (varDef.required && !NON_TERRAFORM_VARS.includes(varDef.name)) {
         const value = request.variables[varDef.name];
         if (!value || (typeof value === 'string' && value.trim() === '')) {
           errors.push({
