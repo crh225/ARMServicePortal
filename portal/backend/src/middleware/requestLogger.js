@@ -25,6 +25,15 @@ export function requestLogger(req, res, next) {
       logData.logRocketSession = logRocketSession;
     }
 
+    // Add user information if authenticated
+    if (req.user) {
+      logData.user = {
+        id: req.user.id,
+        login: req.user.login,
+        name: req.user.name
+      };
+    }
+
     logger.info('HTTP Request', logData);
   });
 
