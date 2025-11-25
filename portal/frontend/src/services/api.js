@@ -198,6 +198,26 @@ const api = {
     }
     const data = await response.json();
     return data.backups || [];
+  },
+
+  /**
+   * Generate Terraform code for an Azure resource
+   * @param {string} resourceId - Azure resource ID
+   * @returns {Promise<object>} Generated Terraform code and metadata
+   */
+  async generateTerraformCode(resourceId) {
+    const response = await fetch(`${API_BASE_URL}/api/terraform/generate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ resourceId })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || "Failed to generate Terraform code");
+    }
+
+    return response.json();
   }
 };
 

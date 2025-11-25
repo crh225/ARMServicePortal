@@ -45,6 +45,7 @@ import { GetResourcesHandler } from "../../application/resources/handlers/GetRes
 import { GetResourcesByRequestHandler } from "../../application/resources/handlers/GetResourcesByRequestHandler.js";
 import { GetResourceGroupsHandler } from "../../application/resources/handlers/GetResourceGroupsHandler.js";
 import { ProcessGitHubWebhookHandler } from "../../application/webhooks/handlers/ProcessGitHubWebhookHandler.js";
+import { GenerateTerraformCodeHandler } from "../../application/terraform/handlers/GenerateTerraformCodeHandler.js";
 
 // Queries & Commands
 import { GetBlueprintCatalogQuery } from "../../application/blueprints/queries/GetBlueprintCatalogQuery.js";
@@ -69,6 +70,7 @@ import { MarkAllNotificationsAsReadCommand } from "../../application/notificatio
 import { DeleteNotificationCommand } from "../../application/notification/commands/DeleteNotificationCommand.js";
 import { DeleteAllNotificationsCommand } from "../../application/notification/commands/DeleteAllNotificationsCommand.js";
 import { ProcessGitHubWebhookCommand } from "../../application/webhooks/commands/ProcessGitHubWebhookCommand.js";
+import { GenerateTerraformCodeQuery } from "../../application/terraform/queries/GenerateTerraformCodeQuery.js";
 
 // Pipeline Behaviors
 import { ValidationBehavior } from "../behaviors/ValidationBehavior.js";
@@ -93,6 +95,7 @@ import { ResourceDestroyedEvent } from "../../domain/events/ResourceDestroyedEve
 import { ProvisionBlueprintCommandValidator } from "../../application/provision/validators/ProvisionBlueprintCommandValidator.js";
 import { PromoteResourceCommandValidator } from "../../application/promote/validators/PromoteResourceCommandValidator.js";
 import { DestroyResourceCommandValidator } from "../../application/destroy/validators/DestroyResourceCommandValidator.js";
+import { GenerateTerraformCodeQueryValidator } from "../../application/terraform/validators/GenerateTerraformCodeQueryValidator.js";
 
 /**
  * Create and configure the mediator with all handlers
@@ -134,6 +137,7 @@ export function createMediator() {
     ProvisionBlueprintCommand: new ProvisionBlueprintCommandValidator(),
     PromoteResourceCommand: new PromoteResourceCommandValidator(),
     DestroyResourceCommand: new DestroyResourceCommandValidator(),
+    GenerateTerraformCodeQuery: new GenerateTerraformCodeQueryValidator(),
   };
   mediator.addBehavior(new ValidationBehavior(validators));
 
@@ -187,6 +191,9 @@ export function createMediator() {
     [GetResourcesQuery, GetResourcesHandler, [services.azureResource, services.resourceEnrichment]],
     [GetResourcesByRequestQuery, GetResourcesByRequestHandler, [services.azureResource, services.resourceEnrichment]],
     [GetResourceGroupsQuery, GetResourceGroupsHandler, [services.azureResource]],
+
+    // Terraform Queries
+    [GenerateTerraformCodeQuery, GenerateTerraformCodeHandler, [services.azureResource]],
 
     // Provision Commands
     [ProvisionBlueprintCommand, ProvisionBlueprintHandler, [repos.blueprint, services.policy, services.gitHubProvision]],

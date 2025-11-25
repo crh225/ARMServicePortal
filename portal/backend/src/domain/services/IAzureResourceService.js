@@ -29,4 +29,13 @@ export class IAzureResourceService {
   async queryResourceGroupsByEnvironment(environment) {
     throw new Error("queryResourceGroupsByEnvironment() must be implemented");
   }
+
+  /**
+   * Get resource by Azure resource ID
+   * @param {string} resourceId - Azure resource ID
+   * @returns {Promise<object|null>} - Resource object or null if not found
+   */
+  async getResourceById(resourceId) {
+    throw new Error("getResourceById() must be implemented");
+  }
 }

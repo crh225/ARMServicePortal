@@ -174,3 +174,38 @@ export async function queryResourceGroupsByEnvironment(environment = null, subsc
 export async function getAllArmPortalResources() {
   return await queryArmPortalResources();
 }
+
+/**
+ * Query a specific resource by its Azure resource ID
+ * @param {string} resourceId - Azure resource ID
+ * @returns {Promise<object|null>} Resource object or null if not found
+ */
+export async function queryResourceById(resourceId) {
+  // Escape single quotes in the resource ID for KQL
+  const escapedId = resourceId.replace(/'/g, "\\'");
+
+  const query = `ResourceContainers | union Resources | where id =~ '${escapedId}' | project id, name, type, location, resourceGroup, subscriptionId, tags, properties`;
+
+  try {
+    const queryRequest = {
+      query,
+      options: {
+        resultFormat: "objectArray"
+      }
+    };
+
+    console.log("Executing Azure Resource Graph query for resource ID:", resourceId);
+
+    const result = await client.resources(queryRequest);
+    const resources = result.data || [];
+
+    if (resources.length === 0) {
+      return null;
+    }
+
+    return resources[0];
+  } catch (error) {
+    console.error("Azure Resource Graph query by ID failed:", error);
+    throw new Error(`Failed to query Azure resource by ID: ${error.message}`);
+  }
+}

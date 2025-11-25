@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { OwnershipStatus } from "../../hooks/useResources";
 import "../../styles/ResourceDetailDrawer.css";
+import api from "../../services/api";
 
 /**
  * Get Azure Portal URL for a resource
@@ -66,6 +68,39 @@ function HealthBadge({ health }) {
  * Details Tab Content
  */
 function ResourceDetailsTab({ resource }) {
+  const [generatingTerraform, setGeneratingTerraform] = useState(false);
+  const [terraformCode, setTerraformCode] = useState(null);
+  const [terraformError, setTerraformError] = useState(null);
+  const [copied, setCopied] = useState(false);
+
+  const handleGenerateTerraform = async () => {
+    setGeneratingTerraform(true);
+    setTerraformError(null);
+    setTerraformCode(null);
+
+    try {
+      const result = await api.generateTerraformCode(resource.id);
+      setTerraformCode(result);
+    } catch (error) {
+      console.error("Failed to generate Terraform code:", error);
+      setTerraformError(error.message);
+    } finally {
+      setGeneratingTerraform(false);
+    }
+  };
+
+  const handleCopyToClipboard = async () => {
+    if (!terraformCode) return;
+
+    try {
+      await navigator.clipboard.writeText(terraformCode.code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error("Failed to copy to clipboard:", error);
+    }
+  };
+
   return (
     <div className="drawer-sections">
       {/* General Info - Two column grid */}
@@ -230,15 +265,67 @@ function ResourceDetailsTab({ resource }) {
               Open PR in GitHub
             </a>
           )}
-          <button
-            className="action-btn action-btn--secondary"
-            disabled
-            title="Cleanup PR generation coming soon"
-          >
-            Generate Cleanup PR (Coming Soon)
-          </button>
+          {resource.ownershipStatus === "unmanaged" && (
+            <button
+              className="action-btn action-btn--secondary"
+              onClick={handleGenerateTerraform}
+              disabled={generatingTerraform}
+            >
+              {generatingTerraform ? "Generating..." : "Generate Terraform Code"}
+            </button>
+          )}
         </div>
       </div>
+
+      {/* Terraform Code Generation */}
+      {terraformCode && (
+        <div className="drawer-section">
+          <h3 className="section-title">Generated Terraform Code</h3>
+          <div style={{ marginBottom: "12px" }}>
+            <p style={{ fontSize: "0.875rem", color: "#6b7280", marginBottom: "8px" }}>
+              Review and customize the generated code before applying:
+            </p>
+            <ul style={{ fontSize: "0.875rem", color: "#6b7280", paddingLeft: "20px", marginBottom: "12px" }}>
+              {terraformCode.notes?.map((note, idx) => (
+                <li key={idx}>{note}</li>
+              ))}
+            </ul>
+            <button
+              className="action-btn action-btn--secondary"
+              onClick={handleCopyToClipboard}
+              style={{ marginBottom: "8px" }}
+            >
+              {copied ? "Copied!" : "Copy to Clipboard"}
+            </button>
+          </div>
+          <pre style={{
+            backgroundColor: "#1e1e1e",
+            color: "#d4d4d4",
+            padding: "16px",
+            borderRadius: "4px",
+            overflow: "auto",
+            fontSize: "0.875rem",
+            fontFamily: "monospace",
+            maxHeight: "400px"
+          }}>
+            {terraformCode.code}
+          </pre>
+        </div>
+      )}
+
+      {terraformError && (
+        <div className="drawer-section">
+          <div style={{
+            padding: "12px",
+            backgroundColor: "#fef2f2",
+            border: "1px solid #fecaca",
+            borderRadius: "4px",
+            color: "#991b1b"
+          }}>
+            <strong>Error:</strong> {terraformError}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
