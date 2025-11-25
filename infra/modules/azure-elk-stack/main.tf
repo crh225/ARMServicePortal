@@ -92,7 +92,7 @@ resource "azurerm_container_group" "elk" {
     }
 
     secure_environment_variables = {
-      "ELASTICSEARCH_PASSWORD" = var.elasticsearch_password
+      "ELASTICSEARCH_PASSWORD" = random_password.elasticsearch_password.result
     }
 
     volume {
@@ -128,7 +128,7 @@ resource "azurerm_container_group" "elk" {
     }
 
     secure_environment_variables = {
-      "ELASTICSEARCH_PASSWORD" = var.elasticsearch_password
+      "ELASTICSEARCH_PASSWORD" = random_password.elasticsearch_password.result
     }
   }
 
