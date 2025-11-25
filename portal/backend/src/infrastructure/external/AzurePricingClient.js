@@ -143,6 +143,18 @@ export async function estimateBlueprintCost(blueprintId, variables, blueprint = 
       estimates.push(...elkCost);
       break;
 
+    case "azure-elastic-managed":
+      // Azure Elastic (Managed Service) - consumption-based pricing
+      // Base estimate is around $95-150/month for small deployments
+      estimates.push({
+        resourceType: "Azure Elastic Cloud",
+        skuName: variables.sku_name || "ess-consumption-2024_Monthly",
+        monthlyEstimate: 95,
+        currency: "USD",
+        note: "Managed Elasticsearch service with consumption-based pricing. Actual cost varies based on usage."
+      });
+      break;
+
     default:
       estimates.push({
         resourceType: "Unknown",
