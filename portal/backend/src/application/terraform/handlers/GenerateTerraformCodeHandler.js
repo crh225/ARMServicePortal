@@ -4,7 +4,7 @@
  */
 import { IRequestHandler } from "../../contracts/IRequestHandler.js";
 import { Result } from "../../../domain/common/Result.js";
-import { generateTerraformCode } from "../../../infrastructure/utils/TerraformCodeGenerator.js";
+import { generateTerraformCode } from "../../../infrastructure/terraform/TerraformCodeGenerator.js";
 
 export class GenerateTerraformCodeHandler extends IRequestHandler {
   constructor(azureResourceService) {
