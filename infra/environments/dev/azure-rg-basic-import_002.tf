@@ -11,4 +11,11 @@ resource "azurerm_resource_group" "test_not_in_tf_1" {
   # Properties found: {
   #   "provisioningState": "Succeeded"
   # }
+
+    # ARM Portal tracking tags
+  tags = {
+    armportal-environment = "dev"
+    armportal-blueprint   = "azure-key-vault-basic"
+    armportal-owner       = "imported"
+  }
 }
