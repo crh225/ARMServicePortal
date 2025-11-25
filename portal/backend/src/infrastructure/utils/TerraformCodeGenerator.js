@@ -540,8 +540,11 @@ export function generateTerraformCode(resource) {
       `This resource uses the "${blueprintId}" blueprint module`,
       "The import block targets the resource within the module (usually labeled 'this')",
       "After placing this code in infra/environments/<env>/, run:",
-      `  1. terraform import 'module.${moduleName}.${tfResourceType}.this' '${resource.id}'`,
-      "  2. terraform plan - to verify the import matches the module configuration",
+      "",
+      `1. terraform import 'module.${moduleName}.${tfResourceType}.this' '${resource.id}'`,
+      "",
+      "2. terraform plan - to verify the import matches the module configuration",
+      "",
       "Review and adjust module variables to match your existing resource configuration",
       "The module may create additional resources (diagnostic settings, role assignments, etc.)"
     ];
