@@ -36,8 +36,10 @@ module "elastic" {
 
 ## Requirements
 
-- Azure subscription with Elastic marketplace offering enabled
+- Azure subscription with appropriate permissions
 - Valid email address for Elastic Cloud account
+- The `Microsoft.Elastic` resource provider will be automatically registered by Terraform
+- Note: Resource provider registration may take a few minutes on first deployment
 
 ## Cost
 
