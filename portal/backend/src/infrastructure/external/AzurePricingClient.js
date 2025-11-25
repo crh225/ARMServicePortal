@@ -129,6 +129,20 @@ export async function estimateBlueprintCost(blueprintId, variables, blueprint = 
       estimates.push(frontDoorCost);
       break;
 
+    case "azure-elk-stack":
+      const elkCost = await estimateElkStackCost(
+        location,
+        parseFloat(variables.elasticsearch_cpu || "2"),
+        parseFloat(variables.elasticsearch_memory || "4"),
+        parseFloat(variables.logstash_cpu || "1"),
+        parseFloat(variables.logstash_memory || "2"),
+        parseFloat(variables.kibana_cpu || "1"),
+        parseFloat(variables.kibana_memory || "2"),
+        parseInt(variables.elasticsearch_storage_gb || "50")
+      );
+      estimates.push(...elkCost);
+      break;
+
     default:
       estimates.push({
         resourceType: "Unknown",
@@ -460,6 +474,118 @@ async function estimateFrontDoorCost(location, skuName, hasCustomDomain) {
       customDomainCost: customDomainCost
     }
   };
+}
+
+/**
+ * Estimate ELK Stack costs (Container Instances + Storage)
+ */
+async function estimateElkStackCost(
+  location,
+  elasticsearchCpu,
+  elasticsearchMemory,
+  logstashCpu,
+  logstashMemory,
+  kibanaCpu,
+  kibanaMemory,
+  storageGb
+) {
+  const estimates = [];
+
+  // Fetch ACI pricing once for all containers
+  const prices = await fetchAzurePricing({
+    serviceName: "Container Instances",
+    armRegionName: location
+  });
+
+  const cpuPrice = prices.find(
+    (p) =>
+      p.meterName && p.meterName.includes("vCPU") &&
+      p.productName && p.productName.includes("Linux")
+  );
+
+  const memoryPrice = prices.find(
+    (p) =>
+      p.meterName && p.meterName.includes("Memory") &&
+      p.productName && p.productName.includes("Linux")
+  );
+
+  // Fallback pricing (approximate US East 2 rates)
+  const cpuPricePerSecond = cpuPrice ? cpuPrice.retailPrice : 0.0000125;
+  const memoryPricePerSecond = memoryPrice ? memoryPrice.retailPrice : 0.0000014;
+  const secondsPerMonth = 30 * 24 * 60 * 60;
+
+  // Calculate Elasticsearch container cost
+  const esCpuCost = elasticsearchCpu * cpuPricePerSecond * secondsPerMonth;
+  const esMemoryCost = elasticsearchMemory * memoryPricePerSecond * secondsPerMonth;
+  const elasticsearchTotal = esCpuCost + esMemoryCost;
+
+  estimates.push({
+    resourceType: "Elasticsearch Container",
+    skuName: `${elasticsearchCpu} vCPU, ${elasticsearchMemory}GB RAM`,
+    monthlyEstimate: parseFloat(elasticsearchTotal.toFixed(2)),
+    currency: "USD",
+    note: "24/7 operation"
+  });
+
+  // Calculate Logstash container cost
+  const lsCpuCost = logstashCpu * cpuPricePerSecond * secondsPerMonth;
+  const lsMemoryCost = logstashMemory * memoryPricePerSecond * secondsPerMonth;
+  const logstashTotal = lsCpuCost + lsMemoryCost;
+
+  estimates.push({
+    resourceType: "Logstash Container",
+    skuName: `${logstashCpu} vCPU, ${logstashMemory}GB RAM`,
+    monthlyEstimate: parseFloat(logstashTotal.toFixed(2)),
+    currency: "USD",
+    note: "24/7 operation"
+  });
+
+  // Calculate Kibana container cost
+  const kbCpuCost = kibanaCpu * cpuPricePerSecond * secondsPerMonth;
+  const kbMemoryCost = kibanaMemory * memoryPricePerSecond * secondsPerMonth;
+  const kibanaTotal = kbCpuCost + kbMemoryCost;
+
+  estimates.push({
+    resourceType: "Kibana Container",
+    skuName: `${kibanaCpu} vCPU, ${kibanaMemory}GB RAM`,
+    monthlyEstimate: parseFloat(kibanaTotal.toFixed(2)),
+    currency: "USD",
+    note: "24/7 operation"
+  });
+
+  // Calculate Azure File Share storage cost (for Elasticsearch data)
+  // Premium Files pricing: ~$0.20/GB/month
+  const storagePrice = await fetchAzurePricing({
+    serviceName: "Storage",
+    armRegionName: location
+  });
+
+  const fileStoragePrice = storagePrice.find(
+    (p) =>
+      p.meterName && p.meterName.includes("Premium Files") &&
+      p.productName && p.productName.includes("Premium Files")
+  ) || { retailPrice: 0.20 }; // Fallback to ~$0.20/GB/month
+
+  const storageCost = storageGb * fileStoragePrice.retailPrice;
+
+  estimates.push({
+    resourceType: "Azure File Share Storage",
+    skuName: `${storageGb}GB Premium Files`,
+    monthlyEstimate: parseFloat(storageCost.toFixed(2)),
+    currency: "USD",
+    note: "Persistent storage for Elasticsearch data"
+  });
+
+  // Add Storage Account base cost (minimal)
+  estimates.push({
+    resourceType: "Storage Account",
+    skuName: "Standard LRS",
+    monthlyEstimate: 0.05,
+    currency: "USD",
+    note: "Base storage account cost"
+  });
+
+  return estimates;
 }
 
 /**

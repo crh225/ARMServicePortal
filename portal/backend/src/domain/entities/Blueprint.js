@@ -64,7 +64,12 @@ export class Blueprint {
    */
   validateRequiredVariables(providedVariables) {
     const required = this.getRequiredVariables();
+
+    // Filter out non-Terraform variables (handled at provider/environment level)
+    const NON_TERRAFORM_VARS = ['subscription_id'];
+
     const missing = required
+      .filter(v => !NON_TERRAFORM_VARS.includes(v.name))  // Exclude non-Terraform vars
       .filter(v => !(v.name in providedVariables))
       .map(v => v.name);
 
