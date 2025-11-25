@@ -66,6 +66,7 @@ jobs:
           TF_VAR_github_installation_id:        ${{ secrets.GH_INSTALLATION_ID }}
           TF_VAR_github_app_private_key_base64: ${{ secrets.GH_APP_PRIVATE_KEY_BASE64 }}
           TF_VAR_github_webhook_secret:         ${{ secrets.GH_WEBHOOK_SECRET }}
+          TF_VAR_elasticsearch_api_key:         ${{ secrets.ELASTICSEARCH_API_KEY }}
         run: terraform plan -input=false -no-color
 
       - name: Label PR with plan status
@@ -147,6 +148,7 @@ jobs:
           TF_VAR_github_installation_id:        ${{ secrets.GH_INSTALLATION_ID }}
           TF_VAR_github_app_private_key_base64: ${{ secrets.GH_APP_PRIVATE_KEY_BASE64 }}
           TF_VAR_github_webhook_secret:         ${{ secrets.GH_WEBHOOK_SECRET }}
+          TF_VAR_elasticsearch_api_key:         ${{ secrets.ELASTICSEARCH_API_KEY }}
         run: terraform apply -input=false -auto-approve
 
       - name: Capture Terraform outputs

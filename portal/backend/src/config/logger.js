@@ -153,4 +153,44 @@ logger.stream = {
   }
 };
 
+// Intercept console methods to also send to Winston/Elasticsearch
+// Save original console methods
+const originalConsole = {
+  log: console.log,
+  info: console.info,
+  warn: console.warn,
+  error: console.error,
+  debug: console.debug
+};
+
+// Override console.log to also log to Winston
+console.log = (...args) => {
+  originalConsole.log(...args);
+  logger.info(args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : String(arg)).join(' '));
+};
+
+// Override console.info
+console.info = (...args) => {
+  originalConsole.info(...args);
+  logger.info(args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : String(arg)).join(' '));
+};
+
+// Override console.warn
+console.warn = (...args) => {
+  originalConsole.warn(...args);
+  logger.warn(args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : String(arg)).join(' '));
+};
+
+// Override console.error
+console.error = (...args) => {
+  originalConsole.error(...args);
+  logger.error(args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : String(arg)).join(' '));
+};
+
+// Override console.debug
+console.debug = (...args) => {
+  originalConsole.debug(...args);
+  logger.debug(args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : String(arg)).join(' '));
+};
+
 export default logger;

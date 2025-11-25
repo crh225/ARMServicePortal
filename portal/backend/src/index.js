@@ -8,6 +8,9 @@ const __dirname = path.dirname(__filename);
 // Load environment variables
 dotenv.config({ path: path.join(__dirname, "..", ".env") });
 
+// Import logger FIRST to intercept console methods
+import "./config/logger.js";
+
 import express from "express";
 import cors from "cors";
 import apiRoutes from "./routes/index.js";
