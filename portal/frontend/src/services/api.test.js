@@ -257,7 +257,8 @@ describe("api", () => {
       const result = await api.destroyResource(resourceNumber);
 
       expectFetchCalledWith("/api/destroy/42", {
-        method: "POST"
+        method: "POST",
+        headers: {}
       });
       expect(result).toEqual(mockResponse);
     });
@@ -306,7 +307,8 @@ describe("api", () => {
       const result = await api.promoteResource(resourceNumber);
 
       expectFetchCalledWith("/api/promote/42", {
-        method: "POST"
+        method: "POST",
+        headers: {}
       });
       expect(result).toEqual(mockResponse);
     });
