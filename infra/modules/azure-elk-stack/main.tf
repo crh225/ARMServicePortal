@@ -61,9 +61,10 @@ resource "azurerm_container_group" "elk" {
     }
 
     environment_variables = {
-      "discovery.type"         = "single-node"
-      "ES_JAVA_OPTS"          = "-Xms${var.elasticsearch_heap_size} -Xmx${var.elasticsearch_heap_size}"
-      "xpack.security.enabled" = "true"
+      "ES_JAVA_OPTS"       = "-Xms${var.elasticsearch_heap_size} -Xmx${var.elasticsearch_heap_size}"
+      "ELASTIC_USERNAME"   = "elastic"
+      "DISCOVERY_TYPE"     = "single-node"
+      "XPACK_SECURITY_ENABLED" = "true"
     }
 
     secure_environment_variables = {
