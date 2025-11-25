@@ -1,6 +1,43 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 /**
+ * Get LogRocket session URL if available
+ * LogRocket.getSessionURL() is async and returns via callback
+ */
+function getLogRocketSessionURL(callback) {
+  try {
+    if (window.LogRocket && typeof window.LogRocket.getSessionURL === 'function') {
+      window.LogRocket.getSessionURL(callback);
+      return;
+    }
+  } catch (e) {
+    // LogRocket not available or error getting session URL
+  }
+  callback(null);
+}
+
+/**
+ * Enhanced fetch that includes LogRocket session URL
+ */
+async function fetchWithLogRocket(url, options = {}) {
+  const headers = options.headers || {};
+
+  // Add LogRocket session URL if available (async)
+  return new Promise((resolve) => {
+    getLogRocketSessionURL((sessionURL) => {
+      if (sessionURL) {
+        headers['X-LogRocket-Session'] = sessionURL;
+      }
+
+      resolve(fetch(url, {
+        ...options,
+        headers
+      }));
+    });
+  });
+}
+
+/**
  * API service layer for all backend communication
  */
 const api = {
@@ -11,7 +48,7 @@ const api = {
    * Fetch all available blueprints from the catalog
    */
   async fetchBlueprints() {
-    const response = await fetch(`${API_BASE_URL}/api/catalog`);
+    const response = await fetchWithLogRocket(`${API_BASE_URL}/api/catalog`);
     if (!response.ok) {
       throw new Error("Failed to load blueprints");
     }
@@ -40,7 +77,7 @@ const api = {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/provision`, {
+    const response = await fetchWithLogRocket(`${API_BASE_URL}/api/provision`, {
       method: "POST",
       headers,
       body: JSON.stringify(body)
@@ -66,7 +103,7 @@ const api = {
    * Fetch all jobs
    */
   async fetchJobs() {
-    const response = await fetch(`${API_BASE_URL}/api/jobs`);
+    const response = await fetchWithLogRocket(`${API_BASE_URL}/api/jobs`);
     if (!response.ok) {
       throw new Error("Failed to load jobs");
     }
@@ -77,7 +114,7 @@ const api = {
    * Fetch detailed information for a specific job
    */
   async fetchJobDetail(jobNumber) {
-    const response = await fetch(`${API_BASE_URL}/api/jobs/${jobNumber}`);
+    const response = await fetchWithLogRocket(`${API_BASE_URL}/api/jobs/${jobNumber}`);
     if (!response.ok) {
       throw new Error("Failed to load job details");
     }
@@ -88,7 +125,7 @@ const api = {
    * Create a destroy PR for a deployed resource
    */
   async destroyResource(resourceNumber) {
-    const response = await fetch(`${API_BASE_URL}/api/destroy/${resourceNumber}`, {
+    const response = await fetchWithLogRocket(`${API_BASE_URL}/api/destroy/${resourceNumber}`, {
       method: "POST"
     });
     if (!response.ok) {
@@ -102,7 +139,7 @@ const api = {
    * Promote a deployed resource to the next environment
    */
   async promoteResource(resourceNumber) {
-    const response = await fetch(`${API_BASE_URL}/api/promote/${resourceNumber}`, {
+    const response = await fetchWithLogRocket(`${API_BASE_URL}/api/promote/${resourceNumber}`, {
       method: "POST"
     });
     if (!response.ok) {
@@ -118,7 +155,7 @@ const api = {
    * @param {object} variables - The Terraform variables
    */
   async getCostEstimate(blueprintId, variables) {
-    const response = await fetch(`${API_BASE_URL}/api/pricing/estimate`, {
+    const response = await fetchWithLogRocket(`${API_BASE_URL}/api/pricing/estimate`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -143,7 +180,7 @@ const api = {
     const url = new URL(`${API_BASE_URL}/api/resources`);
     url.searchParams.set("includeCosts", includeCosts.toString());
 
-    const response = await fetch(url);
+    const response = await fetchWithLogRocket(url);
     if (!response.ok) {
       throw new Error("Failed to load resources");
     }
@@ -167,7 +204,7 @@ const api = {
     }
 
     // Fetch fresh data
-    const response = await fetch(`${API_BASE_URL}/api/subscriptions`);
+    const response = await fetchWithLogRocket(`${API_BASE_URL}/api/subscriptions`);
     if (!response.ok) {
       throw new Error("Failed to load subscriptions");
     }
@@ -192,7 +229,7 @@ const api = {
       ? `${API_BASE_URL}/api/backups/${environment}`
       : `${API_BASE_URL}/api/backups`;
 
-    const response = await fetch(url);
+    const response = await fetchWithLogRocket(url);
     if (!response.ok) {
       throw new Error("Failed to load backups");
     }
@@ -207,7 +244,7 @@ const api = {
    * @returns {Promise<object>} Generated Terraform code and metadata
    */
   async generateTerraformCode(resourceId, useModules = true) {
-    const response = await fetch(`${API_BASE_URL}/api/terraform/generate`, {
+    const response = await fetchWithLogRocket(`${API_BASE_URL}/api/terraform/generate`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ resourceId, useModules })
