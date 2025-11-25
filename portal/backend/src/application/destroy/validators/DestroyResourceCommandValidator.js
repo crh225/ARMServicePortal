@@ -8,11 +8,11 @@ export class DestroyResourceCommandValidator extends IValidator {
   validate(command) {
     const result = new ValidationResult();
 
-    // Validate prNumber
-    if (!command.prNumber) {
-      result.addError("prNumber", "PR number is required");
-    } else if (!Number.isInteger(command.prNumber) || command.prNumber <= 0) {
-      result.addError("prNumber", "PR number must be a positive integer");
+    // Validate prNumberValue
+    if (!command.prNumberValue) {
+      result.addError("prNumberValue", "PR number is required");
+    } else if (!Number.isInteger(parseInt(command.prNumberValue))) {
+      result.addError("prNumberValue", "PR number must be a valid integer");
     }
 
     return result;
