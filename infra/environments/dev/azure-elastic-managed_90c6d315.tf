@@ -12,7 +12,7 @@ module "azure-elastic-managed_90c6d315" {
   tags = {
     armportal-environment = "dev"
     armportal-blueprint   = "azure-elastic-managed"
-    armportal-request-id  = "azure-elastic-managed_90c6d315"
+    armportal-request-id  = "155"
   }
 }
 
