@@ -1,0 +1,20 @@
+# Elasticsearch configuration for Azure Container Instances
+cluster.name: "elk-azure"
+node.name: "elasticsearch-node-1"
+
+# Network settings
+network.host: 0.0.0.0
+http.port: 9200
+
+# Discovery settings for single-node cluster
+discovery.type: single-node
+
+# Security settings
+xpack.security.enabled: true
+xpack.security.enrollment.enabled: false
+
+# Disable ML (not supported in containers with limited resources)
+xpack.ml.enabled: false
+
+# Monitoring
+xpack.monitoring.collection.enabled: true
