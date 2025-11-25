@@ -203,13 +203,14 @@ const api = {
   /**
    * Generate Terraform code for an Azure resource
    * @param {string} resourceId - Azure resource ID
+   * @param {boolean} [useModules=true] - If true, use blueprint modules; if false, generate raw resources
    * @returns {Promise<object>} Generated Terraform code and metadata
    */
-  async generateTerraformCode(resourceId) {
+  async generateTerraformCode(resourceId, useModules = true) {
     const response = await fetch(`${API_BASE_URL}/api/terraform/generate`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ resourceId })
+      body: JSON.stringify({ resourceId, useModules })
     });
 
     if (!response.ok) {

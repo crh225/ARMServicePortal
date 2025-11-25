@@ -421,16 +421,8 @@ function generateResourceSpecificConfig(tfResourceType, properties) {
  * @returns {string} Terraform resource configuration
  */
 function generateResourceConfiguration(tfResourceType, resource) {
-  // Try to use blueprint template first
-  const blueprintId = mapAzureTypeToBlueprint(resource.type);
-  if (blueprintId) {
-    const blueprintConfig = generateFromBlueprintTemplate(blueprintId, resource, tfResourceType);
-    if (blueprintConfig) {
-      return blueprintConfig;
-    }
-  }
-
-  // Fall back to generic generation
+  // Generate raw resource configuration (no blueprint templates)
+  // Blueprint module generation is now handled at a higher level in generateTerraformCode()
   const resourceName = generateTerraformResourceName(resource.name);
   const properties = redactSensitiveProperties(resource.properties || {});
 
@@ -524,32 +516,52 @@ export function generateTerraformCode(resource, useModules = true) {
   const resourceName = generateTerraformResourceName(resource.name);
   const blueprintId = mapAzureTypeToBlueprint(resource.type);
 
+  console.log(`[TerraformCodeGenerator] useModules: ${useModules}, blueprintId: ${blueprintId}, condition result: ${useModules && blueprintId}`);
+
   let importBlock;
   let resourceConfig;
   let notes;
 
   // Check if we should use blueprint modules AND we have a blueprint for this resource type
   if (useModules && blueprintId) {
+    console.log(`[TerraformCodeGenerator] Entering module generation branch`);
+
     const moduleName = `${blueprintId}_${resourceName}`;
 
-    // For module-based imports, the import targets the resource inside the module
-    // Most blueprints use "this" as the resource label
-    importBlock = generateModuleImportBlock(moduleName, tfResourceType, "this", resource.id);
-    resourceConfig = generateResourceConfiguration(tfResourceType, resource);
+    // Try to generate from blueprint template
+    resourceConfig = generateFromBlueprintTemplate(blueprintId, resource, tfResourceType);
 
-    notes = [
-      `This resource uses the "${blueprintId}" blueprint module`,
-      "The import block targets the resource within the module (usually labeled 'this')",
-      "After placing this code in infra/environments/<env>/, run:",
-      "",
-      `1. terraform import 'module.${moduleName}.${tfResourceType}.this' '${resource.id}'`,
-      "",
-      "2. terraform plan - to verify the import matches the module configuration",
-      "",
-      "Review and adjust module variables to match your existing resource configuration",
-      "The module may create additional resources (diagnostic settings, role assignments, etc.)"
-    ];
+    // If template generation failed (template not found), fall back to raw resource
+    if (!resourceConfig) {
+      console.log(`[TerraformCodeGenerator] Blueprint template not found for "${blueprintId}", falling back to raw resource`);
+      importBlock = generateImportBlock(tfResourceType, resourceName, resource.id);
+      resourceConfig = generateResourceConfiguration(tfResourceType, resource);
+
+      notes = [
+        "Review the generated configuration carefully before applying",
+        "Search for ****_UPDATE_**** placeholders and replace with actual values (passwords, keys, secrets, etc.)",
+        "Additional properties may be required based on your resource configuration",
+        "Run 'terraform import' first, then 'terraform plan' to validate the configuration"
+      ];
+    } else {
+      // Module generation succeeded
+      importBlock = generateModuleImportBlock(moduleName, tfResourceType, "this", resource.id);
+
+      notes = [
+        `This resource uses the "${blueprintId}" blueprint module`,
+        "The import block targets the resource within the module (usually labeled 'this')",
+        "After placing this code in infra/environments/<env>/, run:",
+        "",
+        `1. terraform import 'module.${moduleName}.${tfResourceType}.this' '${resource.id}'`,
+        "",
+        "2. terraform plan - to verify the import matches the module configuration",
+        "",
+        "Review and adjust module variables to match your existing resource configuration",
+        "The module may create additional resources (diagnostic settings, role assignments, etc.)"
+      ];
+    }
   } else {
+    console.log(`[TerraformCodeGenerator] Entering raw resource generation branch (useModules=${useModules}, blueprintId=${blueprintId})`);
     // Fall back to direct resource import (no blueprint)
     importBlock = generateImportBlock(tfResourceType, resourceName, resource.id);
     resourceConfig = generateResourceConfiguration(tfResourceType, resource);

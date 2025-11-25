@@ -25,6 +25,8 @@ export const generateTerraformCode = asyncHandler(async (req, res) => {
   const useModulesParam = req.body?.useModules ?? req.query.useModules ?? 'true';
   const useModules = useModulesParam === 'true' || useModulesParam === true;
 
+  console.log(`[Terraform] Received request - resourceId: ${resourceId}, useModulesParam: ${useModulesParam}, useModules: ${useModules}`);
+
   const query = new GenerateTerraformCodeQuery(resourceId, useModules);
   const result = await mediator.send(query);
 
