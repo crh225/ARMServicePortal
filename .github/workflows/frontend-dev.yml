@@ -60,7 +60,7 @@ jobs:
       - name: Build
         working-directory: portal/frontend
         env:
-          VITE_API_URL: https://portal-api.chrishouse.io
+          VITE_API_BASE_URL: https://portal-api.chrishouse.io
         run: npm run build
 
       - name: Azure login
