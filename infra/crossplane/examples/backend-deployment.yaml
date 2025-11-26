@@ -42,15 +42,13 @@ metadata:
   namespace: armportal-backend
 data:
   NODE_ENV: "production"
-  # TODO: Update these with your actual values
   GH_INFRA_OWNER: "crh225"
   GH_INFRA_REPO: "ARMServicePortal"
-  GH_APP_ID: "your-app-id"
-  GH_INSTALLATION_ID: "your-installation-id"
   FRONTEND_URL: "https://portal.chrishouse.io"
   APP_NAME: "arm-service-portal"
-  # Elasticsearch URL - TODO: Update with actual value
-  ELASTICSEARCH_URL: "your-elasticsearch-endpoint"
+  APP_URL: "https://portal-api.chrishouse.io"
+  ELASTICSEARCH_URL: "https://es-test-az-elk-managed-dev-5a6e80.es.eastus2.azure.elastic-cloud.com:9243"
+  LOG_ANALYTICS_WORKSPACE_ID: "c200dcd8-f350-4895-99c0-1a0828fe7384"
 
 ---
 # Secret for sensitive environment variables
