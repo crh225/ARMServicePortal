@@ -25,11 +25,6 @@ resource "azurerm_kubernetes_cluster" "crossplane" {
     node_count = 1
     vm_size    = "Standard_B2s"
 
-    # Enable auto-scaling for cost optimization
-    min_count = 1
-    max_count = 2
-    enable_auto_scaling = true
-
     tags = {
       environment = "dev"
       purpose     = "crossplane"
