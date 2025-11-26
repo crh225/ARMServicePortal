@@ -1,0 +1,87 @@
+# AKS Cluster for Crossplane Demo
+# This cluster hosts Crossplane for Kubernetes-native infrastructure provisioning
+
+resource "azurerm_resource_group" "aks_crossplane" {
+  name     = "rg-armportal-aks-crossplane-dev"
+  location = "East US"
+
+  tags = {
+    environment = "dev"
+    purpose     = "crossplane-demo"
+    managed_by  = "terraform"
+  }
+}
+
+resource "azurerm_kubernetes_cluster" "crossplane" {
+  name                = "aks-armportal-crossplane-dev"
+  location            = azurerm_resource_group.aks_crossplane.location
+  resource_group_name = azurerm_resource_group.aks_crossplane.name
+  dns_prefix          = "crossplane-dev"
+
+  # Cost-optimized for demo purposes
+  # B2s = 2 vCPU, 4GB RAM - sufficient for Crossplane
+  default_node_pool {
+    name       = "default"
+    node_count = 1
+    vm_size    = "Standard_B2s"
+
+    # Enable auto-scaling for cost optimization
+    min_count = 1
+    max_count = 2
+    enable_auto_scaling = true
+
+    tags = {
+      environment = "dev"
+      purpose     = "crossplane"
+    }
+  }
+
+  # Use system-assigned managed identity
+  # This identity will be used by Crossplane to provision Azure resources
+  identity {
+    type = "SystemAssigned"
+  }
+
+  # Enable RBAC
+  role_based_access_control_enabled = true
+
+  # Network settings
+  network_profile {
+    network_plugin = "azure"
+    network_policy = "azure"
+    service_cidr   = "10.0.0.0/16"
+    dns_service_ip = "10.0.0.10"
+  }
+
+  tags = {
+    environment = "dev"
+    purpose     = "crossplane-demo"
+    managed_by  = "terraform"
+  }
+}
+
+# Assign Contributor role to AKS managed identity for Azure resource provisioning
+# This allows Crossplane running in AKS to create Azure resources
+resource "azurerm_role_assignment" "aks_crossplane_contributor" {
+  scope                = "/subscriptions/f989de0f-8697-4a05-8c34-b82c941767c0"
+  role_definition_name = "Contributor"
+  principal_id         = azurerm_kubernetes_cluster.crossplane.identity[0].principal_id
+}
+
+# Output the kubeconfig for accessing the cluster
+output "aks_crossplane_kubeconfig" {
+  value     = azurerm_kubernetes_cluster.crossplane.kube_config_raw
+  sensitive = true
+}
+
+output "aks_crossplane_name" {
+  value = azurerm_kubernetes_cluster.crossplane.name
+}
+
+output "aks_crossplane_resource_group" {
+  value = azurerm_resource_group.aks_crossplane.name
+}
+
+output "aks_crossplane_principal_id" {
+  value = azurerm_kubernetes_cluster.crossplane.identity[0].principal_id
+}
