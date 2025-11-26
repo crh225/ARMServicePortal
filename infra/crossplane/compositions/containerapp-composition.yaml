@@ -1,0 +1,91 @@
+# Composition for Azure Container App
+# Maps XContainerApp to actual Azure Container App resources
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xcontainerapps.armportal.io
+  labels:
+    crossplane.io/xrd: xcontainerapps.armportal.io
+spec:
+  writeConnectionSecretsToNamespace: crossplane-system
+  compositeTypeRef:
+    apiVersion: armportal.io/v1alpha1
+    kind: XContainerApp
+  mode: Pipeline
+  pipeline:
+    - step: patch-and-transform
+      functionRef:
+        name: function-patch-and-transform
+      input:
+        apiVersion: pt.fn.crossplane.io/v1beta1
+        kind: Resources
+        resources:
+          - name: containerapp
+            base:
+              apiVersion: containerapp.azure.upbound.io/v1beta1
+              kind: App
+              spec:
+                forProvider:
+                  location: "East US"
+                  resourceGroupName: ""
+                  containerAppEnvironmentId: ""
+                  revision:
+                    - revisionSuffix: "v1"
+                      template:
+                        - container:
+                            - name: "main"
+                              image: ""
+                              cpu: 0.5
+                              memory: "1Gi"
+                          minReplicas: 1
+                          maxReplicas: 10
+                  ingress:
+                    - externalEnabled: true
+                      targetPort: 80
+                      traffic:
+                        - latestRevision: true
+                          percentage: 100
+            patches:
+              # Basic metadata
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.appName
+                toFieldPath: metadata.annotations[crossplane.io/external-name]
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.location
+                toFieldPath: spec.forProvider.location
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.resourceGroupName
+                toFieldPath: spec.forProvider.resourceGroupName
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.environmentId
+                toFieldPath: spec.forProvider.containerAppEnvironmentId
+
+              # Container configuration
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.containerImage
+                toFieldPath: spec.forProvider.revision[0].template[0].container[0].image
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.appName
+                toFieldPath: spec.forProvider.revision[0].template[0].container[0].name
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.cpu
+                toFieldPath: spec.forProvider.revision[0].template[0].container[0].cpu
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.memory
+                toFieldPath: spec.forProvider.revision[0].template[0].container[0].memory
+
+              # Scaling
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.minReplicas
+                toFieldPath: spec.forProvider.revision[0].template[0].minReplicas
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.maxReplicas
+                toFieldPath: spec.forProvider.revision[0].template[0].maxReplicas
+
+              # Ingress configuration
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.containerPort
+                toFieldPath: spec.forProvider.ingress[0].targetPort
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.externalIngress
+                toFieldPath: spec.forProvider.ingress[0].externalEnabled

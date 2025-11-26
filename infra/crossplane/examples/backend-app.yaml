@@ -1,0 +1,36 @@
+# Example: Deploy ARMServicePortal backend to Azure Container Apps using Crossplane
+#
+# NOTE: This requires a container environment to be created first.
+# Apply containerapp-environment.yaml before this file.
+#
+# You'll need to:
+# 1. Build and push your backend Docker image to a container registry
+# 2. Update the containerImage below with your image path
+# 3. Get the environment ID from the environment resource
+
+apiVersion: armportal.io/v1alpha1
+kind: ContainerApp
+metadata:
+  name: armportal-backend
+  namespace: default
+spec:
+  parameters:
+    appName: armportal-backend
+    resourceGroupName: rg-armportal-crossplane-demo
+    location: "East US"
+    # Replace this with your actual environment ID after creating the environment
+    # Get it with: kubectl get containerenvironment demo-environment -o jsonpath='{.status.environmentId}'
+    environmentId: "/subscriptions/YOUR_SUBSCRIPTION_ID/resourceGroups/rg-armportal-crossplane-demo/providers/Microsoft.App/managedEnvironments/armportal-demo-env"
+    # Replace with your actual container image
+    containerImage: "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest"
+    containerPort: 3000
+    cpu: 0.5
+    memory: "1Gi"
+    minReplicas: 1
+    maxReplicas: 3
+    ingressEnabled: true
+    externalIngress: true
+    # Add environment variables your backend needs
+    # environmentVariables:
+    #   NODE_ENV: "production"
+    #   PORT: "3000"

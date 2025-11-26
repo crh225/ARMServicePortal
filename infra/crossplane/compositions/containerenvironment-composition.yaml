@@ -1,0 +1,44 @@
+# Composition for Azure Container Apps Environment
+# Maps XContainerEnvironment to actual Azure Container Apps Environment
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xcontainerenvironments.armportal.io
+  labels:
+    crossplane.io/xrd: xcontainerenvironments.armportal.io
+spec:
+  writeConnectionSecretsToNamespace: crossplane-system
+  compositeTypeRef:
+    apiVersion: armportal.io/v1alpha1
+    kind: XContainerEnvironment
+  mode: Pipeline
+  pipeline:
+    - step: patch-and-transform
+      functionRef:
+        name: function-patch-and-transform
+      input:
+        apiVersion: pt.fn.crossplane.io/v1beta1
+        kind: Resources
+        resources:
+          - name: environment
+            base:
+              apiVersion: containerapp.azure.upbound.io/v1beta1
+              kind: Environment
+              spec:
+                forProvider:
+                  location: "East US"
+                  resourceGroupName: ""
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.environmentName
+                toFieldPath: metadata.annotations[crossplane.io/external-name]
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.location
+                toFieldPath: spec.forProvider.location
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.resourceGroupName
+                toFieldPath: spec.forProvider.resourceGroupName
+              # Output the environment ID to status
+              - type: ToCompositeFieldPath
+                fromFieldPath: status.atProvider.id
+                toFieldPath: status.environmentId
