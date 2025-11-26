@@ -42,8 +42,11 @@ metadata:
   namespace: armportal-backend
 data:
   NODE_ENV: "production"
+  GH_APP_ID: "2298250"
+  GH_INSTALLATION_ID: "94912535"
   GH_INFRA_OWNER: "crh225"
   GH_INFRA_REPO: "ARMServicePortal"
+  GH_OAUTH_CLIENT_ID: "Ov23liHgcQ7urCFXPs2k"
   FRONTEND_URL: "https://portal.chrishouse.io"
   APP_NAME: "arm-service-portal"
   APP_URL: "https://portal-api.chrishouse.io"
@@ -59,10 +62,11 @@ metadata:
   namespace: armportal-backend
 type: Opaque
 stringData:
-  # TODO: Update these with actual base64-encoded values
+  # TODO: Update GH_APP_PRIVATE_KEY_BASE64 with actual value from GitHub App
   GH_APP_PRIVATE_KEY_BASE64: "your-github-app-private-key-base64"
-  GITHUB_WEBHOOK_SECRET: "your-webhook-secret"
-  ELASTICSEARCH_API_KEY: "your-elasticsearch-api-key"
+  GH_OAUTH_CLIENT_SECRET: "b5a0b4c26388148baaaa6451a53875c04e07796d"
+  GITHUB_WEBHOOK_SECRET: "14906bececd6aa1b4bc6eee4a4f54806118d6f2648c1a0cbe9207f3b45d28199"
+  ELASTICSEARCH_API_KEY: "UHUtNXZKb0JXWDcxN0d3UjFXU2E6R2Y5cXI0UU5xVEZBLXdSUVhuOVpXZw=="
 
 ---
 # Deployment for the backend application
@@ -107,6 +111,11 @@ spec:
             secretKeyRef:
               name: backend-secrets
               key: GH_APP_PRIVATE_KEY_BASE64
+        - name: GH_OAUTH_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: backend-secrets
+              key: GH_OAUTH_CLIENT_SECRET
         - name: GITHUB_WEBHOOK_SECRET
           valueFrom:
             secretKeyRef:
