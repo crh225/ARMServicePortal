@@ -6,12 +6,13 @@ resource "azurerm_resource_group" "aks_crossplane" {
   location = "East US"
 
   tags = {
-    environment = "dev"
-    purpose     = "crossplane-demo"
-    managed_by  = "terraform"
+    armportal-environment = "dev"
+    armportal-blueprint   = "tfstate-infrastructure"
+    armportal-request-id  = "PERMANENT"
+    armportal-owner       = "platform-team"
+    purpose           = "crossplane-demo"
   }
 }
-
 resource "azurerm_kubernetes_cluster" "crossplane" {
   name                = "aks-armportal-crossplane-dev"
   location            = azurerm_resource_group.aks_crossplane.location
@@ -49,9 +50,24 @@ resource "azurerm_kubernetes_cluster" "crossplane" {
   }
 
   tags = {
-    environment = "dev"
-    purpose     = "crossplane-demo"
-    managed_by  = "terraform"
+    armportal-environment        = "dev"
+    purpose            = "crossplane-demo"
+    managed_by         = "terraform"
+    arm_portal_managed = "true"
+    armportal-owner       = "platform-team"
+    armportal-request-id  = "PERMANENT"
+    armportal-blueprint   = "tfstate-infrastructure"
+  }
+
+  # Tags for the managed infrastructure resource group
+  node_resource_group_tags = {
+    armportal-environment        = "dev"
+    purpose            = "crossplane-infrastructure"
+    managed_by         = "aks"
+    arm_portal_managed = "true"
+    armportal-owner       = "platform-team"
+    armportal-request-id  = "PERMANENT"
+    armportal-blueprint   = "tfstate-infrastructure"
   }
 }
 
