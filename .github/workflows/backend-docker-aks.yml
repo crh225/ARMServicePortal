@@ -1,0 +1,81 @@
+name: Backend Docker Build (AKS)
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - "portal/backend/**"
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    env:
+      NODE_VERSION: 20.x
+      ACR_NAME: armportalacre4k9
+      IMAGE_NAME: armportal-backend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          auth-type: SERVICE_PRINCIPAL
+          allow-no-subscriptions: false
+          environment: azurecloud
+          audience: api://AzureADTokenExchange
+
+      - name: Get ACR login server
+        id: acr
+        run: |
+          LOGIN_SERVER=$(az acr show -n $ACR_NAME --query loginServer -o tsv)
+          echo "login_server=$LOGIN_SERVER" >> $GITHUB_OUTPUT
+
+      - name: Build and push Docker image
+        run: |
+          LOGIN_SERVER="${{ steps.acr.outputs.login_server }}"
+          IMAGE_SHA="$LOGIN_SERVER/$IMAGE_NAME:${{ github.sha }}"
+          IMAGE_LATEST="$LOGIN_SERVER/$IMAGE_NAME:latest"
+
+          echo "Building Docker image..."
+          echo "Image with SHA: $IMAGE_SHA"
+          echo "Image latest: $IMAGE_LATEST"
+
+          # Build the Docker image
+          docker build \
+            -t "$IMAGE_SHA" \
+            -t "$IMAGE_LATEST" \
+            -f portal/backend/Dockerfile \
+            portal/backend
+
+          # Login to ACR
+          az acr login --name $ACR_NAME
+
+          # Push both tags
+          echo "Pushing image with SHA tag..."
+          docker push "$IMAGE_SHA"
+
+          echo "Pushing image with latest tag..."
+          docker push "$IMAGE_LATEST"
+
+          echo "✅ Successfully pushed images to ACR"
+          echo "  - $IMAGE_SHA"
+          echo "  - $IMAGE_LATEST"
+
+      - name: Trigger AKS deployment restart (optional)
+        run: |
+          echo "To deploy this image to AKS, run:"
+          echo "kubectl rollout restart deployment armportal-backend -n armportal-backend"
+          echo ""
+          echo "Or update the deployment to use the specific SHA:"
+          echo "kubectl set image deployment/armportal-backend armportal-api=${{ steps.acr.outputs.login_server }}/${{ env.IMAGE_NAME }}:${{ github.sha }} -n armportal-backend"
