@@ -15,7 +15,7 @@ on:
 
 permissions:
   id-token: write
-  contents: read
+  contents: write  # Need write to update deployment manifest
 
 jobs:
   build-and-push:
@@ -25,8 +25,9 @@ jobs:
       NODE_VERSION: 20.x
       ACR_NAME: armportalacre4k9
       IMAGE_NAME: armportal-backend
-      AKS_CLUSTER_NAME: armportal-crossplane-aks
-      AKS_RESOURCE_GROUP: rg-armportal-crossplane
+      # Note: AKS cluster details below - not used in GitOps workflow
+      # AKS_CLUSTER_NAME: aks-armportal-crossplane-dev
+      # AKS_RESOURCE_GROUP: rg-armportal-aks-crossplane-dev
 
     steps:
       - name: Checkout
@@ -80,30 +81,54 @@ jobs:
           echo "  - $IMAGE_SHA"
           echo "  - $IMAGE_LATEST"
 
-      - name: Get AKS credentials
+      - name: Update deployment manifest with new image tag (GitOps)
         if: ${{ github.event.inputs.trigger_rollout == 'true' || github.event_name == 'push' }}
         run: |
-          az aks get-credentials \
-            --resource-group ${{ env.AKS_RESOURCE_GROUP }} \
-            --name ${{ env.AKS_CLUSTER_NAME }} \
-            --overwrite-existing
+          LOGIN_SERVER="${{ steps.acr.outputs.login_server }}"
+          NEW_IMAGE="$LOGIN_SERVER/$IMAGE_NAME:${{ github.sha }}"
 
-      - name: Trigger AKS deployment rollout restart
-        if: ${{ github.event.inputs.trigger_rollout == 'true' || github.event_name == 'push' }}
-        run: |
-          echo "Triggering rollout restart for armportal-backend deployment..."
-          kubectl rollout restart deployment armportal-backend -n armportal-backend
+          echo "Updating deployment manifest with new image: $NEW_IMAGE"
 
-          echo "Waiting for rollout to complete..."
-          kubectl rollout status deployment armportal-backend -n armportal-backend --timeout=5m
+          # Update the image tag in the deployment manifest
+          sed -i "s|image: armportalacre4k9.azurecr.io/armportal-backend:.*|image: $NEW_IMAGE|g" \
+            infra/crossplane/examples/backend-deployment.yaml
 
-          echo "✅ Deployment rollout completed successfully!"
+          # Configure Git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Deployment instructions (manual trigger with rollout disabled)
+          # Commit and push the change
+          git add infra/crossplane/examples/backend-deployment.yaml
+          git commit -m "chore: update backend image to ${{ github.sha }}
+
+          Automated deployment update from GitHub Actions
+          Image: $NEW_IMAGE
+
+          Triggered by: ${{ github.event_name }}
+          Workflow: ${{ github.workflow }}
+          Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          git push
+
+          echo "✅ Deployment manifest updated in Git"
+          echo "🔄 Argo CD will automatically sync this change to the cluster"
+          echo ""
+          echo "Monitor deployment:"
+          echo "  kubectl get pods -n armportal-backend -w"
+          echo ""
+          echo "View in Argo CD:"
+          echo "  kubectl port-forward svc/argocd-server -n argocd 8080:443"
+
+      - name: GitOps deployment skipped
         if: ${{ github.event.inputs.trigger_rollout == 'false' }}
         run: |
-          echo "Rollout restart was disabled. To deploy this image to AKS, run:"
-          echo "kubectl rollout restart deployment armportal-backend -n armportal-backend"
+          echo "GitOps deployment update was disabled."
           echo ""
-          echo "Or update the deployment to use the specific SHA:"
-          echo "kubectl set image deployment/armportal-backend armportal-api=${{ steps.acr.outputs.login_server }}/${{ env.IMAGE_NAME }}:${{ github.sha }} -n armportal-backend"
+          echo "Image built and pushed:"
+          echo "  ${{ steps.acr.outputs.login_server }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+          echo ""
+          echo "To deploy manually, update the deployment manifest:"
+          echo "  image: ${{ steps.acr.outputs.login_server }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+          echo ""
+          echo "Or use kubectl (not recommended with GitOps):"
+          echo "  kubectl set image deployment/armportal-backend armportal-api=${{ steps.acr.outputs.login_server }}/${{ env.IMAGE_NAME }}:${{ github.sha }} -n armportal-backend"
