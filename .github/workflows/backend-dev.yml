@@ -110,7 +110,7 @@ jobs:
               GH_OAUTH_CLIENT_ID="${{ secrets.GH_OAUTH_CLIENT_ID }}" \
               GH_OAUTH_CLIENT_SECRET=secretref:gh-oauth-secret \
               GITHUB_WEBHOOK_SECRET=secretref:gh-webhook-secret \
-              APP_URL="https://armportal-api-dev.kindisland-0c7a7c9a.eastus2.azurecontainerapps.io" \
+              APP_URL="https://portal-api.chrishouse.io" \
               FRONTEND_URL="https://portal.chrishouse.io" \
               LOG_ANALYTICS_WORKSPACE_ID="c200dcd8-f350-4895-99c0-1a0828fe7384" \
               ELASTICSEARCH_URL="https://es-test-az-elk-managed-dev-5a6e80.es.eastus2.azure.elastic-cloud.com:9243" \
