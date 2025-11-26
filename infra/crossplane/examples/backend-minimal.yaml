@@ -1,5 +1,3 @@
-# Minimal Kubernetes Deployment for ARMServicePortal Backend
-# This is a simplified version for quick testing - secrets can be added later
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -80,7 +78,7 @@ metadata:
   name: armportal-backend
   namespace: armportal-backend
 spec:
-  type: ClusterIP
+  type: LoadBalancer
   ports:
   - port: 80
     targetPort: 4000

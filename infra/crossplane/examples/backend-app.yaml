@@ -1,21 +1,3 @@
-# Example: Deploy ARMServicePortal backend to Azure Container Apps using Crossplane
-#
-# This example mirrors your existing Terraform deployment in:
-# infra/environments/dev/backend-containerapps.tf
-#
-# PREREQUISITES:
-# 1. Container environment must be created first (apply containerapp-environment.yaml)
-# 2. Build and push your backend Docker image to ACR:
-#    cd portal/backend
-#    docker build -t armportalacr<suffix>.azurecr.io/armportal-api:latest .
-#    docker push armportalacr<suffix>.azurecr.io/armportal-api:latest
-# 3. Get environment ID: kubectl get containerenvironment demo-environment -o jsonpath='{.status.environmentId}'
-#
-# REUSABLE FROM YOUR EXISTING SETUP:
-# - Dockerfile: portal/backend/Dockerfile (already configured for port 4000)
-# - Health check endpoint: /api/health (already exists in your backend)
-# - Environment variables: see backend-containerapps.tf for complete list
-
 apiVersion: armportal.io/v1alpha1
 kind: ContainerApp
 metadata:

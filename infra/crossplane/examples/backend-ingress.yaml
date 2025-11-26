@@ -1,0 +1,22 @@
+# Ingress for exposing ARMServicePortal backend externally
+# This uses NGINX Ingress Controller to route traffic to the backend service
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: armportal-backend
+  namespace: armportal-backend
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: armportal-backend
+            port:
+              number: 80
