@@ -58,17 +58,6 @@ resource "azurerm_kubernetes_cluster" "crossplane" {
     armportal-request-id  = "PERMANENT"
     armportal-blueprint   = "tfstate-infrastructure"
   }
-
-  # Tags for the managed infrastructure resource group
-  node_resource_group_tags = {
-    armportal-environment        = "dev"
-    purpose            = "crossplane-infrastructure"
-    managed_by         = "aks"
-    arm_portal_managed = "true"
-    armportal-owner       = "platform-team"
-    armportal-request-id  = "PERMANENT"
-    armportal-blueprint   = "tfstate-infrastructure"
-  }
 }
 
 # Assign Contributor role to AKS managed identity for Azure resource provisioning
