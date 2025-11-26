@@ -64,6 +64,7 @@ metadata:
     app: armportal-backend
     environment: dev
 spec:
+  revisionHistoryLimit: 5  # Keep only last 5 ReplicaSets for rollback
   replicas: 2  # Matches your Container Apps configuration (min: 1, max: 2)
   selector:
     matchLabels:
