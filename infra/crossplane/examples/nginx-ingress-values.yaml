@@ -1,0 +1,10 @@
+# Helm values for NGINX Ingress Controller
+# This file fixes the Git Bash path conversion issue on Windows
+# by explicitly setting the health probe path annotation
+---
+controller:
+  service:
+    annotations:
+      # Azure LoadBalancer health probe configuration
+      # Important: Use quoted string to prevent Git Bash from converting the path
+      service.beta.kubernetes.io/azure-load-balancer-health-probe-request-path: "/healthz"
