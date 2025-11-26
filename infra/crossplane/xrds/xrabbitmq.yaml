@@ -1,0 +1,57 @@
+# Composite Resource Definition for RabbitMQ on Azure Container Instances
+# Defines the API schema for XRabbitMQ custom resources
+
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xrabbitmq.armportal.io
+spec:
+  group: armportal.io
+  names:
+    kind: XRabbitMQ
+    plural: xrabbitmq
+  claimNames:
+    kind: RabbitMQ
+    plural: rabbitmqs
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                parameters:
+                  type: object
+                  properties:
+                    location:
+                      type: string
+                      description: Azure region for the RabbitMQ instance
+                      default: "East US"
+                    cpu:
+                      type: number
+                      description: CPU cores (0.5-4)
+                      minimum: 0.5
+                      maximum: 4
+                      default: 1
+                    memory:
+                      type: number
+                      description: Memory in GB (0.5-16)
+                      minimum: 0.5
+                      maximum: 16
+                      default: 1.5
+                    resourceGroupName:
+                      type: string
+                      description: Resource group name
+                    containerGroupName:
+                      type: string
+                      description: Container group name (1-63 lowercase alphanumeric and hyphens)
+                      pattern: '^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$'
+                  required:
+                    - resourceGroupName
+                    - containerGroupName
+              required:
+                - parameters

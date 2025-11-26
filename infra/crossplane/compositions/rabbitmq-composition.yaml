@@ -1,0 +1,64 @@
+# Composition for RabbitMQ on Azure Container Instances
+# Maps XRabbitMQ to actual Azure Container Instance resources
+
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xrabbitmq.armportal.io
+  labels:
+    crossplane.io/xrd: xrabbitmq.armportal.io
+spec:
+  writeConnectionSecretsToNamespace: crossplane-system
+  compositeTypeRef:
+    apiVersion: armportal.io/v1alpha1
+    kind: XRabbitMQ
+  mode: Pipeline
+  pipeline:
+    - step: patch-and-transform
+      functionRef:
+        name: function-patch-and-transform
+      input:
+        apiVersion: pt.fn.crossplane.io/v1beta1
+        kind: Resources
+        resources:
+          - name: rabbitmq-container
+            base:
+              apiVersion: containerinstance.azure.upbound.io/v1beta1
+              kind: ContainerGroup
+              spec:
+                forProvider:
+                  location: "East US"
+                  osType: Linux
+                  restartPolicy: Always
+                  ipAddressType: Public
+                  container:
+                    - name: rabbitmq
+                      image: rabbitmq:3-management
+                      cpu: 1
+                      memory: 1.5
+                      ports:
+                        - port: 5672
+                          protocol: TCP
+                        - port: 15672
+                          protocol: TCP
+                      environmentVariables:
+                        - name: RABBITMQ_DEFAULT_USER
+                          value: admin
+                        - name: RABBITMQ_DEFAULT_PASS
+                          value: Password123!
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.containerGroupName
+                toFieldPath: metadata.annotations[crossplane.io/external-name]
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.location
+                toFieldPath: spec.forProvider.location
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.resourceGroupName
+                toFieldPath: spec.forProvider.resourceGroupName
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.cpu
+                toFieldPath: spec.forProvider.container[0].cpu
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.memory
+                toFieldPath: spec.forProvider.container[0].memory

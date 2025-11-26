@@ -1,0 +1,60 @@
+# Composite Resource Definition for Azure Cache for Redis
+# Defines the API schema for XRedis custom resources
+
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xredis.armportal.io
+spec:
+  group: armportal.io
+  names:
+    kind: XRedis
+    plural: xredis
+  claimNames:
+    kind: RedisCache
+    plural: rediscaches
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                parameters:
+                  type: object
+                  properties:
+                    location:
+                      type: string
+                      description: Azure region for the Redis cache
+                      default: "East US"
+                    sku:
+                      type: string
+                      description: Redis SKU (Basic, Standard, Premium)
+                      enum: ["Basic", "Standard", "Premium"]
+                      default: "Basic"
+                    capacity:
+                      type: integer
+                      description: Size of Redis cache (0-6 for Basic/Standard, 1-5 for Premium)
+                      minimum: 0
+                      maximum: 6
+                      default: 0
+                    resourceGroupName:
+                      type: string
+                      description: Resource group name
+                    redisName:
+                      type: string
+                      description: Redis cache name (1-63 lowercase alphanumeric and hyphens)
+                      pattern: '^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$'
+                    enableNonSslPort:
+                      type: boolean
+                      description: Enable non-SSL port (6379)
+                      default: false
+                  required:
+                    - resourceGroupName
+                    - redisName
+              required:
+                - parameters

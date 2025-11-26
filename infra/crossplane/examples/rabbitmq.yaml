@@ -1,0 +1,15 @@
+# Example: Provision RabbitMQ on Azure Container Instances using Crossplane
+# This demonstrates how to create RabbitMQ using Kubernetes-native APIs
+
+apiVersion: armportal.io/v1alpha1
+kind: RabbitMQ
+metadata:
+  name: demo-rabbitmq
+  namespace: default
+spec:
+  parameters:
+    resourceGroupName: rg-armportal-crossplane-demo
+    containerGroupName: armportal-demo-rabbitmq
+    location: "East US"
+    cpu: 1
+    memory: 1.5

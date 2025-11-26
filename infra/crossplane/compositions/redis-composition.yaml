@@ -1,0 +1,71 @@
+# Composition for Azure Cache for Redis
+# Maps XRedis to actual Azure Redis Cache resources
+
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xredis.armportal.io
+  labels:
+    crossplane.io/xrd: xredis.armportal.io
+spec:
+  writeConnectionSecretsToNamespace: crossplane-system
+  compositeTypeRef:
+    apiVersion: armportal.io/v1alpha1
+    kind: XRedis
+  mode: Pipeline
+  pipeline:
+    - step: patch-and-transform
+      functionRef:
+        name: function-patch-and-transform
+      input:
+        apiVersion: pt.fn.crossplane.io/v1beta1
+        kind: Resources
+        resources:
+          - name: redis
+            base:
+              apiVersion: cache.azure.upbound.io/v1beta1
+              kind: RedisCache
+              spec:
+                forProvider:
+                  capacity: 0
+                  family: C
+                  location: "East US"
+                  skuName: Basic
+                  enableNonSslPort: false
+                  minimumTlsVersion: "1.2"
+                  publicNetworkAccessEnabled: true
+                  redisVersion: "6"
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.redisName
+                toFieldPath: metadata.annotations[crossplane.io/external-name]
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.location
+                toFieldPath: spec.forProvider.location
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.sku
+                toFieldPath: spec.forProvider.skuName
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.capacity
+                toFieldPath: spec.forProvider.capacity
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.resourceGroupName
+                toFieldPath: spec.forProvider.resourceGroupName
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.enableNonSslPort
+                toFieldPath: spec.forProvider.enableNonSslPort
+              # Set family based on SKU
+              - type: CombineFromComposite
+                combine:
+                  variables:
+                    - fromFieldPath: spec.parameters.sku
+                  strategy: string
+                  string:
+                    fmt: "%s"
+                toFieldPath: spec.forProvider.family
+                transforms:
+                  - type: map
+                    map:
+                      Basic: C
+                      Standard: C
+                      Premium: P

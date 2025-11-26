@@ -1,0 +1,16 @@
+# Example: Provision Azure Cache for Redis using Crossplane
+# This demonstrates how to create Redis cache using Kubernetes-native APIs
+
+apiVersion: armportal.io/v1alpha1
+kind: RedisCache
+metadata:
+  name: demo-redis
+  namespace: default
+spec:
+  parameters:
+    resourceGroupName: rg-armportal-crossplane-demo
+    redisName: armportal-demo-redis
+    location: "East US"
+    sku: Basic
+    capacity: 0
+    enableNonSslPort: false
