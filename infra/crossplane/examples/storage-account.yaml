@@ -1,10 +1,10 @@
-# Example: Provision a Storage Account using Crossplane
+# Provision a Storage Account using Crossplane
 # This demonstrates how to create Azure resources using Kubernetes-native APIs
 
 apiVersion: armportal.io/v1alpha1
 kind: StorageAccount
 metadata:
-  name: demo-sa
+  name: portal-sa
   namespace: default
 spec:
   parameters:
