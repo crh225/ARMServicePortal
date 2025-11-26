@@ -111,7 +111,27 @@ jobs:
           git push
 
           echo "✅ Deployment manifest updated in Git"
-          echo "🔄 Argo CD will automatically sync this change to the cluster"
+          echo "🔄 Triggering Argo CD refresh..."
+
+      - name: Set up kubectl for AKS
+        if: ${{ github.event.inputs.trigger_rollout == 'true' || github.event_name == 'push' }}
+        run: |
+          az aks get-credentials \
+            --resource-group rg-armportal-aks-crossplane-dev \
+            --name aks-armportal-crossplane-dev \
+            --overwrite-existing
+
+      - name: Trigger Argo CD refresh
+        if: ${{ github.event.inputs.trigger_rollout == 'true' || github.event_name == 'push' }}
+        run: |
+          # Tell Argo CD to check Git immediately instead of waiting for the 3-minute poll
+          kubectl patch app armportal-backend -n argocd \
+            --type json \
+            -p='[{"op": "replace", "path": "/operation", "value": {"sync": {"revision": "main"}}}]' \
+            || echo "Note: Argo CD will sync within 3 minutes if patch failed"
+
+          echo ""
+          echo "✅ Argo CD refresh triggered"
           echo ""
           echo "Monitor deployment:"
           echo "  kubectl get pods -n armportal-backend -w"
