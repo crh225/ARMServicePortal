@@ -6,6 +6,12 @@ on:
     paths:
       - "portal/backend/**"
   workflow_dispatch:
+    inputs:
+      trigger_rollout:
+        description: 'Trigger AKS deployment rollout restart'
+        required: false
+        type: boolean
+        default: true
 
 permissions:
   id-token: write
@@ -19,6 +25,8 @@ jobs:
       NODE_VERSION: 20.x
       ACR_NAME: armportalacre4k9
       IMAGE_NAME: armportal-backend
+      AKS_CLUSTER_NAME: armportal-crossplane-aks
+      AKS_RESOURCE_GROUP: rg-armportal-crossplane
 
     steps:
       - name: Checkout
@@ -72,9 +80,29 @@ jobs:
           echo "  - $IMAGE_SHA"
           echo "  - $IMAGE_LATEST"
 
-      - name: Trigger AKS deployment restart (optional)
+      - name: Get AKS credentials
+        if: ${{ github.event.inputs.trigger_rollout == 'true' || github.event_name == 'push' }}
         run: |
-          echo "To deploy this image to AKS, run:"
+          az aks get-credentials \
+            --resource-group ${{ env.AKS_RESOURCE_GROUP }} \
+            --name ${{ env.AKS_CLUSTER_NAME }} \
+            --overwrite-existing
+
+      - name: Trigger AKS deployment rollout restart
+        if: ${{ github.event.inputs.trigger_rollout == 'true' || github.event_name == 'push' }}
+        run: |
+          echo "Triggering rollout restart for armportal-backend deployment..."
+          kubectl rollout restart deployment armportal-backend -n armportal-backend
+
+          echo "Waiting for rollout to complete..."
+          kubectl rollout status deployment armportal-backend -n armportal-backend --timeout=5m
+
+          echo "✅ Deployment rollout completed successfully!"
+
+      - name: Deployment instructions (manual trigger with rollout disabled)
+        if: ${{ github.event.inputs.trigger_rollout == 'false' }}
+        run: |
+          echo "Rollout restart was disabled. To deploy this image to AKS, run:"
           echo "kubectl rollout restart deployment armportal-backend -n armportal-backend"
           echo ""
           echo "Or update the deployment to use the specific SHA:"
