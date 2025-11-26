@@ -28,16 +28,13 @@ export class GetCostEstimateHandler extends IRequestHandler {
         }]);
       }
 
-      // Validate blueprint ID
       const blueprintId = new BlueprintId(query.blueprintIdString);
 
-      // Get blueprint
       const blueprint = await this.blueprintRepository.getById(blueprintId);
       if (!blueprint) {
         return Result.notFound('Unknown blueprintId');
       }
 
-      // Get cost estimate
       const estimate = await this.pricingRepository.estimateCost(
         query.blueprintIdString,
         query.variables,
