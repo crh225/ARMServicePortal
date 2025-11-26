@@ -125,7 +125,7 @@ jobs:
         if: ${{ github.event.inputs.trigger_rollout == 'true' || github.event_name == 'push' }}
         run: |
           # Tell Argo CD to check Git immediately instead of waiting for the 3-minute poll
-          kubectl patch app armportal-backend -n argocd \
+          kubectl patch app crossplane-resources -n argocd \
             --type json \
             -p='[{"op": "replace", "path": "/operation", "value": {"sync": {"revision": "main"}}}]' \
             || echo "Note: Argo CD will sync within 3 minutes if patch failed"
