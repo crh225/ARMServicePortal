@@ -1,5 +1,6 @@
 # Ingress for exposing ARMServicePortal backend externally
 # This uses NGINX Ingress Controller to route traffic to the backend service
+# With automatic TLS certificate provisioning via cert-manager
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -7,11 +8,17 @@ metadata:
   name: armportal-backend
   namespace: armportal-backend
   annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
     nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
   ingressClassName: nginx
+  tls:
+  - hosts:
+    - portal-api.chrishouse.io
+    secretName: armportal-backend-tls
   rules:
-  - http:
+  - host: portal-api.chrishouse.io
+    http:
       paths:
       - path: /
         pathType: Prefix
