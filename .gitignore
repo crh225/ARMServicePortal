@@ -137,3 +137,18 @@ Desktop.ini
 
 .claude
 nul
+
+########################################
+# CROSSPLANE / KUBERNETES
+########################################
+
+# Kubeconfig files (should never be committed)
+**/kubeconfig
+**/.kube/
+
+# Crossplane provider credentials (already covered by .env but being explicit)
+**/provider-config-secret.yaml
+
+# Temporary Crossplane test manifests
+infra/crossplane/examples/*-test.yaml
+infra/crossplane/examples/*-temp.yaml

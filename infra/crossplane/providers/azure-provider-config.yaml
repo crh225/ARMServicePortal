@@ -1,0 +1,16 @@
+# Azure Provider Configuration
+# Uses the AKS cluster's managed identity for authentication
+# This allows Crossplane to provision Azure resources using the identity that was granted Contributor role
+
+apiVersion: azure.upbound.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: default
+spec:
+  # Use the AKS managed identity for authentication
+  credentials:
+    source: SystemAssignedManagedIdentity
+  # Azure tenant ID (required for Upbound provider)
+  tenantID: 354b7ce2-bca3-4af5-b19a-e05a09b68a7b
+  # Subscription ID where resources will be created
+  subscriptionID: f989de0f-8697-4a05-8c34-b82c941767c0

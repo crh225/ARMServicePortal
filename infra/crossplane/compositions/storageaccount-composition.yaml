@@ -1,0 +1,50 @@
+# Composition for Storage Account
+# Maps XStorageAccount to actual Azure Storage Account resources
+
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xstorageaccount.armportal.io
+  labels:
+    crossplane.io/xrd: xstorageaccounts.armportal.io
+spec:
+  writeConnectionSecretsToNamespace: crossplane-system
+  compositeTypeRef:
+    apiVersion: armportal.io/v1alpha1
+    kind: XStorageAccount
+  mode: Pipeline
+  pipeline:
+    - step: patch-and-transform
+      functionRef:
+        name: function-patch-and-transform
+      input:
+        apiVersion: pt.fn.crossplane.io/v1beta1
+        kind: Resources
+        resources:
+          - name: storageaccount
+            base:
+              apiVersion: storage.azure.upbound.io/v1beta1
+              kind: Account
+              spec:
+                forProvider:
+                  accountKind: StorageV2
+                  accountReplicationType: LRS
+                  accountTier: Standard
+                  location: "East US"
+                  publicNetworkAccessEnabled: true
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.storageAccountName
+                toFieldPath: metadata.annotations[crossplane.io/external-name]
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.location
+                toFieldPath: spec.forProvider.location
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.replicationType
+                toFieldPath: spec.forProvider.accountReplicationType
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.tier
+                toFieldPath: spec.forProvider.accountTier
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.resourceGroupName
+                toFieldPath: spec.forProvider.resourceGroupName
