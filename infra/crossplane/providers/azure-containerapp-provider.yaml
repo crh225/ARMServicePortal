@@ -1,0 +1,7 @@
+# Azure Container App Provider
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-azure-containerapp
+spec:
+  package: xpkg.upbound.io/upbound/provider-azure-containerapp:v0.42.0
