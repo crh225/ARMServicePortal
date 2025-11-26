@@ -1,12 +1,20 @@
 # Example: Deploy ARMServicePortal backend to Azure Container Apps using Crossplane
 #
-# NOTE: This requires a container environment to be created first.
-# Apply containerapp-environment.yaml before this file.
+# This example mirrors your existing Terraform deployment in:
+# infra/environments/dev/backend-containerapps.tf
 #
-# You'll need to:
-# 1. Build and push your backend Docker image to a container registry
-# 2. Update the containerImage below with your image path
-# 3. Get the environment ID from the environment resource
+# PREREQUISITES:
+# 1. Container environment must be created first (apply containerapp-environment.yaml)
+# 2. Build and push your backend Docker image to ACR:
+#    cd portal/backend
+#    docker build -t armportalacr<suffix>.azurecr.io/armportal-api:latest .
+#    docker push armportalacr<suffix>.azurecr.io/armportal-api:latest
+# 3. Get environment ID: kubectl get containerenvironment demo-environment -o jsonpath='{.status.environmentId}'
+#
+# REUSABLE FROM YOUR EXISTING SETUP:
+# - Dockerfile: portal/backend/Dockerfile (already configured for port 4000)
+# - Health check endpoint: /api/health (already exists in your backend)
+# - Environment variables: see backend-containerapps.tf for complete list
 
 apiVersion: armportal.io/v1alpha1
 kind: ContainerApp
@@ -15,22 +23,42 @@ metadata:
   namespace: default
 spec:
   parameters:
-    appName: armportal-backend
+    appName: armportal-api-crossplane
     resourceGroupName: rg-armportal-crossplane-demo
     location: "East US"
-    # Replace this with your actual environment ID after creating the environment
-    # Get it with: kubectl get containerenvironment demo-environment -o jsonpath='{.status.environmentId}'
+    # Get this after creating the environment with containerapp-environment.yaml
+    # kubectl get containerenvironment demo-environment -o jsonpath='{.status.environmentId}'
     environmentId: "/subscriptions/YOUR_SUBSCRIPTION_ID/resourceGroups/rg-armportal-crossplane-demo/providers/Microsoft.App/managedEnvironments/armportal-demo-env"
-    # Replace with your actual container image
+
+    # Update with your ACR image - matches your Terraform setup
+    # Currently your Terraform uses: mcr.microsoft.com/azuredocs/containerapps-helloworld:latest
+    # Change to: armportalacr<suffix>.azurecr.io/armportal-api:latest
     containerImage: "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest"
-    containerPort: 3000
+
+    # Port configuration - matches your Dockerfile and Terraform (port 4000)
+    containerPort: 4000
+
+    # Resource sizing - matches your Terraform
     cpu: 0.5
     memory: "1Gi"
+
+    # Scaling - matches your Terraform (1-2 replicas)
     minReplicas: 1
-    maxReplicas: 3
+    maxReplicas: 2
+
+    # Ingress - external access enabled
     ingressEnabled: true
     externalIngress: true
-    # Add environment variables your backend needs
+
+    # Environment variables - these match your backend-containerapps.tf
+    # NOTE: Secrets (GH_APP_PRIVATE_KEY_BASE64, GITHUB_WEBHOOK_SECRET, ELASTICSEARCH_API_KEY)
+    # would need to be configured separately via Kubernetes secrets in Crossplane
     # environmentVariables:
     #   NODE_ENV: "production"
-    #   PORT: "3000"
+    #   GH_INFRA_OWNER: "crh225"
+    #   GH_INFRA_REPO: "ARMServicePortal"
+    #   GH_APP_ID: "your-app-id"
+    #   GH_INSTALLATION_ID: "your-installation-id"
+    #   FRONTEND_URL: "https://portal.chrishouse.io"
+    #   ELASTICSEARCH_URL: "your-elasticsearch-endpoint"
+    #   APP_NAME: "arm-service-portal"
