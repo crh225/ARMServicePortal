@@ -54,21 +54,6 @@ data:
   LOG_ANALYTICS_WORKSPACE_ID: "c200dcd8-f350-4895-99c0-1a0828fe7384"
 
 ---
-# Secret for sensitive environment variables
-apiVersion: v1
-kind: Secret
-metadata:
-  name: backend-secrets
-  namespace: armportal-backend
-type: Opaque
-stringData:
-  # TODO: Update GH_APP_PRIVATE_KEY_BASE64 with actual value from GitHub App
-  GH_APP_PRIVATE_KEY_BASE64: "your-github-app-private-key-base64"
-  GH_OAUTH_CLIENT_SECRET: "b5a0b4c26388148baaaa6451a53875c04e07796d"
-  GITHUB_WEBHOOK_SECRET: "14906bececd6aa1b4bc6eee4a4f54806118d6f2648c1a0cbe9207f3b45d28199"
-  ELASTICSEARCH_API_KEY: "UHUtNXZKb0JXWDcxN0d3UjFXU2E6R2Y5cXI0UU5xVEZBLXdSUVhuOVpXZw=="
-
----
 # Deployment for the backend application
 apiVersion: apps/v1
 kind: Deployment
