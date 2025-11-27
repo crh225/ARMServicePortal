@@ -121,12 +121,16 @@ spec:
       autoPromotionSeconds: 30
       # Keep old version running for 30s after promotion (for connection draining)
       scaleDownDelaySeconds: 30
-      # Pre-promotion analysis (optional - can add health checks here)
+
+      # Pre-promotion analysis - Run health checks on preview before allowing promotion
       prePromotionAnalysis:
-        templates: []
-      # Post-promotion analysis (optional - can add smoke tests here)
+        templates:
+        - templateName: preview-health-check
+
+      # Post-promotion analysis - Monitor production after promotion, auto-rollback on failure
       postPromotionAnalysis:
-        templates: []
+        templates:
+        - templateName: production-health-monitor
 
 ---
 # Active Service - This is what production traffic hits
