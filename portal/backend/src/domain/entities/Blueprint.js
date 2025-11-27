@@ -24,7 +24,7 @@ export class Blueprint {
     this.provider = provider || "terraform";
     this.category = category || null;
     this.outputs = outputs || [];
-    this.estimatedMonthlyCost = estimatedMonthlyCost || null;
+    this.estimatedMonthlyCost = estimatedMonthlyCost !== undefined ? estimatedMonthlyCost : null;
     this.crossplane = crossplane || null;
   }
 

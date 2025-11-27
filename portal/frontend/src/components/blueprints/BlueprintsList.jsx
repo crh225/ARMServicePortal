@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import EmptyState from "../shared/EmptyState";
 import BlueprintsListSkeleton from "./BlueprintsListSkeleton";
 import "../../styles/BlueprintsList.css";
@@ -41,15 +41,6 @@ const providerConfig = {
         height="16"
         style={{ verticalAlign: "middle" }}
       />
-    )
-  },
-  "pulumi": {
-    name: "Pulumi",
-    color: "#F7BF2A",
-    icon: (
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
-      </svg>
     )
   }
 };
@@ -141,7 +132,6 @@ function BlueprintsList({ blueprints, selectedBlueprint, onSelectBlueprint, load
         {displayedBlueprints.map((bp) => {
           const category = getCategory(bp);
           const config = categoryConfig[category] || categoryConfig.default;
-
           const provider = getProvider(bp);
           const providerInfo = providerConfig[provider] || providerConfig.terraform;
 
@@ -178,32 +168,16 @@ function BlueprintsList({ blueprints, selectedBlueprint, onSelectBlueprint, load
               <p className="blueprint-desc">{bp.description}</p>
 
               <div className="blueprint-footer">
-                <div className="blueprint-stats">
-                  <span
-                    className="blueprint-provider"
-                    style={{ backgroundColor: `${providerInfo.color}15`, color: providerInfo.color }}
-                  >
-                    {providerInfo.icon}
-                    {providerInfo.name}
-                  </span>
-                  <span className="blueprint-stat">
-                    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-                      <path fillRule="evenodd" d="M7.429 1.525a6.593 6.593 0 011.142 0c.036.003.108.036.137.146l.289 1.105c.147.56.55.967.997 1.189.174.086.341.183.501.29.417.278.97.423 1.53.27l1.102-.303c.11-.03.175.016.195.046.219.31.41.641.573.989.014.031.022.11-.059.19l-.815.806c-.411.406-.562.957-.53 1.456a4.588 4.588 0 010 .582c-.032.499.119 1.05.53 1.456l.815.806c.08.08.073.159.059.19a6.494 6.494 0 01-.573.989c-.02.03-.085.076-.195.046l-1.102-.303c-.56-.153-1.113-.008-1.53.27-.16.107-.327.204-.5.29-.449.222-.851.628-.998 1.189l-.289 1.105c-.029.11-.101.143-.137.146a6.613 6.613 0 01-1.142 0c-.036-.003-.108-.037-.137-.146l-.289-1.105c-.147-.56-.55-.967-.997-1.189a4.502 4.502 0 01-.501-.29c-.417-.278-.97-.423-1.53-.27l-1.102.303c-.11.03-.175-.016-.195-.046a6.494 6.494 0 01-.573-.989c-.014-.031-.022-.11.059-.19l.815-.806c.411-.406.562-.957.53-1.456a4.587 4.587 0 010-.582c.032-.499-.119-1.05-.53-1.456l-.815-.806c-.08-.08-.073-.159-.059-.19a6.44 6.44 0 01.573-.989c.02-.03.085-.076.195-.046l1.102.303c.56.153 1.113.008 1.53-.27.16-.107.327-.204.5-.29.449-.222.851-.628.998-1.189l.289-1.105c.029-.11.101-.143.137-.146zM8 0c-.236 0-.47.01-.701.03-.743.065-1.29.615-1.458 1.261l-.29 1.106c-.017.066-.078.158-.211.224a5.994 5.994 0 00-.668.386c-.123.082-.233.09-.3.071L3.27 2.776c-.644-.177-1.392.02-1.82.63a7.977 7.977 0 00-.704 1.217c-.315.675-.111 1.422.363 1.891l.815.806c.05.048.098.147.088.294a6.084 6.084 0 000 .772c.01.147-.037.246-.088.294l-.815.806c-.474.469-.678 1.216-.363 1.891.2.428.436.835.704 1.218.428.609 1.176.806 1.82.63l1.103-.303c.066-.019.176-.011.299.071.213.143.436.272.668.386.133.066.194.158.212.224l.289 1.106c.169.646.715 1.196 1.458 1.26a8.094 8.094 0 001.402 0c.743-.064 1.29-.614 1.458-1.26l.29-1.106c.017-.066.078-.158.211-.224a5.98 5.98 0 00.668-.386c.123-.082.233-.09.3-.071l1.102.302c.644.177 1.392-.02 1.82-.63.268-.382.505-.789.704-1.217.315-.675.111-1.422-.364-1.891l-.814-.806c-.05-.048-.098-.147-.088-.294a6.1 6.1 0 000-.772c-.01-.147.038-.246.088-.294l.814-.806c.475-.469.679-1.216.364-1.891a7.992 7.992 0 00-.704-1.218c-.428-.609-1.176-.806-1.82-.63l-1.103.303c-.066.019-.176.011-.299-.071a5.991 5.991 0 00-.668-.386c-.133-.066-.194-.158-.212-.224L10.16 1.29C9.99.645 9.444.095 8.701.031A8.094 8.094 0 008 0z"/>
-                    </svg>
-                    {bp.variables?.length || 0} params
-                  </span>
-                  {bp.outputs && bp.outputs.length > 0 && (
-                    <span className="blueprint-stat">
-                      <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-                        <path fillRule="evenodd" d="M8.22 1.754a.25.25 0 00-.44 0L1.698 13.132a.25.25 0 00.22.368h12.164a.25.25 0 00.22-.368L8.22 1.754zm-1.763-.707c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0114.082 15H1.918a1.75 1.75 0 01-1.543-2.575L6.457 1.047zM9 11a1 1 0 11-2 0 1 1 0 012 0zm-.25-5.25a.75.75 0 00-1.5 0v2.5a.75.75 0 001.5 0v-2.5z"/>
-                      </svg>
-                      {bp.outputs.length} outputs
-                    </span>
-                  )}
-                </div>
-                {bp.estimatedMonthlyCost && (
+                <span
+                  className="blueprint-provider"
+                  style={{ backgroundColor: `${providerInfo.color}15`, color: providerInfo.color }}
+                >
+                  {providerInfo.icon}
+                  {providerInfo.name}
+                </span>
+                {(bp.estimatedMonthlyCost !== undefined && bp.estimatedMonthlyCost !== null) && (
                   <span className="blueprint-cost">
-                    ~${bp.estimatedMonthlyCost}/mo
+                    ~${bp.estimatedMonthlyCost === 0 ? "0" : bp.estimatedMonthlyCost}/mo
                   </span>
                 )}
               </div>
