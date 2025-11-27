@@ -40,8 +40,8 @@ describe("BlueprintsList", () => {
   it("renders the title and description", () => {
     render(<BlueprintsList {...defaultProps} />);
 
-    expect(screen.getByText("Choose a Blueprint")).toBeInTheDocument();
-    expect(screen.getByText("Select an approved Terraform module to deploy.")).toBeInTheDocument();
+    expect(screen.getByText("Service Catalog")).toBeInTheDocument();
+    expect(screen.getByText("Choose from pre-approved infrastructure templates")).toBeInTheDocument();
   });
 
   it("renders all blueprints", () => {
