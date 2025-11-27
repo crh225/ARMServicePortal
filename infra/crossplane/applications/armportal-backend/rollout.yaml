@@ -99,16 +99,17 @@ spec:
       activeService: armportal-backend-active
       # Reference to service that the rollout modifies as the preview service
       previewService: armportal-backend-preview
-      # Auto-promotion after 30 seconds (can be set to false for manual promotion)
+      # Manual promotion required - use GitHub Actions "Promote to Production" workflow
+      # Or run: kubectl argo rollouts promote armportal-backend -n armportal-backend
       autoPromotionEnabled: false
-      # Number of seconds to wait before automatically promoting
+      # If auto-promotion was enabled, wait time before promoting
       autoPromotionSeconds: 30
-      # Anti-affinity to ensure blue and green don't run on same node
+      # Keep old version running for 30s after promotion (for connection draining)
       scaleDownDelaySeconds: 30
-      # Pre-promotion analysis
+      # Pre-promotion analysis (optional - can add health checks here)
       prePromotionAnalysis:
         templates: []
-      # Post-promotion analysis
+      # Post-promotion analysis (optional - can add smoke tests here)
       postPromotionAnalysis:
         templates: []
 

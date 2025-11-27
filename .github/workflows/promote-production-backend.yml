@@ -1,0 +1,169 @@
+name: Promote to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to promote'
+        required: true
+        type: choice
+        options:
+          - dev
+        default: dev
+      auto_rollback:
+        description: 'Auto-rollback if health checks fail'
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    environment:
+      name: production-promotion
+      url: https://portal-api.chrishouse.io
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          auth-type: SERVICE_PRINCIPAL
+          allow-no-subscriptions: false
+          environment: azurecloud
+          audience: api://AzureADTokenExchange
+
+      - name: Set up kubectl for AKS
+        run: |
+          az aks get-credentials \
+            --resource-group rg-armportal-aks-crossplane-dev \
+            --name aks-armportal-crossplane-dev \
+            --overwrite-existing
+
+      - name: Install Argo Rollouts kubectl plugin
+        run: |
+          curl -LO https://github.com/argoproj/argo-rollouts/releases/latest/download/kubectl-argo-rollouts-linux-amd64
+          chmod +x kubectl-argo-rollouts-linux-amd64
+          sudo mv kubectl-argo-rollouts-linux-amd64 /usr/local/bin/kubectl-argo-rollouts
+
+      - name: Check rollout status
+        id: rollout_status
+        run: |
+          echo "Current rollout status:"
+          kubectl argo rollouts get rollout armportal-backend -n armportal-backend
+
+          # Check if there's a pending promotion
+          STATUS=$(kubectl argo rollouts status armportal-backend -n armportal-backend 2>&1 || true)
+
+          if echo "$STATUS" | grep -q "Paused"; then
+            echo "has_pending_promotion=true" >> $GITHUB_OUTPUT
+            echo "✅ Rollout is paused and ready for promotion"
+          else
+            echo "has_pending_promotion=false" >> $GITHUB_OUTPUT
+            echo "⚠️  No pending promotion found"
+          fi
+
+      - name: Test preview endpoint
+        if: steps.rollout_status.outputs.has_pending_promotion == 'true'
+        run: |
+          echo "Testing preview endpoint..."
+
+          # Health check
+          HEALTH_URL="https://portal-api-preview.chrishouse.io/api/health"
+
+          for i in {1..5}; do
+            echo "Attempt $i/5: Testing $HEALTH_URL"
+
+            if curl -f -s --max-time 10 "$HEALTH_URL" > /dev/null; then
+              echo "✅ Health check passed!"
+              exit 0
+            else
+              echo "❌ Health check failed, retrying in 5s..."
+              sleep 5
+            fi
+          done
+
+          echo "❌ Preview health check failed after 5 attempts"
+          exit 1
+
+      - name: Promote to production
+        if: steps.rollout_status.outputs.has_pending_promotion == 'true'
+        run: |
+          echo "🚀 Promoting to production..."
+
+          kubectl argo rollouts promote armportal-backend -n armportal-backend
+
+          echo "⏳ Waiting for promotion to complete..."
+          kubectl argo rollouts status armportal-backend -n armportal-backend --timeout 5m
+
+          echo "✅ Promotion complete!"
+
+      - name: Verify production endpoint
+        if: steps.rollout_status.outputs.has_pending_promotion == 'true'
+        run: |
+          echo "Verifying production endpoint..."
+          sleep 10  # Give load balancer time to update
+
+          PROD_URL="https://portal-api.chrishouse.io/api/health"
+
+          for i in {1..5}; do
+            echo "Attempt $i/5: Testing $PROD_URL"
+
+            if curl -f -s --max-time 10 "$PROD_URL" > /dev/null; then
+              echo "✅ Production health check passed!"
+              exit 0
+            else
+              echo "⚠️  Production health check failed, retrying in 5s..."
+              sleep 5
+            fi
+          done
+
+          if [ "${{ inputs.auto_rollback }}" == "true" ]; then
+            echo "❌ Production health check failed - initiating rollback!"
+            kubectl argo rollouts abort armportal-backend -n armportal-backend
+            exit 1
+          else
+            echo "❌ Production health check failed but auto-rollback is disabled"
+            exit 1
+          fi
+
+      - name: No promotion needed
+        if: steps.rollout_status.outputs.has_pending_promotion == 'false'
+        run: |
+          echo "ℹ️  No pending promotion found."
+          echo ""
+          echo "Possible reasons:"
+          echo "  1. No new deployment has been triggered"
+          echo "  2. Rollout has already been promoted"
+          echo "  3. Rollout is in progress"
+          echo ""
+          echo "Current rollout status:"
+          kubectl argo rollouts get rollout armportal-backend -n armportal-backend
+
+      - name: Deployment summary
+        if: always()
+        run: |
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "📊 Deployment Summary"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          echo "Environment: ${{ inputs.environment }}"
+          echo "Promotion status: ${{ job.status }}"
+          echo ""
+          echo "🔗 URLs:"
+          echo "  Production: https://portal-api.chrishouse.io"
+          echo "  Preview: https://portal-api-preview.chrishouse.io"
+          echo "  ArgoCD: https://argocd.chrishouse.io"
+          echo ""
+          echo "Current rollout:"
+          kubectl argo rollouts get rollout armportal-backend -n armportal-backend || true

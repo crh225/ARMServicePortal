@@ -89,16 +89,16 @@ jobs:
 
           echo "Updating deployment manifest with new image: $NEW_IMAGE"
 
-          # Update the image tag in the deployment manifest
+          # Update the image tag in the rollout manifest
           sed -i "s|image: armportalacre4k9.azurecr.io/armportal-backend:.*|image: $NEW_IMAGE|g" \
-            infra/crossplane/examples/backend-deployment.yaml
+            infra/crossplane/applications/armportal-backend/rollout.yaml
 
           # Configure Git
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           # Commit and push the change
-          git add infra/crossplane/examples/backend-deployment.yaml
+          git add infra/crossplane/applications/armportal-backend/rollout.yaml
           git commit -m "chore: update backend image to ${{ github.sha }}
 
           Automated deployment update from GitHub Actions
@@ -125,7 +125,7 @@ jobs:
         if: ${{ github.event.inputs.trigger_rollout == 'true' || github.event_name == 'push' }}
         run: |
           # Tell Argo CD to check Git immediately instead of waiting for the 3-minute poll
-          kubectl patch app crossplane-resources -n argocd \
+          kubectl patch app armportal-backend -n argocd \
             --type json \
             -p='[{"op": "replace", "path": "/operation", "value": {"sync": {"revision": "main"}}}]' \
             || echo "Note: Argo CD will sync within 3 minutes if patch failed"
@@ -133,11 +133,19 @@ jobs:
           echo ""
           echo "✅ Argo CD refresh triggered"
           echo ""
+          echo "🔄 Argo Rollouts will deploy to PREVIEW first (blue-green)"
+          echo ""
           echo "Monitor deployment:"
-          echo "  kubectl get pods -n armportal-backend -w"
+          echo "  kubectl argo rollouts get rollout armportal-backend -n armportal-backend --watch"
+          echo ""
+          echo "Test preview at:"
+          echo "  https://portal-api-preview.chrishouse.io/api/health"
+          echo ""
+          echo "Promote to production (after testing):"
+          echo "  kubectl argo rollouts promote armportal-backend -n armportal-backend"
           echo ""
           echo "View in Argo CD:"
-          echo "  kubectl port-forward svc/argocd-server -n argocd 8080:443"
+          echo "  https://argocd.chrishouse.io"
 
       - name: GitOps deployment skipped
         if: ${{ github.event.inputs.trigger_rollout == 'false' }}
