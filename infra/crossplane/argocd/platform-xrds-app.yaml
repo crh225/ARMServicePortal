@@ -1,0 +1,42 @@
+# Argo CD Application for Crossplane Platform XRDs and Compositions
+# Syncs the platform-level Crossplane definitions that power the self-service portal
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: crossplane-platform
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: crossplane
+    app.kubernetes.io/component: platform
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/crh225/ARMServicePortal.git
+    targetRevision: main
+    path: infra/crossplane/platform
+    # Exclude examples directory - those are for documentation only
+    directory:
+      exclude: 'examples/*'
+
+  destination:
+    server: https://kubernetes.default.svc
+    # XRDs and Compositions are cluster-scoped, namespace doesn't matter for them
+    # But we'll use crossplane-system for any namespaced resources
+    namespace: crossplane-system
+
+  syncPolicy:
+    automated:
+      prune: true      # Delete resources removed from Git
+      selfHeal: true   # Auto-sync when drift detected
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true  # Better for CRDs/XRDs
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
