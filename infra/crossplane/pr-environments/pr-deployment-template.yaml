@@ -19,8 +19,15 @@ metadata:
 data:
   NODE_ENV: "development"
   GH_APP_ID: "2298250"
+  GH_INSTALLATION_ID: "94912535"
+  GH_INFRA_OWNER: "crh225"
+  GH_INFRA_REPO: "ARMServicePortal"
+  GH_OAUTH_CLIENT_ID: "Ov23liHgcQ7urCFXPs2k"
   FRONTEND_URL: "https://portal-pr-PR_NUMBER.pr.chrishouse.io"
+  APP_NAME: "arm-service-portal-pr-PR_NUMBER"
   APP_URL: "https://portal-api-pr-PR_NUMBER.pr.chrishouse.io"
+  ELASTICSEARCH_URL: "https://es-test-az-elk-managed-dev-5a6e80.es.eastus2.azure.elastic-cloud.com:9243"
+  LOG_ANALYTICS_WORKSPACE_ID: "c200dcd8-f350-4895-99c0-1a0828fe7384"
 ---
 apiVersion: v1
 kind: Service
@@ -78,16 +85,51 @@ spec:
             configMapKeyRef:
               name: backend-config-pr-PR_NUMBER
               key: GH_APP_ID
+        - name: GH_INSTALLATION_ID
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config-pr-PR_NUMBER
+              key: GH_INSTALLATION_ID
+        - name: GH_INFRA_OWNER
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config-pr-PR_NUMBER
+              key: GH_INFRA_OWNER
+        - name: GH_INFRA_REPO
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config-pr-PR_NUMBER
+              key: GH_INFRA_REPO
+        - name: GH_OAUTH_CLIENT_ID
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config-pr-PR_NUMBER
+              key: GH_OAUTH_CLIENT_ID
         - name: FRONTEND_URL
           valueFrom:
             configMapKeyRef:
               name: backend-config-pr-PR_NUMBER
               key: FRONTEND_URL
+        - name: APP_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config-pr-PR_NUMBER
+              key: APP_NAME
         - name: APP_URL
           valueFrom:
             configMapKeyRef:
               name: backend-config-pr-PR_NUMBER
               key: APP_URL
+        - name: ELASTICSEARCH_URL
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config-pr-PR_NUMBER
+              key: ELASTICSEARCH_URL
+        - name: LOG_ANALYTICS_WORKSPACE_ID
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config-pr-PR_NUMBER
+              key: LOG_ANALYTICS_WORKSPACE_ID
         - name: GH_APP_PRIVATE_KEY_BASE64
           valueFrom:
             secretKeyRef:
