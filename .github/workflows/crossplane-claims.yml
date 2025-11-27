@@ -87,8 +87,8 @@ jobs:
               continue
             fi
 
-            # Extract claim name from metadata
-            claim_name=$(grep -A1 "^metadata:" "$file" | grep "name:" | head -1 | awk '{print $2}')
+            # Extract claim name from metadata (strip quotes if present)
+            claim_name=$(grep -A1 "^metadata:" "$file" | grep "name:" | head -1 | awk '{print $2}' | tr -d '"'"'")
 
             # Check name follows convention (lowercase, alphanumeric, hyphens)
             if ! [[ "$claim_name" =~ ^[a-z][a-z0-9-]*$ ]]; then
