@@ -10,11 +10,11 @@ describe("BlueprintsListSkeleton", () => {
     expect(screen.getByText("Choose from pre-approved infrastructure templates")).toBeInTheDocument();
   });
 
-  it("renders default number of skeleton cards (6)", () => {
+  it("renders default number of skeleton cards (8)", () => {
     const { container } = render(<BlueprintsListSkeleton />);
 
     const skeletonCards = container.querySelectorAll(".blueprint-card--skeleton");
-    expect(skeletonCards).toHaveLength(6);
+    expect(skeletonCards).toHaveLength(8);
   });
 
   it("renders custom number of skeleton cards when count is provided", () => {
