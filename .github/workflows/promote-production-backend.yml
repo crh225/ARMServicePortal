@@ -58,15 +58,15 @@ jobs:
           echo "Current rollout status:"
           kubectl argo rollouts get rollout armportal-backend -n armportal-backend
 
-          # Check if there's a pending promotion
-          STATUS=$(kubectl argo rollouts status armportal-backend -n armportal-backend 2>&1 || true)
+          # Check if there's a pending promotion (non-blocking check)
+          STATUS=$(kubectl get rollout armportal-backend -n armportal-backend -o jsonpath='{.status.message}' 2>&1 || true)
 
-          if echo "$STATUS" | grep -q "Paused"; then
+          if echo "$STATUS" | grep -q "BlueGreenPause"; then
             echo "has_pending_promotion=true" >> $GITHUB_OUTPUT
             echo "✅ Rollout is paused and ready for promotion"
           else
             echo "has_pending_promotion=false" >> $GITHUB_OUTPUT
-            echo "⚠️  No pending promotion found"
+            echo "⚠️  No pending promotion found - Status: $STATUS"
           fi
 
       - name: Test preview endpoint
