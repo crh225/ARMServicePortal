@@ -117,6 +117,14 @@ function Header({ activeTab, onTabChange, notifications, unreadCount, onMarkAsRe
           </button>
           <button
             className={
+              "nav-tab" + (activeTab === "about" ? " nav-tab--active" : "")
+            }
+            onClick={() => onTabChange("about")}
+          >
+            About
+          </button>
+          <button
+            className={
               "nav-tab" + (activeTab === "admin" ? " nav-tab--active" : "")
             }
             onClick={() => onTabChange("admin")}
