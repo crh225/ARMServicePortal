@@ -29,7 +29,7 @@ function Header({ activeTab, onTabChange, notifications, unreadCount, onMarkAsRe
         <div className="header-top">
           <div>
             <div className="logo-row">
-              <span className="logo-text" onClick={() => onTabChange("blueprints")} style={{ cursor: "pointer" }}>
+              <span className="logo-text" onClick={() => onTabChange("home")} style={{ cursor: "pointer" }}>
                 Cloud Self-Service Portal
               </span>
             </div>
@@ -92,6 +92,14 @@ function Header({ activeTab, onTabChange, notifications, unreadCount, onMarkAsRe
         <nav className="app-nav">
           <button
             className={
+              "nav-tab" + (activeTab === "home" ? " nav-tab--active" : "")
+            }
+            onClick={() => onTabChange("home")}
+          >
+            Home
+          </button>
+          <button
+            className={
               "nav-tab" +
               (activeTab === "blueprints" ? " nav-tab--active" : "")
             }
@@ -114,14 +122,6 @@ function Header({ activeTab, onTabChange, notifications, unreadCount, onMarkAsRe
             onClick={() => onTabChange("resources")}
           >
             Resources
-          </button>
-          <button
-            className={
-              "nav-tab" + (activeTab === "about" ? " nav-tab--active" : "")
-            }
-            onClick={() => onTabChange("about")}
-          >
-            About
           </button>
           <button
             className={

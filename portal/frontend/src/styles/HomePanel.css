@@ -1,43 +1,43 @@
-/* About Panel */
-.about-panel {
+/* Home Panel */
+.home-panel {
   width: 100%;
   padding: 0 24px;
 }
 
-.about-header {
+.home-header {
   text-align: center;
   margin-bottom: 40px;
 }
 
-.about-title {
+.home-title {
   margin: 0 0 12px 0;
   font-size: 2rem;
   font-weight: 700;
   color: var(--text-primary);
 }
 
-.about-subtitle {
+.home-subtitle {
   margin: 0;
   font-size: 1.1rem;
   color: var(--text-secondary);
   line-height: 1.6;
 }
 
-.about-content {
+.home-content {
   display: flex;
   flex-direction: column;
   gap: 24px;
 }
 
 /* Row layout for side-by-side sections */
-.about-row {
+.home-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 24px;
 }
 
 /* Sections */
-.about-section {
+.home-section {
   background: var(--bg-primary);
   border: 1px solid var(--border-default);
   border-radius: 12px;
@@ -45,42 +45,42 @@
   min-width: 0;
 }
 
-.about-section--full {
+.home-section--full {
   grid-column: 1 / -1;
 }
 
-.about-section-title {
+.home-section-title {
   margin: 0 0 16px 0;
   font-size: 1.25rem;
   font-weight: 600;
   color: var(--text-primary);
 }
 
-.about-text {
+.home-text {
   margin: 0 0 12px 0;
   font-size: 0.95rem;
   color: var(--text-secondary);
   line-height: 1.7;
 }
 
-.about-text:last-child {
+.home-text:last-child {
   margin-bottom: 0;
 }
 
 /* Steps */
-.about-steps {
+.home-steps {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-.about-step {
+.home-step {
   display: flex;
   align-items: flex-start;
   gap: 16px;
 }
 
-.about-step-number {
+.home-step-number {
   width: 32px;
   height: 32px;
   display: flex;
@@ -94,14 +94,14 @@
   flex-shrink: 0;
 }
 
-.about-step-content h3 {
+.home-step-content h3 {
   margin: 0 0 4px 0;
   font-size: 1rem;
   font-weight: 600;
   color: var(--text-primary);
 }
 
-.about-step-content p {
+.home-step-content p {
   margin: 0;
   font-size: 0.875rem;
   color: var(--text-secondary);
@@ -109,13 +109,13 @@
 }
 
 /* Technology Grid */
-.about-tech-grid {
+.home-tech-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 16px;
 }
 
-.about-tech-card {
+.home-tech-card {
   background: var(--bg-hover-subtle);
   border: 1px solid var(--border-subtle);
   border-radius: 10px;
@@ -124,12 +124,12 @@
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.about-tech-card:hover {
+.home-tech-card:hover {
   border-color: var(--border-default);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
-.about-tech-icon {
+.home-tech-icon {
   width: 48px;
   height: 48px;
   display: flex;
@@ -139,14 +139,14 @@
   margin: 0 auto 12px;
 }
 
-.about-tech-card h3 {
+.home-tech-card h3 {
   margin: 0 0 8px 0;
   font-size: 1rem;
   font-weight: 600;
   color: var(--text-primary);
 }
 
-.about-tech-card p {
+.home-tech-card p {
   margin: 0;
   font-size: 0.8125rem;
   color: var(--text-secondary);
@@ -154,13 +154,13 @@
 }
 
 /* List */
-.about-list {
+.home-list {
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.about-list li {
+.home-list li {
   position: relative;
   padding-left: 24px;
   margin-bottom: 10px;
@@ -169,11 +169,11 @@
   line-height: 1.6;
 }
 
-.about-list li:last-child {
+.home-list li:last-child {
   margin-bottom: 0;
 }
 
-.about-list li::before {
+.home-list li::before {
   content: "";
   position: absolute;
   left: 0;
@@ -184,43 +184,43 @@
   border-radius: 50%;
 }
 
-.about-list li strong {
+.home-list li strong {
   color: var(--text-primary);
 }
 
 /* Responsive */
 @media (max-width: 900px) {
-  .about-row {
+  .home-row {
     grid-template-columns: 1fr;
   }
 
-  .about-tech-grid {
+  .home-tech-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
 @media (max-width: 640px) {
-  .about-panel {
+  .home-panel {
     padding: 0 16px;
   }
 
-  .about-header {
+  .home-header {
     margin-bottom: 24px;
   }
 
-  .about-title {
+  .home-title {
     font-size: 1.5rem;
   }
 
-  .about-subtitle {
+  .home-subtitle {
     font-size: 1rem;
   }
 
-  .about-section {
+  .home-section {
     padding: 20px;
   }
 
-  .about-tech-grid {
+  .home-tech-grid {
     grid-template-columns: 1fr;
   }
 }
