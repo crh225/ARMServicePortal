@@ -61,13 +61,18 @@ jobs:
           kubectl create namespace "$PR_NAMESPACE" --dry-run=client -o yaml | kubectl apply -f -
 
           # Copy backend secrets from main namespace to PR namespace
-          kubectl get secret backend-secrets -n armportal-backend -o yaml | \
-            sed "s/namespace: armportal-backend/namespace: $PR_NAMESPACE/" | \
+          # Delete existing secret first to avoid conflicts, then create fresh copy
+          kubectl delete secret backend-secrets -n "$PR_NAMESPACE" --ignore-not-found=true
+          kubectl get secret backend-secrets -n armportal-backend -o json | \
+            jq 'del(.metadata.resourceVersion, .metadata.uid, .metadata.creationTimestamp, .metadata.selfLink)' | \
+            jq ".metadata.namespace = \"$PR_NAMESPACE\"" | \
             kubectl apply -f -
 
           # Copy wildcard TLS certificate from cert-manager namespace to PR namespace
-          kubectl get secret pr-wildcard-tls -n cert-manager -o yaml | \
-            sed "s/namespace: cert-manager/namespace: $PR_NAMESPACE/" | \
+          kubectl delete secret pr-wildcard-tls -n "$PR_NAMESPACE" --ignore-not-found=true
+          kubectl get secret pr-wildcard-tls -n cert-manager -o json | \
+            jq 'del(.metadata.resourceVersion, .metadata.uid, .metadata.creationTimestamp, .metadata.selfLink)' | \
+            jq ".metadata.namespace = \"$PR_NAMESPACE\"" | \
             kubectl apply -f -
 
       - name: Deploy PR environment
