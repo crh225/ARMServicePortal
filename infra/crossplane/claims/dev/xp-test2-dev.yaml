@@ -1,0 +1,38 @@
+apiVersion: platform.chrishouse.io/v1alpha1
+kind: ApplicationEnvironmentClaim
+metadata:
+  name: "xp-test2-dev"
+  namespace: "platform-claims"
+  labels:
+    app.kubernetes.io/managed-by: armportal
+    armportal.chrishouse.io/blueprint: "xp-application-environment"
+    armportal.chrishouse.io/version: 1.0.0
+    armportal.chrishouse.io/request-id: 165
+    armportal.chrishouse.io/created-by: crh225
+  annotations:
+    armportal.chrishouse.io/provisioned-at: 2025-11-27T16:36:30.158Z
+spec:
+  parameters:
+    appName: "xp-test2"
+    environment: dev
+    frontend:
+      imageRepo: "armportalacre4k9.azurecr.io/armportal-backend"
+      tag: latest
+      replicas: 1
+      port: 80
+    backend:
+      imageRepo: "armportalacre4k9.azurecr.io/armportal-api-backend"
+      tag: latest
+      replicas: 1
+      port: 4000
+    database:
+      storageGB: 10
+      version: 16
+    ingress:
+      host: "xp-test2.chrishouse.io"
+      tlsEnabled: true
+      clusterIssuer: "letsencrypt-prod"
+  writeConnectionSecretToRef:
+    name: "xp-test2-dev-connection"
+  compositionRef:
+    name: "application-environment"
