@@ -90,19 +90,48 @@ jobs:
       - name: Wait for TLS certificate
         run: |
           PR_NAMESPACE="armportal-pr-${{ github.event.pull_request.number }}"
+          PR_NUMBER=${{ github.event.pull_request.number }}
 
           echo "Waiting for TLS certificate to be issued..."
-          for i in {1..30}; do
-            CERT_READY=$(kubectl get certificate portal-api-pr-${{ github.event.pull_request.number }}-tls -n "$PR_NAMESPACE" -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null || echo "False")
 
-            if [ "$CERT_READY" == "True" ]; then
-              echo "✅ Certificate ready!"
-              break
+          # Try for up to 5 minutes with retry logic
+          for attempt in {1..10}; do
+            echo "Attempt $attempt/10..."
+
+            # Wait up to 30 seconds for cert to be ready
+            for i in {1..6}; do
+              CERT_READY=$(kubectl get certificate portal-api-pr-$PR_NUMBER-tls -n "$PR_NAMESPACE" -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null || echo "False")
+
+              if [ "$CERT_READY" == "True" ]; then
+                echo "✅ Certificate ready!"
+                exit 0
+              fi
+
+              sleep 5
+            done
+
+            # Check if certificate is in failed state
+            CERT_STATUS=$(kubectl get certificate portal-api-pr-$PR_NUMBER-tls -n "$PR_NAMESPACE" -o jsonpath='{.status.conditions[?(@.type=="Issuing")].reason}' 2>/dev/null || echo "")
+
+            if [ "$CERT_STATUS" == "Failed" ]; then
+              echo "⚠️  Certificate issuance failed, retrying..."
+
+              # Delete and recreate certificate by reapplying ingress
+              kubectl delete certificate portal-api-pr-$PR_NUMBER-tls -n "$PR_NAMESPACE" --ignore-not-found=true
+              kubectl delete secret portal-api-pr-$PR_NUMBER-tls -n "$PR_NAMESPACE" --ignore-not-found=true
+
+              sleep 5
+
+              # Reapply ingress to trigger new certificate request
+              kubectl get ingress armportal-backend-pr-$PR_NUMBER -n "$PR_NAMESPACE" -o yaml | kubectl apply -f -
+
+              echo "Retrying certificate issuance..."
+              sleep 10
             fi
-
-            echo "Waiting for certificate... ($i/30)"
-            sleep 10
           done
+
+          echo "❌ Certificate failed to be issued after multiple retries"
+          exit 1
 
       - name: Comment on PR
         uses: actions/github-script@v7
