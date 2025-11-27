@@ -113,7 +113,7 @@ export const BLUEPRINTS = [
         description: "The endpoint URL for blob storage"
       }
     ],
-    estimatedMonthlyCost: 21
+    estimatedMonthlyCost: 2
   },
   {
     id: "azure-key-vault-basic",
@@ -266,7 +266,7 @@ export const BLUEPRINTS = [
         description: "CDN endpoint URL (if CDN enabled)"
       }
     ],
-    estimatedMonthlyCost: 1
+    estimatedMonthlyCost: 0.10
   },
   {
     id: "azure-frontdoor",
@@ -593,7 +593,7 @@ export const BLUEPRINTS = [
         description: "PostgreSQL connection string (sensitive)"
       }
     ],
-    estimatedMonthlyCost: 12.41
+    estimatedMonthlyCost: 15
   },
   {
     id: "azure-elastic-managed",
@@ -838,7 +838,7 @@ export const BLUEPRINTS = [
         description: "PostgreSQL connection endpoint"
       }
     ],
-    estimatedMonthlyCost: 150
+    estimatedMonthlyCost: 80
   }
 ];
 
