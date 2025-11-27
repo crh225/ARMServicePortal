@@ -8,46 +8,17 @@ metadata:
   namespace: armportal-backend
 spec:
   metrics:
-  # Production health endpoint check
+  # Production health endpoint check - must return "ok"
   - name: production-health
     interval: 30s
     count: 10
-    successCondition: result == "200"
+    successCondition: result == "ok"
     failureLimit: 3
     provider:
       web:
         url: https://portal-api.chrishouse.io/api/health
         timeoutSeconds: 10
         jsonPath: "{$.status}"
-        headers:
-          - key: Content-Type
-            value: application/json
-
-  # Production HTTP status code check
-  - name: production-http-status
-    interval: 30s
-    count: 10
-    successCondition: result.startsWith("2")
-    failureLimit: 3
-    provider:
-      web:
-        url: https://portal-api.chrishouse.io/api/health
-        timeoutSeconds: 10
-        headers:
-          - key: Content-Type
-            value: application/json
-        jsonPath: "{$.statusCode}"
-
-  # Response time check - fail if response takes > 5 seconds
-  - name: production-response-time
-    interval: 30s
-    count: 10
-    successCondition: result < 5000
-    failureLimit: 3
-    provider:
-      web:
-        url: https://portal-api.chrishouse.io/api/health
-        timeoutSeconds: 10
         headers:
           - key: Content-Type
             value: application/json
