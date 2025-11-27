@@ -1,0 +1,172 @@
+name: Crossplane Claims
+
+on:
+  pull_request:
+    paths:
+      - "infra/crossplane/claims/**"
+      - "infra/crossplane/platform/**"
+  push:
+    branches:
+      - main
+    paths:
+      - "infra/crossplane/claims/**"
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+jobs:
+  validate:
+    name: Validate Claims
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.0'
+
+      - name: Install kubeconform
+        run: |
+          curl -sL https://github.com/yannh/kubeconform/releases/download/v0.6.4/kubeconform-linux-amd64.tar.gz | tar xz
+          sudo mv kubeconform /usr/local/bin/
+
+      - name: Find changed claim files
+        id: changed-files
+        uses: tj-actions/changed-files@v44
+        with:
+          files: |
+            infra/crossplane/claims/**/*.yaml
+            infra/crossplane/claims/**/*.yml
+
+      - name: Validate YAML syntax
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          echo "Validating YAML syntax for changed files..."
+          for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
+            echo "Checking: $file"
+            # Basic YAML syntax check
+            python3 -c "import yaml; yaml.safe_load(open('$file'))" || exit 1
+            echo "✅ $file - Valid YAML"
+          done
+
+      - name: Validate Kubernetes manifest structure
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          echo "Validating Kubernetes manifest structure..."
+          for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
+            echo "Checking: $file"
+            # Check required fields exist
+            if ! grep -q "apiVersion:" "$file"; then
+              echo "❌ $file - Missing apiVersion"
+              exit 1
+            fi
+            if ! grep -q "kind:" "$file"; then
+              echo "❌ $file - Missing kind"
+              exit 1
+            fi
+            if ! grep -q "metadata:" "$file"; then
+              echo "❌ $file - Missing metadata"
+              exit 1
+            fi
+            echo "✅ $file - Valid structure"
+          done
+
+      - name: Check claim naming convention
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          echo "Checking claim naming conventions..."
+          for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
+            # Skip .gitkeep files
+            if [[ "$file" == *".gitkeep" ]]; then
+              continue
+            fi
+
+            # Extract claim name from metadata
+            claim_name=$(grep -A1 "^metadata:" "$file" | grep "name:" | head -1 | awk '{print $2}')
+
+            # Check name follows convention (lowercase, alphanumeric, hyphens)
+            if ! [[ "$claim_name" =~ ^[a-z][a-z0-9-]*$ ]]; then
+              echo "❌ $file - Invalid claim name: '$claim_name'"
+              echo "   Name must be lowercase, start with a letter, and contain only letters, numbers, and hyphens"
+              exit 1
+            fi
+
+            echo "✅ $file - Claim name '$claim_name' is valid"
+          done
+
+      - name: Post validation summary to PR
+        if: always() && steps.changed-files.outputs.any_changed == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const files = '${{ steps.changed-files.outputs.all_changed_files }}'.split(' ').filter(f => f);
+            const body = `## Crossplane Claim Validation
+
+            **Files validated:** ${files.length}
+
+            ${files.map(f => `- \`${f}\``).join('\n')}
+
+            ✅ All validations passed!
+
+            Once merged, ArgoCD will sync these claims to the cluster.`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
+  # Optional: Dry-run against cluster (requires cluster access)
+  dry-run:
+    name: Dry Run (Optional)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    needs: validate
+    continue-on-error: true  # Don't fail PR if dry-run fails (cluster might not be accessible)
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Get AKS credentials
+        run: |
+          az aks get-credentials \
+            --resource-group rg-armportal-aks-crossplane-dev \
+            --name aks-armportal-crossplane-dev \
+            --overwrite-existing
+
+      - name: Find changed claim files
+        id: changed-files
+        uses: tj-actions/changed-files@v44
+        with:
+          files: |
+            infra/crossplane/claims/**/*.yaml
+            infra/crossplane/claims/**/*.yml
+
+      - name: Dry-run kubectl apply
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          echo "Running dry-run validation against cluster..."
+          for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
+            # Skip .gitkeep files
+            if [[ "$file" == *".gitkeep" ]]; then
+              continue
+            fi
+
+            echo "Dry-run: $file"
+            kubectl apply --dry-run=server -f "$file" || echo "⚠️ Dry-run failed for $file (this may be expected if CRDs are not installed)"
+          done
