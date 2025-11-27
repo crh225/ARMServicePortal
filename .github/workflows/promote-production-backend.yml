@@ -23,9 +23,6 @@ permissions:
 jobs:
   promote:
     runs-on: ubuntu-latest
-    environment:
-      name: production-promotion
-      url: https://portal-api.chrishouse.io
 
     steps:
       - name: Checkout
