@@ -121,7 +121,7 @@ function App() {
                 />
               )}
               {activeTab === "home" && (
-                <HomePanel />
+                <HomePanel onNavigate={handleTabChange} />
               )}
               {activeTab === "admin" && (
                 <AdminPanel />

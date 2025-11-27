@@ -1,17 +1,63 @@
+import { useEffect, useState } from "react";
 import "../../styles/HomePanel.css";
 
 /**
  * HomePanel component
  * Explains what the Cloud Self-Service Portal is and how it works
  */
-function HomePanel() {
+function HomePanel({ onNavigate }) {
+  const [stats, setStats] = useState({ blueprints: 0, resources: 0, jobs: 0 });
+
+  useEffect(() => {
+    // Fetch stats for the dashboard
+    const fetchStats = async () => {
+      try {
+        const [blueprintsRes, resourcesRes, jobsRes] = await Promise.all([
+          fetch("/api/blueprints").then(r => r.ok ? r.json() : []),
+          fetch("/api/resources").then(r => r.ok ? r.json() : { resources: [] }),
+          fetch("/api/jobs").then(r => r.ok ? r.json() : [])
+        ]);
+        setStats({
+          blueprints: Array.isArray(blueprintsRes) ? blueprintsRes.length : 0,
+          resources: resourcesRes?.resources?.length || 0,
+          jobs: Array.isArray(jobsRes) ? jobsRes.length : 0
+        });
+      } catch {
+        // Stats are optional, fail silently
+      }
+    };
+    fetchStats();
+  }, []);
+
   return (
     <div className="home-panel">
       <div className="home-header">
-        <h1 className="home-title">Cloud Self-Service Portal</h1>
+        <h1 className="home-title">Welcome to the Cloud Self-Service Portal</h1>
         <p className="home-subtitle">
-          A self-service platform for provisioning cloud infrastructure through GitOps workflows.
+          Provision approved cloud infrastructure through GitOps workflows - no cloud console access required.
         </p>
+        <button className="home-cta" onClick={() => onNavigate?.("blueprints")}>
+          Get Started
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </button>
+      </div>
+
+      {/* Stats Row */}
+      <div className="home-stats">
+        <div className="home-stat">
+          <span className="home-stat-value">{stats.blueprints}</span>
+          <span className="home-stat-label">Blueprints Available</span>
+        </div>
+        <div className="home-stat">
+          <span className="home-stat-value">{stats.resources}</span>
+          <span className="home-stat-label">Resources Deployed</span>
+        </div>
+        <div className="home-stat">
+          <span className="home-stat-value">{stats.jobs}</span>
+          <span className="home-stat-label">Jobs Completed</span>
+        </div>
       </div>
 
       <div className="home-content">
