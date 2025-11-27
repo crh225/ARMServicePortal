@@ -1,62 +1,7 @@
-# Kubernetes Deployment for ARMServicePortal Backend
-# This deploys the backend application directly to the AKS cluster
-#
-# PREREQUISITES:
-# 1. Backend image built and pushed to ACR (armportalacre4k9.azurecr.io/armportal-backend:latest)
-# 2. Secrets configured for GitHub and Elasticsearch credentials
-#
-# APPLY:
-# kubectl apply -f infra/crossplane/examples/backend-deployment.yaml
-
+# Argo Rollout for ARMServicePortal Backend (Blue-Green Deployment)
 ---
-# Namespace for the backend application
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: armportal-backend
-
----
-# Secret for ACR credentials (using existing ACR)
-apiVersion: v1
-kind: Secret
-metadata:
-  name: acr-credentials
-  namespace: armportal-backend
-type: kubernetes.io/dockerconfigjson
-data:
-  # This will need to be populated with actual ACR credentials
-  # You can create this using:
-  # kubectl create secret docker-registry acr-credentials \
-  #   --docker-server=armportalacre4k9.azurecr.io \
-  #   --docker-username=<acr-username> \
-  #   --docker-password=<acr-password> \
-  #   -n armportal-backend
-  .dockerconfigjson: e30K
-
----
-# ConfigMap for non-sensitive environment variables
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: backend-config
-  namespace: armportal-backend
-data:
-  NODE_ENV: "production"
-  GH_APP_ID: "2298250"
-  GH_INSTALLATION_ID: "94912535"
-  GH_INFRA_OWNER: "crh225"
-  GH_INFRA_REPO: "ARMServicePortal"
-  GH_OAUTH_CLIENT_ID: "Ov23liHgcQ7urCFXPs2k"
-  FRONTEND_URL: "https://portal.chrishouse.io"
-  APP_NAME: "arm-service-portal"
-  APP_URL: "https://portal-api.chrishouse.io"
-  ELASTICSEARCH_URL: "https://es-test-az-elk-managed-dev-5a6e80.es.eastus2.azure.elastic-cloud.com:9243"
-  LOG_ANALYTICS_WORKSPACE_ID: "c200dcd8-f350-4895-99c0-1a0828fe7384"
-
----
-# Deployment for the backend application
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
 metadata:
   name: armportal-backend
   namespace: armportal-backend
@@ -64,11 +9,12 @@ metadata:
     app: armportal-backend
     environment: dev
 spec:
-  revisionHistoryLimit: 5  # Keep only last 5 ReplicaSets for rollback
-  replicas: 2  # Matches your Container Apps configuration (min: 1, max: 2)
+  revisionHistoryLimit: 5
+  replicas: 2
   selector:
     matchLabels:
       app: armportal-backend
+
   template:
     metadata:
       labels:
@@ -85,12 +31,10 @@ spec:
           name: http
           protocol: TCP
 
-        # Environment variables from ConfigMap
         envFrom:
         - configMapRef:
             name: backend-config
 
-        # Sensitive environment variables from Secret
         env:
         - name: GH_APP_PRIVATE_KEY_BASE64
           valueFrom:
@@ -113,7 +57,6 @@ spec:
               name: backend-secrets
               key: ELASTICSEARCH_API_KEY
 
-        # Resource limits (matches Container Apps: 0.5 CPU, 1Gi memory)
         resources:
           requests:
             cpu: "500m"
@@ -122,7 +65,6 @@ spec:
             cpu: "500m"
             memory: "1Gi"
 
-        # Health probes (matches your existing Container Apps configuration)
         livenessProbe:
           httpGet:
             path: /api/health
@@ -150,12 +92,32 @@ spec:
           timeoutSeconds: 3
           failureThreshold: 30
 
+  # Blue-Green deployment strategy
+  strategy:
+    blueGreen:
+      # Reference to service that the rollout modifies as the active service
+      activeService: armportal-backend-active
+      # Reference to service that the rollout modifies as the preview service
+      previewService: armportal-backend-preview
+      # Auto-promotion after 30 seconds (can be set to false for manual promotion)
+      autoPromotionEnabled: false
+      # Number of seconds to wait before automatically promoting
+      autoPromotionSeconds: 30
+      # Anti-affinity to ensure blue and green don't run on same node
+      scaleDownDelaySeconds: 30
+      # Pre-promotion analysis
+      prePromotionAnalysis:
+        templates: []
+      # Post-promotion analysis
+      postPromotionAnalysis:
+        templates: []
+
 ---
-# Service to expose the backend
+# Active Service - This is what production traffic hits
 apiVersion: v1
 kind: Service
 metadata:
-  name: armportal-backend
+  name: armportal-backend-active
   namespace: armportal-backend
   labels:
     app: armportal-backend
@@ -170,3 +132,20 @@ spec:
     app: armportal-backend
 
 ---
+# Preview Service - This is for testing the new version before promotion
+apiVersion: v1
+kind: Service
+metadata:
+  name: armportal-backend-preview
+  namespace: armportal-backend
+  labels:
+    app: armportal-backend
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 4000
+    protocol: TCP
+    name: http
+  selector:
+    app: armportal-backend
