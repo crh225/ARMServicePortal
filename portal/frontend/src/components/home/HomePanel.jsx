@@ -6,7 +6,7 @@ import "../../styles/HomePanel.css";
  * Explains what the Cloud Self-Service Portal is and how it works
  */
 function HomePanel({ onNavigate }) {
-  const [stats, setStats] = useState({ blueprints: 0, resources: 0, jobs: 0 });
+  const [stats, setStats] = useState(null);
 
   useEffect(() => {
     // Fetch stats for the dashboard
@@ -23,7 +23,8 @@ function HomePanel({ onNavigate }) {
           jobs: Array.isArray(jobsRes) ? jobsRes.length : 0
         });
       } catch {
-        // Stats are optional, fail silently
+        // Stats are optional, show zeros on error
+        setStats({ blueprints: 0, resources: 0, jobs: 0 });
       }
     };
     fetchStats();
@@ -41,15 +42,27 @@ function HomePanel({ onNavigate }) {
       {/* Stats Row with CTA */}
       <div className="home-stats">
         <div className="home-stat">
-          <span className="home-stat-value">{stats.blueprints}</span>
+          {stats ? (
+            <span className="home-stat-value">{stats.blueprints}</span>
+          ) : (
+            <div className="home-stat-value-skeleton" />
+          )}
           <span className="home-stat-label">Blueprints Available</span>
         </div>
         <div className="home-stat">
-          <span className="home-stat-value">{stats.resources}</span>
+          {stats ? (
+            <span className="home-stat-value">{stats.resources}</span>
+          ) : (
+            <div className="home-stat-value-skeleton" />
+          )}
           <span className="home-stat-label">Resources Deployed</span>
         </div>
         <div className="home-stat">
-          <span className="home-stat-value">{stats.jobs}</span>
+          {stats ? (
+            <span className="home-stat-value">{stats.jobs}</span>
+          ) : (
+            <div className="home-stat-value-skeleton" />
+          )}
           <span className="home-stat-label">Jobs Completed</span>
         </div>
         <button className="home-cta" onClick={() => onNavigate?.("blueprints")}>
@@ -115,36 +128,47 @@ function HomePanel({ onNavigate }) {
           <h2 className="home-section-title">Technologies</h2>
           <div className="home-tech-grid">
             <div className="home-tech-card">
-              <div className="home-tech-icon" style={{ background: "linear-gradient(135deg, #7B42BC, #5C4EE5)" }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
-                  <path d="M12 2L2 7v10l10 5 10-5V7L12 2zm0 2.18l6.9 3.45L12 11.09 5.1 7.63 12 4.18zM4 8.82l7 3.5v7.36l-7-3.5V8.82zm9 10.86v-7.36l7-3.5v7.36l-7 3.5z"/>
+              <div className="home-tech-icon" style={{ background: "#7B42BC" }}>
+                {/* Terraform logo - official HashiCorp mark */}
+                <svg width="28" height="28" viewBox="0 0 64 64" fill="none">
+                  <path d="M22.5 11v14.4l12.5 7.2V18.2L22.5 11z" fill="white"/>
+                  <path d="M37 18.2v14.4l12.5-7.2V11L37 18.2z" fill="white" fillOpacity="0.5"/>
+                  <path d="M9 4v14.4l12.5 7.2V11.2L9 4z" fill="white" fillOpacity="0.5"/>
+                  <path d="M22.5 38.6V53l12.5-7.2V31.4l-12.5 7.2z" fill="white"/>
                 </svg>
               </div>
               <h3>Terraform</h3>
               <p>Infrastructure as Code for provisioning and managing cloud resources declaratively.</p>
             </div>
             <div className="home-tech-card">
-              <div className="home-tech-icon" style={{ background: "linear-gradient(135deg, #1572B6, #0D5B99)" }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+              <div className="home-tech-icon" style={{ background: "#1572B6" }}>
+                {/* Crossplane logo - stylized X with planes */}
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                  <path d="M4 4l7 8-7 8h3l5.5-6.5L18 20h3l-7-8 7-8h-3l-5.5 6.5L7 4H4z" fill="white"/>
                 </svg>
               </div>
               <h3>Crossplane</h3>
               <p>Kubernetes-native infrastructure provisioning using custom resource definitions.</p>
             </div>
             <div className="home-tech-card">
-              <div className="home-tech-icon" style={{ background: "linear-gradient(135deg, #EF7B4D, #E05D44)" }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
-                  <path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3zm-1.06 13.54L7.4 12l1.41-1.41 2.12 2.12 4.24-4.24 1.41 1.41-5.64 5.66z"/>
+              <div className="home-tech-icon" style={{ background: "#EF7B4D" }}>
+                {/* ArgoCD logo - octopus/squid shape */}
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="8" r="4" fill="white"/>
+                  <path d="M12 12c-2 0-3.5 1-4 2.5L6 20M12 12c2 0 3.5 1 4 2.5L18 20M12 12v8" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+                  <circle cx="6" cy="20" r="1.5" fill="white"/>
+                  <circle cx="12" cy="20" r="1.5" fill="white"/>
+                  <circle cx="18" cy="20" r="1.5" fill="white"/>
                 </svg>
               </div>
               <h3>ArgoCD</h3>
               <p>GitOps continuous delivery tool for Kubernetes that syncs desired state from Git.</p>
             </div>
             <div className="home-tech-card">
-              <div className="home-tech-icon" style={{ background: "linear-gradient(135deg, #24292e, #1b1f23)" }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
-                  <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+              <div className="home-tech-icon" style={{ background: "#24292e" }}>
+                {/* GitHub logo - Octocat mark */}
+                <svg width="28" height="28" viewBox="0 0 98 96" fill="white">
+                  <path fillRule="evenodd" clipRule="evenodd" d="M48.854 0C21.839 0 0 22 0 49.217c0 21.756 13.993 40.172 33.405 46.69 2.427.49 3.316-1.059 3.316-2.362 0-1.141-.08-5.052-.08-9.127-13.59 2.934-16.42-5.867-16.42-5.867-2.184-5.704-5.42-7.17-5.42-7.17-4.448-3.015.324-3.015.324-3.015 4.934.326 7.523 5.052 7.523 5.052 4.367 7.496 11.404 5.378 14.235 4.074.404-3.178 1.699-5.378 3.074-6.6-10.839-1.141-22.243-5.378-22.243-24.283 0-5.378 1.94-9.778 5.014-13.2-.485-1.222-2.184-6.275.486-13.038 0 0 4.125-1.304 13.426 5.052a46.97 46.97 0 0 1 12.214-1.63c4.125 0 8.33.571 12.213 1.63 9.302-6.356 13.427-5.052 13.427-5.052 2.67 6.763.97 11.816.485 13.038 3.155 3.422 5.015 7.822 5.015 13.2 0 18.905-11.404 23.06-22.324 24.283 1.78 1.548 3.316 4.481 3.316 9.126 0 6.6-.08 11.897-.08 13.526 0 1.304.89 2.853 3.316 2.364 19.412-6.52 33.405-24.935 33.405-46.691C97.707 22 75.788 0 48.854 0z"/>
                 </svg>
               </div>
               <h3>GitHub</h3>

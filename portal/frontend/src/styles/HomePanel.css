@@ -54,12 +54,36 @@
 .home-stats {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 48px;
   margin-bottom: 32px;
   padding: 24px 32px;
   background: var(--bg-primary);
   border: 1px solid var(--border-default);
   border-radius: 12px;
+}
+
+.home-stat-value-skeleton {
+  width: 48px;
+  height: 32px;
+  background: linear-gradient(
+    90deg,
+    rgba(148, 163, 184, 0.15) 0%,
+    rgba(148, 163, 184, 0.25) 50%,
+    rgba(148, 163, 184, 0.15) 100%
+  );
+  background-size: 200% 100%;
+  border-radius: 6px;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 .home-stat {
