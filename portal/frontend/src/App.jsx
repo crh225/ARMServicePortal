@@ -6,6 +6,7 @@ import Header from "./components/shared/Header";
 import BlueprintsPanel from "./components/blueprints/BlueprintsPanel";
 import JobsPanel from "./components/jobs/JobsPanel";
 import ResourcesPanel from "./components/resources/ResourcesPanel";
+import HomePanel from "./components/home/HomePanel";
 import AdminPanel from "./components/admin/AdminPanel";
 import AuthCallback from "./components/shared/AuthCallback";
 import Footer from "./components/shared/Footer";
@@ -21,7 +22,7 @@ function App() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(() => {
     // Initialize from URL query parameter if present
-    return searchParams.get("tab") || "blueprints";
+    return searchParams.get("tab") || "home";
   });
   const [updateResourceData, setUpdateResourceData] = useState(null);
 
@@ -101,7 +102,7 @@ function App() {
               onMarkAllAsRead={markAllAsRead}
             />
 
-            <main className={`app-main ${(activeTab === "resources" || activeTab === "admin") ? "app-main--full" : ""}`}>
+            <main className={`app-main ${(activeTab === "resources" || activeTab === "admin" || activeTab === "home") ? "app-main--full" : ""}`}>
               {activeTab === "blueprints" && (
                 <BlueprintsPanel
                   updateResourceData={updateResourceData}
@@ -118,6 +119,9 @@ function App() {
                 <ResourcesPanel
                   isActive={true}
                 />
+              )}
+              {activeTab === "home" && (
+                <HomePanel onNavigate={handleTabChange} />
               )}
               {activeTab === "admin" && (
                 <AdminPanel />

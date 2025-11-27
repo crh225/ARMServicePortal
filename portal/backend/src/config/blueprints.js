@@ -42,7 +42,8 @@ export const BLUEPRINTS = [
         name: "resource_group_name",
         description: "The name of the created resource group"
       }
-    ]
+    ],
+    estimatedMonthlyCost: 0
   },
   {
     id: "azure-storage-basic",
@@ -111,7 +112,8 @@ export const BLUEPRINTS = [
         name: "primary_blob_endpoint",
         description: "The endpoint URL for blob storage"
       }
-    ]
+    ],
+    estimatedMonthlyCost: 2
   },
   {
     id: "azure-key-vault-basic",
@@ -178,7 +180,8 @@ export const BLUEPRINTS = [
         options: ["true", "false"],
         default: "true"
       }
-    ]
+    ],
+    estimatedMonthlyCost: 0.03
   },
   {
     id: "azure-static-site",
@@ -262,7 +265,8 @@ export const BLUEPRINTS = [
         name: "cdn_endpoint",
         description: "CDN endpoint URL (if CDN enabled)"
       }
-    ]
+    ],
+    estimatedMonthlyCost: 0.10
   },
   {
     id: "azure-frontdoor",
@@ -450,7 +454,8 @@ export const BLUEPRINTS = [
         name: "resource_group_name",
         description: "Resource group name"
       }
-    ]
+    ],
+    estimatedMonthlyCost: 35
   },
   {
     id: "azure-postgres-flexible",
@@ -587,7 +592,8 @@ export const BLUEPRINTS = [
         name: "connection_string",
         description: "PostgreSQL connection string (sensitive)"
       }
-    ]
+    ],
+    estimatedMonthlyCost: 15
   },
   {
     id: "azure-elastic-managed",
@@ -832,7 +838,7 @@ export const BLUEPRINTS = [
         description: "PostgreSQL connection endpoint"
       }
     ],
-    estimatedMonthlyCost: 150
+    estimatedMonthlyCost: 80
   }
 ];
 

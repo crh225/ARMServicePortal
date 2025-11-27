@@ -200,11 +200,12 @@ export async function listGitHubRequests({ environment } = {}) {
   const { infraOwner, infraRepo } = validateGitHubConfig();
   const octokit = await getInstallationClient();
 
-  const { data: pulls } = await octokit.pulls.list({
+  // Fetch all PRs using pagination (GitHub max is 100 per page)
+  const pulls = await octokit.paginate(octokit.pulls.list, {
     owner: infraOwner,
     repo: infraRepo,
     state: "all",
-    per_page: 50,
+    per_page: 100,
     sort: "created",
     direction: "desc"
   });

@@ -109,7 +109,7 @@ function BackupsList() {
   if (loading) {
     return (
       <div className="admin-section">
-        <h3>Terraform State Backups</h3>
+        <h3>State Backups</h3>
         <div className="backups-loading">
           <div className="skeleton-line" style={{ width: "100%", height: "40px", marginBottom: "8px" }}></div>
           <div className="skeleton-line" style={{ width: "100%", height: "40px", marginBottom: "8px" }}></div>
@@ -122,7 +122,7 @@ function BackupsList() {
   if (error) {
     return (
       <div className="admin-section">
-        <h3>Terraform State Backups</h3>
+        <h3>State Backups</h3>
         <div className="error-state">{error}</div>
       </div>
     );
@@ -131,7 +131,7 @@ function BackupsList() {
   return (
     <div className="admin-section">
       <div className="backups-header">
-        <h3>Terraform State Backups</h3>
+        <h3>State Backups</h3>
         <div className="backups-controls">
           <select
             value={environmentFilter}

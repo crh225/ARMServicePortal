@@ -29,12 +29,12 @@ function Header({ activeTab, onTabChange, notifications, unreadCount, onMarkAsRe
         <div className="header-top">
           <div>
             <div className="logo-row">
-              <span className="logo-text" onClick={() => onTabChange("blueprints")} style={{ cursor: "pointer" }}>
+              <span className="logo-text" onClick={() => onTabChange("home")} style={{ cursor: "pointer" }}>
                 Cloud Self-Service Portal
               </span>
             </div>
             <p className="app-subtitle">
-              Provision approved Azure resources through GitOps + Terraform.
+              Provision approved cloud resources through GitOps.
             </p>
           </div>
           <div className="header-actions">
@@ -90,6 +90,14 @@ function Header({ activeTab, onTabChange, notifications, unreadCount, onMarkAsRe
           </div>
         </div>
         <nav className="app-nav">
+          <button
+            className={
+              "nav-tab" + (activeTab === "home" ? " nav-tab--active" : "")
+            }
+            onClick={() => onTabChange("home")}
+          >
+            Home
+          </button>
           <button
             className={
               "nav-tab" +
