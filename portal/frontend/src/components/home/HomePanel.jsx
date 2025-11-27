@@ -1,14 +1,47 @@
 import { useEffect, useState } from "react";
 import "../../styles/HomePanel.css";
 
+// Cache for home page stats (5 minutes)
+const STATS_CACHE_KEY = "homeStats";
+const STATS_CACHE_TTL = 5 * 60 * 1000;
+
+function getCachedStats() {
+  try {
+    const cached = sessionStorage.getItem(STATS_CACHE_KEY);
+    if (cached) {
+      const { data, timestamp } = JSON.parse(cached);
+      if (Date.now() - timestamp < STATS_CACHE_TTL) {
+        return data;
+      }
+    }
+  } catch {
+    // Ignore cache errors
+  }
+  return null;
+}
+
+function setCachedStats(data) {
+  try {
+    sessionStorage.setItem(STATS_CACHE_KEY, JSON.stringify({
+      data,
+      timestamp: Date.now()
+    }));
+  } catch {
+    // Ignore cache errors
+  }
+}
+
 /**
  * HomePanel component
  * Explains what the Cloud Self-Service Portal is and how it works
  */
 function HomePanel({ onNavigate }) {
-  const [stats, setStats] = useState(null);
+  const [stats, setStats] = useState(() => getCachedStats());
 
   useEffect(() => {
+    // If we have cached stats, don't refetch
+    if (stats) return;
+
     // Fetch stats for the dashboard
     const fetchStats = async () => {
       try {
@@ -17,18 +50,20 @@ function HomePanel({ onNavigate }) {
           fetch("/api/resources").then(r => r.ok ? r.json() : { resources: [] }),
           fetch("/api/jobs").then(r => r.ok ? r.json() : [])
         ]);
-        setStats({
+        const newStats = {
           blueprints: Array.isArray(catalogRes) ? catalogRes.length : 0,
           resources: resourcesRes?.resources?.length || 0,
           jobs: Array.isArray(jobsRes) ? jobsRes.length : 0
-        });
+        };
+        setStats(newStats);
+        setCachedStats(newStats);
       } catch {
         // Stats are optional, show zeros on error
         setStats({ blueprints: 0, resources: 0, jobs: 0 });
       }
     };
     fetchStats();
-  }, []);
+  }, [stats]);
 
   return (
     <div className="home-panel">

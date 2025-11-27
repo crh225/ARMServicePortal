@@ -15,31 +15,39 @@ const categoryConfig = {
   "default": { icon: "📦", color: "#6b7280" }
 };
 
-// Provider/engine configuration
+// Provider/engine configuration with official logos
 const providerConfig = {
   "terraform": {
     name: "Terraform",
-    color: "#7B42BC",
+    color: "#5c4ee5",
     icon: (
-      <svg width="12" height="12" viewBox="0 0 128 128" fill="currentColor">
-        <path d="M44.5 2v42.5L81 22.3V2H44.5zm0 46.8v42.5l36.5-22.2V46.9L44.5 48.8zM85 27.6v42.5l36.5-22.2V5.4L85 27.6zM7 49.8v42.5l36.5-22.2V47.9L7 49.8z"/>
+      <svg width="14" height="14" viewBox="0 0 128 128">
+        <g fillRule="evenodd">
+          <path d="M77.941 44.5v36.836L46.324 62.918V26.082zm0 0" fill="currentColor"/>
+          <path d="M81.41 81.336l31.633-18.418V26.082L81.41 44.5zm0 0" fill="currentColor" fillOpacity="0.6"/>
+          <path d="M11.242 42.36L42.86 60.776V23.941L11.242 5.523zm0 0M77.941 85.375L46.324 66.957v36.82l31.617 18.418zm0 0" fill="currentColor"/>
+        </g>
       </svg>
     )
   },
   "crossplane": {
     name: "Crossplane",
-    color: "#1572B6",
+    color: "#35d0ba",
     icon: (
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 2L2 7v10l10 5 10-5V7L12 2zm0 2.18l6.9 3.45L12 11.09 5.1 7.63 12 4.18zM4 8.82l7 3.5v7.36l-7-3.5V8.82zm9 10.86v-7.36l7-3.5v7.36l-7 3.5z"/>
-      </svg>
+      <img
+        src="https://raw.githubusercontent.com/cncf/artwork/main/projects/crossplane/icon/color/crossplane-icon-color.svg"
+        alt=""
+        width="16"
+        height="16"
+        style={{ verticalAlign: "middle" }}
+      />
     )
   },
   "pulumi": {
     name: "Pulumi",
     color: "#F7BF2A",
     icon: (
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
         <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
       </svg>
     )
