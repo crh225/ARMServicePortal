@@ -12,13 +12,13 @@ function HomePanel({ onNavigate }) {
     // Fetch stats for the dashboard
     const fetchStats = async () => {
       try {
-        const [blueprintsRes, resourcesRes, jobsRes] = await Promise.all([
-          fetch("/api/blueprints").then(r => r.ok ? r.json() : []),
+        const [catalogRes, resourcesRes, jobsRes] = await Promise.all([
+          fetch("/api/catalog").then(r => r.ok ? r.json() : []),
           fetch("/api/resources").then(r => r.ok ? r.json() : { resources: [] }),
           fetch("/api/jobs").then(r => r.ok ? r.json() : [])
         ]);
         setStats({
-          blueprints: Array.isArray(blueprintsRes) ? blueprintsRes.length : 0,
+          blueprints: Array.isArray(catalogRes) ? catalogRes.length : 0,
           resources: resourcesRes?.resources?.length || 0,
           jobs: Array.isArray(jobsRes) ? jobsRes.length : 0
         });
@@ -36,15 +36,9 @@ function HomePanel({ onNavigate }) {
         <p className="home-subtitle">
           Provision approved cloud infrastructure through GitOps workflows - no cloud console access required.
         </p>
-        <button className="home-cta" onClick={() => onNavigate?.("blueprints")}>
-          Get Started
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M5 12h14M12 5l7 7-7 7"/>
-          </svg>
-        </button>
       </div>
 
-      {/* Stats Row */}
+      {/* Stats Row with CTA */}
       <div className="home-stats">
         <div className="home-stat">
           <span className="home-stat-value">{stats.blueprints}</span>
@@ -58,6 +52,12 @@ function HomePanel({ onNavigate }) {
           <span className="home-stat-value">{stats.jobs}</span>
           <span className="home-stat-label">Jobs Completed</span>
         </div>
+        <button className="home-cta" onClick={() => onNavigate?.("blueprints")}>
+          Get Started
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </button>
       </div>
 
       <div className="home-content">

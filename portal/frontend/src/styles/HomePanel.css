@@ -30,7 +30,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 24px;
+  padding: 14px 28px;
   font-size: 1rem;
   font-weight: 600;
   color: white;
@@ -53,10 +53,10 @@
 /* Stats Row */
 .home-stats {
   display: flex;
-  justify-content: center;
+  align-items: center;
   gap: 48px;
   margin-bottom: 32px;
-  padding: 24px;
+  padding: 24px 32px;
   background: var(--bg-primary);
   border: 1px solid var(--border-default);
   border-radius: 12px;
@@ -286,6 +286,13 @@
 
   .home-stat-value {
     font-size: 1.5rem;
+  }
+
+  .home-cta {
+    margin-left: 0;
+    margin-top: 8px;
+    width: 100%;
+    justify-content: center;
   }
 
   .home-section {
