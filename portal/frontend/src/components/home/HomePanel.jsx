@@ -128,38 +128,41 @@ function HomePanel({ onNavigate }) {
           <h2 className="home-section-title">Technologies</h2>
           <div className="home-tech-grid">
             <div className="home-tech-card">
-              <div className="home-tech-icon" style={{ background: "#7B42BC" }}>
+              <div className="home-tech-icon" style={{ background: "#5c4ee5" }}>
                 {/* Terraform logo - official HashiCorp mark */}
-                <svg width="28" height="28" viewBox="0 0 64 64" fill="none">
-                  <path d="M22.5 11v14.4l12.5 7.2V18.2L22.5 11z" fill="white"/>
-                  <path d="M37 18.2v14.4l12.5-7.2V11L37 18.2z" fill="white" fillOpacity="0.5"/>
-                  <path d="M9 4v14.4l12.5 7.2V11.2L9 4z" fill="white" fillOpacity="0.5"/>
-                  <path d="M22.5 38.6V53l12.5-7.2V31.4l-12.5 7.2z" fill="white"/>
+                <svg width="28" height="28" viewBox="0 0 128 128">
+                  <g fillRule="evenodd">
+                    <path d="M77.941 44.5v36.836L46.324 62.918V26.082zm0 0" fill="white"/>
+                    <path d="M81.41 81.336l31.633-18.418V26.082L81.41 44.5zm0 0" fill="white" fillOpacity="0.6"/>
+                    <path d="M11.242 42.36L42.86 60.776V23.941L11.242 5.523zm0 0M77.941 85.375L46.324 66.957v36.82l31.617 18.418zm0 0" fill="white"/>
+                  </g>
                 </svg>
               </div>
               <h3>Terraform</h3>
               <p>Infrastructure as Code for provisioning and managing cloud resources declaratively.</p>
             </div>
             <div className="home-tech-card">
-              <div className="home-tech-icon" style={{ background: "#1572B6" }}>
-                {/* Crossplane logo - stylized X with planes */}
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                  <path d="M4 4l7 8-7 8h3l5.5-6.5L18 20h3l-7-8 7-8h-3l-5.5 6.5L7 4H4z" fill="white"/>
-                </svg>
+              <div className="home-tech-icon" style={{ background: "transparent" }}>
+                {/* Crossplane logo - official CNCF artwork */}
+                <img
+                  src="https://raw.githubusercontent.com/cncf/artwork/main/projects/crossplane/icon/color/crossplane-icon-color.svg"
+                  alt="Crossplane"
+                  width="40"
+                  height="40"
+                />
               </div>
               <h3>Crossplane</h3>
               <p>Kubernetes-native infrastructure provisioning using custom resource definitions.</p>
             </div>
             <div className="home-tech-card">
-              <div className="home-tech-icon" style={{ background: "#EF7B4D" }}>
-                {/* ArgoCD logo - octopus/squid shape */}
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="8" r="4" fill="white"/>
-                  <path d="M12 12c-2 0-3.5 1-4 2.5L6 20M12 12c2 0 3.5 1 4 2.5L18 20M12 12v8" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-                  <circle cx="6" cy="20" r="1.5" fill="white"/>
-                  <circle cx="12" cy="20" r="1.5" fill="white"/>
-                  <circle cx="18" cy="20" r="1.5" fill="white"/>
-                </svg>
+              <div className="home-tech-icon" style={{ background: "transparent" }}>
+                {/* ArgoCD logo - official devicon */}
+                <img
+                  src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/argocd/argocd-original.svg"
+                  alt="ArgoCD"
+                  width="40"
+                  height="40"
+                />
               </div>
               <h3>ArgoCD</h3>
               <p>GitOps continuous delivery tool for Kubernetes that syncs desired state from Git.</p>
