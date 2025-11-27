@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import EmptyState from "../shared/EmptyState";
+import BlueprintsListSkeleton from "./BlueprintsListSkeleton";
 import "../../styles/BlueprintsList.css";
 
 // Category icons and colors
@@ -50,31 +51,6 @@ function getProvider(bp) {
   return bp.provider || "terraform";
 }
 
-// Skeleton card component for loading state
-function SkeletonCard() {
-  return (
-    <div className="blueprint-card blueprint-card--skeleton">
-      <div className="blueprint-card-header">
-        <div className="skeleton skeleton-icon" />
-        <div className="blueprint-meta">
-          <div className="skeleton skeleton-category" />
-          <div className="skeleton skeleton-version" />
-        </div>
-      </div>
-      <div className="skeleton skeleton-title" />
-      <div className="skeleton skeleton-desc" />
-      <div className="skeleton skeleton-desc-short" />
-      <div className="blueprint-footer">
-        <div className="blueprint-stats">
-          <div className="skeleton skeleton-provider" />
-          <div className="skeleton skeleton-stat" />
-        </div>
-        <div className="skeleton skeleton-cost" />
-      </div>
-    </div>
-  );
-}
-
 // Get category from blueprint (infer from name/description if not set)
 function getCategory(bp) {
   if (bp.category) return bp.category;
@@ -101,6 +77,11 @@ function BlueprintsList({ blueprints, selectedBlueprint, onSelectBlueprint, load
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }, [selectedBlueprint]);
+
+  // Show skeleton while loading
+  if (loading) {
+    return <BlueprintsListSkeleton />;
+  }
 
   // Filter blueprints based on search
   const filteredBlueprints = blueprints.filter(bp => {
@@ -149,20 +130,7 @@ function BlueprintsList({ blueprints, selectedBlueprint, onSelectBlueprint, load
       </div>
 
       <div className="blueprint-grid">
-        {/* Show skeleton cards while loading */}
-        {loading && (
-          <>
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-          </>
-        )}
-
-        {/* Show actual cards when not loading */}
-        {!loading && displayedBlueprints.map((bp) => {
+        {displayedBlueprints.map((bp) => {
           const category = getCategory(bp);
           const config = categoryConfig[category] || categoryConfig.default;
 
@@ -235,14 +203,14 @@ function BlueprintsList({ blueprints, selectedBlueprint, onSelectBlueprint, load
           );
         })}
 
-        {!loading && blueprints.length === 0 && (
+        {blueprints.length === 0 && (
           <EmptyState
             message="No blueprints found yet."
             subMessage="Add modules in the infra folder and expose them via the API."
           />
         )}
 
-        {!loading && blueprints.length > 0 && displayedBlueprints.length === 0 && searchQuery && (
+        {blueprints.length > 0 && displayedBlueprints.length === 0 && searchQuery && (
           <div className="blueprint-no-results">
             <p>No templates match "{searchQuery}"</p>
             <button onClick={() => setSearchQuery("")} className="blueprint-clear-search">

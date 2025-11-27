@@ -6,59 +6,58 @@ describe("BlueprintsListSkeleton", () => {
   it("renders the title and description", () => {
     render(<BlueprintsListSkeleton />);
 
-    expect(screen.getByText("Choose a Blueprint")).toBeInTheDocument();
-    expect(screen.getByText("Select an approved Terraform module to deploy.")).toBeInTheDocument();
+    expect(screen.getByText("Service Catalog")).toBeInTheDocument();
+    expect(screen.getByText("Choose from pre-approved infrastructure templates")).toBeInTheDocument();
   });
 
-  it("renders default number of skeleton cards (4)", () => {
+  it("renders default number of skeleton cards (6)", () => {
     const { container } = render(<BlueprintsListSkeleton />);
 
-    const skeletonCards = container.querySelectorAll(".blueprint-card");
-    expect(skeletonCards).toHaveLength(4);
-  });
-
-  it("renders custom number of skeleton cards when count is provided", () => {
-    const { container } = render(<BlueprintsListSkeleton count={6} />);
-
-    const skeletonCards = container.querySelectorAll(".blueprint-card");
+    const skeletonCards = container.querySelectorAll(".blueprint-card--skeleton");
     expect(skeletonCards).toHaveLength(6);
   });
 
-  it("renders skeleton loaders for title and badge in each card", () => {
+  it("renders custom number of skeleton cards when count is provided", () => {
+    const { container } = render(<BlueprintsListSkeleton count={4} />);
+
+    const skeletonCards = container.querySelectorAll(".blueprint-card--skeleton");
+    expect(skeletonCards).toHaveLength(4);
+  });
+
+  it("renders skeleton elements in each card", () => {
     const { container } = render(<BlueprintsListSkeleton count={2} />);
 
-    const blueprintCards = container.querySelectorAll(".blueprint-card");
+    const blueprintCards = container.querySelectorAll(".blueprint-card--skeleton");
 
     blueprintCards.forEach(card => {
-      const skeletons = card.querySelectorAll(".skeleton");
-      // Each card should have: 1 title skeleton, 1 badge skeleton, 2 text skeletons = 4 total
-      expect(skeletons.length).toBeGreaterThanOrEqual(4);
+      // Each card should have skeleton elements
+      expect(card.querySelector(".skeleton-icon")).toBeInTheDocument();
+      expect(card.querySelector(".skeleton-category")).toBeInTheDocument();
+      expect(card.querySelector(".skeleton-version")).toBeInTheDocument();
+      expect(card.querySelector(".skeleton-title")).toBeInTheDocument();
+      expect(card.querySelector(".skeleton-desc")).toBeInTheDocument();
+      expect(card.querySelector(".skeleton-provider")).toBeInTheDocument();
     });
   });
 
-  it("renders text skeletons with correct widths", () => {
-    const { container } = render(<BlueprintsListSkeleton count={1} />);
-
-    // Check for the 100% width skeleton
-    const fullWidthSkeleton = container.querySelector('.skeleton[style*="width: 100%"]');
-    expect(fullWidthSkeleton).toBeInTheDocument();
-
-    // Check for the 80% width skeleton
-    const partialWidthSkeleton = container.querySelector('.skeleton[style*="width: 80%"]');
-    expect(partialWidthSkeleton).toBeInTheDocument();
-  });
-
-  it("renders with correct class names for blueprint list", () => {
+  it("renders with correct class names for blueprint grid", () => {
     const { container } = render(<BlueprintsListSkeleton />);
 
-    const blueprintList = container.querySelector(".blueprint-list");
-    expect(blueprintList).toBeInTheDocument();
+    const blueprintGrid = container.querySelector(".blueprint-grid");
+    expect(blueprintGrid).toBeInTheDocument();
+  });
+
+  it("renders a skeleton search bar", () => {
+    const { container } = render(<BlueprintsListSkeleton />);
+
+    const searchSkeleton = container.querySelector(".blueprint-search .skeleton");
+    expect(searchSkeleton).toBeInTheDocument();
   });
 
   it("renders zero skeleton cards when count is 0", () => {
     const { container } = render(<BlueprintsListSkeleton count={0} />);
 
-    const skeletonCards = container.querySelectorAll(".blueprint-card");
+    const skeletonCards = container.querySelectorAll(".blueprint-card--skeleton");
     expect(skeletonCards).toHaveLength(0);
   });
 });
