@@ -92,6 +92,21 @@ spec:
           timeoutSeconds: 3
           failureThreshold: 30
 
+        # Mount CSI Secret Store volume
+        volumeMounts:
+        - name: secrets-store
+          mountPath: "/mnt/secrets-store"
+          readOnly: true
+
+      # CSI Secret Store volume
+      volumes:
+      - name: secrets-store
+        csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: "azure-backend-secrets"
+
   # Blue-Green deployment strategy
   strategy:
     blueGreen:
