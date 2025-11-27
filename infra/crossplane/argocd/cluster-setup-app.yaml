@@ -1,0 +1,33 @@
+# Argo CD Application for Cluster Setup
+# Tracks cluster-level infrastructure resources (cert-manager, ingress, etc.)
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cluster-setup
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/crh225/ARMServicePortal.git
+    targetRevision: main
+    path: infra/crossplane/cluster-setup
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+
+  syncPolicy:
+    automated:
+      prune: true      # Delete resources removed from Git
+      selfHeal: true   # Auto-sync when drift detected
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
