@@ -1,5 +1,4 @@
 /**
- * Backups Controller
  * Handles HTTP requests for Terraform state backup operations
  * Error handling, validation, and logging are handled by pipeline behaviors
  */
