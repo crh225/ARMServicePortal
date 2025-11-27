@@ -34,7 +34,7 @@ function Header({ activeTab, onTabChange, notifications, unreadCount, onMarkAsRe
               </span>
             </div>
             <p className="app-subtitle">
-              Provision approved Azure resources through GitOps + Terraform.
+              Provision approved cloud resources through GitOps.
             </p>
           </div>
           <div className="header-actions">
