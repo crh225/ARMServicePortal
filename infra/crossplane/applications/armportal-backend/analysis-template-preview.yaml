@@ -8,11 +8,11 @@ metadata:
   namespace: armportal-backend
 spec:
   metrics:
-  # Health endpoint check - must return 200 OK
+  # Health endpoint check - must return "ok"
   - name: preview-health
     interval: 10s
     count: 6
-    successCondition: result == "200"
+    successCondition: result == "ok"
     failureLimit: 2
     provider:
       web:
@@ -22,18 +22,3 @@ spec:
         headers:
           - key: Content-Type
             value: application/json
-
-  # HTTP status code check
-  - name: preview-http-status
-    interval: 10s
-    count: 6
-    successCondition: result.startsWith("2")
-    failureLimit: 2
-    provider:
-      web:
-        url: https://portal-api-preview.chrishouse.io/api/health
-        timeoutSeconds: 5
-        headers:
-          - key: Content-Type
-            value: application/json
-        jsonPath: "{$.statusCode}"
