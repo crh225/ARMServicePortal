@@ -1,6 +1,6 @@
 import crypto from "crypto";
 
-// In-memory session store (replace with Redis/DB in production)
+// (replace with Redis/DB in production)
 const sessions = new Map();
 
 /**
