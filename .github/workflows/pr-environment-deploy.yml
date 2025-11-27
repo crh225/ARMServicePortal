@@ -60,9 +60,14 @@ jobs:
           # Create namespace if it doesn't exist
           kubectl create namespace "$PR_NAMESPACE" --dry-run=client -o yaml | kubectl apply -f -
 
-          # Copy secrets from main namespace to PR namespace
+          # Copy backend secrets from main namespace to PR namespace
           kubectl get secret backend-secrets -n armportal-backend -o yaml | \
             sed "s/namespace: armportal-backend/namespace: $PR_NAMESPACE/" | \
+            kubectl apply -f -
+
+          # Copy wildcard TLS certificate from cert-manager namespace to PR namespace
+          kubectl get secret pr-wildcard-tls -n cert-manager -o yaml | \
+            sed "s/namespace: cert-manager/namespace: $PR_NAMESPACE/" | \
             kubectl apply -f -
 
       - name: Deploy PR environment
@@ -87,22 +92,13 @@ jobs:
             deployment/armportal-backend-pr-${{ github.event.pull_request.number }} \
             -n "$PR_NAMESPACE"
 
-      - name: Wait for TLS certificate
+      - name: Verify TLS certificate
         run: |
           PR_NAMESPACE="armportal-pr-${{ github.event.pull_request.number }}"
 
-          echo "Waiting for TLS certificate to be issued..."
-          for i in {1..30}; do
-            CERT_READY=$(kubectl get certificate portal-api-pr-${{ github.event.pull_request.number }}-tls -n "$PR_NAMESPACE" -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null || echo "False")
-
-            if [ "$CERT_READY" == "True" ]; then
-              echo "✅ Certificate ready!"
-              break
-            fi
-
-            echo "Waiting for certificate... ($i/30)"
-            sleep 10
-          done
+          echo "Verifying wildcard TLS certificate is available..."
+          kubectl get secret pr-wildcard-tls -n "$PR_NAMESPACE"
+          echo "✅ Certificate ready!"
 
       - name: Comment on PR
         uses: actions/github-script@v7

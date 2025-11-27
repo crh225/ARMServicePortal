@@ -137,7 +137,6 @@ metadata:
     app: armportal-backend-pr
     pr-number: "PR_NUMBER"
   annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
     nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
 spec:
@@ -145,7 +144,7 @@ spec:
   tls:
   - hosts:
     - portal-api-pr-PR_NUMBER.pr.chrishouse.io
-    secretName: portal-api-pr-PR_NUMBER-tls
+    secretName: pr-wildcard-tls
   rules:
   - host: portal-api-pr-PR_NUMBER.pr.chrishouse.io
     http:

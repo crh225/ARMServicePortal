@@ -1,0 +1,16 @@
+# Wildcard TLS Certificate for PR environments
+# Uses Cloudflare DNS-01 challenge for wildcard domain
+# Certificate is stored in cert-manager namespace and copied to PR namespaces
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: pr-wildcard-tls
+  namespace: cert-manager
+spec:
+  secretName: pr-wildcard-tls
+  issuerRef:
+    name: letsencrypt-dns01
+    kind: ClusterIssuer
+  dnsNames:
+    - "*.pr.chrishouse.io"
