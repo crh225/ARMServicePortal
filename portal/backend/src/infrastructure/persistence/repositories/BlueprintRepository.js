@@ -17,15 +17,7 @@ export class BlueprintRepository extends IBlueprintRepository {
       return null;
     }
 
-    return new Blueprint({
-      id: blueprintData.id,
-      name: blueprintData.displayName || blueprintData.name,
-      version: blueprintData.version,
-      description: blueprintData.description,
-      variables: blueprintData.variables,
-      policies: blueprintData.policies,
-      metadata: blueprintData.metadata
-    });
+    return this._toEntity(blueprintData);
   }
 
   /**
@@ -33,16 +25,27 @@ export class BlueprintRepository extends IBlueprintRepository {
    */
   async getAllLatest() {
     const blueprintsData = getLatestBlueprints();
+    return blueprintsData.map(data => this._toEntity(data));
+  }
 
-    return blueprintsData.map(data => new Blueprint({
+  /**
+   * Convert raw blueprint data to Blueprint entity
+   */
+  _toEntity(data) {
+    return new Blueprint({
       id: data.id,
       name: data.displayName || data.name,
       version: data.version,
       description: data.description,
       variables: data.variables,
       policies: data.policies,
-      metadata: data.metadata
-    }));
+      metadata: data.metadata,
+      provider: data.provider,
+      category: data.category,
+      outputs: data.outputs,
+      estimatedMonthlyCost: data.estimatedMonthlyCost,
+      crossplane: data.crossplane
+    });
   }
 
   /**

@@ -155,6 +155,50 @@ export async function estimateBlueprintCost(blueprintId, variables, blueprint = 
       });
       break;
 
+    case "xp-application-environment": {
+      // Crossplane Application Environment - Kubernetes-based deployment
+      // Cost is based on AKS node resources consumed, not Azure-managed services
+      const xpFrontendReplicas = parseInt(variables.frontend_replicas || "2");
+      const xpBackendReplicas = parseInt(variables.backend_replicas || "2");
+      const xpDbStorageGB = parseInt(variables.database_storageGB || "10");
+
+      // Estimate based on typical AKS resource costs:
+      // - Pods: ~$10-15/pod/month for small workloads (CPU/memory share of node)
+      // - PostgreSQL PVC: ~$0.10/GB/month for Azure Disk
+      // - Ingress/Load Balancer: ~$20/month
+      const xpPvcCost = xpDbStorageGB * 0.10;
+
+      estimates.push({
+        resourceType: "Frontend Pods",
+        skuName: `${xpFrontendReplicas} replica(s)`,
+        monthlyEstimate: xpFrontendReplicas * 12,
+        currency: "USD",
+        note: "Kubernetes deployment resource share"
+      });
+      estimates.push({
+        resourceType: "Backend Pods",
+        skuName: `${xpBackendReplicas} replica(s)`,
+        monthlyEstimate: xpBackendReplicas * 12,
+        currency: "USD",
+        note: "Kubernetes deployment resource share"
+      });
+      estimates.push({
+        resourceType: "PostgreSQL Pod + Storage",
+        skuName: `${xpDbStorageGB}GB PVC`,
+        monthlyEstimate: 12 + xpPvcCost,
+        currency: "USD",
+        note: "StatefulSet with persistent volume"
+      });
+      estimates.push({
+        resourceType: "Ingress / Load Balancer",
+        skuName: "NGINX Ingress",
+        monthlyEstimate: 20,
+        currency: "USD",
+        note: "Shared ingress controller cost allocation"
+      });
+      break;
+    }
+
     default:
       estimates.push({
         resourceType: "Unknown",

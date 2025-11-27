@@ -675,6 +675,164 @@ export const BLUEPRINTS = [
       }
     ],
     estimatedMonthlyCost: 95
+  },
+  // ============================================================
+  // CROSSPLANE BLUEPRINTS
+  // ============================================================
+  {
+    id: "xp-application-environment",
+    version: "1.0.0",
+    displayName: "Application Environment (Full Stack)",
+    description: "Complete application stack with frontend, backend, and PostgreSQL database. Provisions namespace, deployments, services, and ingress with TLS.",
+    category: "Compute",
+    provider: "crossplane",
+    // Crossplane-specific config
+    crossplane: {
+      apiVersion: "platform.chrishouse.io/v1alpha1",
+      kind: "ApplicationEnvironmentClaim",
+      compositionRef: "application-environment",
+      claimsNamespace: "platform-claims"
+    },
+    variables: [
+      {
+        name: "appName",
+        label: "Application Name",
+        type: "string",
+        required: true,
+        placeholder: "orders",
+        validation: {
+          pattern: "^[a-z][a-z0-9-]{1,20}$",
+          message: "Lowercase letters, numbers, hyphens. 2-21 chars. Must start with letter."
+        }
+      },
+      {
+        name: "environment",
+        label: "Environment",
+        type: "select",
+        required: true,
+        options: ["dev", "staging", "prod"],
+        default: "dev"
+      },
+      {
+        name: "frontend_imageRepo",
+        label: "Frontend Image Repository",
+        type: "acr-repository",
+        required: true,
+        placeholder: "Select from registry or enter custom",
+        helpText: "Select an image from your ACR or enter a full image path"
+      },
+      {
+        name: "frontend_tag",
+        label: "Frontend Image Tag",
+        type: "acr-tag",
+        dependsOn: "frontend_imageRepo",
+        required: true,
+        default: "latest"
+      },
+      {
+        name: "frontend_replicas",
+        label: "Frontend Replicas",
+        type: "select",
+        required: false,
+        options: ["1", "2", "3", "4", "5"],
+        default: "2"
+      },
+      {
+        name: "frontend_port",
+        label: "Frontend Container Port",
+        type: "string",
+        required: false,
+        default: "80"
+      },
+      {
+        name: "backend_imageRepo",
+        label: "Backend Image Repository",
+        type: "acr-repository",
+        required: true,
+        placeholder: "Select from registry or enter custom",
+        helpText: "Select an image from your ACR or enter a full image path"
+      },
+      {
+        name: "backend_tag",
+        label: "Backend Image Tag",
+        type: "acr-tag",
+        dependsOn: "backend_imageRepo",
+        required: true,
+        default: "latest"
+      },
+      {
+        name: "backend_replicas",
+        label: "Backend Replicas",
+        type: "select",
+        required: false,
+        options: ["1", "2", "3", "4", "5"],
+        default: "2"
+      },
+      {
+        name: "backend_port",
+        label: "Backend Container Port",
+        type: "string",
+        required: false,
+        default: "4000"
+      },
+      {
+        name: "database_storageGB",
+        label: "Database Storage (GB)",
+        type: "select",
+        required: true,
+        options: ["10", "20", "50", "100", "200", "500"],
+        default: "10"
+      },
+      {
+        name: "database_version",
+        label: "PostgreSQL Version",
+        type: "select",
+        required: false,
+        options: ["14", "15", "16"],
+        default: "16"
+      },
+      {
+        name: "ingress_host",
+        label: "Ingress Hostname",
+        type: "string",
+        required: true,
+        placeholder: "myapp-dev.example.com"
+      },
+      {
+        name: "ingress_tlsEnabled",
+        label: "Enable TLS (HTTPS)",
+        type: "select",
+        required: false,
+        options: ["true", "false"],
+        default: "true"
+      },
+      {
+        name: "ingress_clusterIssuer",
+        label: "Cert-Manager Cluster Issuer",
+        type: "string",
+        required: false,
+        default: "letsencrypt-prod"
+      }
+    ],
+    outputs: [
+      {
+        name: "namespaceRef",
+        description: "Created namespace name"
+      },
+      {
+        name: "frontendEndpoint",
+        description: "Frontend URL (https://...)"
+      },
+      {
+        name: "backendEndpoint",
+        description: "Internal backend service endpoint"
+      },
+      {
+        name: "databaseEndpoint",
+        description: "PostgreSQL connection endpoint"
+      }
+    ],
+    estimatedMonthlyCost: 150
   }
 ];
 

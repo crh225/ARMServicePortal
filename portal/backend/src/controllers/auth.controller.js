@@ -19,7 +19,7 @@ export async function initiateGitHubLogin(req, res) {
   // Store state in session (expires in 10 minutes)
   sessions.set(state, { createdAt: Date.now() });
 
-  const redirectUri = `${process.env.APP_URL || "http://localhost:3000"}/api/auth/github/callback`;
+  const redirectUri = `${process.env.APP_URL || "http://localhost:4000"}/api/auth/github/callback`;
   const scope = "read:user,repo"; // Permissions needed
 
   const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&state=${state}`;

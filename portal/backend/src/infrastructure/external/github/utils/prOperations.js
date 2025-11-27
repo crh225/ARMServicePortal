@@ -78,6 +78,7 @@ export async function addPRComment(octokit, config) {
  * @param {string} metadata.environment - Target environment
  * @param {string} metadata.createdBy - Username who created the request
  * @param {string} metadata.terraformModule - Terraform module name
+ * @param {string} metadata.provider - Provider type (terraform or crossplane)
  * @param {string} description - Additional description text
  * @returns {string} - Formatted PR body
  */
@@ -102,6 +103,10 @@ export function generatePRBody(metadata, description = "") {
 
   if (metadata.environment) {
     parts.push(`- Environment: \`${metadata.environment}\``);
+  }
+
+  if (metadata.provider) {
+    parts.push(`- Provider: \`${metadata.provider}\``);
   }
 
   if (metadata.createdBy) {

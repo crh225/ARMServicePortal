@@ -256,6 +256,66 @@ const api = {
     }
 
     return response.json();
+  },
+
+  /**
+   * Fetch container repositories from ACR
+   * Cached for 2 minutes
+   */
+  async fetchContainerRepositories() {
+    const CACHE_KEY = 'acr_repositories_cache';
+    const CACHE_TTL = 2 * 60 * 1000; // 2 minutes
+
+    // Check cache first
+    const cached = this._cache[CACHE_KEY];
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      return cached.data;
+    }
+
+    const response = await fetchWithLogRocket(`${API_BASE_URL}/api/registry/repositories`);
+    if (!response.ok) {
+      throw new Error("Failed to load container repositories");
+    }
+    const data = await response.json();
+
+    // Store in cache
+    this._cache[CACHE_KEY] = {
+      data,
+      timestamp: Date.now()
+    };
+
+    return data;
+  },
+
+  /**
+   * Fetch tags for a specific container repository
+   * Cached for 1 minute per repository
+   */
+  async fetchContainerTags(repositoryName) {
+    const CACHE_KEY = `acr_tags_${repositoryName}`;
+    const CACHE_TTL = 1 * 60 * 1000; // 1 minute
+
+    // Check cache first
+    const cached = this._cache[CACHE_KEY];
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      return cached.data;
+    }
+
+    const response = await fetchWithLogRocket(
+      `${API_BASE_URL}/api/registry/repositories/${encodeURIComponent(repositoryName)}/tags`
+    );
+    if (!response.ok) {
+      throw new Error(`Failed to load tags for ${repositoryName}`);
+    }
+    const data = await response.json();
+
+    // Store in cache
+    this._cache[CACHE_KEY] = {
+      data,
+      timestamp: Date.now()
+    };
+
+    return data;
   }
 };
 

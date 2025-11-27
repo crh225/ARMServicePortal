@@ -88,11 +88,28 @@ function extractModuleName(filePath) {
 }
 
 /**
+ * Detect provider from blueprint ID or branch name (fallback for older PRs without provider metadata)
+ */
+function detectProvider(blueprintId, headRef, explicitProvider) {
+  // If explicitly set in PR body, use that
+  if (explicitProvider) return explicitProvider;
+
+  // Check blueprint ID prefix (xp- = crossplane)
+  if (blueprintId && blueprintId.startsWith("xp-")) return "crossplane";
+
+  // Check if branch points to crossplane claims directory
+  if (headRef && headRef.includes("crossplane")) return "crossplane";
+
+  // Default to terraform
+  return "terraform";
+}
+
+/**
  * Build basic job object from PR data
  */
 function buildBasicJob(pr, environment) {
   const headRef = getHeadRef(pr);
-  const { blueprintId, environment: envFromBody, createdBy } =
+  const { blueprintId, environment: envFromBody, provider, createdBy } =
     parseBlueprintMetadataFromBody(pr.body || "");
   const { planStatus, applyStatus, labels } = mapStatusFromLabels(pr.labels || []);
   const status = determinePRStatus(pr);
@@ -103,6 +120,7 @@ function buildBasicJob(pr, environment) {
     title: pr.title,
     blueprintId: blueprintId || null,
     environment: environment || envFromBody || null,
+    provider: detectProvider(blueprintId, headRef, provider),
     status,
     labels,
     planStatus,
@@ -132,6 +150,7 @@ function buildDetailedJob(pr, metadata, terraformFilePath, moduleName, outputs, 
     description: pr.body || null,
     blueprintId: metadata.blueprintId || null,
     environment: metadata.environment || null,
+    provider: detectProvider(metadata.blueprintId, headRef, metadata.provider),
     status,
     labels,
     planStatus,

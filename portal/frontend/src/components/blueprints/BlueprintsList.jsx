@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import EmptyState from "../shared/EmptyState";
+import BlueprintsListSkeleton from "./BlueprintsListSkeleton";
 import "../../styles/BlueprintsList.css";
 
 // Category icons and colors
@@ -64,7 +65,7 @@ function getCategory(bp) {
   return "Infrastructure";
 }
 
-function BlueprintsList({ blueprints, selectedBlueprint, onSelectBlueprint }) {
+function BlueprintsList({ blueprints, selectedBlueprint, onSelectBlueprint, loading = false }) {
   const [showAllBlueprints, setShowAllBlueprints] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -76,6 +77,11 @@ function BlueprintsList({ blueprints, selectedBlueprint, onSelectBlueprint }) {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }, [selectedBlueprint]);
+
+  // Show skeleton while loading
+  if (loading) {
+    return <BlueprintsListSkeleton />;
+  }
 
   // Filter blueprints based on search
   const filteredBlueprints = blueprints.filter(bp => {

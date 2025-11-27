@@ -13,6 +13,7 @@ import { GitHubJobRepository } from "../persistence/repositories/GitHubJobReposi
 import { GitHubDestroyRepository } from "../persistence/repositories/GitHubDestroyRepository.js";
 import { AzureLogsRepository } from "../persistence/repositories/AzureLogsRepository.js";
 import { InMemoryNotificationRepository } from "../persistence/repositories/InMemoryNotificationRepository.js";
+import { AzureContainerRegistryRepository } from "../persistence/repositories/AzureContainerRegistryRepository.js";
 
 // Infrastructure - Services
 import { PolicyService } from "../services/PolicyService.js";
@@ -46,6 +47,8 @@ import { GetResourcesByRequestHandler } from "../../application/resources/handle
 import { GetResourceGroupsHandler } from "../../application/resources/handlers/GetResourceGroupsHandler.js";
 import { ProcessGitHubWebhookHandler } from "../../application/webhooks/handlers/ProcessGitHubWebhookHandler.js";
 import { GenerateTerraformCodeHandler } from "../../application/terraform/handlers/GenerateTerraformCodeHandler.js";
+import { GetContainerRepositoriesHandler } from "../../application/registry/handlers/GetContainerRepositoriesHandler.js";
+import { GetContainerTagsHandler } from "../../application/registry/handlers/GetContainerTagsHandler.js";
 
 // Queries & Commands
 import { GetBlueprintCatalogQuery } from "../../application/blueprints/queries/GetBlueprintCatalogQuery.js";
@@ -71,6 +74,8 @@ import { DeleteNotificationCommand } from "../../application/notification/comman
 import { DeleteAllNotificationsCommand } from "../../application/notification/commands/DeleteAllNotificationsCommand.js";
 import { ProcessGitHubWebhookCommand } from "../../application/webhooks/commands/ProcessGitHubWebhookCommand.js";
 import { GenerateTerraformCodeQuery } from "../../application/terraform/queries/GenerateTerraformCodeQuery.js";
+import { GetContainerRepositoriesQuery } from "../../application/registry/queries/GetContainerRepositoriesQuery.js";
+import { GetContainerTagsQuery } from "../../application/registry/queries/GetContainerTagsQuery.js";
 
 // Pipeline Behaviors
 import { ValidationBehavior } from "../behaviors/ValidationBehavior.js";
@@ -151,6 +156,7 @@ export function createMediator() {
     destroy: new GitHubDestroyRepository(),
     logs: new AzureLogsRepository(),
     notification: new InMemoryNotificationRepository(),
+    containerRegistry: new AzureContainerRegistryRepository(),
   };
 
   // Create singleton service instances
@@ -194,6 +200,10 @@ export function createMediator() {
 
     // Terraform Queries
     [GenerateTerraformCodeQuery, GenerateTerraformCodeHandler, [services.azureResource]],
+
+    // Registry Queries
+    [GetContainerRepositoriesQuery, GetContainerRepositoriesHandler, [repos.containerRegistry]],
+    [GetContainerTagsQuery, GetContainerTagsHandler, [repos.containerRegistry]],
 
     // Provision Commands
     [ProvisionBlueprintCommand, ProvisionBlueprintHandler, [repos.blueprint, services.policy, services.gitHubProvision]],

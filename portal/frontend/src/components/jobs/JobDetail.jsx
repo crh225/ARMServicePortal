@@ -7,6 +7,24 @@ import ResourceActions from "../resources/ResourceActions";
 import JobDetailSkeleton from "./JobDetailSkeleton";
 import "../../styles/JobDetail.css";
 
+// Provider badge component
+function ProviderBadge({ provider }) {
+  const config = {
+    terraform: { label: "Terraform", color: "#7B42BC" },
+    crossplane: { label: "Crossplane", color: "#1572B6" }
+  };
+  const { label, color } = config[provider] || config.terraform;
+
+  return (
+    <span
+      className="provider-badge"
+      style={{ backgroundColor: `${color}15`, color }}
+    >
+      {label}
+    </span>
+  );
+}
+
 /**
  * Component for displaying job/PR details
  */
@@ -24,6 +42,8 @@ function JobDetail({ job, loading, error, onUpdate, onDelete, onPromote, promote
     return <JobDetailSkeleton />;
   }
 
+  const isCrossplane = job.provider === "crossplane";
+
   return (
     <div className="job-detail-container">
       {/* Header Section */}
@@ -34,6 +54,7 @@ function JobDetail({ job, loading, error, onUpdate, onDelete, onPromote, promote
           </h1>
           <div className="job-detail-meta">
             <StatusBadge status={job.status} />
+            <ProviderBadge provider={job.provider} />
             <span className="job-detail-meta-item">#{job.number}</span>
             {job.environment && (
               <span className="job-detail-meta-item">env: {job.environment}</span>
@@ -62,8 +83,18 @@ function JobDetail({ job, loading, error, onUpdate, onDelete, onPromote, promote
             <h2 className="job-detail-section-title">Status</h2>
             <div className="job-detail-section-content">
               <ResultRow label="PR Status" value={job.status} />
-              <ResultRow label="Plan" value={<StatusBadge status={job.planStatus} />} />
-              <ResultRow label="Apply" value={<StatusBadge status={job.applyStatus} />} />
+              {!isCrossplane && (
+                <>
+                  <ResultRow label="Plan" value={<StatusBadge status={job.planStatus} />} />
+                  <ResultRow label="Apply" value={<StatusBadge status={job.applyStatus} />} />
+                </>
+              )}
+              {isCrossplane && (
+                <ResultRow
+                  label="Sync"
+                  value={<StatusBadge status={job.merged ? "ok" : "pending"} />}
+                />
+              )}
               <ResultRow
                 label="Created At"
                 value={job.createdAt ? new Date(job.createdAt).toLocaleString() : "Unknown"}
@@ -108,8 +139,8 @@ function JobDetail({ job, loading, error, onUpdate, onDelete, onPromote, promote
           </div>
         </div>
 
-        {/* Terraform Module Section */}
-        {job.terraformModule && (
+        {/* Terraform Module Section - only for Terraform */}
+        {!isCrossplane && job.terraformModule && (
           <div className="job-detail-section">
             <h2 className="job-detail-section-title">Terraform Module</h2>
             <div className="job-detail-section-content">
@@ -118,13 +149,29 @@ function JobDetail({ job, loading, error, onUpdate, onDelete, onPromote, promote
           </div>
         )}
 
-        {/* Terraform Outputs Section */}
-        <div className="job-detail-section">
-          <h2 className="job-detail-section-title">Terraform Outputs</h2>
-          <div className="job-detail-section-content">
-            <TerraformOutputs outputs={job.outputs} loading={loading} error={error} />
+        {/* Crossplane Info Section - only for Crossplane */}
+        {isCrossplane && job.terraformModule && (
+          <div className="job-detail-section">
+            <h2 className="job-detail-section-title">Crossplane Claim</h2>
+            <div className="job-detail-section-content">
+              <ResultRow label="Claim Name" value={job.terraformModule} />
+              <p className="crossplane-hint">
+                Crossplane claims are synced via ArgoCD. Once the PR is merged, the claim will be
+                applied to the cluster and Crossplane will provision the resources.
+              </p>
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Terraform Outputs Section - only for Terraform */}
+        {!isCrossplane && (
+          <div className="job-detail-section">
+            <h2 className="job-detail-section-title">Terraform Outputs</h2>
+            <div className="job-detail-section-content">
+              <TerraformOutputs outputs={job.outputs} loading={loading} error={error} />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

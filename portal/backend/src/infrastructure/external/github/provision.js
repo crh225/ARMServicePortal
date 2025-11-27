@@ -4,6 +4,7 @@ import { getGitHubConfig } from "./config.js";
 import { getBlueprintById } from "../../../config/blueprints.js";
 import { renderTerraformModule } from "../../utils/TerraformRenderer.js";
 import { isStack, renderStackTerraform } from "../../utils/StackRenderer.js";
+import { isCrossplane, renderCrossplaneClaim, getCrossplaneFilePath } from "../../utils/CrossplaneRenderer.js";
 import { ensureBranch, commitFile, getFileContent } from "./utils/gitOperations.js";
 import { createPR, generatePRBody } from "./utils/prOperations.js";
 import { DEFAULT_BASE_BRANCH } from "../../../config/githubConstants.js";
@@ -99,7 +100,7 @@ export async function createGitHubRequest({ environment, blueprintId, blueprintV
 
   const baseSha = baseRef.object.sha;
 
-  // Determine module name and whether this is an update
+  // Determine module/claim name and whether this is an update
   const { moduleName, isUpdate, shortId } = getModuleName(blueprintId, providedModuleName);
 
   // Create branch
@@ -112,9 +113,177 @@ export async function createGitHubRequest({ environment, blueprintId, blueprintV
     baseSha
   });
 
+  // Route to Crossplane or Terraform rendering based on provider
+  if (isCrossplane(blueprint)) {
+    return await createCrossplaneRequest({
+      octokit,
+      infraOwner,
+      infraRepo,
+      baseBranch,
+      branchName,
+      blueprint,
+      variables,
+      moduleName,
+      shortId,
+      isUpdate,
+      environment,
+      createdBy
+    });
+  }
+
+  // Terraform path (existing logic)
+  return await createTerraformRequest({
+    octokit,
+    infraOwner,
+    infraRepo,
+    baseBranch,
+    branchName,
+    blueprint,
+    variables,
+    moduleName,
+    shortId,
+    isUpdate,
+    environment,
+    createdBy
+  });
+}
+
+/**
+ * Create a Crossplane claim PR
+ */
+async function createCrossplaneRequest({
+  octokit,
+  infraOwner,
+  infraRepo,
+  baseBranch,
+  branchName,
+  blueprint,
+  variables,
+  moduleName,
+  shortId,
+  isUpdate,
+  environment,
+  createdBy
+}) {
+  // For Crossplane, the claim name is derived from appName + environment if available
+  const claimName = variables.appName && variables.environment
+    ? `${variables.appName}-${variables.environment}`
+    : moduleName;
+
+  // Render Crossplane claim YAML
+  let yamlContent = renderCrossplaneClaim({
+    claimName,
+    blueprint,
+    variables,
+    prNumber: moduleName, // Temporary, will update with actual PR number
+    createdBy
+  });
+
+  const filePath = getCrossplaneFilePath(environment, claimName);
+
+  // Get existing file SHA if updating
+  const fileSha = isUpdate
+    ? await getExistingFileSha(octokit, infraOwner, infraRepo, filePath, baseBranch)
+    : null;
+
+  // Commit file
+  const commitMessage = isUpdate
+    ? `chore: update ${blueprint.id} claim in ${environment} (${claimName})`
+    : `chore: request ${blueprint.id} claim in ${environment} (${shortId})`;
+
+  const { data: file } = await octokit.repos.createOrUpdateFileContents({
+    owner: infraOwner,
+    repo: infraRepo,
+    path: filePath,
+    message: commitMessage,
+    content: Buffer.from(yamlContent, "utf8").toString("base64"),
+    branch: branchName,
+    ...(fileSha && { sha: fileSha })
+  });
+
+  // Create PR
+  const title = isUpdate
+    ? `Update ${blueprint.displayName} in ${environment} (${claimName})`
+    : `Provision ${blueprint.displayName} in ${environment} (${shortId})`;
+
+  const description = [
+    isUpdate ? `**Update**: Modifying existing Crossplane claim \`${claimName}\`` : "",
+    "",
+    `**Provider**: Crossplane`,
+    `**Kind**: ${blueprint.crossplane.kind}`,
+    "",
+    "Rendered claim:",
+    "```yaml",
+    yamlContent,
+    "```"
+  ].filter(Boolean).join("\n");
+
+  const body = generatePRBody({
+    blueprintId: blueprint.id,
+    environment,
+    createdBy,
+    terraformModule: claimName, // Reuse field for claim name
+    version: blueprint.version,
+    provider: "crossplane"
+  }, description);
+
+  const pr = await createPR(octokit, {
+    owner: infraOwner,
+    repo: infraRepo,
+    title,
+    head: branchName,
+    base: baseBranch,
+    body
+  });
+
+  // Update YAML with actual PR number
+  yamlContent = renderCrossplaneClaim({
+    claimName,
+    blueprint,
+    variables,
+    prNumber: pr.number,
+    createdBy
+  });
+
+  await octokit.repos.createOrUpdateFileContents({
+    owner: infraOwner,
+    repo: infraRepo,
+    path: filePath,
+    message: `chore: update request-id label with PR number #${pr.number}`,
+    content: Buffer.from(yamlContent, "utf8").toString("base64"),
+    branch: branchName,
+    sha: file.content.sha
+  });
+
+  return {
+    branchName,
+    filePath,
+    pullRequestUrl: pr.html_url,
+    pullRequestNumber: pr.number,
+    commitSha: file.commit.sha,
+    provider: "crossplane",
+    claimName
+  };
+}
+
+/**
+ * Create a Terraform module PR (existing logic extracted)
+ */
+async function createTerraformRequest({
+  octokit,
+  infraOwner,
+  infraRepo,
+  baseBranch,
+  branchName,
+  blueprint,
+  variables,
+  moduleName,
+  shortId,
+  isUpdate,
+  environment,
+  createdBy
+}) {
   // Render Terraform (handles both single blueprints and stacks)
-  // Use moduleName as the request-id tag value for all resources
-  // This allows looking up resources by module name without needing PR number
   let tfContent;
   if (isStack(blueprint)) {
     tfContent = renderStackTerraform(blueprint, variables, moduleName);
@@ -123,7 +292,7 @@ export async function createGitHubRequest({ environment, blueprintId, blueprintV
       moduleName,
       blueprint,
       variables,
-      prNumber: moduleName  // Use module name instead of PR number for consistent tagging
+      prNumber: moduleName
     });
   }
 
@@ -134,12 +303,10 @@ export async function createGitHubRequest({ environment, blueprintId, blueprintV
     ? await getExistingFileSha(octokit, infraOwner, infraRepo, filePath, baseBranch)
     : null;
 
-  // Determine commit message
   const commitMessage = isUpdate
-    ? `chore: update ${blueprintId} in ${environment} (${moduleName})`
-    : `chore: request ${blueprintId} in ${environment} (${shortId})`;
+    ? `chore: update ${blueprint.id} in ${environment} (${moduleName})`
+    : `chore: request ${blueprint.id} in ${environment} (${shortId})`;
 
-  // Commit file
   const { data: file } = await octokit.repos.createOrUpdateFileContents({
     owner: infraOwner,
     repo: infraRepo,
@@ -165,7 +332,7 @@ export async function createGitHubRequest({ environment, blueprintId, blueprintV
   ].filter(Boolean).join("\n");
 
   const body = generatePRBody({
-    blueprintId,
+    blueprintId: blueprint.id,
     environment,
     createdBy,
     terraformModule: moduleName,
@@ -181,8 +348,7 @@ export async function createGitHubRequest({ environment, blueprintId, blueprintV
     body
   });
 
-  // Now update the Terraform file with the actual PR number
-  // Re-render with the PR number instead of module name
+  // Update with actual PR number
   let tfContentWithPR;
   if (isStack(blueprint)) {
     tfContentWithPR = renderStackTerraform(blueprint, variables, moduleName, pr.number);
@@ -191,11 +357,10 @@ export async function createGitHubRequest({ environment, blueprintId, blueprintV
       moduleName,
       blueprint,
       variables,
-      prNumber: pr.number  // Use actual PR number now
+      prNumber: pr.number
     });
   }
 
-  // Update the file with the PR number
   await octokit.repos.createOrUpdateFileContents({
     owner: infraOwner,
     repo: infraRepo,
@@ -211,6 +376,7 @@ export async function createGitHubRequest({ environment, blueprintId, blueprintV
     filePath,
     pullRequestUrl: pr.html_url,
     pullRequestNumber: pr.number,
-    commitSha: file.commit.sha
+    commitSha: file.commit.sha,
+    provider: "terraform"
   };
 }

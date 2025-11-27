@@ -48,6 +48,7 @@ export function parseBlueprintMetadataFromBody(body) {
       blueprintId: null,
       environment: null,
       version: null,
+      provider: null,
       terraformModule: null,
       createdBy: null
     };
@@ -57,6 +58,7 @@ export function parseBlueprintMetadataFromBody(body) {
     blueprintId: extractMetadataField(body, METADATA_PATTERNS.blueprintId),
     environment: extractMetadataField(body, METADATA_PATTERNS.environment),
     version: extractMetadataField(body, METADATA_PATTERNS.version),
+    provider: extractMetadataField(body, METADATA_PATTERNS.provider),
     terraformModule: extractCodeBlock(body, CODE_BLOCK_PATTERNS.hcl),
     createdBy: extractMetadataField(body, METADATA_PATTERNS.createdBy)
   };
