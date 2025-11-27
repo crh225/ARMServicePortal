@@ -3,7 +3,7 @@
  * Represents a blueprint with business logic and validation
  */
 export class Blueprint {
-  constructor({ id, name, version, description, variables, policies, metadata }) {
+  constructor({ id, name, version, description, variables, policies, metadata, provider, category, outputs, estimatedMonthlyCost, crossplane }) {
     if (!id) {
       throw new Error("Blueprint must have an id");
     }
@@ -21,6 +21,11 @@ export class Blueprint {
     this.variables = variables || {};
     this.policies = policies || [];
     this.metadata = metadata || {};
+    this.provider = provider || "terraform";
+    this.category = category || null;
+    this.outputs = outputs || [];
+    this.estimatedMonthlyCost = estimatedMonthlyCost || null;
+    this.crossplane = crossplane || null;
   }
 
   /**
@@ -90,7 +95,12 @@ export class Blueprint {
       description: this.description,
       variables: this.variables,
       policies: this.policies,
-      metadata: this.metadata
+      metadata: this.metadata,
+      provider: this.provider,
+      category: this.category,
+      outputs: this.outputs,
+      estimatedMonthlyCost: this.estimatedMonthlyCost,
+      crossplane: this.crossplane
     };
   }
 }

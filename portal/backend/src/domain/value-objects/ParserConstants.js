@@ -10,6 +10,7 @@ export const METADATA_PATTERNS = {
   blueprintId: /Blueprint:\s*`([^`]+)`/i,
   environment: /Environment:\s*`([^`]+)`/i,
   version: /Version:\s*`([^`]+)`/i,
+  provider: /Provider:\s*`([^`]+)`/i,
   createdBy: /Created by:\s*@([^\s]+)/i,
   terraformModule: /Terraform Module:\s*`([^`]+)`/i
 };

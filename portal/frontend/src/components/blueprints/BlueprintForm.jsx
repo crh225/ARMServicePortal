@@ -20,10 +20,20 @@ function BlueprintForm({
   const [loadingResourceGroups, setLoadingResourceGroups] = useState(false);
   const [subscriptions, setSubscriptions] = useState([]);
   const [loadingSubscriptions, setLoadingSubscriptions] = useState(false);
+  const [acrRepositories, setAcrRepositories] = useState([]);
+  const [loadingAcrRepos, setLoadingAcrRepos] = useState(false);
+  const [acrTags, setAcrTags] = useState({});
+  const [loadingAcrTags, setLoadingAcrTags] = useState({});
+  const [acrRegistry, setAcrRegistry] = useState("");
 
   // Get environment value and warning configuration
   const environment = formValues.environment || "dev";
   const envWarning = getEnvironmentConfig(environment);
+
+  // Check if blueprint has ACR fields
+  const hasAcrFields = blueprint?.variables?.some(
+    v => v.type === "acr-repository" || v.type === "acr-tag"
+  );
 
   // Fetch subscriptions on component mount
   useEffect(() => {
@@ -46,6 +56,42 @@ function BlueprintForm({
     };
     loadSubscriptions();
   }, []); // Only run once on mount
+
+  // Fetch ACR repositories when blueprint has ACR fields
+  useEffect(() => {
+    if (!hasAcrFields) return;
+
+    const loadAcrRepositories = async () => {
+      setLoadingAcrRepos(true);
+      try {
+        const data = await api.fetchContainerRepositories();
+        setAcrRepositories(data.repositories || []);
+        setAcrRegistry(data.registry || "");
+      } catch (error) {
+        console.error("Failed to load ACR repositories:", error);
+        setAcrRepositories([]);
+      } finally {
+        setLoadingAcrRepos(false);
+      }
+    };
+    loadAcrRepositories();
+  }, [hasAcrFields]);
+
+  // Fetch tags when a repository is selected
+  const loadTagsForRepo = useCallback(async (repoName) => {
+    if (!repoName || acrTags[repoName]) return;
+
+    setLoadingAcrTags(prev => ({ ...prev, [repoName]: true }));
+    try {
+      const data = await api.fetchContainerTags(repoName);
+      setAcrTags(prev => ({ ...prev, [repoName]: data.tags || [] }));
+    } catch (error) {
+      console.error(`Failed to load tags for ${repoName}:`, error);
+      setAcrTags(prev => ({ ...prev, [repoName]: [] }));
+    } finally {
+      setLoadingAcrTags(prev => ({ ...prev, [repoName]: false }));
+    }
+  }, [acrTags]);
 
   // Fetch resource groups when environment changes
   const loadResourceGroups = useCallback(async (env) => {
@@ -75,6 +121,19 @@ function BlueprintForm({
     }
   }, [blueprint?.id]);
 
+  // Helper to extract repo name from full path
+  const extractRepoName = (fullPath) => {
+    if (!fullPath || !acrRegistry) return fullPath;
+    return fullPath.replace(`${acrRegistry}/`, "");
+  };
+
+  // Helper to get repo name for tag field's dependent repo field
+  const getRepoForTagField = (v) => {
+    if (!v.dependsOn) return null;
+    const repoValue = formValues[v.dependsOn];
+    return extractRepoName(repoValue);
+  };
+
   if (!blueprint) return null;
 
   return (
@@ -98,7 +157,9 @@ function BlueprintForm({
         <div>
           <h2 className="panel-title">Configure Parameters</h2>
           <p className="panel-help">
-            Specify values for your Terraform module deployment.
+            {blueprint.provider === "crossplane"
+              ? "Specify values for your Crossplane application stack."
+              : "Specify values for your Terraform module deployment."}
           </p>
         </div>
 
@@ -127,9 +188,21 @@ function BlueprintForm({
           // Check if this is a resource_group_name or subscription_id field
           const isResourceGroupField = v.name === "resource_group_name";
           const isSubscriptionField = v.name === "subscription_id";
+          const isAcrRepoField = v.type === "acr-repository";
+          const isAcrTagField = v.type === "acr-tag";
           const shouldUseDynamicDropdown =
             (isResourceGroupField && resourceGroups.length > 0) ||
             (isSubscriptionField && subscriptions.length > 0);
+
+          // For ACR tag fields, get the repository name from the dependent field
+          const repoForTags = isAcrTagField ? getRepoForTagField(v) : null;
+          const tagsForRepo = repoForTags ? acrTags[repoForTags] : null;
+          const isLoadingTags = repoForTags ? loadingAcrTags[repoForTags] : false;
+
+          // Load tags when repo is selected
+          if (repoForTags && !tagsForRepo && !isLoadingTags) {
+            loadTagsForRepo(repoForTags);
+          }
 
           return (
             <div key={v.name} className="form-field">
@@ -144,8 +217,68 @@ function BlueprintForm({
                 {isSubscriptionField && loadingSubscriptions && (
                   <span className="field-loading"> (loading...)</span>
                 )}
+                {isAcrRepoField && loadingAcrRepos && (
+                  <span className="field-loading"> (loading...)</span>
+                )}
+                {isAcrTagField && isLoadingTags && (
+                  <span className="field-loading"> (loading...)</span>
+                )}
               </label>
-              {v.type === "select" || shouldUseDynamicDropdown ? (
+
+              {/* ACR Repository field - combobox style */}
+              {isAcrRepoField ? (
+                <div className="acr-field-wrapper">
+                  <select
+                    className="field-input"
+                    value={formValues[v.name] || ""}
+                    onChange={(e) => {
+                      onChange(v.name, e.target.value);
+                      // Clear dependent tag field when repo changes
+                      const tagField = blueprint.variables.find(
+                        f => f.type === "acr-tag" && f.dependsOn === v.name
+                      );
+                      if (tagField) {
+                        onChange(tagField.name, "latest");
+                      }
+                    }}
+                    disabled={loadingAcrRepos}
+                  >
+                    <option value="">-- Select from registry --</option>
+                    {acrRepositories.map((repo) => (
+                      <option key={repo.name} value={repo.fullPath}>
+                        {repo.name}
+                      </option>
+                    ))}
+                  </select>
+                  {v.helpText && (
+                    <span className="field-help">{v.helpText}</span>
+                  )}
+                  {acrRegistry && (
+                    <span className="acr-registry-hint">Registry: {acrRegistry}</span>
+                  )}
+                </div>
+              ) : isAcrTagField ? (
+                <div className="acr-field-wrapper">
+                  <select
+                    className="field-input"
+                    value={formValues[v.name] || "latest"}
+                    onChange={(e) => onChange(v.name, e.target.value)}
+                    disabled={!repoForTags || isLoadingTags}
+                  >
+                    <option value="latest">latest</option>
+                    {tagsForRepo && tagsForRepo
+                      .filter(t => t.name !== "latest")
+                      .map((tag) => (
+                        <option key={tag.name} value={tag.name}>
+                          {tag.name}
+                        </option>
+                      ))}
+                  </select>
+                  {!repoForTags && (
+                    <span className="field-help">Select a repository first</span>
+                  )}
+                </div>
+              ) : v.type === "select" || shouldUseDynamicDropdown ? (
                 <select
                   className="field-input"
                   value={formValues[v.name] || ""}
@@ -186,7 +319,7 @@ function BlueprintForm({
                   }
                   disabled={isUpdating && v.name === "project_name"}
                   title={isUpdating && v.name === "project_name" ? "Resource name cannot be changed when updating" : ""}
-                  placeholder={isResourceGroupField ? "Or type a resource group name" : isSubscriptionField ? "Or paste a subscription ID" : ""}
+                  placeholder={isResourceGroupField ? "Or type a resource group name" : isSubscriptionField ? "Or paste a subscription ID" : v.placeholder || ""}
                 />
               )}
             </div>
