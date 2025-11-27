@@ -1,0 +1,90 @@
+name: Cleanup PR Environment
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+jobs:
+  cleanup-pr-environment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          auth-type: SERVICE_PRINCIPAL
+          allow-no-subscriptions: false
+          environment: azurecloud
+          audience: api://AzureADTokenExchange
+
+      - name: Set up kubectl for AKS
+        run: |
+          az aks get-credentials \
+            --resource-group rg-armportal-aks-crossplane-dev \
+            --name aks-armportal-crossplane-dev \
+            --overwrite-existing
+
+      - name: Delete PR namespace
+        run: |
+          PR_NAMESPACE="armportal-pr-${{ github.event.pull_request.number }}"
+
+          if kubectl get namespace "$PR_NAMESPACE" >/dev/null 2>&1; then
+            echo "Deleting namespace: $PR_NAMESPACE"
+            kubectl delete namespace "$PR_NAMESPACE"
+            echo "✅ Namespace deleted"
+          else
+            echo "ℹ️  Namespace $PR_NAMESPACE does not exist, nothing to clean up"
+          fi
+
+      - name: Delete PR image from ACR (optional)
+        continue-on-error: true
+        run: |
+          az acr repository delete \
+            --name armportalacre4k9 \
+            --image armportal-backend:pr-${{ github.event.pull_request.number }} \
+            --yes
+
+      - name: Comment on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.payload.pull_request.number;
+
+            github.rest.issues.createComment({
+              issue_number: prNumber,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## 🧹 PR Environment Cleaned Up
+
+            The PR environment for #${prNumber} has been deleted.
+
+            - Namespace: armportal-pr-${prNumber} ❌
+            - Pods: ❌
+            - Services: ❌
+            - Ingress: ❌
+            - TLS Certificate: ❌
+            `
+            });
+
+      - name: Cleanup summary
+        run: |
+          PR_NUMBER=${{ github.event.pull_request.number }}
+
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "🧹 PR Environment Cleaned Up"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          echo "PR Number: #$PR_NUMBER"
+          echo "Namespace: armportal-pr-$PR_NUMBER (deleted)"
+          echo ""

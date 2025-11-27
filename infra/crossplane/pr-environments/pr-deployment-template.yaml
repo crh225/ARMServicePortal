@@ -1,0 +1,159 @@
+# PR Environment Deployment Template
+# This template is used by GitHub Actions to create ephemeral PR environments
+# Variables replaced by workflow: PR_NUMBER, IMAGE_TAG, PR_NAMESPACE
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: PR_NAMESPACE
+  labels:
+    app: armportal-backend-pr
+    pr-number: "PR_NUMBER"
+    managed-by: github-actions
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config-pr-PR_NUMBER
+  namespace: PR_NAMESPACE
+data:
+  NODE_ENV: "development"
+  GH_APP_ID: "2298250"
+  FRONTEND_URL: "https://portal-pr-PR_NUMBER.pr.chrishouse.io"
+  APP_URL: "https://portal-api-pr-PR_NUMBER.pr.chrishouse.io"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: armportal-backend-pr-PR_NUMBER
+  namespace: PR_NAMESPACE
+  labels:
+    app: armportal-backend-pr
+    pr-number: "PR_NUMBER"
+spec:
+  selector:
+    app: armportal-backend-pr
+    pr-number: "PR_NUMBER"
+  ports:
+    - port: 80
+      targetPort: 4000
+      protocol: TCP
+      name: http
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: armportal-backend-pr-PR_NUMBER
+  namespace: PR_NAMESPACE
+  labels:
+    app: armportal-backend-pr
+    pr-number: "PR_NUMBER"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: armportal-backend-pr
+      pr-number: "PR_NUMBER"
+  template:
+    metadata:
+      labels:
+        app: armportal-backend-pr
+        pr-number: "PR_NUMBER"
+    spec:
+      containers:
+      - name: armportal-api
+        image: armportalacre4k9.azurecr.io/armportal-backend:IMAGE_TAG
+        ports:
+        - containerPort: 4000
+          name: http
+        env:
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config-pr-PR_NUMBER
+              key: NODE_ENV
+        - name: GH_APP_ID
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config-pr-PR_NUMBER
+              key: GH_APP_ID
+        - name: FRONTEND_URL
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config-pr-PR_NUMBER
+              key: FRONTEND_URL
+        - name: APP_URL
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config-pr-PR_NUMBER
+              key: APP_URL
+        - name: GH_APP_PRIVATE_KEY_BASE64
+          valueFrom:
+            secretKeyRef:
+              name: backend-secrets
+              key: GH_APP_PRIVATE_KEY_BASE64
+        - name: GH_OAUTH_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: backend-secrets
+              key: GH_OAUTH_CLIENT_SECRET
+        - name: GITHUB_WEBHOOK_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: backend-secrets
+              key: GITHUB_WEBHOOK_SECRET
+        - name: ELASTICSEARCH_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: backend-secrets
+              key: ELASTICSEARCH_API_KEY
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 4000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 4000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: armportal-backend-pr-PR_NUMBER
+  namespace: PR_NAMESPACE
+  labels:
+    app: armportal-backend-pr
+    pr-number: "PR_NUMBER"
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - portal-api-pr-PR_NUMBER.pr.chrishouse.io
+    secretName: portal-api-pr-PR_NUMBER-tls
+  rules:
+  - host: portal-api-pr-PR_NUMBER.pr.chrishouse.io
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: armportal-backend-pr-PR_NUMBER
+            port:
+              number: 80
