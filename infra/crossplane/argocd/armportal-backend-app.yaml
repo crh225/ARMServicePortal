@@ -1,22 +1,22 @@
-# Argo CD Application for Crossplane Resources
-# Tracks Crossplane resource manifests from the GitHub repository
+# Argo CD Application for ARM Portal Backend API
+# Tracks backend deployment manifests from the GitHub repository
 
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: crossplane-resources
+  name: armportal-backend
   namespace: argocd
 spec:
   project: default
 
   source:
     repoURL: https://github.com/crh225/ARMServicePortal.git
-    targetRevision: main  # or HEAD for the default branch
-    path: infra/crossplane/examples
+    targetRevision: main
+    path: infra/crossplane/applications/armportal-backend
 
   destination:
     server: https://kubernetes.default.svc
-    namespace: default
+    namespace: armportal-backend
 
   syncPolicy:
     automated:
