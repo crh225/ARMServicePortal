@@ -37,11 +37,16 @@ function setCachedStats(data) {
  * Explains what the Cloud Self-Service Portal is and how it works
  */
 function HomePanel({ onNavigate }) {
-  const [stats, setStats] = useState(() => getCachedStats());
+  const [stats, setStats] = useState(null);
 
   useEffect(() => {
-    // If we have cached stats, don't refetch
-    if (stats) return;
+    // Check cache first
+    const cachedStats = getCachedStats();
+    if (cachedStats) {
+      setStats(cachedStats);
+      setLoading(false);
+      return;
+    }
 
     // Fetch stats for the dashboard using the api service
     const fetchStats = async () => {
@@ -64,7 +69,7 @@ function HomePanel({ onNavigate }) {
       }
     };
     fetchStats();
-  }, [stats]);
+  }, []); // Run once on mount
 
   return (
     <div className="home-panel">
