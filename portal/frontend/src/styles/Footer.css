@@ -20,7 +20,7 @@
 .app-footer .footer-links {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 12px;
 }
 
 .app-footer .footer-links a {
@@ -32,4 +32,29 @@
 .app-footer .footer-links a:hover {
   color: var(--text-primary);
   text-decoration: underline;
+}
+
+/* Icon links with hover effects */
+.app-footer .footer-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+}
+
+.app-footer .footer-icon:hover {
+  text-decoration: none;
+  transform: scale(1.15);
+}
+
+/* Icon images - grayscale by default, color on hover */
+.app-footer .footer-icon-img {
+  width: 20px;
+  height: 20px;
+  filter: grayscale(100%) opacity(0.6);
+  transition: filter 0.25s ease;
+}
+
+.app-footer .footer-icon:hover .footer-icon-img {
+  filter: grayscale(0%) opacity(1);
 }

@@ -49,6 +49,7 @@ import { ProcessGitHubWebhookHandler } from "../../application/webhooks/handlers
 import { GenerateTerraformCodeHandler } from "../../application/terraform/handlers/GenerateTerraformCodeHandler.js";
 import { GetContainerRepositoriesHandler } from "../../application/registry/handlers/GetContainerRepositoriesHandler.js";
 import { GetContainerTagsHandler } from "../../application/registry/handlers/GetContainerTagsHandler.js";
+import { GetHomeStatsHandler } from "../../application/stats/handlers/GetHomeStatsHandler.js";
 
 // Queries & Commands
 import { GetBlueprintCatalogQuery } from "../../application/blueprints/queries/GetBlueprintCatalogQuery.js";
@@ -76,6 +77,7 @@ import { ProcessGitHubWebhookCommand } from "../../application/webhooks/commands
 import { GenerateTerraformCodeQuery } from "../../application/terraform/queries/GenerateTerraformCodeQuery.js";
 import { GetContainerRepositoriesQuery } from "../../application/registry/queries/GetContainerRepositoriesQuery.js";
 import { GetContainerTagsQuery } from "../../application/registry/queries/GetContainerTagsQuery.js";
+import { GetHomeStatsQuery } from "../../application/stats/queries/GetHomeStatsQuery.js";
 
 // Pipeline Behaviors
 import { ValidationBehavior } from "../behaviors/ValidationBehavior.js";
@@ -204,6 +206,9 @@ export function createMediator() {
     // Registry Queries
     [GetContainerRepositoriesQuery, GetContainerRepositoriesHandler, [repos.containerRegistry]],
     [GetContainerTagsQuery, GetContainerTagsHandler, [repos.containerRegistry]],
+
+    // Stats Queries
+    [GetHomeStatsQuery, GetHomeStatsHandler, [repos.blueprint, services.azureResource, repos.job]],
 
     // Provision Commands
     [ProvisionBlueprintCommand, ProvisionBlueprintHandler, [repos.blueprint, services.policy, services.gitHubProvision]],

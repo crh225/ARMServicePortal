@@ -316,6 +316,18 @@ const api = {
     };
 
     return data;
+  },
+
+  /**
+   * Fetch homepage stats (cached server-side for 12 hours)
+   * Returns: { blueprints, resources, jobs, cached, cachedAt }
+   */
+  async fetchHomeStats() {
+    const response = await fetchWithLogRocket(`${API_BASE_URL}/api/stats`);
+    if (!response.ok) {
+      throw new Error("Failed to load stats");
+    }
+    return response.json();
   }
 };
 

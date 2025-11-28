@@ -3,36 +3,6 @@ import api from "../../services/api";
 import AnimatedCounter from "../shared/AnimatedCounter";
 import "../../styles/HomePanel.css";
 
-// Cache for home page stats (5 minutes)
-const STATS_CACHE_KEY = "homeStats";
-const STATS_CACHE_TTL = 5 * 60 * 1000;
-
-function getCachedStats() {
-  try {
-    const cached = sessionStorage.getItem(STATS_CACHE_KEY);
-    if (cached) {
-      const { data, timestamp } = JSON.parse(cached);
-      if (Date.now() - timestamp < STATS_CACHE_TTL) {
-        return data;
-      }
-    }
-  } catch {
-    // Ignore cache errors
-  }
-  return null;
-}
-
-function setCachedStats(data) {
-  try {
-    sessionStorage.setItem(STATS_CACHE_KEY, JSON.stringify({
-      data,
-      timestamp: Date.now()
-    }));
-  } catch {
-    // Ignore cache errors
-  }
-}
-
 /**
  * HomePanel component
  * Explains what the Cloud Self-Service Portal is and how it works
@@ -41,28 +11,15 @@ function HomePanel({ onNavigate }) {
   const [stats, setStats] = useState(null);
 
   useEffect(() => {
-    // Check cache first
-    const cachedStats = getCachedStats();
-    if (cachedStats) {
-      setStats(cachedStats);
-      return;
-    }
-
-    // Fetch stats for the dashboard using the api service
+    // Fetch stats from the dedicated stats endpoint (server-side 12hr cache)
     const fetchStats = async () => {
       try {
-        const [blueprints, resources, jobs] = await Promise.all([
-          api.fetchBlueprints().catch(() => []),
-          api.fetchResources(false).catch(() => []),
-          api.fetchJobs().catch(() => [])
-        ]);
-        const newStats = {
-          blueprints: Array.isArray(blueprints) ? blueprints.length : 0,
-          resources: Array.isArray(resources) ? resources.length : 0,
-          jobs: Array.isArray(jobs) ? jobs.length : 0
-        };
-        setStats(newStats);
-        setCachedStats(newStats);
+        const data = await api.fetchHomeStats();
+        setStats({
+          blueprints: data.blueprints || 0,
+          resources: data.resources || 0,
+          jobs: data.jobs || 0
+        });
       } catch {
         // Stats are optional, show zeros on error
         setStats({ blueprints: 0, resources: 0, jobs: 0 });
@@ -127,7 +84,7 @@ function HomePanel({ onNavigate }) {
           <section className="home-section">
             <h2 className="home-section-title">What is this?</h2>
             <p className="home-text">
-              This is Chris House's internal developer portal — a personal sandbox for
+              This is Chris House's internal developer portal (IDP) — a personal sandbox for
               experimenting with cloud infrastructure patterns, GitOps workflows, and
               self-service provisioning. Use it to spin up resources like Redis, RabbitMQ,
               Azure resources, and more through pre-built blueprints.
