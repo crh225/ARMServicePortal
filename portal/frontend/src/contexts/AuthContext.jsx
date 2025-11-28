@@ -11,28 +11,33 @@ const RETURN_TAB_TTL = 60 * 60 * 1000; // 1 hour
 
 function setReturnTab(tab) {
   try {
-    localStorage.setItem(RETURN_TAB_KEY, JSON.stringify({
+    const data = {
       tab,
       timestamp: Date.now()
-    }));
-  } catch {
-    // Ignore storage errors
+    };
+    localStorage.setItem(RETURN_TAB_KEY, JSON.stringify(data));
+    console.log("[Auth] Saved return tab:", tab, data);
+  } catch (e) {
+    console.error("[Auth] Failed to save return tab:", e);
   }
 }
 
 function getReturnTab() {
   try {
     const stored = localStorage.getItem(RETURN_TAB_KEY);
+    console.log("[Auth] Getting return tab, stored value:", stored);
     if (stored) {
       const { tab, timestamp } = JSON.parse(stored);
-      if (Date.now() - timestamp < RETURN_TAB_TTL) {
+      const age = Date.now() - timestamp;
+      console.log("[Auth] Return tab:", tab, "age:", age, "expired:", age >= RETURN_TAB_TTL);
+      if (age < RETURN_TAB_TTL) {
         return tab;
       }
       // Expired, clean up
       localStorage.removeItem(RETURN_TAB_KEY);
     }
-  } catch {
-    // Ignore storage errors
+  } catch (e) {
+    console.error("[Auth] Failed to get return tab:", e);
   }
   return null;
 }
@@ -99,9 +104,9 @@ export function AuthProvider({ children }) {
     try {
       // Save current tab before redirecting to login
       // Use passed tab, or fall back to URL param, or default to home
-      const tabToSave = currentTab ||
-        new URLSearchParams(window.location.search).get("tab") ||
-        "home";
+      const urlTab = new URLSearchParams(window.location.search).get("tab");
+      const tabToSave = currentTab || urlTab || "home";
+      console.log("[Auth] Login called with:", { currentTab, urlTab, tabToSave });
       setReturnTab(tabToSave);
 
       // Get GitHub OAuth URL from backend
