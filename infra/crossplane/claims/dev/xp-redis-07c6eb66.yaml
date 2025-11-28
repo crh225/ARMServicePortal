@@ -18,7 +18,7 @@ spec:
     storageGB: 1
     redisVersion: "7.2"
     maxMemoryPolicy: "allkeys-lru"
-    memoryLimitMB: "256"
+    memoryLimitMB: 256
   writeConnectionSecretToRef:
     name: "xp-redis-07c6eb66-connection"
   compositionRef:

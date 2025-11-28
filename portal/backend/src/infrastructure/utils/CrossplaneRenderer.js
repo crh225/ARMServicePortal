@@ -53,7 +53,7 @@ function coerceValue(value, key) {
   if (value === "false") return false;
 
   // Integer coercion for known numeric fields
-  const numericFields = ["replicas", "port", "storageGB"];
+  const numericFields = ["replicas", "port", "storageGB", "memoryLimitMB", "cpuLimit", "cpuRequest", "memoryRequest"];
   if (numericFields.some(f => key.toLowerCase().includes(f.toLowerCase()))) {
     const num = parseInt(value, 10);
     if (!isNaN(num)) return num;
