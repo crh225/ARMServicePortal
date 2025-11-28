@@ -24,7 +24,7 @@ spec:
         - name: acr-credentials
       containers:
       - name: armportal-api
-        image: armportalacre4k9.azurecr.io/armportal-backend:458c600baa12acce7fe8deb5228f8cdf6f5d1b66
+        image: armportalacre4k9.azurecr.io/armportal-backend:24ea6480d525b3c5fd282ebd51badd08a525316c
         imagePullPolicy: Always
         ports:
         - containerPort: 4000
