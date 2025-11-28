@@ -7,9 +7,10 @@
   border-top: 1px solid var(--border-default);
   background: var(--bg-primary);
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
 }
 
 .app-footer span {
