@@ -1,0 +1,25 @@
+apiVersion: platform.chrishouse.io/v1alpha1
+kind: RedisClaim
+metadata:
+  name: "xp-redis_6d8fe78b"
+  namespace: "platform-claims"
+  labels:
+    app.kubernetes.io/managed-by: armportal
+    armportal.chrishouse.io/blueprint: "xp-redis"
+    armportal.chrishouse.io/version: "0.0.1"
+    armportal.chrishouse.io/request-id: "xp-redis_6d8fe78b"
+    armportal.chrishouse.io/created-by: crh225
+  annotations:
+    armportal.chrishouse.io/provisioned-at: "2025-11-28T01:59:57.047Z"
+spec:
+  parameters:
+    name: "test-redis-xp"
+    environment: dev
+    storageGB: 1
+    redisVersion: "7.2"
+    maxMemoryPolicy: "allkeys-lru"
+    memoryLimitMB: "256"
+  writeConnectionSecretToRef:
+    name: "xp-redis_6d8fe78b-connection"
+  compositionRef:
+    name: redis
