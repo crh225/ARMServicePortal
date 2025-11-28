@@ -17,7 +17,7 @@ spec:
     environment: dev
     storageGB: 5
     rabbitmqVersion: "3.13"
-    memoryLimitMB: "512"
+    memoryLimitMB: 512
     adminUsername: admin
   writeConnectionSecretToRef:
     name: "xp-rabbitmq-4929f0c3-connection"
