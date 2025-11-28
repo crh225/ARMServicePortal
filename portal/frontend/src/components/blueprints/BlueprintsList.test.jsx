@@ -127,7 +127,8 @@ describe("BlueprintsList", () => {
   it("shows all blueprints when showAllBlueprints is true", () => {
     render(<BlueprintsList {...defaultProps} />);
 
-    const blueprintCards = screen.getAllByRole("button");
+    // Count only blueprint cards, not filter buttons
+    const blueprintCards = document.querySelectorAll(".blueprint-card");
     expect(blueprintCards).toHaveLength(3);
   });
 
@@ -152,8 +153,8 @@ describe("BlueprintsList", () => {
       />
     );
 
-    // Should still show all blueprints initially (showAllBlueprints starts as true)
-    const blueprintCards = screen.getAllByRole("button");
+    // Should still show blueprints (showAllBlueprints starts as true but clicking sets it false)
+    const blueprintCards = document.querySelectorAll(".blueprint-card");
     expect(blueprintCards.length).toBeGreaterThan(0);
   });
 
@@ -166,7 +167,8 @@ describe("BlueprintsList", () => {
     rerender(<BlueprintsList {...defaultProps} selectedBlueprint={null} />);
 
     await waitFor(() => {
-      const blueprintCards = screen.getAllByRole("button");
+      // Count only blueprint cards, not filter buttons
+      const blueprintCards = document.querySelectorAll(".blueprint-card");
       expect(blueprintCards).toHaveLength(3);
     });
   });

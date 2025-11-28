@@ -44,7 +44,6 @@ function HomePanel({ onNavigate }) {
     const cachedStats = getCachedStats();
     if (cachedStats) {
       setStats(cachedStats);
-      setLoading(false);
       return;
     }
 
