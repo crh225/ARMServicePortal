@@ -5,7 +5,7 @@
 apiVersion: apiextensions.crossplane.io/v1
 kind: CompositeResourceDefinition
 metadata:
-  name: rabbitmq.platform.chrishouse.io
+  name: rabbitmqs.platform.chrishouse.io
 spec:
   group: platform.chrishouse.io
   names:

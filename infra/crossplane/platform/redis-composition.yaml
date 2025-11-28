@@ -203,7 +203,7 @@ spec:
                   string:
                     fmt: "redis-config-%s-%s"
                 toFieldPath: metadata.name
-              # Build redis.conf - using %v for generic value formatting to avoid float/int issues
+              # Build redis.conf - using %.0f to format float64 as integer without decimals
               - type: CombineFromComposite
                 combine:
                   variables:
@@ -217,7 +217,7 @@ spec:
                       save 900 1
                       save 300 10
                       save 60 10000
-                      maxmemory %vmb
+                      maxmemory %.0fmb
                       maxmemory-policy %s
                 toFieldPath: spec.forProvider.manifest.data["redis.conf"]
 

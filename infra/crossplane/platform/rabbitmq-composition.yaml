@@ -7,7 +7,7 @@ kind: Composition
 metadata:
   name: rabbitmq
   labels:
-    crossplane.io/xrd: rabbitmq.platform.chrishouse.io
+    crossplane.io/xrd: rabbitmqs.platform.chrishouse.io
     provider: kubernetes
 spec:
   compositeTypeRef:
