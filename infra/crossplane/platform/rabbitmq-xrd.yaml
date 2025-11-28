@@ -1,0 +1,136 @@
+---
+# RabbitMQ XRD (CompositeResourceDefinition)
+# Defines a single-node RabbitMQ instance running in Kubernetes with PVC and management UI
+# Management UI is exposed via ingress at {name}.pr.chrishouse.io
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: rabbitmq.platform.chrishouse.io
+spec:
+  group: platform.chrishouse.io
+  names:
+    kind: RabbitMQ
+    plural: rabbitmqs
+    shortNames:
+      - rmq
+  claimNames:
+    kind: RabbitMQClaim
+    plural: rabbitmqclaims
+  connectionSecretKeys:
+    - amqp-endpoint
+    - management-url
+    - host
+    - port
+    - username
+    - password
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              required:
+                - parameters
+              properties:
+                parameters:
+                  type: object
+                  required:
+                    - name
+                    - environment
+                    - storageGB
+                  properties:
+                    name:
+                      type: string
+                      description: "RabbitMQ instance name (used in resource naming and ingress hostname)"
+                      pattern: "^[a-z][a-z0-9-]{1,20}$"
+                    environment:
+                      type: string
+                      description: "Environment name (dev, staging, prod)"
+                      enum:
+                        - dev
+                        - staging
+                        - prod
+                    storageGB:
+                      type: integer
+                      description: "Storage size in GB for RabbitMQ data"
+                      minimum: 5
+                      maximum: 100
+                      default: 5
+                    rabbitmqVersion:
+                      type: string
+                      description: "RabbitMQ version"
+                      enum:
+                        - "3.13"
+                        - "3.12"
+                        - "3.11"
+                      default: "3.13"
+                    memoryLimitMB:
+                      type: integer
+                      description: "Memory limit in MB"
+                      enum:
+                        - 256
+                        - 512
+                        - 1024
+                        - 2048
+                        - 4096
+                      default: 512
+                    adminUsername:
+                      type: string
+                      description: "Admin username for RabbitMQ management UI"
+                      default: "admin"
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                  description: "Current phase of the RabbitMQ instance"
+                amqpEndpoint:
+                  type: string
+                  description: "AMQP connection endpoint (host:port)"
+                managementUrl:
+                  type: string
+                  description: "Management UI URL (https://...)"
+                serviceName:
+                  type: string
+                  description: "Kubernetes service name"
+                namespace:
+                  type: string
+                  description: "Kubernetes namespace"
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                      status:
+                        type: string
+                      reason:
+                        type: string
+                      message:
+                        type: string
+                      lastTransitionTime:
+                        type: string
+      additionalPrinterColumns:
+        - name: Name
+          type: string
+          jsonPath: ".spec.parameters.name"
+        - name: Environment
+          type: string
+          jsonPath: ".spec.parameters.environment"
+        - name: Version
+          type: string
+          jsonPath: ".spec.parameters.rabbitmqVersion"
+        - name: Management URL
+          type: string
+          jsonPath: ".status.managementUrl"
+        - name: Ready
+          type: string
+          jsonPath: ".status.conditions[?(@.type=='Ready')].status"
+        - name: Age
+          type: date
+          jsonPath: ".metadata.creationTimestamp"

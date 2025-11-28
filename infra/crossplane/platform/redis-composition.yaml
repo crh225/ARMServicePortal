@@ -1,0 +1,423 @@
+---
+# Redis Composition (Crossplane v2 Pipeline Mode)
+# Implements the XRD by creating: Namespace, PVC, Deployment, Service
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: redis
+  labels:
+    crossplane.io/xrd: redis.platform.chrishouse.io
+    provider: kubernetes
+spec:
+  compositeTypeRef:
+    apiVersion: platform.chrishouse.io/v1alpha1
+    kind: Redis
+
+  writeConnectionSecretsToNamespace: crossplane-system
+
+  mode: Pipeline
+  pipeline:
+    - step: patch-and-transform
+      functionRef:
+        name: function-patch-and-transform
+      input:
+        apiVersion: pt.fn.crossplane.io/v1beta1
+        kind: Resources
+
+        patchSets:
+          # Common labels applied to all resources
+          - name: common-labels
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.name
+                toFieldPath: metadata.labels["app.kubernetes.io/name"]
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.environment
+                toFieldPath: metadata.labels["app.kubernetes.io/environment"]
+              - type: CombineFromComposite
+                combine:
+                  variables:
+                    - fromFieldPath: spec.parameters.name
+                    - fromFieldPath: spec.parameters.environment
+                  strategy: string
+                  string:
+                    fmt: "%s-%s"
+                toFieldPath: metadata.labels["app.kubernetes.io/instance"]
+
+          # Namespace patch - used by all namespaced resources
+          - name: namespace-patch
+            patches:
+              - type: CombineFromComposite
+                combine:
+                  variables:
+                    - fromFieldPath: spec.parameters.name
+                    - fromFieldPath: spec.parameters.environment
+                  strategy: string
+                  string:
+                    fmt: "%s-%s"
+                toFieldPath: spec.forProvider.manifest.metadata.namespace
+
+        resources:
+          # ============================================================
+          # 1. NAMESPACE
+          # ============================================================
+          - name: namespace
+            base:
+              apiVersion: kubernetes.crossplane.io/v1alpha2
+              kind: Object
+              spec:
+                forProvider:
+                  manifest:
+                    apiVersion: v1
+                    kind: Namespace
+                    metadata:
+                      name: ""
+                      labels:
+                        app.kubernetes.io/managed-by: crossplane
+                        platform.chrishouse.io/type: redis
+            patches:
+              - type: PatchSet
+                patchSetName: common-labels
+              - type: CombineFromComposite
+                combine:
+                  variables:
+                    - fromFieldPath: spec.parameters.name
+                    - fromFieldPath: spec.parameters.environment
+                  strategy: string
+                  string:
+                    fmt: "%s-%s"
+                toFieldPath: spec.forProvider.manifest.metadata.name
+              - type: CombineFromComposite
+                combine:
+                  variables:
+                    - fromFieldPath: spec.parameters.name
+                    - fromFieldPath: spec.parameters.environment
+                  strategy: string
+                  string:
+                    fmt: "namespace-%s-%s"
+                toFieldPath: metadata.name
+
+          # ============================================================
+          # 2. PVC FOR REDIS DATA
+          # ============================================================
+          - name: redis-pvc
+            base:
+              apiVersion: kubernetes.crossplane.io/v1alpha2
+              kind: Object
+              spec:
+                forProvider:
+                  manifest:
+                    apiVersion: v1
+                    kind: PersistentVolumeClaim
+                    metadata:
+                      name: ""
+                      labels:
+                        app.kubernetes.io/component: redis
+                    spec:
+                      accessModes:
+                        - ReadWriteOnce
+                      resources:
+                        requests:
+                          storage: "1Gi"
+                      storageClassName: managed-csi
+            patches:
+              - type: PatchSet
+                patchSetName: common-labels
+              - type: PatchSet
+                patchSetName: namespace-patch
+              - type: CombineFromComposite
+                combine:
+                  variables:
+                    - fromFieldPath: spec.parameters.name
+                    - fromFieldPath: spec.parameters.environment
+                  strategy: string
+                  string:
+                    fmt: "%s-%s-redis-data"
+                toFieldPath: spec.forProvider.manifest.metadata.name
+              - type: CombineFromComposite
+                combine:
+                  variables:
+                    - fromFieldPath: spec.parameters.name
+                    - fromFieldPath: spec.parameters.environment
+                  strategy: string
+                  string:
+                    fmt: "redis-pvc-%s-%s"
+                toFieldPath: metadata.name
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.storageGB
+                toFieldPath: spec.forProvider.manifest.spec.resources.requests.storage
+                transforms:
+                  - type: string
+                    string:
+                      type: Format
+                      fmt: "%dGi"
+
+          # ============================================================
+          # 3. REDIS CONFIGMAP
+          # ============================================================
+          - name: redis-config
+            base:
+              apiVersion: kubernetes.crossplane.io/v1alpha2
+              kind: Object
+              spec:
+                forProvider:
+                  manifest:
+                    apiVersion: v1
+                    kind: ConfigMap
+                    metadata:
+                      name: ""
+                      labels:
+                        app.kubernetes.io/component: redis
+                    data:
+                      redis.conf: |
+                        appendonly yes
+                        appendfsync everysec
+                        save 900 1
+                        save 300 10
+                        save 60 10000
+                        maxmemory 256mb
+                        maxmemory-policy allkeys-lru
+            patches:
+              - type: PatchSet
+                patchSetName: common-labels
+              - type: PatchSet
+                patchSetName: namespace-patch
+              - type: CombineFromComposite
+                combine:
+                  variables:
+                    - fromFieldPath: spec.parameters.name
+                    - fromFieldPath: spec.parameters.environment
+                  strategy: string
+                  string:
+                    fmt: "%s-%s-redis-config"
+                toFieldPath: spec.forProvider.manifest.metadata.name
+              - type: CombineFromComposite
+                combine:
+                  variables:
+                    - fromFieldPath: spec.parameters.name
+                    - fromFieldPath: spec.parameters.environment
+                  strategy: string
+                  string:
+                    fmt: "redis-config-%s-%s"
+                toFieldPath: metadata.name
+              - type: CombineFromComposite
+                combine:
+                  variables:
+                    - fromFieldPath: spec.parameters.memoryLimitMB
+                    - fromFieldPath: spec.parameters.maxMemoryPolicy
+                  strategy: string
+                  string:
+                    fmt: |
+                      appendonly yes
+                      appendfsync everysec
+                      save 900 1
+                      save 300 10
+                      save 60 10000
+                      maxmemory %dmb
+                      maxmemory-policy %s
+                toFieldPath: spec.forProvider.manifest.data["redis.conf"]
+
+          # ============================================================
+          # 4. REDIS DEPLOYMENT
+          # ============================================================
+          - name: redis-deployment
+            base:
+              apiVersion: kubernetes.crossplane.io/v1alpha2
+              kind: Object
+              spec:
+                forProvider:
+                  manifest:
+                    apiVersion: apps/v1
+                    kind: Deployment
+                    metadata:
+                      name: ""
+                      labels:
+                        app.kubernetes.io/component: redis
+                    spec:
+                      replicas: 1
+                      selector:
+                        matchLabels:
+                          app.kubernetes.io/component: redis
+                      strategy:
+                        type: Recreate
+                      template:
+                        metadata:
+                          labels:
+                            app.kubernetes.io/component: redis
+                        spec:
+                          containers:
+                            - name: redis
+                              image: redis:7.2-alpine
+                              command:
+                                - redis-server
+                                - /etc/redis/redis.conf
+                              ports:
+                                - containerPort: 6379
+                                  name: redis
+                              volumeMounts:
+                                - name: redis-data
+                                  mountPath: /data
+                                - name: redis-config
+                                  mountPath: /etc/redis
+                              resources:
+                                requests:
+                                  cpu: "100m"
+                                  memory: "128Mi"
+                                limits:
+                                  cpu: "500m"
+                                  memory: "512Mi"
+                              readinessProbe:
+                                tcpSocket:
+                                  port: 6379
+                                initialDelaySeconds: 5
+                                periodSeconds: 10
+                              livenessProbe:
+                                tcpSocket:
+                                  port: 6379
+                                initialDelaySeconds: 15
+                                periodSeconds: 20
+                          volumes:
+                            - name: redis-data
+                              persistentVolumeClaim:
+                                claimName: ""
+                            - name: redis-config
+                              configMap:
+                                name: ""
+            patches:
+              - type: PatchSet
+                patchSetName: common-labels
+              - type: PatchSet
+                patchSetName: namespace-patch
+              - type: CombineFromComposite
+                combine:
+                  variables:
+                    - fromFieldPath: spec.parameters.name
+                    - fromFieldPath: spec.parameters.environment
+                  strategy: string
+                  string:
+                    fmt: "%s-%s-redis"
+                toFieldPath: spec.forProvider.manifest.metadata.name
+              - type: CombineFromComposite
+                combine:
+                  variables:
+                    - fromFieldPath: spec.parameters.name
+                    - fromFieldPath: spec.parameters.environment
+                  strategy: string
+                  string:
+                    fmt: "redis-deployment-%s-%s"
+                toFieldPath: metadata.name
+              # Image version
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.redisVersion
+                toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].image
+                transforms:
+                  - type: string
+                    string:
+                      type: Format
+                      fmt: "redis:%s-alpine"
+              # Memory limits
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.memoryLimitMB
+                toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].resources.limits.memory
+                transforms:
+                  - type: string
+                    string:
+                      type: Format
+                      fmt: "%dMi"
+              # PVC reference
+              - type: CombineFromComposite
+                combine:
+                  variables:
+                    - fromFieldPath: spec.parameters.name
+                    - fromFieldPath: spec.parameters.environment
+                  strategy: string
+                  string:
+                    fmt: "%s-%s-redis-data"
+                toFieldPath: spec.forProvider.manifest.spec.template.spec.volumes[0].persistentVolumeClaim.claimName
+              # ConfigMap reference
+              - type: CombineFromComposite
+                combine:
+                  variables:
+                    - fromFieldPath: spec.parameters.name
+                    - fromFieldPath: spec.parameters.environment
+                  strategy: string
+                  string:
+                    fmt: "%s-%s-redis-config"
+                toFieldPath: spec.forProvider.manifest.spec.template.spec.volumes[1].configMap.name
+              # Instance labels for selector
+              - type: CombineFromComposite
+                combine:
+                  variables:
+                    - fromFieldPath: spec.parameters.name
+                    - fromFieldPath: spec.parameters.environment
+                  strategy: string
+                  string:
+                    fmt: "%s-%s"
+                toFieldPath: spec.forProvider.manifest.spec.selector.matchLabels["app.kubernetes.io/instance"]
+              - type: CombineFromComposite
+                combine:
+                  variables:
+                    - fromFieldPath: spec.parameters.name
+                    - fromFieldPath: spec.parameters.environment
+                  strategy: string
+                  string:
+                    fmt: "%s-%s"
+                toFieldPath: spec.forProvider.manifest.spec.template.metadata.labels["app.kubernetes.io/instance"]
+
+          # ============================================================
+          # 5. REDIS SERVICE
+          # ============================================================
+          - name: redis-service
+            base:
+              apiVersion: kubernetes.crossplane.io/v1alpha2
+              kind: Object
+              spec:
+                forProvider:
+                  manifest:
+                    apiVersion: v1
+                    kind: Service
+                    metadata:
+                      name: ""
+                      labels:
+                        app.kubernetes.io/component: redis
+                    spec:
+                      type: ClusterIP
+                      ports:
+                        - port: 6379
+                          targetPort: 6379
+                          protocol: TCP
+                          name: redis
+                      selector:
+                        app.kubernetes.io/component: redis
+            patches:
+              - type: PatchSet
+                patchSetName: common-labels
+              - type: PatchSet
+                patchSetName: namespace-patch
+              - type: CombineFromComposite
+                combine:
+                  variables:
+                    - fromFieldPath: spec.parameters.name
+                    - fromFieldPath: spec.parameters.environment
+                  strategy: string
+                  string:
+                    fmt: "%s-%s-redis"
+                toFieldPath: spec.forProvider.manifest.metadata.name
+              - type: CombineFromComposite
+                combine:
+                  variables:
+                    - fromFieldPath: spec.parameters.name
+                    - fromFieldPath: spec.parameters.environment
+                  strategy: string
+                  string:
+                    fmt: "redis-service-%s-%s"
+                toFieldPath: metadata.name
+              - type: CombineFromComposite
+                combine:
+                  variables:
+                    - fromFieldPath: spec.parameters.name
+                    - fromFieldPath: spec.parameters.environment
+                  strategy: string
+                  string:
+                    fmt: "%s-%s"
+                toFieldPath: spec.forProvider.manifest.spec.selector["app.kubernetes.io/instance"]
