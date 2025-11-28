@@ -1,0 +1,120 @@
+name: Cleanup Stale PR Environments
+
+on:
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      max_age_days:
+        description: 'Delete PR environments older than X days'
+        required: false
+        default: '7'
+      dry_run:
+        description: 'Dry run (show what would be deleted)'
+        required: false
+        default: 'true'
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: read
+
+env:
+  MAX_AGE_DAYS: ${{ github.event.inputs.max_age_days || '7' }}
+  DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+
+jobs:
+  cleanup-stale-environments:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Set up kubectl for AKS
+        run: |
+          az aks get-credentials \
+            --resource-group rg-armportal-aks-crossplane-dev \
+            --name aks-armportal-crossplane-dev \
+            --overwrite-existing
+
+      - name: Find and cleanup stale PR namespaces
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "🔍 Finding stale PR environments"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Max age: $MAX_AGE_DAYS days"
+          echo "Dry run: $DRY_RUN"
+          echo ""
+
+          # Get all PR namespaces
+          PR_NAMESPACES=$(kubectl get namespaces -o jsonpath='{.items[*].metadata.name}' | tr ' ' '\n' | grep '^armportal-pr-' || true)
+
+          if [ -z "$PR_NAMESPACES" ]; then
+            echo "No PR namespaces found"
+            exit 0
+          fi
+
+          CUTOFF_DATE=$(date -d "-$MAX_AGE_DAYS days" +%s)
+          DELETED_COUNT=0
+
+          for NS in $PR_NAMESPACES; do
+            PR_NUMBER=$(echo "$NS" | sed 's/armportal-pr-//')
+
+            # Get namespace creation time
+            CREATED=$(kubectl get namespace "$NS" -o jsonpath='{.metadata.creationTimestamp}')
+            CREATED_EPOCH=$(date -d "$CREATED" +%s)
+            AGE_DAYS=$(( ($(date +%s) - CREATED_EPOCH) / 86400 ))
+
+            # Check if PR is still open
+            PR_STATE=$(gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --json state -q '.state' 2>/dev/null || echo "UNKNOWN")
+
+            echo "Namespace: $NS"
+            echo "  Age: $AGE_DAYS days"
+            echo "  PR State: $PR_STATE"
+
+            # Delete if:
+            # 1. PR is closed/merged (shouldn't exist, but cleanup failed)
+            # 2. PR is open but older than MAX_AGE_DAYS
+            # 3. PR doesn't exist (orphaned namespace)
+            SHOULD_DELETE=false
+            REASON=""
+
+            if [ "$PR_STATE" = "CLOSED" ] || [ "$PR_STATE" = "MERGED" ]; then
+              SHOULD_DELETE=true
+              REASON="PR is $PR_STATE"
+            elif [ "$PR_STATE" = "UNKNOWN" ]; then
+              SHOULD_DELETE=true
+              REASON="PR not found (orphaned)"
+            elif [ "$AGE_DAYS" -ge "$MAX_AGE_DAYS" ]; then
+              SHOULD_DELETE=true
+              REASON="Older than $MAX_AGE_DAYS days"
+            fi
+
+            if [ "$SHOULD_DELETE" = "true" ]; then
+              if [ "$DRY_RUN" = "true" ]; then
+                echo "  ⚠️  WOULD DELETE ($REASON)"
+              else
+                echo "  🗑️  DELETING ($REASON)"
+                kubectl delete namespace "$NS" --wait=false
+                DELETED_COUNT=$((DELETED_COUNT + 1))
+              fi
+            else
+              echo "  ✅ Keeping (PR open, $AGE_DAYS days old)"
+            fi
+            echo ""
+          done
+
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "🔍 Dry run complete"
+          else
+            echo "🧹 Cleaned up $DELETED_COUNT stale namespace(s)"
+          fi
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
