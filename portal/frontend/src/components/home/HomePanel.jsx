@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import api from "../../services/api";
 import "../../styles/HomePanel.css";
 
 // Cache for home page stats (5 minutes)
@@ -42,18 +43,18 @@ function HomePanel({ onNavigate }) {
     // If we have cached stats, don't refetch
     if (stats) return;
 
-    // Fetch stats for the dashboard
+    // Fetch stats for the dashboard using the api service
     const fetchStats = async () => {
       try {
-        const [catalogRes, resourcesRes, jobsRes] = await Promise.all([
-          fetch("/api/catalog").then(r => r.ok ? r.json() : []),
-          fetch("/api/resources").then(r => r.ok ? r.json() : { resources: [] }),
-          fetch("/api/jobs").then(r => r.ok ? r.json() : [])
+        const [blueprints, resources, jobs] = await Promise.all([
+          api.fetchBlueprints().catch(() => []),
+          api.fetchResources(false).catch(() => []),
+          api.fetchJobs().catch(() => [])
         ]);
         const newStats = {
-          blueprints: Array.isArray(catalogRes) ? catalogRes.length : 0,
-          resources: resourcesRes?.resources?.length || 0,
-          jobs: Array.isArray(jobsRes) ? jobsRes.length : 0
+          blueprints: Array.isArray(blueprints) ? blueprints.length : 0,
+          resources: Array.isArray(resources) ? resources.length : 0,
+          jobs: Array.isArray(jobs) ? jobs.length : 0
         };
         setStats(newStats);
         setCachedStats(newStats);
