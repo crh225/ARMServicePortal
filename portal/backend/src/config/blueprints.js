@@ -842,7 +842,7 @@ export const BLUEPRINTS = [
   },
   {
     id: "xp-redis",
-    version: "0.0.1",
+    version: "1.0.0",
     displayName: "Redis (Single Node)",
     description: "Single-node Redis instance with persistent storage. Perfect for caching, session storage, and pub/sub messaging in Kubernetes environments.",
     category: "Cache",
@@ -925,7 +925,7 @@ export const BLUEPRINTS = [
   },
   {
     id: "xp-rabbitmq",
-    version: "0.0.1",
+    version: "1.0.0",
     displayName: "RabbitMQ (Single Node)",
     description: "Single-node RabbitMQ message broker with management UI. Ideal for async messaging, task queues, and event-driven architectures.",
     category: "Messaging",
