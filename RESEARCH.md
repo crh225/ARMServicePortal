@@ -35,14 +35,14 @@ Research areas next
 
 ## Security
 
-- [ ] **Secret management** - External Secrets Operator or Sealed Secrets
+- [DONE] **Secret management** - External Secrets AKV
 - [ ] **Pod Security Standards** - Enforce restricted/baseline profiles
 - [ ] **Image scanning** - Trivy/Grype in CI pipeline
 - [ ] **SBOM generation** - Software bill of materials
-- [ ] **mTLS** - Service mesh or cert-manager for inter-service encryption
+- [DONE] **mTLS** - Service mesh or cert-manager for inter-service encryption
 
 ## Developer Experience
-- [ ] **Resource TTL** - Auto-cleanup dev resources after X days
+- [DONE] **Resource TTL** - Auto-cleanup dev resources after X days
 - [DONE] **PR preview environments** - Ephemeral namespaces per PR
 
 ---

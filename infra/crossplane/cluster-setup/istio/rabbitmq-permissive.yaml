@@ -1,0 +1,20 @@
+# Allow PERMISSIVE mTLS for RabbitMQ management UI
+# This allows ingress-nginx (no sidecar) to access the management port
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: rabbitmq-permissive
+  namespace: rabbit-xp1-dev
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: rabbitmq
+  mtls:
+    mode: PERMISSIVE  # Accept both mTLS and plaintext
+  portLevelMtls:
+    # Keep AMQP port strict (only mesh traffic)
+    5672:
+      mode: STRICT
+    # Allow management UI from ingress
+    15672:
+      mode: PERMISSIVE
