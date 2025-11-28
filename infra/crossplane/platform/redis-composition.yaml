@@ -75,6 +75,7 @@ spec:
                       labels:
                         app.kubernetes.io/managed-by: crossplane
                         platform.chrishouse.io/type: redis
+                        istio-injection: enabled
             patches:
               - type: PatchSet
                 patchSetName: common-labels

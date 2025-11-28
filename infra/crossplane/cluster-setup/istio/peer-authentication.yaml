@@ -1,0 +1,85 @@
+# Mesh-wide strict mTLS policy
+# All service-to-service communication must use mTLS
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: istio-system  # Mesh-wide policy
+spec:
+  mtls:
+    mode: STRICT  # Require mTLS for all traffic
+
+---
+# Authorization policy - deny all by default (zero trust)
+# Uncomment to enable strict zero-trust
+# apiVersion: security.istio.io/v1beta1
+# kind: AuthorizationPolicy
+# metadata:
+#   name: deny-all
+#   namespace: istio-system
+# spec:
+#   {}  # Empty spec = deny all
+
+---
+# Allow armportal-backend to connect to RabbitMQ
+# Note: Apply this after your Crossplane-managed RabbitMQ namespace exists
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-backend-to-rabbitmq
+  namespace: rabbit-xp1-dev  # Update to match your actual namespace
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: rabbitmq
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            namespaces: ["armportal-backend"]
+      to:
+        - operation:
+            ports: ["5672", "15672"]  # AMQP and Management
+
+---
+# Allow armportal-backend to connect to Redis
+# Note: Apply this after your Crossplane-managed Redis namespace exists
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-backend-to-redis
+  namespace: redis-xp1-dev  # Update to match your actual namespace
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: redis
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            namespaces: ["armportal-backend"]
+      to:
+        - operation:
+            ports: ["6379"]
+
+---
+# Allow external traffic to armportal-backend (from ingress)
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-ingress-to-backend
+  namespace: armportal-backend
+spec:
+  selector:
+    matchLabels:
+      app: armportal-backend
+  action: ALLOW
+  rules:
+    # Allow from NGINX ingress (non-mesh traffic)
+    - from:
+        - source:
+            namespaces: ["ingress-nginx"]
+    # Allow health checks from kubelet
+    - to:
+        - operation:
+            paths: ["/api/health", "/healthz", "/ready"]
