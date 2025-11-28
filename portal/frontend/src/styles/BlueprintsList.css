@@ -42,6 +42,99 @@
   color: var(--text-tertiary);
 }
 
+/* Filter container */
+.blueprint-filters {
+  margin-bottom: 20px;
+}
+
+.blueprint-filters .blueprint-search {
+  margin-bottom: 12px;
+}
+
+.blueprint-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Provider pills */
+.blueprint-provider-pills {
+  display: flex;
+  gap: 6px;
+}
+
+.blueprint-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-default);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.blueprint-pill:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-hover);
+}
+
+.blueprint-pill--active {
+  color: #3b82f6;
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.blueprint-pill--terraform.blueprint-pill--active {
+  color: #5c4ee5;
+  background: rgba(92, 78, 229, 0.1);
+  border-color: rgba(92, 78, 229, 0.3);
+}
+
+.blueprint-pill--crossplane.blueprint-pill--active {
+  color: #35d0ba;
+  background: rgba(53, 208, 186, 0.1);
+  border-color: rgba(53, 208, 186, 0.3);
+}
+
+.blueprint-pill svg,
+.blueprint-pill img {
+  flex-shrink: 0;
+}
+
+/* Category dropdown */
+.blueprint-category-select {
+  padding: 6px 28px 6px 12px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%236b7280' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+}
+
+.blueprint-category-select:hover {
+  background-color: var(--bg-hover);
+  border-color: var(--border-hover);
+}
+
+.blueprint-category-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
 /* Blueprint grid - Backstage style */
 .blueprint-grid {
   display: grid;

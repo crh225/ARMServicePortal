@@ -839,6 +839,180 @@ export const BLUEPRINTS = [
       }
     ],
     estimatedMonthlyCost: 80
+  },
+  {
+    id: "xp-redis",
+    version: "0.0.1",
+    displayName: "Redis (Single Node)",
+    description: "Single-node Redis instance with persistent storage. Perfect for caching, session storage, and pub/sub messaging in Kubernetes environments.",
+    category: "Cache",
+    provider: "crossplane",
+    crossplane: {
+      apiVersion: "platform.chrishouse.io/v1alpha1",
+      kind: "RedisClaim",
+      compositionRef: "redis",
+      claimsNamespace: "platform-claims"
+    },
+    variables: [
+      {
+        name: "name",
+        label: "Redis Instance Name",
+        type: "string",
+        required: true,
+        placeholder: "myapp-cache",
+        validation: {
+          pattern: "^[a-z][a-z0-9-]{1,20}$",
+          message: "Lowercase letters, numbers, hyphens. 2-21 chars. Must start with letter."
+        }
+      },
+      {
+        name: "environment",
+        label: "Environment",
+        type: "select",
+        required: true,
+        options: ["dev", "staging", "prod"],
+        default: "dev"
+      },
+      {
+        name: "storageGB",
+        label: "Storage Size (GB)",
+        type: "select",
+        required: true,
+        options: ["1", "2", "5", "10", "20"],
+        default: "1"
+      },
+      {
+        name: "redisVersion",
+        label: "Redis Version",
+        type: "select",
+        required: false,
+        options: ["7.2", "7.0", "6.2"],
+        default: "7.2"
+      },
+      {
+        name: "maxMemoryPolicy",
+        label: "Max Memory Policy",
+        type: "select",
+        required: false,
+        options: ["allkeys-lru", "volatile-lru", "allkeys-lfu", "volatile-lfu", "allkeys-random", "volatile-random", "noeviction"],
+        default: "allkeys-lru",
+        helpText: "Policy for evicting keys when max memory is reached"
+      },
+      {
+        name: "memoryLimitMB",
+        label: "Memory Limit (MB)",
+        type: "select",
+        required: false,
+        options: ["128", "256", "512", "1024", "2048"],
+        default: "256"
+      }
+    ],
+    outputs: [
+      {
+        name: "endpoint",
+        description: "Redis connection endpoint (host:port)"
+      },
+      {
+        name: "serviceName",
+        description: "Kubernetes service name"
+      },
+      {
+        name: "namespace",
+        description: "Kubernetes namespace"
+      }
+    ],
+    estimatedMonthlyCost: 5
+  },
+  {
+    id: "xp-rabbitmq",
+    version: "0.0.1",
+    displayName: "RabbitMQ (Single Node)",
+    description: "Single-node RabbitMQ message broker with management UI. Ideal for async messaging, task queues, and event-driven architectures.",
+    category: "Messaging",
+    provider: "crossplane",
+    crossplane: {
+      apiVersion: "platform.chrishouse.io/v1alpha1",
+      kind: "RabbitMQClaim",
+      compositionRef: "rabbitmq",
+      claimsNamespace: "platform-claims"
+    },
+    variables: [
+      {
+        name: "name",
+        label: "RabbitMQ Instance Name",
+        type: "string",
+        required: true,
+        placeholder: "myapp-mq",
+        validation: {
+          pattern: "^[a-z][a-z0-9-]{1,20}$",
+          message: "Lowercase letters, numbers, hyphens. 2-21 chars. Must start with letter."
+        }
+      },
+      {
+        name: "environment",
+        label: "Environment",
+        type: "select",
+        required: true,
+        options: ["dev", "staging", "prod"],
+        default: "dev"
+      },
+      {
+        name: "storageGB",
+        label: "Storage Size (GB)",
+        type: "select",
+        required: true,
+        options: ["5", "10", "20", "50"],
+        default: "5"
+      },
+      {
+        name: "rabbitmqVersion",
+        label: "RabbitMQ Version",
+        type: "select",
+        required: false,
+        options: ["3.13", "3.12", "3.11"],
+        default: "3.13"
+      },
+      {
+        name: "memoryLimitMB",
+        label: "Memory Limit (MB)",
+        type: "select",
+        required: false,
+        options: ["256", "512", "1024", "2048", "4096"],
+        default: "512"
+      },
+      {
+        name: "adminUsername",
+        label: "Admin Username",
+        type: "string",
+        required: false,
+        default: "admin",
+        helpText: "Username for RabbitMQ management UI"
+      }
+    ],
+    outputs: [
+      {
+        name: "amqpEndpoint",
+        description: "AMQP connection endpoint (host:port)"
+      },
+      {
+        name: "managementUrl",
+        description: "Management UI URL (https://...)"
+      },
+      {
+        name: "serviceName",
+        description: "Kubernetes service name"
+      },
+      {
+        name: "namespace",
+        description: "Kubernetes namespace"
+      },
+      {
+        name: "adminPassword",
+        description: "Admin password (from secret)",
+        sensitive: true
+      }
+    ],
+    estimatedMonthlyCost: 10
   }
 ];
 
