@@ -114,7 +114,9 @@ export function generatePRBody(metadata, description = "") {
   }
 
   if (metadata.terraformModule) {
-    parts.push(`- Terraform Module: \`${metadata.terraformModule}\``);
+    // Use appropriate label based on provider
+    const label = metadata.provider === "crossplane" ? "Claim Name" : "Terraform Module";
+    parts.push(`- ${label}: \`${metadata.terraformModule}\``);
   }
 
   return parts.join("\n");

@@ -32,7 +32,8 @@ function getModuleName(blueprintId, providedModuleName) {
 
   const shortId = crypto.randomBytes(4).toString("hex");
   const safeBlueprint = blueprintId.replace(/[^a-zA-Z0-9_-]/g, "-");
-  const moduleName = `${safeBlueprint}_${shortId}`;
+  // Use hyphen for K8s compatibility (Crossplane claims can't have underscores)
+  const moduleName = `${safeBlueprint}-${shortId}`;
 
   return { moduleName, isUpdate: false, shortId };
 }
