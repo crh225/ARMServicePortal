@@ -196,6 +196,9 @@ spec:
                 fromFieldPath: spec.parameters.storageGB
                 toFieldPath: spec.forProvider.manifest.spec.resources.requests.storage
                 transforms:
+                  - type: convert
+                    convert:
+                      toType: int64
                   - type: string
                     string:
                       type: Format
