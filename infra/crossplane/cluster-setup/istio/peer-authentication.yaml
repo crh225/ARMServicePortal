@@ -62,24 +62,7 @@ spec:
         - operation:
             ports: ["6379"]
 
----
-# Allow external traffic to armportal-backend (from ingress)
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: allow-ingress-to-backend
-  namespace: armportal-backend
-spec:
-  selector:
-    matchLabels:
-      app: armportal-backend
-  action: ALLOW
-  rules:
-    # Allow from NGINX ingress (non-mesh traffic)
-    - from:
-        - source:
-            namespaces: ["ingress-nginx"]
-    # Allow health checks from kubelet
-    - to:
-        - operation:
-            paths: ["/api/health", "/healthz", "/ready"]
+# Note: No AuthorizationPolicy for armportal-backend
+# The backend uses PERMISSIVE mTLS (see backend-permissive.yaml) to allow
+# traffic from ingress-nginx which doesn't have an Istio sidecar.
+# Without explicit DENY policies, Istio allows all traffic by default.
