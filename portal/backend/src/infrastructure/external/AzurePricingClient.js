@@ -199,6 +199,82 @@ export async function estimateBlueprintCost(blueprintId, variables, blueprint = 
       break;
     }
 
+    case "xp-redis": {
+      // Crossplane Redis - Kubernetes-based deployment
+      const redisStorageGB = parseInt(variables.storageGB || "5");
+      const redisMemoryMB = parseInt(variables.memoryLimitMB || "256");
+
+      // Cost breakdown:
+      // - Redis Pod: ~$3-5/month for small instance (CPU/memory share of node)
+      // - PVC: ~$0.10/GB/month for Azure Disk
+      const pvcCost = redisStorageGB * 0.10;
+
+      estimates.push({
+        resourceType: "Redis Pod",
+        skuName: `${redisMemoryMB}MB memory limit`,
+        monthlyEstimate: 4,
+        currency: "USD",
+        note: "Kubernetes deployment resource share"
+      });
+      estimates.push({
+        resourceType: "Redis Storage (PVC)",
+        skuName: `${redisStorageGB}GB Azure Disk`,
+        monthlyEstimate: pvcCost,
+        currency: "USD",
+        note: "Persistent volume for Redis data"
+      });
+      estimates.push({
+        resourceType: "Shared Infrastructure",
+        skuName: "Ingress + monitoring",
+        monthlyEstimate: 1,
+        currency: "USD",
+        note: "Allocated share of cluster services"
+      });
+      break;
+    }
+
+    case "xp-rabbitmq": {
+      // Crossplane RabbitMQ - Kubernetes-based deployment
+      const rmqStorageGB = parseInt(variables.storageGB || "5");
+      const rmqMemoryMB = parseInt(variables.memoryLimitMB || "512");
+
+      // Cost breakdown:
+      // - RabbitMQ Pod: ~$5-8/month for small instance (CPU/memory share of node)
+      // - PVC: ~$0.10/GB/month for Azure Disk
+      // - Management UI ingress: minimal additional cost
+      const pvcCost = rmqStorageGB * 0.10;
+
+      estimates.push({
+        resourceType: "RabbitMQ Pod",
+        skuName: `${rmqMemoryMB}MB memory limit`,
+        monthlyEstimate: 7,
+        currency: "USD",
+        note: "Kubernetes deployment with management plugin"
+      });
+      estimates.push({
+        resourceType: "RabbitMQ Storage (PVC)",
+        skuName: `${rmqStorageGB}GB Azure Disk`,
+        monthlyEstimate: pvcCost,
+        currency: "USD",
+        note: "Persistent volume for message data"
+      });
+      estimates.push({
+        resourceType: "Management UI Ingress",
+        skuName: "HTTPS endpoint",
+        monthlyEstimate: 2,
+        currency: "USD",
+        note: "Allocated share of ingress controller"
+      });
+      estimates.push({
+        resourceType: "Shared Infrastructure",
+        skuName: "Monitoring + TLS",
+        monthlyEstimate: 1,
+        currency: "USD",
+        note: "Allocated share of cluster services"
+      });
+      break;
+    }
+
     default:
       estimates.push({
         resourceType: "Unknown",
