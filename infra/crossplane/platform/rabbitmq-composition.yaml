@@ -312,6 +312,9 @@ spec:
                 fromFieldPath: spec.parameters.memoryLimitMB
                 toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].resources.limits.memory
                 transforms:
+                  - type: convert
+                    convert:
+                      toType: int64
                   - type: string
                     string:
                       type: Format
