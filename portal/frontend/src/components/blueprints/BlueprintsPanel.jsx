@@ -164,7 +164,7 @@ function BlueprintsPanel({ updateResourceData, onClearUpdate }) {
         </>
       )}
 
-      <AuthModal isOpen={showAuthModal} onClose={handleCloseAuthModal} />
+      <AuthModal isOpen={showAuthModal} onClose={handleCloseAuthModal} currentTab="blueprints" />
     </>
   );
 }

@@ -3,15 +3,18 @@ import "../../styles/AuthModal.css";
 
 /**
  * Modal that prompts users to authenticate
+ * @param {boolean} isOpen - Whether the modal is open
+ * @param {function} onClose - Callback to close the modal
+ * @param {string} currentTab - Current tab to return to after login
  */
-function AuthModal({ isOpen, onClose }) {
+function AuthModal({ isOpen, onClose, currentTab = "blueprints" }) {
   const { login } = useAuth();
 
   if (!isOpen) return null;
 
   const handleLogin = () => {
     onClose();
-    login();
+    login(currentTab);
   };
 
   return (

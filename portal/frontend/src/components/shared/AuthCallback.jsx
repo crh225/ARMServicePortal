@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth, getReturnTab, clearReturnTab } from "../../contexts/AuthContext";
 
 function AuthCallback() {
   const [searchParams] = useSearchParams();
@@ -12,9 +12,9 @@ function AuthCallback() {
 
     if (token) {
       handleCallback(token);
-      // Get the tab the user was on before login, or default to admin
-      const returnTab = sessionStorage.getItem("returnTab") || "admin";
-      sessionStorage.removeItem("returnTab");
+      // Get the tab the user was on before login (with 1-hour expiry), or default to home
+      const returnTab = getReturnTab() || "home";
+      clearReturnTab();
 
       // Redirect to the previous tab with a small delay to ensure token is stored
       setTimeout(() => {

@@ -171,7 +171,7 @@ function AdminPanel() {
         <div className="admin-login-card">
           <h2>Admin Portal</h2>
           <p>Sign in with your GitHub account to access admin features.</p>
-          <button className="btn-login" onClick={login}>
+          <button className="btn-login" onClick={() => login("admin")}>
             Login with GitHub
           </button>
         </div>

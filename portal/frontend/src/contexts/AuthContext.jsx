@@ -5,6 +5,46 @@ const AuthContext = createContext(null);
 // Use environment variable or default to localhost:4000
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
+// Return tab storage with 1-hour expiry
+const RETURN_TAB_KEY = "returnTab";
+const RETURN_TAB_TTL = 60 * 60 * 1000; // 1 hour
+
+function setReturnTab(tab) {
+  try {
+    localStorage.setItem(RETURN_TAB_KEY, JSON.stringify({
+      tab,
+      timestamp: Date.now()
+    }));
+  } catch {
+    // Ignore storage errors
+  }
+}
+
+function getReturnTab() {
+  try {
+    const stored = localStorage.getItem(RETURN_TAB_KEY);
+    if (stored) {
+      const { tab, timestamp } = JSON.parse(stored);
+      if (Date.now() - timestamp < RETURN_TAB_TTL) {
+        return tab;
+      }
+      // Expired, clean up
+      localStorage.removeItem(RETURN_TAB_KEY);
+    }
+  } catch {
+    // Ignore storage errors
+  }
+  return null;
+}
+
+function clearReturnTab() {
+  try {
+    localStorage.removeItem(RETURN_TAB_KEY);
+  } catch {
+    // Ignore storage errors
+  }
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -55,12 +95,14 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const login = async () => {
+  const login = async (currentTab) => {
     try {
       // Save current tab before redirecting to login
-      const searchParams = new URLSearchParams(window.location.search);
-      const currentTab = searchParams.get("tab") || "blueprints";
-      sessionStorage.setItem("returnTab", currentTab);
+      // Use passed tab, or fall back to URL param, or default to home
+      const tabToSave = currentTab ||
+        new URLSearchParams(window.location.search).get("tab") ||
+        "home";
+      setReturnTab(tabToSave);
 
       // Get GitHub OAuth URL from backend
       const response = await fetch(`${API_BASE_URL}/api/auth/github`);
@@ -123,3 +165,6 @@ export function useAuth() {
   }
   return context;
 }
+
+// Export helpers for AuthCallback
+export { getReturnTab, clearReturnTab };
