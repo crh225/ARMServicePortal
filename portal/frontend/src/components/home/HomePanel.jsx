@@ -120,10 +120,10 @@ function HomePanel({ onNavigate }) {
           <section className="home-section">
             <h2 className="home-section-title">What is this?</h2>
             <p className="home-text">
-              The Cloud Self-Service Portal enables developers and teams to provision approved
-              cloud resources without needing direct access to cloud provider consoles or
-              infrastructure-as-code repositories. Simply select a blueprint, fill in the
-              required parameters, and submit your request.
+              This is Chris House's internal developer portal — a personal sandbox for
+              experimenting with cloud infrastructure patterns, GitOps workflows, and
+              self-service provisioning. Use it to spin up resources like Redis, RabbitMQ,
+              Azure resources, and more through pre-built blueprints.
             </p>
           </section>
 

@@ -22,7 +22,8 @@ export const METADATA_PATTERNS = {
 export const CODE_BLOCK_PATTERNS = {
   hcl: /```hcl\n([\s\S]*?)\n```/,
   json: /```json([\s\S]*?)```/,
-  terraform: /```terraform\n([\s\S]*?)\n```/
+  terraform: /```terraform\n([\s\S]*?)\n```/,
+  yaml: /```yaml\n([\s\S]*?)\n```/
 };
 
 /**

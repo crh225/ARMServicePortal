@@ -38,6 +38,24 @@ function extractCodeBlock(body, pattern) {
 }
 
 /**
+ * Extract resource name from Crossplane claim YAML
+ * Looks for spec.parameters.name in the YAML content
+ * @param {string} yamlContent - YAML content
+ * @returns {string|null} - Resource name or null
+ */
+function extractCrossplaneResourceName(yamlContent) {
+  if (!yamlContent) return null;
+
+  // Look for name: "value" or name: value after parameters:
+  const nameMatch = yamlContent.match(/parameters:\s*\n(?:.*\n)*?\s+name:\s*["']?([a-z0-9-]+)["']?/);
+  if (nameMatch && nameMatch[1]) {
+    return nameMatch[1];
+  }
+
+  return null;
+}
+
+/**
  * Parse blueprint metadata from PR body
  * @param {string} body - PR body text
  * @returns {Object} - Parsed metadata
@@ -50,16 +68,23 @@ export function parseBlueprintMetadataFromBody(body) {
       version: null,
       provider: null,
       terraformModule: null,
+      crossplaneYaml: null,
+      crossplaneResourceName: null,
       createdBy: null
     };
   }
+
+  const provider = extractMetadataField(body, METADATA_PATTERNS.provider);
+  const crossplaneYaml = extractCodeBlock(body, CODE_BLOCK_PATTERNS.yaml);
 
   return {
     blueprintId: extractMetadataField(body, METADATA_PATTERNS.blueprintId),
     environment: extractMetadataField(body, METADATA_PATTERNS.environment),
     version: extractMetadataField(body, METADATA_PATTERNS.version),
-    provider: extractMetadataField(body, METADATA_PATTERNS.provider),
+    provider,
     terraformModule: extractCodeBlock(body, CODE_BLOCK_PATTERNS.hcl),
+    crossplaneYaml,
+    crossplaneResourceName: provider === "crossplane" ? extractCrossplaneResourceName(crossplaneYaml) : null,
     createdBy: extractMetadataField(body, METADATA_PATTERNS.createdBy)
   };
 }

@@ -3,6 +3,7 @@ import EmptyState from "../shared/EmptyState";
 import ResultRow from "./ResultRow";
 import StatusBadge from "../shared/StatusBadge";
 import TerraformOutputs from "./TerraformOutputs";
+import CrossplaneCredentials from "./CrossplaneCredentials";
 import ResourceActions from "../resources/ResourceActions";
 import JobDetailSkeleton from "./JobDetailSkeleton";
 import "../../styles/JobDetail.css";
@@ -159,6 +160,20 @@ function JobDetail({ job, loading, error, onUpdate, onDelete, onPromote, promote
                 Crossplane claims are synced via ArgoCD. Once the PR is merged, the claim will be
                 applied to the cluster and Crossplane will provision the resources.
               </p>
+            </div>
+          </div>
+        )}
+
+        {/* Crossplane Credentials Section - only for Crossplane when merged */}
+        {isCrossplane && job.merged && job.blueprintId && job.environment && (
+          <div className="job-detail-section">
+            <h2 className="job-detail-section-title">Access Credentials</h2>
+            <div className="job-detail-section-content">
+              <CrossplaneCredentials
+                blueprintId={job.blueprintId}
+                name={job.crossplaneResourceName}
+                environment={job.environment}
+              />
             </div>
           </div>
         )}
