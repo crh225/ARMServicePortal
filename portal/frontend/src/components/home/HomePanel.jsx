@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../../services/api";
+import AnimatedCounter from "../shared/AnimatedCounter";
 import "../../styles/HomePanel.css";
 
 // Cache for home page stats (5 minutes)
@@ -83,7 +84,9 @@ function HomePanel({ onNavigate }) {
       <div className="home-stats">
         <div className="home-stat">
           {stats ? (
-            <span className="home-stat-value">{stats.blueprints}</span>
+            <span className="home-stat-value">
+              <AnimatedCounter value={stats.blueprints} duration={2000} />
+            </span>
           ) : (
             <div className="home-stat-value-skeleton" />
           )}
@@ -91,7 +94,9 @@ function HomePanel({ onNavigate }) {
         </div>
         <div className="home-stat">
           {stats ? (
-            <span className="home-stat-value">{stats.resources}</span>
+            <span className="home-stat-value">
+              <AnimatedCounter value={stats.resources} duration={2200} />
+            </span>
           ) : (
             <div className="home-stat-value-skeleton" />
           )}
@@ -99,7 +104,9 @@ function HomePanel({ onNavigate }) {
         </div>
         <div className="home-stat">
           {stats ? (
-            <span className="home-stat-value">{stats.jobs}</span>
+            <span className="home-stat-value">
+              <AnimatedCounter value={stats.jobs} duration={2400} />
+            </span>
           ) : (
             <div className="home-stat-value-skeleton" />
           )}
