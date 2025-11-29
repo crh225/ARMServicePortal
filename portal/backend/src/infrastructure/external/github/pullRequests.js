@@ -6,8 +6,8 @@ import { fileExists } from "./utils/gitOperations.js";
 import { DEFAULT_BASE_BRANCH } from "../../../config/githubConstants.js";
 import { cache } from "../../utils/Cache.js";
 
-// Cache TTL: 1 hour for PR data
-const PR_CACHE_TTL = 60 * 60 * 1000;
+// Cache TTL: 10 minutes for PR data
+const PR_CACHE_TTL = 10 * 60 * 1000;
 
 // In-memory cache for module name to PR number mapping
 // This prevents excessive GitHub API calls when looking up the same module multiple times

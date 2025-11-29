@@ -208,7 +208,7 @@ export function createMediator() {
     [GetContainerTagsQuery, GetContainerTagsHandler, [repos.containerRegistry]],
 
     // Stats Queries
-    [GetHomeStatsQuery, GetHomeStatsHandler, [repos.blueprint, services.azureResource, repos.job]],
+    [GetHomeStatsQuery, GetHomeStatsHandler, [repos.blueprint, services.azureResource, repos.job, cache]],
 
     // Provision Commands
     [ProvisionBlueprintCommand, ProvisionBlueprintHandler, [repos.blueprint, services.policy, services.gitHubProvision]],

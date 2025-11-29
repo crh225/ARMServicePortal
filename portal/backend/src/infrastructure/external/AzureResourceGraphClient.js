@@ -5,17 +5,15 @@
 
 import { DefaultAzureCredential } from "@azure/identity";
 import { ResourceGraphClient } from "@azure/arm-resourcegraph";
+import { cache } from "../utils/Cache.js";
 
 // Initialize with managed identity (works in Container Apps)
 const credential = new DefaultAzureCredential();
 const client = new ResourceGraphClient(credential);
 
-// Cache for resource groups query (3 minute TTL)
-const resourceGroupsCache = {
-  data: null,
-  timestamp: null,
-  ttl: 3 * 60 * 1000 // 3 minutes in milliseconds
-};
+// Cache keys and TTL
+const RESOURCE_GROUPS_CACHE_KEY = "resourceGroups:all";
+const RESOURCE_GROUPS_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 
 /**
  * Query Azure Resource Graph for ARM Portal resources
@@ -110,18 +108,14 @@ export async function queryResourcesByRequestId(requestId) {
  * @returns {Promise<Array>} Array of resource group names
  */
 export async function queryResourceGroupsByEnvironment(environment = null, subscriptions = []) {
-  // Check cache first
-  const now = Date.now();
-  const cacheValid = resourceGroupsCache.data &&
-                     resourceGroupsCache.timestamp &&
-                     (now - resourceGroupsCache.timestamp) < resourceGroupsCache.ttl;
-
+  // Check Redis cache first
+  const cached = await cache.get(RESOURCE_GROUPS_CACHE_KEY);
   let allResourceGroups;
 
-  if (cacheValid) {
+  if (cached && cached.timestamp && (Date.now() - cached.timestamp) < RESOURCE_GROUPS_CACHE_TTL) {
     // Use cached data
-    allResourceGroups = resourceGroupsCache.data;
-    console.log(`Using cached resource groups (age: ${Math.round((now - resourceGroupsCache.timestamp) / 1000)}s)`);
+    allResourceGroups = cached.data;
+    console.log(`[ResourceGroups] Cache HIT (age: ${Math.round((Date.now() - cached.timestamp) / 1000)}s)`);
   } else {
     // Query Azure Resource Graph
     const query = "ResourceContainers | union Resources | where type =~ 'microsoft.resources/subscriptions/resourcegroups' | project name | order by name asc";
@@ -144,10 +138,12 @@ export async function queryResourceGroupsByEnvironment(environment = null, subsc
       const result = await client.resources(queryRequest);
       allResourceGroups = (result.data || []).map(rg => rg.name);
 
-      // Update cache
-      resourceGroupsCache.data = allResourceGroups;
-      resourceGroupsCache.timestamp = now;
-      console.log(`Cached ${allResourceGroups.length} resource groups (TTL: ${resourceGroupsCache.ttl / 1000}s)`);
+      // Cache to Redis
+      await cache.set(RESOURCE_GROUPS_CACHE_KEY, {
+        data: allResourceGroups,
+        timestamp: Date.now()
+      }, RESOURCE_GROUPS_CACHE_TTL);
+      console.log(`[ResourceGroups] Cache MISS - Cached ${allResourceGroups.length} resource groups`);
     } catch (error) {
       console.error("Resource Groups query failed:", error);
       throw new Error(`Failed to query resource groups: ${error.message}`);

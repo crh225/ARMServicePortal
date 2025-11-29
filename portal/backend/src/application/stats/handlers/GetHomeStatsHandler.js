@@ -6,17 +6,16 @@
 import { IRequestHandler } from "../../contracts/IRequestHandler.js";
 import { Result } from "../../../domain/common/Result.js";
 
-// In-memory cache for home stats (12 hours TTL)
+const CACHE_KEY = "stats:home";
 const CACHE_TTL_MS = 12 * 60 * 60 * 1000; // 12 hours
-let cachedStats = null;
-let cacheTimestamp = null;
 
 export class GetHomeStatsHandler extends IRequestHandler {
-  constructor(blueprintRepository, azureResourceService, jobRepository) {
+  constructor(blueprintRepository, azureResourceService, jobRepository, cache) {
     super();
     this.blueprintRepository = blueprintRepository;
     this.azureResourceService = azureResourceService;
     this.jobRepository = jobRepository;
+    this.cache = cache;
   }
 
   /**
@@ -26,13 +25,14 @@ export class GetHomeStatsHandler extends IRequestHandler {
    */
   async handle(query) {
     try {
-      // Check if cache is still valid
-      const now = Date.now();
-      if (cachedStats && cacheTimestamp && (now - cacheTimestamp) < CACHE_TTL_MS) {
+      // Check Redis cache first
+      const cached = await this.cache.get(CACHE_KEY);
+      if (cached && cached.timestamp && (Date.now() - cached.timestamp) < CACHE_TTL_MS) {
+        console.log(`[HomeStats] Cache HIT (age: ${Math.round((Date.now() - cached.timestamp) / 1000)}s)`);
         return Result.success({
-          ...cachedStats,
+          ...cached.stats,
           cached: true,
-          cachedAt: new Date(cacheTimestamp).toISOString()
+          cachedAt: new Date(cached.timestamp).toISOString()
         });
       }
 
@@ -49,9 +49,14 @@ export class GetHomeStatsHandler extends IRequestHandler {
         jobs: Array.isArray(jobs) ? jobs.length : 0
       };
 
-      // Update cache
-      cachedStats = stats;
-      cacheTimestamp = now;
+      const now = Date.now();
+
+      // Cache to Redis
+      await this.cache.set(CACHE_KEY, {
+        stats,
+        timestamp: now
+      }, CACHE_TTL_MS);
+      console.log("[HomeStats] Cache MISS - fetched fresh data");
 
       return Result.success({
         ...stats,

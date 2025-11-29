@@ -10,7 +10,7 @@ export class GetAllBackupsHandler extends IRequestHandler {
     super();
     this.backupRepository = backupRepository;
     this.cache = cache;
-    this.CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+    this.CACHE_TTL = 60 * 60 * 1000; // 1 hour
   }
 
   /**
