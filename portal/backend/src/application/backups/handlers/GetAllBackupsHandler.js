@@ -20,10 +20,10 @@ export class GetAllBackupsHandler extends IRequestHandler {
    */
   async handle(query) {
     try {
-      const cacheKey = `all-${query.limit}`;
+      const cacheKey = `backups:all-${query.limit}`;
 
       // Check cache
-      const cached = this.cache.get(cacheKey);
+      const cached = await this.cache.get(cacheKey);
       if (cached && Date.now() - cached.timestamp < this.CACHE_TTL) {
         console.log(`Serving backups from cache (age: ${Math.round((Date.now() - cached.timestamp) / 1000)}s)`);
         return Result.success(cached.data);
@@ -42,10 +42,10 @@ export class GetAllBackupsHandler extends IRequestHandler {
       };
 
       // Cache the response
-      this.cache.set(cacheKey, {
+      await this.cache.set(cacheKey, {
         data: response,
         timestamp: Date.now()
-      });
+      }, this.CACHE_TTL);
 
       return Result.success(response);
     } catch (error) {

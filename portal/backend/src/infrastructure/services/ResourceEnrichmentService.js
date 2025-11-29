@@ -96,17 +96,21 @@ export class ResourceEnrichmentService extends IResourceEnrichmentService {
 
       const costPromises = Array.from(subscriptions).map(async subscriptionId => {
         const result = await getSubscriptionCosts(subscriptionId);
-        console.log(`Cost query for subscription ${subscriptionId}: ${result.costMap.size} resources, ${result.rgTotals.size} RGs`);
-        return { subscriptionId, costMap: result.costMap, rgTotals: result.rgTotals };
+        // costMap and rgTotals are now plain objects (for Redis serialization)
+        const costMapKeys = Object.keys(result.costMap || {});
+        const rgTotalsKeys = Object.keys(result.rgTotals || {});
+        console.log(`Cost query for subscription ${subscriptionId}: ${costMapKeys.length} resources, ${rgTotalsKeys.length} RGs`);
+        return { subscriptionId, costMap: result.costMap || {}, rgTotals: result.rgTotals || {} };
       });
 
       const costResults = await Promise.all(costPromises);
 
       costResults.forEach(({ subscriptionId, costMap, rgTotals }) => {
-        costMap.forEach((cost, resourceId) => {
+        // Iterate over plain objects instead of Maps
+        Object.entries(costMap).forEach(([resourceId, cost]) => {
           allCostsMap.set(resourceId, cost);
         });
-        rgTotals.forEach((cost, rgName) => {
+        Object.entries(rgTotals).forEach(([rgName, cost]) => {
           const key = `${subscriptionId}|${rgName}`;
           console.log(`Storing RG cost for key "${key}": $${cost}`);
           allRgTotals.set(key, cost);

@@ -234,7 +234,7 @@ export async function getGitHubRequestByNumber(prNumber) {
   const cacheKey = `pr:details:${prNumber}`;
 
   // Check cache first
-  const cached = cache.get(cacheKey);
+  const cached = await cache.get(cacheKey);
   if (cached) {
     console.log(`[Cache HIT] Using cached PR data for #${prNumber}`);
     return cached;
@@ -287,7 +287,7 @@ export async function getGitHubRequestByNumber(prNumber) {
   const prData = buildDetailedJob(pr, metadata, terraformFilePath, moduleName, outputs, resourceExists);
 
   // Cache the result for 1 hour
-  cache.set(cacheKey, prData, PR_CACHE_TTL);
+  await cache.set(cacheKey, prData, PR_CACHE_TTL);
   console.log(`[Cache STORED] Cached PR #${prNumber} (TTL: 1hr)`);
 
   return prData;

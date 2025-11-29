@@ -79,7 +79,7 @@ export async function getSubscriptionCosts(subscriptionId) {
   const cacheKey = `cost:subscription:${subscriptionId}`;
 
   // Check cache first
-  const cached = cache.get(cacheKey);
+  const cached = await cache.get(cacheKey);
   if (cached) {
     console.log(`[Cache HIT] Using cached costs for subscription ${subscriptionId}`);
     return cached;
@@ -151,15 +151,19 @@ export async function getSubscriptionCosts(subscriptionId) {
       }
     }
 
-    const costData = { costMap, rgTotals };
+    // Convert Maps to serializable objects for Redis
+    const costData = {
+      costMap: Object.fromEntries(costMap),
+      rgTotals: Object.fromEntries(rgTotals)
+    };
 
     // Cache the result for 1 hour
-    cache.set(cacheKey, costData, COST_CACHE_TTL);
+    await cache.set(cacheKey, costData, COST_CACHE_TTL);
     console.log(`[Cache STORED] Cached costs for subscription ${subscriptionId} (TTL: 1hr)`);
 
     return costData;
   } catch (error) {
     console.error(`Failed to fetch costs for subscription ${subscriptionId}:`, error.message);
-    return { costMap: new Map(), rgTotals: new Map() };
+    return { costMap: {}, rgTotals: {} };
   }
 }

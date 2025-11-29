@@ -24,10 +24,10 @@ export class GetBackupsByEnvironmentHandler extends IRequestHandler {
       // Validate and create Environment value object
       const environment = new Environment(query.environmentName);
 
-      const cacheKey = `${environment.value}-${query.limit}`;
+      const cacheKey = `backups:${environment.value}-${query.limit}`;
 
       // Check cache
-      const cached = this.cache.get(cacheKey);
+      const cached = await this.cache.get(cacheKey);
       if (cached && Date.now() - cached.timestamp < this.CACHE_TTL) {
         console.log(`[${environment.value}] backups from cache (age: ${Math.round((Date.now() - cached.timestamp) / 1000)}s)`);
         return Result.success(cached.data);
@@ -46,10 +46,10 @@ export class GetBackupsByEnvironmentHandler extends IRequestHandler {
       };
 
       // Cache the response
-      this.cache.set(cacheKey, {
+      await this.cache.set(cacheKey, {
         data: response,
         timestamp: Date.now()
-      });
+      }, this.CACHE_TTL);
 
       return Result.success(response);
     } catch (error) {
