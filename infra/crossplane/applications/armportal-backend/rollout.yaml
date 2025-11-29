@@ -20,8 +20,6 @@ spec:
       labels:
         app: armportal-backend
         azure.workload.identity/use: "true"
-      annotations:
-        kubectl.kubernetes.io/restartedAt: "2025-11-29T03:00:00Z"
     spec:
       serviceAccountName: armportal-backend-sa
       imagePullSecrets:

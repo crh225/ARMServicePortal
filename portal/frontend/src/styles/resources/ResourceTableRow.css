@@ -37,6 +37,12 @@
   border-color: #a855f7;
 }
 
+.status-badge--infrastructure {
+  color: #0e7490;
+  background: #cffafe;
+  border-color: #22d3ee;
+}
+
 .status-badge--stale {
   color: #854d0e;
   background: #fef3c7;
