@@ -9,8 +9,8 @@ metadata:
     app: armportal-backend
     environment: dev
 spec:
-  revisionHistoryLimit: 5
-  replicas: 2
+  revisionHistoryLimit: 2
+  replicas: 1
   selector:
     matchLabels:
       app: armportal-backend
@@ -59,11 +59,11 @@ spec:
 
         resources:
           requests:
-            cpu: "500m"
-            memory: "1Gi"
+            cpu: "100m"
+            memory: "256Mi"
           limits:
             cpu: "500m"
-            memory: "1Gi"
+            memory: "512Mi"
 
         livenessProbe:
           httpGet:
