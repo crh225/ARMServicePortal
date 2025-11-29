@@ -1,14 +1,14 @@
-# Azure Self-Service Portal (GitOps + Terraform)
+# Azure Self-Service Portal (GitOps + Infrastructure as Code)
 
 ## Overview
-The Azure Self-Service Portal is a lightweight, extensible platform designed to enable end-users to safely provision approved Azure resources through a GitOps workflow. Instead of granting users direct access to Azure or Terraform, the portal automates infrastructure delivery entirely through pull requests, GitHub Actions, and Terraform.
+The Azure Self-Service Portal is a lightweight, extensible platform designed to enable end-users to safely provision approved Azure resources through a GitOps workflow. Instead of granting users direct access to Azure, the portal automates infrastructure delivery through pull requests, GitHub Actions, Terraform, and Crossplane.
 
 This ensures:
 - Security — No direct Azure access for end users
 - Governance — All changes tracked through Git
-- Consistency — Reproducible Terraform modules
+- Consistency — Reproducible infrastructure modules
 - Automation — CI/CD handles validation and deployment
-- Transparency — Users can watch deployments live as Terraform runs
+- Transparency — Users can watch deployments live
 
 ---
 
@@ -16,14 +16,16 @@ This ensures:
 The primary goal of this project is to provide a self-service, auditable, GitOps-driven deployment experience.
 
 The portal allows users to:
-- Browse a catalog of approved blueprints (Terraform modules)
+- Browse a catalog of approved blueprints (Terraform modules or Crossplane Claims)
 - Provide parameters dynamically via the UI
-- Automatically generate a new Git branch containing the requested module
+- Automatically generate a new Git branch containing the requested infrastructure
 - Open a pull request back to the infrastructure repository
-- View real-time deployment status (Plan and Apply)
-- Track created resources and Terraform outputs
+- View real-time deployment status (Terraform Plan/Apply or Crossplane sync)
+- Track created resources and outputs
 
-All provisioning is performed via Terraform inside GitHub Actions — no resources are deployed directly from the UI backend.
+Infrastructure is provisioned via two complementary approaches:
+- **Terraform** — GitHub Actions executes plan/apply for Azure resources
+- **Crossplane** — Kubernetes-native provisioning for claims (e.g., Redis, databases) that sync automatically via GitOps
 
 ---
 
