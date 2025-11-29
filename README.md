@@ -28,12 +28,13 @@ All provisioning is performed via Terraform inside GitHub Actions — no resourc
 ---
 
 ## Architecture
-The system consists of three core components:
+The system consists of four core components:
 
 ### 1. Frontend (React/Vite)
 - Provides UI for selecting blueprints and submitting requests
 - Shows job history and real-time status
 - Fetches data from the backend API
+- Hosted on Azure Static Web Apps with CDN
 
 ### 2. Backend (Node.js)
 - Acts as a broker between the UI and GitHub
@@ -41,8 +42,16 @@ The system consists of three core components:
 - Creates branches, commits, and pull requests via the GitHub App installation
 - Extracts Terraform outputs from GitHub Action comments
 - Normalizes job history for the UI
+- Uses Redis for distributed caching across pods
 
-### 3. Infrastructure (Terraform + GitHub Actions)
+### 3. Kubernetes Platform (AKS)
+- **Argo Rollouts** — Blue-green deployments with automated analysis
+- **Istio Service Mesh** — Traffic management, mTLS, observability
+- **Crossplane** — GitOps-driven infrastructure provisioning
+- **Redis** — Shared cache for session and data caching
+- **Cert-Manager** — Automated TLS certificate management via Let's Encrypt
+
+### 4. Infrastructure (Terraform + GitHub Actions)
 - Terraform modules live in infra/environments/<env>
 - GitHub Actions executes:
   - terraform init
@@ -56,27 +65,46 @@ The system consists of three core components:
 ## Architecture Diagram
 
 ```text
-+------------------------+        +----------------------------+
-|        Frontend        | <----> |         Backend API        |
-|  React / Vite          |        |  Node.js + GitHub App      |
-+------------------------+        +----------------------------+
-             |                                   |
-             | REST API                           | GitHub App API
-             v                                   v
-+---------------------------------------------------------------+
-|                         GitHub Repository                     |
-|  - Terraform modules                                         |
-|  - GitHub Actions (Plan & Apply)                             |
-|  - PR labeling + TF outputs comments                         |
-+---------------------------------------------------------------+
-             |                                   |
-             | Terraform Apply                   |
-             v                                   v
-+------------------------+         +-----------------------------+
-|        Azure           |         | Terraform Remote Backend   |
-|  Container Apps        | <------ | State Storage              |
-|  Container Registry    |         | (e.g., Azure Blob)         |
-+------------------------+         +-----------------------------+
+                                    +---------------------------+
+                                    |     Azure Static Web      |
+                                    |     Apps (Frontend)       |
+                                    |     React / Vite          |
+                                    +-------------+-------------+
+                                                  |
+                                                  | HTTPS
+                                                  v
++-------------------------------------------------------------------------------------------+
+|                              Azure Kubernetes Service (AKS)                               |
+|  +-------------------------------------------------------------------------------------+  |
+|  |                              Istio Service Mesh                                     |  |
+|  |  +---------------------------+    +---------------------------+                     |  |
+|  |  |    Ingress Gateway        |--->|   Backend Service         |                     |  |
+|  |  |    (TLS Termination)      |    |   (Argo Rollouts)         |                     |  |
+|  |  +---------------------------+    +-------------+-------------+                     |  |
+|  |                                                 |                                   |  |
+|  |                    +----------------------------+----------------------------+      |  |
+|  |                    |                            |                            |      |  |
+|  |                    v                            v                            v      |  |
+|  |  +------------------+         +------------------+         +------------------+     |  |
+|  |  |  Active Pods     |         |  Preview Pods    |         |  Redis Cluster   |     |  |
+|  |  |  (Blue/Green)    |         |  (Canary)        |         |  (Cache)         |     |  |
+|  |  +------------------+         +------------------+         +------------------+     |  |
+|  +-------------------------------------------------------------------------------------+  |
+|                                                                                           |
+|  +----------------------------------+    +----------------------------------+             |
+|  |  Crossplane                      |    |  Cert-Manager                   |             |
+|  |  (Infrastructure Provisioning)   |    |  (TLS Certificates)             |             |
+|  +----------------------------------+    +----------------------------------+             |
++-------------------------------------------------------------------------------------------+
+              |                                              |
+              | GitHub App API                               | Azure Resource Graph
+              v                                              v
++-------------------------------+              +-------------------------------+
+|      GitHub Repository        |              |         Azure                 |
+|  - Terraform modules          |              |  - Container Registry         |
+|  - GitHub Actions (CI/CD)     |              |  - Key Vault (Secrets)        |
+|  - PR labeling + outputs      |              |  - Blob Storage (TF State)    |
++-------------------------------+              +-------------------------------+
 ```
 
 ---
@@ -180,17 +208,19 @@ Set:
 - Azure authentication variables
 
 ### 3. Backend Deployment
-Terraform provisions:
-- Container registry
-- Log analytics
-- Container app environment
-- Backend API
+The backend runs on AKS with the following components:
+- **Argo Rollouts** — Blue-green deployment with pre/post analysis
+- **Istio** — Service mesh for traffic routing and mTLS
+- **Redis** — Distributed caching (deployed via Crossplane)
+- **Secrets** — Synced from Azure Key Vault via CSI driver
+
+Deployments are triggered via GitHub Actions on push to main.
 
 ### 4. Frontend Deployment
 ```bash
 npm run build
 ```
-Deploy to Azure Static Web Apps or Storage Static Website.
+Deployed to Azure Static Web Apps via GitHub Actions. The build uses `VITE_API_URL` to configure the backend endpoint.
 
 ---
 
@@ -199,11 +229,17 @@ Deploy to Azure Static Web Apps or Storage Static Website.
 ### Project Structure
 ```
 /portal
-  /frontend
-  /backend
+  /frontend          # React/Vite SPA
+  /backend           # Node.js API (DDD architecture)
 /infra
-  /modules
-  /environments/dev|stage|prod
+  /modules           # Terraform modules (blueprints)
+  /environments      # Per-environment Terraform configs
+  /crossplane        # Kubernetes infrastructure manifests
+    /cluster-setup   # Argo, Istio, Cert-Manager configs
+    /apps            # Application deployments (Rollouts)
+    /redis           # Redis cluster via Crossplane
+/.github
+  /workflows         # CI/CD pipelines
 ```
 
 ### Standards
