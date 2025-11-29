@@ -230,7 +230,7 @@ To restore this backup if needed:
     "value": "https://portal.chrishouse.io"
   },
   "backend_url": {
-    "value": "https://armportal-api-dev.kindisland-0c7a7c9a.eastus2.azurecontainerapps.io"
+    "value": "https://portal-api.chrishouse.io"
   }
 }
 ```
