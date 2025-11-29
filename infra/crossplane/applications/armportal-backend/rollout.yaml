@@ -38,6 +38,8 @@ spec:
             name: backend-config
 
         env:
+        - name: REDIS_URL
+          value: "redis://redis-xp1-dev-redis.redis-xp1-dev.svc.cluster.local:6379"
         - name: GH_APP_PRIVATE_KEY_BASE64
           valueFrom:
             secretKeyRef:
