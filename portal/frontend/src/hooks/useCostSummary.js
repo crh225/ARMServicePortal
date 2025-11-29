@@ -2,6 +2,22 @@ import { useMemo } from "react";
 import { getResourceTypeDisplay } from "../components/resources/helpers.jsx";
 
 /**
+ * Get display cost - prefers actual cost, falls back to estimated
+ * This is the same logic used in ResourceGraph for consistency
+ */
+function getDisplayCost(resource) {
+  // Prefer actual cost if available
+  if (resource.cost !== null && resource.cost !== undefined && resource.cost > 0) {
+    return resource.cost;
+  }
+  // Fall back to estimated cost
+  if (resource.estimatedMonthlyCost !== null && resource.estimatedMonthlyCost !== undefined && resource.estimatedMonthlyCost > 0) {
+    return resource.estimatedMonthlyCost;
+  }
+  return 0;
+}
+
+/**
  * Custom hook to calculate cost summary with breakdowns
  * @param {Array} resources - Filtered resources to analyze
  * @returns {Object} Cost summary with breakdowns and statistics
@@ -10,8 +26,10 @@ export function useCostSummary(resources) {
   return useMemo(() => {
     let totalCost = 0;
     let totalEstimatedCost = 0;
+    let totalDisplayCost = 0; // Combined: actual if available, else estimated
     let resourcesWithCost = 0;
     let resourcesWithEstimatedCost = 0;
+    let resourcesWithDisplayCost = 0;
     let resourcesNoCost = 0;
     const costByEnvironment = {};
     const costByBlueprint = {};
@@ -21,13 +39,48 @@ export function useCostSummary(resources) {
     const estimatedCostByBlueprint = {};
     const estimatedCostByOwnership = {};
     const estimatedCostByProduct = {};
+    const displayCostByEnvironment = {};
+    const displayCostByBlueprint = {};
+    const displayCostByOwnership = {};
+    const displayCostByProduct = {};
     let highestCostResource = null;
     let highestCost = 0;
     let highestEstimatedCostResource = null;
     let highestEstimatedCost = 0;
+    let highestDisplayCostResource = null;
+    let highestDisplayCost = 0;
 
     resources.forEach(resource => {
-      // Actual cost
+      // Calculate display cost (actual if available, else estimated)
+      const displayCost = getDisplayCost(resource);
+      if (displayCost > 0) {
+        totalDisplayCost += displayCost;
+        resourcesWithDisplayCost++;
+
+        // Track highest display cost resource
+        if (displayCost > highestDisplayCost) {
+          highestDisplayCost = displayCost;
+          highestDisplayCostResource = resource;
+        }
+
+        // Breakdown by environment
+        const env = resource.environment || "unknown";
+        displayCostByEnvironment[env] = (displayCostByEnvironment[env] || 0) + displayCost;
+
+        // Breakdown by blueprint
+        const bp = resource.blueprintId || "unknown";
+        displayCostByBlueprint[bp] = (displayCostByBlueprint[bp] || 0) + displayCost;
+
+        // Breakdown by ownership status
+        const status = resource.ownershipStatus || "unknown";
+        displayCostByOwnership[status] = (displayCostByOwnership[status] || 0) + displayCost;
+
+        // Breakdown by product (resource type)
+        const product = getResourceTypeDisplay(resource.type);
+        displayCostByProduct[product] = (displayCostByProduct[product] || 0) + displayCost;
+      }
+
+      // Actual cost (for backwards compatibility)
       if (resource.cost !== null && resource.cost !== undefined) {
         totalCost += resource.cost;
         resourcesWithCost++;
@@ -55,7 +108,7 @@ export function useCostSummary(resources) {
         costByProduct[product] = (costByProduct[product] || 0) + resource.cost;
       }
 
-      // Estimated monthly cost
+      // Estimated monthly cost (for backwards compatibility)
       if (resource.estimatedMonthlyCost !== null && resource.estimatedMonthlyCost !== undefined) {
         totalEstimatedCost += resource.estimatedMonthlyCost;
         resourcesWithEstimatedCost++;
@@ -93,6 +146,7 @@ export function useCostSummary(resources) {
     // Calculate average costs
     const avgCost = resourcesWithCost > 0 ? totalCost / resourcesWithCost : 0;
     const avgEstimatedCost = resourcesWithEstimatedCost > 0 ? totalEstimatedCost / resourcesWithEstimatedCost : 0;
+    const avgDisplayCost = resourcesWithDisplayCost > 0 ? totalDisplayCost / resourcesWithDisplayCost : 0;
 
     // Sort breakdowns
     const topEnvironments = Object.entries(costByEnvironment)
@@ -119,7 +173,21 @@ export function useCostSummary(resources) {
       .sort(([, a], [, b]) => b - a)
       .slice(0, 4);
 
+    // Sort display cost breakdowns (used for consistent display across views)
+    const topDisplayEnvironments = Object.entries(displayCostByEnvironment)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 3);
+
+    const topDisplayBlueprints = Object.entries(displayCostByBlueprint)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 3);
+
+    const topDisplayProducts = Object.entries(displayCostByProduct)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 4);
+
     return {
+      // Legacy fields (backwards compatibility)
       totalCost,
       totalEstimatedCost,
       avgCost,
@@ -138,7 +206,17 @@ export function useCostSummary(resources) {
       topEstimatedBlueprints,
       topEstimatedProducts,
       costByOwnership,
-      estimatedCostByOwnership
+      estimatedCostByOwnership,
+      // New unified display cost fields (prefers actual, falls back to estimated)
+      totalDisplayCost,
+      avgDisplayCost,
+      resourcesWithDisplayCost,
+      hasAnyDisplayCost: resourcesWithDisplayCost > 0,
+      highestDisplayCostResource,
+      topDisplayEnvironments,
+      topDisplayBlueprints,
+      topDisplayProducts,
+      displayCostByOwnership
     };
   }, [resources]);
 }

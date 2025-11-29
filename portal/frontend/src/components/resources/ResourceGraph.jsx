@@ -202,7 +202,12 @@ function ResourceNode({ data }) {
         )}
 
         <div className="resource-node-meta">
-          {data.cost > 0 && (
+          {data.aggregatedCost && (
+            <span className="resource-node-cost aggregated" title="Total cost of all resources">
+              {data.aggregatedCost}/mo
+            </span>
+          )}
+          {!data.aggregatedCost && data.cost > 0 && (
             <span className="resource-node-cost">${data.cost.toFixed(2)}/mo</span>
           )}
           {data.tags && Object.keys(data.tags).length > 0 && (
@@ -478,6 +483,67 @@ const Icons = {
       <path d="M3 9h12M11 5l4 4-4 4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   ),
+  // Fullscreen icon
+  fullscreen: (
+    <svg viewBox="0 0 18 18" fill="currentColor">
+      <path d="M2 6V2h4M12 2h4v4M16 12v4h-4M6 16H2v-4" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  ),
+  // Exit fullscreen icon
+  exitFullscreen: (
+    <svg viewBox="0 0 18 18" fill="currentColor">
+      <path d="M6 2v4H2M12 6h4V2M12 16v-4h4M2 12h4v4" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  ),
+  // Tree layout icon
+  tree: (
+    <svg viewBox="0 0 18 18" fill="currentColor">
+      <rect x="7" y="1" width="4" height="3" rx=".5"/>
+      <rect x="2" y="7" width="4" height="3" rx=".5"/>
+      <rect x="7" y="7" width="4" height="3" rx=".5"/>
+      <rect x="12" y="7" width="4" height="3" rx=".5"/>
+      <path d="M9 4v1M9 5v2M4 7V6h10v1" fill="none" stroke="currentColor" strokeWidth="1"/>
+    </svg>
+  ),
+  // Radial layout icon
+  radial: (
+    <svg viewBox="0 0 18 18" fill="currentColor">
+      <circle cx="9" cy="9" r="2"/>
+      <circle cx="9" cy="3" r="1.5"/>
+      <circle cx="14" cy="6" r="1.5"/>
+      <circle cx="14" cy="12" r="1.5"/>
+      <circle cx="9" cy="15" r="1.5"/>
+      <circle cx="4" cy="12" r="1.5"/>
+      <circle cx="4" cy="6" r="1.5"/>
+      <path d="M9 7V4.5M10.5 8l2.5-1.5M10.5 10l2.5 1.5M9 11v2.5M7.5 10l-2.5 1.5M7.5 8l-2.5-1.5" fill="none" stroke="currentColor" strokeWidth=".75"/>
+    </svg>
+  ),
+  // Force layout icon
+  force: (
+    <svg viewBox="0 0 18 18" fill="currentColor">
+      <circle cx="9" cy="9" r="2"/>
+      <circle cx="4" cy="4" r="1.5"/>
+      <circle cx="14" cy="5" r="1.5"/>
+      <circle cx="3" cy="12" r="1.5"/>
+      <circle cx="15" cy="13" r="1.5"/>
+      <path d="M7.5 7.5L5 5M10.5 8l3-2.5M7 10l-3 1.5M11 10l3.5 2.5" fill="none" stroke="currentColor" strokeWidth=".75"/>
+    </svg>
+  ),
+  // List layout icon
+  list: (
+    <svg viewBox="0 0 18 18" fill="currentColor">
+      <rect x="2" y="2" width="3" height="3" rx=".5"/>
+      <rect x="2" y="7.5" width="3" height="3" rx=".5"/>
+      <rect x="2" y="13" width="3" height="3" rx=".5"/>
+      <path d="M7 3.5h9M7 9h9M7 14.5h9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  ),
+  // Dollar/cost icon
+  dollar: (
+    <svg viewBox="0 0 18 18" fill="currentColor">
+      <path d="M9 2v14M6 5.5c0-1.1 1.3-2 3-2s3 .9 3 2-1.3 2-3 2-3 .9-3 2 1.3 2 3 2 3-.9 3-2" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  ),
 };
 
 /**
@@ -650,9 +716,126 @@ const VIEW_LEVELS = {
 };
 
 /**
+ * Layout modes for the graph
+ */
+const LAYOUT_MODES = {
+  TREE: "tree",
+  RADIAL: "radial",
+  FORCE: "force",
+  LIST: "list",
+};
+
+/**
+ * Format cost for display
+ */
+function formatCost(cost) {
+  if (!cost || cost <= 0) {
+    return null; // Don't show cost badge if no cost data
+  }
+  if (cost >= 1000) {
+    return `$${(cost / 1000).toFixed(1)}k`;
+  }
+  return `$${cost.toFixed(2)}`;
+}
+
+/**
+ * Get display cost - prefers actual cost, falls back to estimated
+ * Matches the logic used in CostSummaryCard
+ */
+function getDisplayCost(resource) {
+  // Prefer actual cost if available
+  if (resource.cost !== null && resource.cost !== undefined && resource.cost > 0) {
+    return resource.cost;
+  }
+  // Fall back to estimated cost
+  if (resource.estimatedMonthlyCost !== null && resource.estimatedMonthlyCost !== undefined && resource.estimatedMonthlyCost > 0) {
+    return resource.estimatedMonthlyCost;
+  }
+  return 0;
+}
+
+/**
+ * Calculate positions based on layout mode
+ */
+function calculatePositions(items, layoutMode, options = {}) {
+  const {
+    nodeWidth = 180,
+    nodeHeight = 80,
+    horizontalGap = 40,
+    centerY = 160,
+    radiusBase = 200,
+  } = options;
+
+  const positions = [];
+
+  switch (layoutMode) {
+    case LAYOUT_MODES.RADIAL: {
+      // Radial layout - items in a circle
+      const radius = radiusBase + items.length * 15;
+      const angleStep = (2 * Math.PI) / items.length;
+      const startAngle = -Math.PI / 2; // Start from top
+
+      items.forEach((_, idx) => {
+        const angle = startAngle + idx * angleStep;
+        positions.push({
+          x: Math.cos(angle) * radius,
+          y: Math.sin(angle) * radius + radius + 50,
+        });
+      });
+      break;
+    }
+
+    case LAYOUT_MODES.FORCE: {
+      // Force-directed simulation (simplified)
+      // Use golden ratio spiral for organic distribution
+      const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+      const spacing = 120;
+
+      items.forEach((_, idx) => {
+        const radius = spacing * Math.sqrt(idx + 1);
+        const angle = idx * goldenAngle;
+        positions.push({
+          x: Math.cos(angle) * radius,
+          y: Math.sin(angle) * radius + 200,
+        });
+      });
+      break;
+    }
+
+    case LAYOUT_MODES.LIST: {
+      // Vertical list layout
+      items.forEach((_, idx) => {
+        positions.push({
+          x: 0,
+          y: centerY + idx * (nodeHeight + 20),
+        });
+      });
+      break;
+    }
+
+    case LAYOUT_MODES.TREE:
+    default: {
+      // Tree layout (horizontal rows)
+      const totalWidth = items.length * nodeWidth + (items.length - 1) * horizontalGap;
+      const startX = -totalWidth / 2 + nodeWidth / 2;
+
+      items.forEach((_, idx) => {
+        positions.push({
+          x: startX + idx * (nodeWidth + horizontalGap),
+          y: centerY,
+        });
+      });
+      break;
+    }
+  }
+
+  return positions;
+}
+
+/**
  * Build subscription-level view - shows resource groups
  */
-function buildSubscriptionView(allResources, subscriptionId, subscriptionName, currentResourceRG, showAll = false) {
+function buildSubscriptionView(allResources, subscriptionId, subscriptionName, currentResourceRG, showAll = false, layoutMode = LAYOUT_MODES.TREE) {
   const nodes = [];
   const edges = [];
 
@@ -665,7 +848,7 @@ function buildSubscriptionView(allResources, subscriptionId, subscriptionName, c
       }
       const rgData = rgMap.get(rg);
       rgData.count++;
-      rgData.totalCost += r.cost || 0;
+      rgData.totalCost += getDisplayCost(r);
     }
   });
 
@@ -677,17 +860,28 @@ function buildSubscriptionView(allResources, subscriptionId, subscriptionName, c
   const nodeWidth = 180;
   const horizontalGap = 40;
   const verticalGap = 100;
-  const totalWidth = displayRGs.length * nodeWidth + (displayRGs.length - 1) * horizontalGap;
-  const startX = -totalWidth / 2 + nodeWidth / 2;
+
+  // Calculate positions based on layout mode
+  const positions = calculatePositions(displayRGs, layoutMode, {
+    nodeWidth,
+    horizontalGap,
+    centerY: verticalGap + 60,
+    radiusBase: 180,
+  });
 
   const displayName = subscriptionName || subscriptionId;
   const totalResources = allResources.filter(r => r.subscriptionId?.toLowerCase() === subscriptionId?.toLowerCase());
-  const totalCost = totalResources.reduce((sum, r) => sum + (r.cost || 0), 0);
+  const totalCost = totalResources.reduce((sum, r) => sum + getDisplayCost(r), 0);
+
+  // Subscription node position depends on layout
+  const subPosition = layoutMode === LAYOUT_MODES.RADIAL || layoutMode === LAYOUT_MODES.FORCE
+    ? { x: 0, y: 0 }
+    : { x: 0, y: 0 };
 
   nodes.push({
     id: "subscription",
     type: "resourceNode",
-    position: { x: 0, y: 0 },
+    position: subPosition,
     data: {
       label: displayName?.length > 20 ? displayName.substring(0, 20) + "..." : displayName,
       fullName: subscriptionName ? `${subscriptionName} (${subscriptionId})` : subscriptionId,
@@ -695,18 +889,19 @@ function buildSubscriptionView(allResources, subscriptionId, subscriptionName, c
       nodeType: "subscription",
       count: totalResources.length,
       cost: totalCost,
+      aggregatedCost: formatCost(totalCost),
     },
   });
 
   displayRGs.forEach(([rgKey, rgData], idx) => {
     const isCurrent = rgKey === currentResourceRG?.toLowerCase();
     const rgNodeId = `rg-${idx}`;
-    const xPos = startX + idx * (nodeWidth + horizontalGap);
+    const position = positions[idx] || { x: 0, y: verticalGap + 60 };
 
     nodes.push({
       id: rgNodeId,
       type: "resourceNode",
-      position: { x: xPos, y: verticalGap + 60 },
+      position,
       data: {
         label: rgData.name.length > 18 ? rgData.name.substring(0, 18) + "..." : rgData.name,
         fullName: rgData.name,
@@ -714,18 +909,20 @@ function buildSubscriptionView(allResources, subscriptionId, subscriptionName, c
         nodeType: "resourceGroup",
         count: rgData.count,
         cost: rgData.totalCost,
+        aggregatedCost: formatCost(rgData.totalCost),
         clickable: true,
         rgName: rgData.name,
         isCurrent,
       },
     });
 
-    // Faint edges, highlighted for current
+    // Edges - use different type for radial/force layouts
+    const edgeType = layoutMode === LAYOUT_MODES.LIST ? "step" : "smoothstep";
     edges.push({
       id: `edge-sub-${rgNodeId}`,
       source: "subscription",
       target: rgNodeId,
-      type: "smoothstep",
+      type: edgeType,
       animated: isCurrent,
       style: { stroke: isCurrent ? "#f59e0b" : "#94a3b8", strokeWidth: isCurrent ? 3 : 1.5 },
       markerEnd: { type: MarkerType.ArrowClosed, color: isCurrent ? "#f59e0b" : "#94a3b8" },
@@ -733,10 +930,16 @@ function buildSubscriptionView(allResources, subscriptionId, subscriptionName, c
   });
 
   if (hasMore) {
+    const morePosition = layoutMode === LAYOUT_MODES.LIST
+      ? { x: 0, y: (verticalGap + 60) + displayRGs.length * 100 }
+      : positions.length > 0
+        ? { x: positions[positions.length - 1].x + nodeWidth + horizontalGap, y: positions[positions.length - 1].y }
+        : { x: 0, y: verticalGap + 60 };
+
     nodes.push({
       id: "more-rgs",
       type: "resourceNode",
-      position: { x: startX + displayRGs.length * (nodeWidth + horizontalGap), y: verticalGap + 60 },
+      position: morePosition,
       data: {
         label: `+${resourceGroups.length - 8} more`,
         icon: Icons.plus,
@@ -753,7 +956,7 @@ function buildSubscriptionView(allResources, subscriptionId, subscriptionName, c
 /**
  * Build resource group level view with dependencies
  */
-function buildResourceGroupView(allResources, resourceGroup, subscriptionName, currentResource, showAll = false) {
+function buildResourceGroupView(allResources, resourceGroup, subscriptionName, currentResource, showAll = false, layoutMode = LAYOUT_MODES.TREE) {
   const nodes = [];
   const edges = [];
 
@@ -782,8 +985,15 @@ function buildResourceGroupView(allResources, resourceGroup, subscriptionName, c
   const nodeWidth = 200;
   const horizontalGap = 50;
   const verticalGap = 100;
-  const totalWidth = displayResources.length * nodeWidth + (displayResources.length - 1) * horizontalGap;
-  const startX = -totalWidth / 2 + nodeWidth / 2;
+
+  // Calculate positions based on layout mode
+  const resourceY = (verticalGap + 60) * 2;
+  const positions = calculatePositions(displayResources, layoutMode, {
+    nodeWidth,
+    horizontalGap,
+    centerY: resourceY,
+    radiusBase: 220,
+  });
 
   // Subscription node
   nodes.push({
@@ -799,22 +1009,27 @@ function buildResourceGroupView(allResources, resourceGroup, subscriptionName, c
     },
   });
 
-  // Resource group node
-  const rgCost = rgResources.reduce((sum, r) => sum + (r.cost || 0), 0);
+  // Resource group node with aggregated cost
+  const rgCost = rgResources.reduce((sum, r) => sum + getDisplayCost(r), 0);
+  const rgPosition = layoutMode === LAYOUT_MODES.RADIAL || layoutMode === LAYOUT_MODES.FORCE
+    ? { x: 0, y: 100 }
+    : { x: 0, y: verticalGap + 60 };
+
   nodes.push({
     id: "resource-group",
     type: "resourceNode",
-    position: { x: 0, y: verticalGap + 60 },
+    position: rgPosition,
     data: {
       label: resourceGroup,
       icon: getTypeIcon("resourceGroup"),
       nodeType: "resourceGroup",
       count: rgResources.length,
       cost: rgCost,
+      aggregatedCost: formatCost(rgCost),
     },
   });
 
-  // Faint edge from subscription to resource group
+  // Edge from subscription to resource group
   edges.push({
     id: "edge-sub-rg",
     source: "subscription",
@@ -825,14 +1040,14 @@ function buildResourceGroupView(allResources, resourceGroup, subscriptionName, c
   });
 
   // Resource nodes with enhanced data
-  const resourceY = (verticalGap + 60) * 2;
   const resourceIdToNodeId = new Map();
+  const edgeType = layoutMode === LAYOUT_MODES.LIST ? "step" : "smoothstep";
 
   displayResources.forEach((resource, idx) => {
     const isCurrent = resource.id?.toLowerCase() === currentResource?.id?.toLowerCase();
     const resourceNodeId = `resource-${idx}`;
     const shortType = resource.type?.split("/").pop() || "resource";
-    const xPos = startX + idx * (nodeWidth + horizontalGap);
+    const position = positions[idx] || { x: 0, y: resourceY };
 
     resourceIdToNodeId.set(resource.id?.toLowerCase(), resourceNodeId);
 
@@ -842,7 +1057,7 @@ function buildResourceGroupView(allResources, resourceGroup, subscriptionName, c
     nodes.push({
       id: resourceNodeId,
       type: "resourceNode",
-      position: { x: xPos, y: resourceY },
+      position,
       data: {
         label: resource.name?.length > 16 ? resource.name.substring(0, 16) + "..." : resource.name,
         fullName: resource.name,
@@ -851,7 +1066,7 @@ function buildResourceGroupView(allResources, resourceGroup, subscriptionName, c
         resourceType: shortType,
         fullType: resource.type,
         location: formatLocation(resource.location),
-        cost: resource.cost,
+        cost: getDisplayCost(resource),
         health,
         tags: resource.tags,
         dependencies,
@@ -864,12 +1079,12 @@ function buildResourceGroupView(allResources, resourceGroup, subscriptionName, c
       },
     });
 
-    // Faint edges connecting resources to RG, highlighted for current
+    // Edges connecting resources to RG, highlighted for current
     edges.push({
       id: `edge-rg-${resourceNodeId}`,
       source: "resource-group",
       target: resourceNodeId,
-      type: "smoothstep",
+      type: edgeType,
       animated: isCurrent,
       style: { stroke: isCurrent ? "#f59e0b" : "#94a3b8", strokeWidth: isCurrent ? 3 : 1.5 },
       markerEnd: { type: MarkerType.ArrowClosed, color: isCurrent ? "#f59e0b" : "#94a3b8" },
@@ -888,7 +1103,7 @@ function buildResourceGroupView(allResources, resourceGroup, subscriptionName, c
           id: `dep-${sourceNodeId}-${targetNodeId}`,
           source: sourceNodeId,
           target: targetNodeId,
-          type: "smoothstep",
+          type: edgeType,
           animated: true,
           style: { stroke: "#a855f7", strokeWidth: 1, strokeDasharray: "5,5" },
           markerEnd: { type: MarkerType.ArrowClosed, color: "#a855f7", width: 15, height: 15 },
@@ -901,10 +1116,16 @@ function buildResourceGroupView(allResources, resourceGroup, subscriptionName, c
   });
 
   if (hasMore) {
+    const morePosition = layoutMode === LAYOUT_MODES.LIST
+      ? { x: 0, y: resourceY + displayResources.length * 100 }
+      : positions.length > 0
+        ? { x: positions[positions.length - 1].x + nodeWidth + horizontalGap, y: positions[positions.length - 1].y }
+        : { x: 0, y: resourceY };
+
     nodes.push({
       id: "more-resources",
       type: "resourceNode",
-      position: { x: startX + displayResources.length * (nodeWidth + horizontalGap), y: resourceY },
+      position: morePosition,
       data: {
         label: `+${rgResources.length - displayResources.length} more`,
         icon: Icons.plus,
@@ -974,7 +1195,7 @@ function buildFocusedView(allResources, focusedResource, subscriptionName) {
       resourceType: shortType,
       fullType: focusedResource.type,
       location: formatLocation(focusedResource.location),
-      cost: focusedResource.cost,
+      cost: getDisplayCost(focusedResource),
       health,
       tags: focusedResource.tags,
       dependencies,
@@ -1055,8 +1276,55 @@ function ResourceGraphInner({ resource }) {
   const [showAllItems, setShowAllItems] = useState(false);
   const [showDependencies, setShowDependencies] = useState(true);
   const [focusedResource, setFocusedResource] = useState(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [layoutMode, setLayoutMode] = useState(LAYOUT_MODES.TREE);
+  const containerRef = useRef(null);
   const reactFlowInstance = useRef(null);
   const prevViewLevel = useRef(viewLevel);
+
+  // Toggle fullscreen mode
+  const toggleFullscreen = useCallback(() => {
+    if (!containerRef.current) return;
+
+    if (!isFullscreen) {
+      if (containerRef.current.requestFullscreen) {
+        containerRef.current.requestFullscreen();
+      } else if (containerRef.current.webkitRequestFullscreen) {
+        containerRef.current.webkitRequestFullscreen();
+      } else if (containerRef.current.msRequestFullscreen) {
+        containerRef.current.msRequestFullscreen();
+      }
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      } else if (document.msExitFullscreen) {
+        document.msExitFullscreen();
+      }
+    }
+  }, [isFullscreen]);
+
+  // Listen for fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+      // Fit view after fullscreen transition
+      setTimeout(() => {
+        reactFlowInstance.current?.fitView({ padding: 0.2, duration: 300 });
+      }, 100);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
+    document.addEventListener("msfullscreenchange", handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      document.removeEventListener("webkitfullscreenchange", handleFullscreenChange);
+      document.removeEventListener("msfullscreenchange", handleFullscreenChange);
+    };
+  }, []);
 
   useEffect(() => {
     async function loadResources() {
@@ -1066,8 +1334,9 @@ function ResourceGraphInner({ resource }) {
       setError(null);
 
       try {
+        // Fetch resources with costs included for consistent display
         const [resourcesResponse, subscriptions] = await Promise.all([
-          fetchAllResources({}),
+          fetchAllResources({ includeCosts: true }),
           api.fetchSubscriptions().catch(() => [])
         ]);
 
@@ -1109,7 +1378,8 @@ function ResourceGraphInner({ resource }) {
         resource.subscriptionId,
         subscriptionName,
         resource.resourceGroup,
-        showAllItems
+        showAllItems,
+        layoutMode
       );
     } else {
       result = buildResourceGroupView(
@@ -1117,7 +1387,8 @@ function ResourceGraphInner({ resource }) {
         selectedRG || resource.resourceGroup,
         subscriptionName,
         resource,
-        showAllItems
+        showAllItems,
+        layoutMode
       );
     }
 
@@ -1129,14 +1400,14 @@ function ResourceGraphInner({ resource }) {
     setNodes(result.nodes);
     setEdges(result.edges);
 
-    // Fit view when view level changes
+    // Fit view when view level or layout changes
     if (prevViewLevel.current !== viewLevel && reactFlowInstance.current) {
       setTimeout(() => {
         reactFlowInstance.current?.fitView({ padding: 0.2, duration: 300 });
       }, 50);
     }
     prevViewLevel.current = viewLevel;
-  }, [viewLevel, selectedRG, allResources, resource, subscriptionName, showAllItems, showDependencies, focusedResource, setNodes, setEdges]);
+  }, [viewLevel, selectedRG, allResources, resource, subscriptionName, showAllItems, showDependencies, focusedResource, layoutMode, setNodes, setEdges]);
 
   const onInit = useCallback((instance) => {
     reactFlowInstance.current = instance;
@@ -1210,7 +1481,9 @@ function ResourceGraphInner({ resource }) {
     );
   }
 
-  if (nodes.length === 0) {
+  // Only show empty state if we have resources loaded but no nodes
+  // Don't show empty state during view transitions
+  if (nodes.length === 0 && allResources.length > 0) {
     return (
       <div className="resource-graph-container">
         <div className="graph-empty">No resource hierarchy available</div>
@@ -1218,8 +1491,20 @@ function ResourceGraphInner({ resource }) {
     );
   }
 
+  // Show loading while resources are being fetched or nodes are being built
+  if (nodes.length === 0 && allResources.length === 0 && !loading) {
+    return (
+      <div className="resource-graph-container">
+        <div className="graph-loading">
+          <div className="graph-loading-spinner" />
+          Loading resource hierarchy...
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="resource-graph-container">
+    <div className={`resource-graph-container ${isFullscreen ? "fullscreen" : ""}`} ref={containerRef}>
       <div className="graph-header">
         <div className="graph-breadcrumb">
           <button
@@ -1250,6 +1535,40 @@ function ResourceGraphInner({ resource }) {
           )}
         </div>
         <div className="graph-controls">
+          {/* Layout mode selector */}
+          <div className="layout-selector">
+            <button
+              className={`layout-btn ${layoutMode === LAYOUT_MODES.TREE ? "active" : ""}`}
+              onClick={() => setLayoutMode(LAYOUT_MODES.TREE)}
+              title="Tree Layout"
+            >
+              <span className="layout-icon">{Icons.tree}</span>
+            </button>
+            <button
+              className={`layout-btn ${layoutMode === LAYOUT_MODES.RADIAL ? "active" : ""}`}
+              onClick={() => setLayoutMode(LAYOUT_MODES.RADIAL)}
+              title="Radial Layout"
+            >
+              <span className="layout-icon">{Icons.radial}</span>
+            </button>
+            <button
+              className={`layout-btn ${layoutMode === LAYOUT_MODES.FORCE ? "active" : ""}`}
+              onClick={() => setLayoutMode(LAYOUT_MODES.FORCE)}
+              title="Force-Directed Layout"
+            >
+              <span className="layout-icon">{Icons.force}</span>
+            </button>
+            <button
+              className={`layout-btn ${layoutMode === LAYOUT_MODES.LIST ? "active" : ""}`}
+              onClick={() => setLayoutMode(LAYOUT_MODES.LIST)}
+              title="List Layout"
+            >
+              <span className="layout-icon">{Icons.list}</span>
+            </button>
+          </div>
+
+          <div className="graph-divider" />
+
           <label className="graph-toggle">
             <input
               type="checkbox"
@@ -1258,6 +1577,18 @@ function ResourceGraphInner({ resource }) {
             />
             <span>Dependencies</span>
           </label>
+
+          {/* Fullscreen toggle */}
+          <button
+            className="fullscreen-btn"
+            onClick={toggleFullscreen}
+            title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+          >
+            <span className="fullscreen-icon">
+              {isFullscreen ? Icons.exitFullscreen : Icons.fullscreen}
+            </span>
+          </button>
+
           {currentPortalUrl && (
             <a
               href={currentPortalUrl}
@@ -1284,7 +1615,7 @@ function ResourceGraphInner({ resource }) {
           fitView
           minZoom={0.2}
           maxZoom={1.5}
-          nodesDraggable={false}
+          nodesDraggable={true}
           nodesConnectable={false}
           elementsSelectable={true}
           panOnDrag={true}

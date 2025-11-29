@@ -191,11 +191,17 @@ function ResourceDetailsTab({ resource }) {
         <h3 className="section-title">Status & Metrics</h3>
         <div className="info-grid info-grid--three-cols">
           <div className="info-item">
-            <span className="info-label">Cost (30 Days)</span>
+            <span className="info-label">
+              {resource.cost !== null && resource.cost !== undefined && resource.cost > 0
+                ? "Cost (30 Days)"
+                : "Estimated Monthly Cost"}
+            </span>
             <span className="info-value">
-              {resource.cost !== null && resource.cost !== undefined
+              {resource.cost !== null && resource.cost !== undefined && resource.cost > 0
                 ? `$${resource.cost.toFixed(2)}`
-                : "—"}
+                : resource.estimatedMonthlyCost !== null && resource.estimatedMonthlyCost !== undefined && resource.estimatedMonthlyCost > 0
+                  ? `$${resource.estimatedMonthlyCost.toFixed(2)}`
+                  : "—"}
             </span>
           </div>
           <div className="info-item">

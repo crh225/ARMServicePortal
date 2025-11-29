@@ -65,9 +65,15 @@ function CostSummaryCard({ costSummary, costsLoading }) {
     );
   }
 
-  if (!costSummary.hasAnyCost && !costSummary.hasAnyEstimatedCost) {
+  if (!costSummary.hasAnyDisplayCost) {
     return null;
   }
+
+  // Determine if we're showing actual costs or estimated (for label purposes)
+  const showingActualCosts = costSummary.hasAnyCost;
+  const highestCost = costSummary.highestDisplayCostResource
+    ? (costSummary.highestDisplayCostResource.cost || costSummary.highestDisplayCostResource.estimatedMonthlyCost || 0)
+    : 0;
 
   return (
     <div className="cost-summary">
@@ -75,12 +81,12 @@ function CostSummaryCard({ costSummary, costsLoading }) {
         <div className="cost-summary-header">
           <div className="cost-summary-main">
             <div className="cost-summary-label">
-              {costSummary.hasAnyCost ? 'Total Monthly Cost' : 'Estimated Monthly Cost'}
+              {showingActualCosts ? 'Total Monthly Cost' : 'Estimated Monthly Cost'}
             </div>
             <div className="cost-summary-amount">
-              ${costSummary.hasAnyCost ? costSummary.totalCost.toFixed(2) : costSummary.totalEstimatedCost.toFixed(2)}
+              ${costSummary.totalDisplayCost.toFixed(2)}
             </div>
-            {!costSummary.hasAnyCost && costSummary.hasAnyEstimatedCost && (
+            {!showingActualCosts && (
               <div className="cost-summary-sublabel">
                 Estimated (no actual usage yet)
               </div>
@@ -90,43 +96,31 @@ function CostSummaryCard({ costSummary, costsLoading }) {
             <div className="cost-stat">
               <div className="cost-stat-label">Average</div>
               <div className="cost-stat-value">
-                ${costSummary.hasAnyCost ? costSummary.avgCost.toFixed(2) : costSummary.avgEstimatedCost.toFixed(2)}
+                ${costSummary.avgDisplayCost.toFixed(2)}
               </div>
             </div>
             <div className="cost-stat">
               <div className="cost-stat-label">Highest</div>
               <div className="cost-stat-value">
-                ${costSummary.hasAnyCost
-                  ? (costSummary.highestCostResource?.cost.toFixed(2) || '0.00')
-                  : (costSummary.highestEstimatedCostResource?.estimatedMonthlyCost.toFixed(2) || '0.00')}
+                ${highestCost.toFixed(2)}
               </div>
             </div>
           </div>
         </div>
 
         <div className="cost-summary-details">
-          {costSummary.hasAnyCost ? (
-            <>
-              <span className="cost-summary-detail">
-                {costSummary.resourcesWithCost} resource{costSummary.resourcesWithCost !== 1 ? 's' : ''} with cost
-              </span>
-              {costSummary.resourcesNoCost > 0 && (
-                <span className="cost-summary-detail cost-summary-detail--muted">
-                  {costSummary.resourcesNoCost} without cost data
-                </span>
-              )}
-            </>
-          ) : (
-            <>
-              <span className="cost-summary-detail">
-                {costSummary.resourcesWithEstimatedCost} resource{costSummary.resourcesWithEstimatedCost !== 1 ? 's' : ''} with estimated cost
-              </span>
-            </>
+          <span className="cost-summary-detail">
+            {costSummary.resourcesWithDisplayCost} resource{costSummary.resourcesWithDisplayCost !== 1 ? 's' : ''} with cost
+          </span>
+          {costSummary.resourcesNoCost > 0 && (
+            <span className="cost-summary-detail cost-summary-detail--muted">
+              {costSummary.resourcesNoCost} without cost data
+            </span>
           )}
         </div>
 
         <CostProductsChart
-          topProducts={costSummary.hasAnyCost ? costSummary.topProducts : costSummary.topEstimatedProducts}
+          topProducts={costSummary.topDisplayProducts}
         />
         <CostBreakdowns costSummary={costSummary} />
       </div>

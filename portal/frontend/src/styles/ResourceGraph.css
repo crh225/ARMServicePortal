@@ -7,6 +7,31 @@
   border-radius: 8px;
   border: 1px solid #e2e8f0;
   overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+/* Fullscreen Mode */
+.resource-graph-container.fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  border-radius: 0;
+  border: none;
+}
+
+.resource-graph-container.fullscreen .graph-flow-container {
+  flex: 1;
+}
+
+.resource-graph-container:fullscreen {
+  height: 100vh;
+  border-radius: 0;
+  border: none;
 }
 
 /* Header with Breadcrumb */
@@ -57,7 +82,93 @@
 .graph-controls {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+}
+
+/* Layout Selector */
+.layout-selector {
+  display: flex;
+  gap: 2px;
+  background: #f1f5f9;
+  border-radius: 6px;
+  padding: 2px;
+}
+
+.layout-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 4px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  color: #64748b;
+}
+
+.layout-btn:hover {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.layout-btn.active {
+  background: #3b82f6;
+  color: #ffffff;
+  box-shadow: 0 1px 3px rgba(59, 130, 246, 0.3);
+}
+
+.layout-icon {
+  display: flex;
+  width: 16px;
+  height: 16px;
+}
+
+.layout-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Divider */
+.graph-divider {
+  width: 1px;
+  height: 20px;
+  background: #e2e8f0;
+}
+
+/* Fullscreen Button */
+.fullscreen-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 4px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  color: #64748b;
+}
+
+.fullscreen-btn:hover {
+  background: #e2e8f0;
+  color: #334155;
+  border-color: #cbd5e1;
+}
+
+.fullscreen-icon {
+  display: flex;
+  width: 14px;
+  height: 14px;
+}
+
+.fullscreen-icon svg {
+  width: 100%;
+  height: 100%;
 }
 
 .graph-toggle {
@@ -106,6 +217,15 @@
   flex: 1;
   background: #ffffff;
   position: relative;
+}
+
+/* Override ReactFlow's default cursor to use move cursor which has better visibility */
+.graph-flow-container .react-flow__pane {
+  cursor: move;
+}
+
+.graph-flow-container .react-flow__pane:active {
+  cursor: move;
 }
 
 /* Custom Node Styles */
@@ -263,6 +383,13 @@
   padding: 2px 6px;
   background: rgba(255, 255, 255, 0.2);
   border-radius: 4px;
+}
+
+.resource-node-cost.aggregated {
+  background: rgba(16, 185, 129, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  font-size: 11px;
+  padding: 3px 8px;
 }
 
 .resource-node-tags {

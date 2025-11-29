@@ -4,23 +4,29 @@ import "../../styles/resources/CostBreakdowns.css";
 /**
  * CostBreakdowns component
  * Displays cost breakdowns by environment and blueprint
+ * Uses unified display costs (actual if available, otherwise estimated)
  */
 function CostBreakdowns({ costSummary }) {
+  // Use display cost fields for consistency with other views
+  const topEnvironments = costSummary.topDisplayEnvironments || costSummary.topEnvironments || [];
+  const topBlueprints = costSummary.topDisplayBlueprints || costSummary.topBlueprints || [];
+  const totalCost = costSummary.totalDisplayCost || costSummary.totalCost || 0;
+
   return (
     <div className="cost-breakdowns">
       {/* Top Environments */}
-      {costSummary.topEnvironments && costSummary.topEnvironments.length > 0 && (
+      {topEnvironments.length > 0 && (
         <div className="cost-breakdown">
           <div className="cost-breakdown-title">Top Environments</div>
           <div className="cost-breakdown-items">
-            {costSummary.topEnvironments.map(([env, cost]) => (
+            {topEnvironments.map(([env, cost]) => (
               <div key={env} className="cost-breakdown-item">
                 <span className="cost-breakdown-label">{env}</span>
                 <span className="cost-breakdown-value">${cost.toFixed(2)}</span>
                 <div className="cost-breakdown-bar">
                   <div
                     className="cost-breakdown-bar-fill"
-                    style={{ width: `${(cost / costSummary.totalCost) * 100}%` }}
+                    style={{ width: `${totalCost > 0 ? (cost / totalCost) * 100 : 0}%` }}
                   ></div>
                 </div>
               </div>
@@ -30,18 +36,18 @@ function CostBreakdowns({ costSummary }) {
       )}
 
       {/* Top Blueprints */}
-      {costSummary.topBlueprints && costSummary.topBlueprints.length > 0 && (
+      {topBlueprints.length > 0 && (
         <div className="cost-breakdown">
           <div className="cost-breakdown-title">Top Blueprints</div>
           <div className="cost-breakdown-items">
-            {costSummary.topBlueprints.map(([bp, cost]) => (
+            {topBlueprints.map(([bp, cost]) => (
               <div key={bp} className="cost-breakdown-item">
                 <span className="cost-breakdown-label">{bp}</span>
                 <span className="cost-breakdown-value">${cost.toFixed(2)}</span>
                 <div className="cost-breakdown-bar">
                   <div
                     className="cost-breakdown-bar-fill"
-                    style={{ width: `${(cost / costSummary.totalCost) * 100}%` }}
+                    style={{ width: `${totalCost > 0 ? (cost / totalCost) * 100 : 0}%` }}
                   ></div>
                 </div>
               </div>
