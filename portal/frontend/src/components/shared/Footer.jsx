@@ -65,7 +65,7 @@ function Footer() {
           </svg>
         </a>
         {/* Hacker Blog - Retro CRT monitor */}
-        <a href="https://blog.chrishouse.io" target="_blank" rel="noopener noreferrer" title="Hacker Blog" className="footer-icon footer-icon--hacker">
+        <a href="https://blog.chrishouse.io" target="_blank" rel="noopener noreferrer" title="My Blog" className="footer-icon footer-icon--hacker">
           <svg width="20" height="20" viewBox="0 0 24 24" className="footer-icon-img">
             <rect x="2" y="2" width="20" height="15" rx="2" fill="#2d2d2d" stroke="#00ff41" strokeWidth="1"/>
             <rect x="4" y="4" width="16" height="11" fill="#0a0a0a"/>

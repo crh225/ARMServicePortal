@@ -58,21 +58,45 @@ export class WorkflowRun {
     if (this.headBranch === 'main' && this.name) {
       // Extract environment from workflow name (e.g., "Backend Dev" -> "dev")
       const envMatch = this.name.match(/(Dev|Staging|Prod|QA)/i);
-      const env = envMatch ? envMatch[1].toLowerCase() : 'unknown';
+      const env = envMatch ? envMatch[1].toLowerCase() : null;
 
       // Extract blueprint type from workflow name
       if (this.name.toLowerCase().includes('backend')) {
-        return { environment: env, blueprint: 'backend' };
+        return { environment: env || 'prod', blueprint: 'backend' };
       } else if (this.name.toLowerCase().includes('frontend')) {
-        return { environment: env, blueprint: 'frontend' };
+        return { environment: env || 'prod', blueprint: 'frontend' };
       } else if (this.name.toLowerCase().includes('terraform')) {
-        return { environment: env, blueprint: 'terraform' };
+        return { environment: env || 'prod', blueprint: 'terraform' };
+      } else if (this.name.toLowerCase().includes('pr environment')) {
+        return { environment: 'pr', blueprint: 'pr-environment' };
+      } else if (this.name.toLowerCase().includes('ci')) {
+        return { environment: 'ci', blueprint: 'ci-build' };
+      } else if (this.name.toLowerCase().includes('deploy')) {
+        return { environment: env || 'prod', blueprint: 'deploy' };
       }
     }
 
+    // Handle testpr or feature branches
+    if (this.headBranch && this.headBranch !== 'main') {
+      // Use workflow name as blueprint if available
+      const workflowName = this.name ? this.name.replace(/\s+/g, '-').toLowerCase() : 'workflow';
+      return {
+        environment: 'branch',
+        blueprint: workflowName
+      };
+    }
+
+    // Final fallback - use workflow name if available
+    if (this.name) {
+      return {
+        environment: 'main',
+        blueprint: this.name.replace(/\s+/g, '-').toLowerCase()
+      };
+    }
+
     return {
-      environment: 'unknown',
-      blueprint: 'unknown'
+      environment: 'system',
+      blueprint: 'workflow'
     };
   }
 
