@@ -684,7 +684,7 @@ export const BLUEPRINTS = [
   },
   {
     id: "azure-function",
-    version: "1.0.0",
+    version: "0.0.1",
     displayName: "Azure Function App",
     description: "Serverless compute for event-driven applications. Automatically scales based on demand with pay-per-execution pricing. Perfect for APIs, webhooks, scheduled tasks, and event processing.",
     category: "Compute",
