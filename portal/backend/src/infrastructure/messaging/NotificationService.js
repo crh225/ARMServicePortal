@@ -11,7 +11,7 @@ class NotificationService {
     this.isRunning = false;
     this.exchange = "github-webhooks";
     this.queue = "notifications";
-    this.routingPattern = "workflow.*";
+    this.routingPattern = "webhook.#";  // Matches webhook.github and any sub-patterns
   }
 
   /**

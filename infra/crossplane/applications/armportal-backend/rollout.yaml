@@ -40,6 +40,11 @@ spec:
         env:
         - name: REDIS_URL
           value: "redis://redis-xp1-dev-redis.redis-xp1-dev.svc.cluster.local:6379"
+        - name: RABBITMQ_URL
+          valueFrom:
+            secretKeyRef:
+              name: backend-secrets
+              key: RABBITMQ_URL
         - name: GH_APP_PRIVATE_KEY_BASE64
           valueFrom:
             secretKeyRef:
