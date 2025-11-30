@@ -1,5 +1,5 @@
-# Allow PERMISSIVE mTLS for RabbitMQ management UI
-# This allows ingress-nginx (no sidecar) to access the management port
+# Allow PERMISSIVE mTLS for RabbitMQ
+# This allows non-mesh services (webhook-relay, ingress-nginx) to connect
 apiVersion: security.istio.io/v1beta1
 kind: PeerAuthentication
 metadata:
@@ -12,9 +12,9 @@ spec:
   mtls:
     mode: PERMISSIVE  # Accept both mTLS and plaintext
   portLevelMtls:
-    # Keep AMQP port strict (only mesh traffic)
+    # Allow AMQP connections from non-mesh services (webhook-relay)
     5672:
-      mode: STRICT
+      mode: PERMISSIVE
     # Allow management UI from ingress
     15672:
       mode: PERMISSIVE
