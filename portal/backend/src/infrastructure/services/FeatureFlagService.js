@@ -158,23 +158,30 @@ export class FeatureFlagService extends IFeatureFlagService {
    * Supports basic targeting based on context
    */
   async isFeatureEnabled(featureKey, context = {}) {
+    console.log(`[FeatureFlagService] isFeatureEnabled called for: ${featureKey}`);
     const flag = await this.getFeatureFlag(featureKey);
+    console.log(`[FeatureFlagService] getFeatureFlag returned:`, JSON.stringify(flag));
 
     if (!flag) {
       // Default to disabled if flag doesn't exist
+      console.log(`[FeatureFlagService] Flag is null/undefined, returning false`);
       return false;
     }
 
     // Simple enabled check
     if (!flag.enabled) {
+      console.log(`[FeatureFlagService] Flag exists but enabled=${flag.enabled}, returning false`);
       return false;
     }
 
     // Check targeting conditions if they exist
     if (flag.conditions?.client_filters?.length > 0) {
-      return this.evaluateConditions(flag.conditions, context);
+      const result = this.evaluateConditions(flag.conditions, context);
+      console.log(`[FeatureFlagService] Evaluated conditions, returning ${result}`);
+      return result;
     }
 
+    console.log(`[FeatureFlagService] No conditions, returning enabled=${flag.enabled}`);
     return flag.enabled;
   }
 
