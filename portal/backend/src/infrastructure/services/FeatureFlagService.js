@@ -98,7 +98,7 @@ export class FeatureFlagService extends IFeatureFlagService {
       if (error.statusCode === 404) {
         return null;
       }
-      console.error(`[FeatureFlagService] Error getting flag ${featureKey}:`, error.message);
+      console.error(`[FeatureFlagService] Error getting flag ${featureKey}:`, error.message || error.code || error);
       return null;
     }
   }
