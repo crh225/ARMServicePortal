@@ -14,7 +14,7 @@ module "azure-function-4562d22f" {
   tags = {
     armportal-environment = "dev"
     armportal-blueprint   = "azure-function"
-    armportal-request-id  = "azure-function-4562d22f"
+    armportal-request-id  = "182"
   }
 }
 
