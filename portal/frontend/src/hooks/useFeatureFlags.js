@@ -8,7 +8,7 @@ import featureFlagService from "../services/featureFlagService";
  * @param {object} options - Configuration options
  * @param {Array<string>} options.features - Array of feature keys to monitor
  * @param {object} options.context - Optional context for targeting (userId, groups, etc.)
- * @param {number} options.refreshInterval - Refresh interval in ms (default: 60000)
+ * @param {number} options.refreshInterval - Refresh interval in ms (default: 0 = no polling)
  * @returns {object} Feature flag states and utilities
  *
  * @example
@@ -25,7 +25,7 @@ function useFeatureFlags(options = {}) {
   const {
     features = [],
     context = {},
-    refreshInterval = 60000, // 1 minute default
+    refreshInterval = 0, // No polling by default - feature flags rarely change
   } = options;
 
   // State for all flag values
@@ -43,17 +43,23 @@ function useFeatureFlags(options = {}) {
   const [error, setError] = useState(null);
   const refreshTimer = useRef(null);
   const contextRef = useRef(context);
+  const featuresRef = useRef(features);
 
-  // Update context ref when it changes
+  // Update refs when they change
   useEffect(() => {
     contextRef.current = context;
   }, [context]);
+
+  useEffect(() => {
+    featuresRef.current = features;
+  }, [features]);
 
   /**
    * Fetch feature flags from API
    */
   const fetchFlags = useCallback(async () => {
-    if (features.length === 0) {
+    const currentFeatures = featuresRef.current;
+    if (currentFeatures.length === 0) {
       setLoading(false);
       return;
     }
@@ -62,7 +68,7 @@ function useFeatureFlags(options = {}) {
       setError(null);
 
       // Use batch API for efficiency
-      const results = await featureFlagService.batchCheck(features, contextRef.current);
+      const results = await featureFlagService.batchCheck(currentFeatures, contextRef.current);
 
       setFlags(results);
     } catch (err) {
@@ -71,7 +77,7 @@ function useFeatureFlags(options = {}) {
     } finally {
       setLoading(false);
     }
-  }, [features]);
+  }, []); // No dependencies - uses refs
 
   /**
    * Check if a specific feature is enabled
@@ -91,43 +97,22 @@ function useFeatureFlags(options = {}) {
     return fetchFlags();
   }, [fetchFlags]);
 
-  // Initial fetch and polling setup
+  // Initial fetch only - runs once on mount
   useEffect(() => {
     fetchFlags();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-    // Set up polling for refresh
-    if (refreshInterval > 0) {
-      refreshTimer.current = setInterval(fetchFlags, refreshInterval);
-    }
+  // Optional polling setup (only if refreshInterval > 0)
+  useEffect(() => {
+    if (refreshInterval <= 0) return;
+
+    refreshTimer.current = setInterval(fetchFlags, refreshInterval);
 
     return () => {
       if (refreshTimer.current) {
         clearInterval(refreshTimer.current);
       }
-    };
-  }, [fetchFlags, refreshInterval]);
-
-  // Handle visibility change (pause/resume polling)
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        if (refreshTimer.current) {
-          clearInterval(refreshTimer.current);
-          refreshTimer.current = null;
-        }
-      } else {
-        // Refresh immediately when tab becomes visible
-        fetchFlags();
-        if (refreshInterval > 0) {
-          refreshTimer.current = setInterval(fetchFlags, refreshInterval);
-        }
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [fetchFlags, refreshInterval]);
 
