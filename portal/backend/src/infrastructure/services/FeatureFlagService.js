@@ -33,12 +33,18 @@ export class FeatureFlagService extends IFeatureFlagService {
     }
 
     try {
+      console.log("[FeatureFlagService] Initializing with endpoint:", this.endpoint);
       const credential = new DefaultAzureCredential();
       this.client = new AppConfigurationClient(this.endpoint, credential);
       this.initialized = true;
-      console.log("[FeatureFlagService] Connected to Azure App Configuration:", this.endpoint);
+      console.log("[FeatureFlagService] Successfully initialized Azure App Configuration client");
     } catch (error) {
-      console.error("[FeatureFlagService] Failed to initialize:", error.message);
+      console.error("[FeatureFlagService] Failed to initialize:", {
+        message: error.message,
+        code: error.code,
+        name: error.name,
+        stack: error.stack?.split('\n').slice(0, 3).join('\n')
+      });
       this.initialized = true;
     }
   }
@@ -98,7 +104,16 @@ export class FeatureFlagService extends IFeatureFlagService {
       if (error.statusCode === 404) {
         return null;
       }
-      console.error(`[FeatureFlagService] Error getting flag ${featureKey}:`, error.message || error.code || JSON.stringify(error));
+      // Log detailed error info for debugging Azure SDK issues
+      const errorDetails = {
+        message: error.message,
+        code: error.code,
+        statusCode: error.statusCode,
+        name: error.name,
+        details: error.details,
+        stack: error.stack?.split('\n').slice(0, 3).join('\n')
+      };
+      console.error(`[FeatureFlagService] Error getting flag ${featureKey}:`, JSON.stringify(errorDetails, null, 2));
       return null;
     }
   }
