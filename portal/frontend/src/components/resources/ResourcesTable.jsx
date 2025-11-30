@@ -86,8 +86,8 @@ function ResourcesTable({ resources, subscriptions, onSelectResource, selectedRe
       );
     }
 
-    // Apply sorting
-    filtered.sort((a, b) => {
+    // Apply sorting (create a copy to avoid mutating the original array)
+    return [...filtered].sort((a, b) => {
       let aVal = a[sortColumn];
       let bVal = b[sortColumn];
 
@@ -105,8 +105,6 @@ function ResourcesTable({ resources, subscriptions, onSelectResource, selectedRe
       if (aVal > bVal) return sortDirection === "asc" ? 1 : -1;
       return 0;
     });
-
-    return filtered;
   }, [resources, subscriptionFilter, environmentFilter, blueprintFilter, ownerFilter, ownershipFilter, searchQuery, sortColumn, sortDirection]);
 
   // Calculate cost summary using custom hook
