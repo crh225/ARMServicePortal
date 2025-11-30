@@ -2,6 +2,19 @@
 
 Node/Express API built with Domain-Driven Design (DDD), CQRS, and MediatR patterns.
 
+## Deployment
+
+The backend runs on AKS (Azure Kubernetes Service) with the following infrastructure:
+
+- **Argo Rollouts** — Blue-green deployments with automated pre/post analysis
+- **Istio Service Mesh** — Traffic management, mTLS, observability
+- **Redis** — Distributed caching across pods (deployed via Crossplane)
+- **Azure Key Vault** — Secrets synced via CSI driver
+
+### URLs
+- Production: `https://portal-api.chrishouse.io`
+- Preview (Canary): `https://portal-api-preview.chrishouse.io`
+
 ## Architecture Patterns
 
 ### Domain-Driven Design (DDD)
@@ -127,8 +140,14 @@ src/
 │   ├── persistence/     # Repository implementations
 │   ├── services/        # Service implementations
 │   └── utils/           # Infrastructure utilities
+│       ├── Cache.js     # Redis cache with in-memory fallback
+│       └── ...
 │
-└── controllers/         # Express route handlers
+├── controllers/         # Express route handlers
+│
+├── routes/              # Express route definitions
+│
+└── utils/               # Shared utilities
 ```
 
 ## API Endpoints
@@ -161,6 +180,13 @@ src/
 ### Webhooks
 - `POST /api/webhooks/github` - GitHub webhook endpoint
 
+### Health & Auth
+- `GET /api/health` - Health check endpoint (used by K8s probes)
+- `GET /api/auth/github` - Initiate GitHub OAuth login
+- `GET /api/auth/github/callback` - GitHub OAuth callback
+- `GET /api/auth/me` - Get current authenticated user
+- `POST /api/auth/logout` - Logout current user
+
 ## Environment Variables
 
 ### GitHub App Configuration
@@ -170,11 +196,58 @@ src/
 - `GITHUB_INFRA_OWNER` - GitHub user/org that owns the infrastructure repo
 - `GITHUB_INFRA_REPO` - Infrastructure repository name
 
+### GitHub OAuth Configuration
+- `GH_OAUTH_CLIENT_ID` - GitHub OAuth App client ID
+- `GH_OAUTH_CLIENT_SECRET` - GitHub OAuth App client secret
+- `SESSION_SECRET` - Secret for session encryption
+- `APP_URL` - Backend URL for OAuth callbacks (e.g., `https://portal-api.chrishouse.io`)
+
 ### Azure Configuration
 - `AZURE_SUBSCRIPTION_ID` - Default Azure subscription ID
 - `AZURE_TENANT_ID` - Azure tenant ID
 - `AZURE_CLIENT_ID` - Service principal client ID
 - `AZURE_CLIENT_SECRET` - Service principal secret
+
+### Redis Configuration
+- `REDIS_HOST` - Redis server hostname (default: `localhost`)
+- `REDIS_PORT` - Redis server port (default: `6379`)
+- `REDIS_PASSWORD` - Redis authentication password
+
+## Caching
+
+The backend uses Redis for distributed caching across pods. Cache is implemented with automatic fallback to in-memory storage if Redis is unavailable.
+
+### Cache Implementation
+
+Located in `src/infrastructure/utils/Cache.js`:
+
+```javascript
+import { cache } from "../utils/Cache.js";
+
+// Get cached value
+const cached = await cache.get("key");
+
+// Set with TTL (milliseconds)
+await cache.set("key", value, 60 * 60 * 1000); // 1 hour
+
+// Delete
+await cache.del("key");
+```
+
+### Cached Data & TTLs
+
+| Data | Cache Key | TTL | Description |
+|------|-----------|-----|-------------|
+| Home Stats | `stats:home` | 12 hours | Dashboard statistics |
+| Resource Groups | `resourceGroups:all` | 10 minutes | Azure Resource Graph results |
+| PR Details | `pr:details:*` | 10 minutes | GitHub PR metadata |
+| Backups | `backups:*` | 1 hour | Terraform state backups |
+
+### Cache Behavior
+
+- **Redis Connected**: Data shared across all pods, survives pod restarts
+- **Redis Unavailable**: Falls back to in-memory cache (per-pod, lost on restart)
+- **Startup**: Logs `[Cache] Initialized with Redis` or `[Cache] Initialized with in-memory fallback`
 
 ## Run Locally
 

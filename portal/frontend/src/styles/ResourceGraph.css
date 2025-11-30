@@ -862,3 +862,107 @@
 .react-flow__edge-textbg {
   fill: #faf5ff;
 }
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+  /* Hide MiniMap on smaller screens */
+  .react-flow__minimap {
+    display: none;
+  }
+
+  /* Simplify header on mobile */
+  .graph-header {
+    flex-direction: column;
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  .graph-breadcrumb {
+    width: 100%;
+    justify-content: flex-start;
+    overflow-x: auto;
+  }
+
+  .graph-controls {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+
+  /* Hide layout selector on very small screens */
+  .layout-selector {
+    display: none;
+  }
+
+  .graph-divider {
+    display: none;
+  }
+
+  /* Reduce container height on mobile */
+  .resource-graph-container {
+    height: 380px;
+  }
+
+  /* Smaller nodes on mobile */
+  .resource-node {
+    min-width: 140px;
+    max-width: 160px;
+    padding: 10px 12px;
+  }
+
+  .resource-node-name {
+    font-size: 12px;
+  }
+
+  .resource-node-type {
+    font-size: 9px;
+  }
+
+  /* Smaller legend */
+  .graph-legend-bar {
+    padding: 8px 12px;
+    gap: 10px;
+  }
+
+  .legend-item {
+    font-size: 9px;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Further reduce on very small screens */
+  .resource-graph-container {
+    height: 320px;
+  }
+
+  /* Hide some controls */
+  .graph-toggle {
+    display: none;
+  }
+
+  .graph-portal-link {
+    padding: 4px 8px;
+    font-size: 10px;
+  }
+
+  /* Compact legend */
+  .graph-legend-bar {
+    gap: 6px;
+    padding: 6px 8px;
+  }
+
+  .legend-item {
+    font-size: 8px;
+    gap: 3px;
+  }
+
+  .legend-dot {
+    width: 8px;
+    height: 8px;
+  }
+
+  .health-legend .health-dot {
+    width: 6px;
+    height: 6px;
+  }
+}
