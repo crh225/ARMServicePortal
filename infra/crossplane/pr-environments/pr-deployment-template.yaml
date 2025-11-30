@@ -24,7 +24,7 @@ data:
   GH_INFRA_REPO: "ARMServicePortal"
   GH_OAUTH_CLIENT_ID: "Ov23liHgcQ7urCFXPs2k"
   FRONTEND_URL: "https://portal-pr-PR_NUMBER.pr.chrishouse.io"
-  APP_NAME: "arm-service-portal-pr-PR_NUMBER"
+  APP_NAME: "arm-portal-dev-pr-PR_NUMBER"
   APP_URL: "https://portal-api-pr-PR_NUMBER.pr.chrishouse.io"
   ELASTICSEARCH_URL: "https://es-test-az-elk-managed-dev-5a6e80.es.eastus2.azure.elastic-cloud.com:9243"
   LOG_ANALYTICS_WORKSPACE_ID: "c200dcd8-f350-4895-99c0-1a0828fe7384"
