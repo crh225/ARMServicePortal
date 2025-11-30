@@ -13,7 +13,7 @@ module "azure-app-configuration-8db30e0e" {
   tags = {
     armportal-environment = "dev"
     armportal-blueprint   = "azure-app-configuration"
-    armportal-request-id  = "azure-app-configuration-8db30e0e"
+    armportal-request-id  = "186"
   }
 }
 
