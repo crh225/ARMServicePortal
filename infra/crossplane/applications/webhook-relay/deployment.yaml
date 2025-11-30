@@ -30,7 +30,7 @@ spec:
         - name: acr-credentials
       containers:
       - name: webhook-relay
-        image: armportalacre4k9.azurecr.io/webhook-relay:b23c39e4d6e4ad1e99463f79a649ff9e67d063da
+        image: armportalacre4k9.azurecr.io/webhook-relay:c42d3ef216a17c1973db19fc38ad082b26dc412e
         imagePullPolicy: Always
         ports:
         - containerPort: 3000
