@@ -46,9 +46,15 @@ async function getRabbitChannel() {
     }
   }
 
-  console.log("Connecting to RabbitMQ at:", rabbitUrl.replace(/:[^:@]+@/, ':****@'));
+  const maskedUrl = rabbitUrl.replace(/:[^:@]+@/, ':****@');
+  console.log("Connecting to RabbitMQ at:", maskedUrl);
   try {
-    rabbitConnection = await amqp.connect(rabbitUrl);
+    // Add connection timeout
+    const connectPromise = amqp.connect(rabbitUrl);
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Connection timeout after 10s')), 10000)
+    );
+    rabbitConnection = await Promise.race([connectPromise, timeoutPromise]);
     rabbitChannel = await rabbitConnection.createChannel();
   } catch (err) {
     console.error("Failed to connect to RabbitMQ:", err.message);
