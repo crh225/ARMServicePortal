@@ -165,6 +165,25 @@ export async function estimateBlueprintCost(blueprintId, variables, blueprint = 
       estimates.push(functionCost);
       break;
 
+    case "azure-app-configuration": {
+      // Azure App Configuration pricing:
+      // Free tier: 10 MB storage, 1,000 requests/day - $0
+      // Standard tier: $1.20/day (~$36/month) + $0.06 per 10,000 requests over 200K
+      const appConfigSku = variables.sku || "free";
+      const isStandard = appConfigSku === "standard";
+
+      estimates.push({
+        resourceType: "Azure App Configuration",
+        skuName: isStandard ? "Standard" : "Free",
+        monthlyEstimate: isStandard ? 36 : 0,
+        currency: "USD",
+        note: isStandard
+          ? "Standard tier: $1.20/day + $0.06 per 10K requests over 200K/day"
+          : "Free tier: 10 MB storage, 1,000 requests/day"
+      });
+      break;
+    }
+
     case "xp-application-environment": {
       // Crossplane Application Environment - Kubernetes-based deployment
       // Cost is based on AKS node resources consumed, not Azure-managed services
