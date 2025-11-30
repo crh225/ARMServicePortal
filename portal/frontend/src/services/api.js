@@ -328,6 +328,32 @@ const api = {
       throw new Error("Failed to load stats");
     }
     return response.json();
+  },
+
+  /**
+   * Get cache statistics (admin only)
+   * Returns: { success, stats, usingRedis }
+   */
+  async getCacheStats() {
+    const response = await fetchWithLogRocket(`${API_BASE_URL}/api/admin/cache/stats`);
+    if (!response.ok) {
+      throw new Error("Failed to get cache stats");
+    }
+    return response.json();
+  },
+
+  /**
+   * Clear all server-side cache (admin only)
+   * Returns: { success, message, cleared: { redis, memory }, usingRedis }
+   */
+  async clearCache() {
+    const response = await fetchWithLogRocket(`${API_BASE_URL}/api/admin/cache/clear`, {
+      method: "POST"
+    });
+    if (!response.ok) {
+      throw new Error("Failed to clear cache");
+    }
+    return response.json();
   }
 };
 

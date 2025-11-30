@@ -118,6 +118,53 @@
   background: #dc2626;
 }
 
+/* Clear Cache Button (Redis-themed - white background with red text/icon) */
+.btn-clear-cache {
+  background: #ffffff;
+  color: #dc382d;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-clear-cache:hover:not(:disabled) {
+  background: #fef2f2;
+  color: #a41e11;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(220, 56, 45, 0.15);
+}
+
+.btn-clear-cache:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-clear-cache svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+.btn-clear-cache svg.spinning {
+  animation: spin 1s linear infinite;
+}
+
+.cache-stats {
+  font-size: 12px;
+  color: inherit;
+  opacity: 0.75;
+  font-weight: 400;
+  margin-left: 4px;
+}
+
 .admin-content {
   background: var(--bg-primary);
   border-radius: 12px;

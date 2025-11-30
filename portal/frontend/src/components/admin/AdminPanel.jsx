@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import api from "../../services/api";
 import AdminDashboardSkeleton from "./AdminDashboardSkeleton";
@@ -7,6 +7,18 @@ import RecentActivityList from "./RecentActivityList";
 import BackupsList from "./BackupsList";
 import AdminUserFilter from "./AdminUserFilter";
 import "../../styles/AdminPanel.css";
+
+// Redis icon SVG component
+const RedisIcon = ({ spinning = false }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    xmlns="http://www.w3.org/2000/svg"
+    className={spinning ? "spinning" : ""}
+  >
+    <path d="M23.99 14.34c-.02.56-.57 1.01-1.53 1.47l-6.88 2.87c-.79.37-1.76.57-2.58.57-.82 0-1.43-.2-2.11-.52l-7.4-3.12c-.95-.45-1.47-.9-1.47-1.47v2.24c0 .57.52 1.14 1.47 1.58l7.4 3.12c.68.32 1.29.52 2.11.52.82 0 1.79-.2 2.58-.57l6.88-2.87c.96-.46 1.51-.91 1.53-1.47v-2.35zm0-4.77c-.02.56-.57 1.01-1.53 1.47l-6.88 2.87c-.79.37-1.76.57-2.58.57-.82 0-1.43-.2-2.11-.52l-7.4-3.12c-.95-.45-1.47-.9-1.47-1.47v2.24c0 .57.52 1.14 1.47 1.58l7.4 3.12c.68.32 1.29.52 2.11.52.82 0 1.79-.2 2.58-.57l6.88-2.87c.96-.46 1.51-.91 1.53-1.47V9.57zM1.02 7.1c0 .57.52 1.14 1.47 1.58l7.4 3.12c.68.32 1.29.52 2.11.52.82 0 1.79-.2 2.58-.57l6.88-2.87c.96-.46 1.53-.96 1.53-1.53s-.57-1.08-1.53-1.53L14.58 2.95c-.79-.37-1.76-.57-2.58-.57-.82 0-1.43.2-2.11.52L2.49 6c-.95.45-1.47.9-1.47 1.1z"/>
+  </svg>
+);
 
 // Cache for dashboard data (5 minutes)
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
@@ -22,12 +34,25 @@ function AdminPanel() {
     error: null
   });
   const [userFilter, setUserFilter] = useState("all");
+  const [cacheClearing, setCacheClearing] = useState(false);
+  const [cacheStats, setCacheStats] = useState(null);
+
+  // Load cache stats on mount
+  const loadCacheStats = useCallback(async () => {
+    try {
+      const result = await api.getCacheStats();
+      setCacheStats(result);
+    } catch (err) {
+      console.error("Failed to load cache stats:", err);
+    }
+  }, []);
 
   useEffect(() => {
     if (isAuthenticated) {
       loadDashboardData();
+      loadCacheStats();
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, loadCacheStats]);
 
   const loadDashboardData = async (forceRefresh = false) => {
     // Check cache first
@@ -73,6 +98,31 @@ function AdminPanel() {
         loading: false,
         error: "Failed to load dashboard data"
       }));
+    }
+  };
+
+  // Handle clear cache action
+  const handleClearCache = async () => {
+    if (cacheClearing) return;
+
+    setCacheClearing(true);
+    try {
+      const result = await api.clearCache();
+      console.log("Cache cleared:", result);
+
+      // Clear local dashboard cache too
+      dashboardCache = null;
+      cacheTimestamp = null;
+
+      // Reload cache stats
+      await loadCacheStats();
+
+      // Optionally refresh dashboard data
+      await loadDashboardData(true);
+    } catch (err) {
+      console.error("Failed to clear cache:", err);
+    } finally {
+      setCacheClearing(false);
     }
   };
 
@@ -196,9 +246,23 @@ function AdminPanel() {
             {user.email && <p className="user-email">{user.email}</p>}
           </div>
         </div>
-        <button className="btn-logout" onClick={logout}>
-          Logout
-        </button>
+        <div className="admin-header-actions">
+          <button
+            className="btn-clear-cache"
+            onClick={handleClearCache}
+            disabled={cacheClearing}
+            title={cacheStats?.usingRedis ? "Clear Redis cache" : "Clear in-memory cache"}
+          >
+            <RedisIcon spinning={cacheClearing} />
+            {cacheClearing ? "Clearing..." : "Clear Cache"}
+            {cacheStats?.stats?.redis?.keys > 0 && (
+              <span className="cache-stats">({cacheStats.stats.redis.keys})</span>
+            )}
+          </button>
+          <button className="btn-logout" onClick={logout}>
+            Logout
+          </button>
+        </div>
       </div>
 
       {dashboardData.loading ? (
