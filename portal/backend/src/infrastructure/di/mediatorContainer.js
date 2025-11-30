@@ -12,7 +12,7 @@ import { AzurePricingRepository } from "../persistence/repositories/AzurePricing
 import { GitHubJobRepository } from "../persistence/repositories/GitHubJobRepository.js";
 import { GitHubDestroyRepository } from "../persistence/repositories/GitHubDestroyRepository.js";
 import { AzureLogsRepository } from "../persistence/repositories/AzureLogsRepository.js";
-import { InMemoryNotificationRepository } from "../persistence/repositories/InMemoryNotificationRepository.js";
+import { RedisNotificationRepository } from "../persistence/repositories/RedisNotificationRepository.js";
 import { AzureContainerRegistryRepository } from "../persistence/repositories/AzureContainerRegistryRepository.js";
 
 // Infrastructure - Services
@@ -157,7 +157,7 @@ export function createMediator() {
     job: new GitHubJobRepository(),
     destroy: new GitHubDestroyRepository(),
     logs: new AzureLogsRepository(),
-    notification: new InMemoryNotificationRepository(),
+    notification: new RedisNotificationRepository(),
     containerRegistry: new AzureContainerRegistryRepository(),
   };
 
