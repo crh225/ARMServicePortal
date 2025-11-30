@@ -7,8 +7,8 @@ module "azure-function-4562d22f" {
   runtime_stack = "node"
   runtime_version = "20"
   os_type = "Linux"
-  sku_name = "Y1"
-  always_on = false
+  sku_name = "B1"
+  always_on = true
 
   # ARM Portal tracking tags
   tags = {
