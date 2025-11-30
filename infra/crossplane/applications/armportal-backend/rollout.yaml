@@ -65,6 +65,11 @@ spec:
             secretKeyRef:
               name: backend-secrets
               key: ELASTICSEARCH_API_KEY
+        - name: AZURE_APP_CONFIG_ENDPOINT
+          valueFrom:
+            secretKeyRef:
+              name: backend-secrets
+              key: AZURE_APP_CONFIG_ENDPOINT
 
         resources:
           requests:
