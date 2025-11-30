@@ -562,3 +562,76 @@ spec:
                   string:
                     fmt: "%s-%s-rabbitmq"
                 toFieldPath: spec.forProvider.manifest.spec.rules[0].http.paths[0].backend.service.name
+
+          # ============================================================
+          # 8. EXTERNAL AMQP SERVICE (LoadBalancer for Azure Function)
+          # ============================================================
+          - name: rabbitmq-amqp-external
+            base:
+              apiVersion: kubernetes.crossplane.io/v1alpha2
+              kind: Object
+              spec:
+                forProvider:
+                  manifest:
+                    apiVersion: v1
+                    kind: Service
+                    metadata:
+                      name: ""
+                      labels:
+                        app.kubernetes.io/component: rabbitmq-amqp-external
+                      annotations:
+                        # Azure-specific annotations for internal load balancer
+                        # Remove this annotation if you want a public IP
+                        # service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+                        service.beta.kubernetes.io/azure-dns-label-name: ""
+                    spec:
+                      type: LoadBalancer
+                      ports:
+                        - port: 5672
+                          targetPort: 5672
+                          protocol: TCP
+                          name: amqp
+                      selector:
+                        app.kubernetes.io/component: rabbitmq
+            patches:
+              - type: PatchSet
+                patchSetName: common-labels
+              - type: PatchSet
+                patchSetName: namespace-patch
+              - type: CombineFromComposite
+                combine:
+                  variables:
+                    - fromFieldPath: spec.parameters.name
+                    - fromFieldPath: spec.parameters.environment
+                  strategy: string
+                  string:
+                    fmt: "%s-%s-rabbitmq-amqp"
+                toFieldPath: spec.forProvider.manifest.metadata.name
+              - type: CombineFromComposite
+                combine:
+                  variables:
+                    - fromFieldPath: spec.parameters.name
+                    - fromFieldPath: spec.parameters.environment
+                  strategy: string
+                  string:
+                    fmt: "rabbitmq-amqp-external-%s-%s"
+                toFieldPath: metadata.name
+              # DNS label for Azure (creates {name}-amqp.{region}.cloudapp.azure.com)
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.name
+                toFieldPath: spec.forProvider.manifest.metadata.annotations["service.beta.kubernetes.io/azure-dns-label-name"]
+                transforms:
+                  - type: string
+                    string:
+                      type: Format
+                      fmt: "%s-amqp"
+              # Instance selector
+              - type: CombineFromComposite
+                combine:
+                  variables:
+                    - fromFieldPath: spec.parameters.name
+                    - fromFieldPath: spec.parameters.environment
+                  strategy: string
+                  string:
+                    fmt: "%s-%s"
+                toFieldPath: spec.forProvider.manifest.spec.selector["app.kubernetes.io/instance"]
