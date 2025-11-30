@@ -1,12 +1,16 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import NotificationBell from "./NotificationBell";
+import { useFeatureFlag } from "../../hooks/useFeatureFlags";
 import "../../styles/Header.css";
 
 function Header({ activeTab, onTabChange, notifications, unreadCount, onMarkAsRead, onNavigate, onMarkAllAsRead }) {
   const { user, logout, login } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
+
+  // Feature flag for notifications - defaults to true if flag service unavailable
+  const notificationsEnabled = useFeatureFlag("notifications");
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -38,7 +42,7 @@ function Header({ activeTab, onTabChange, notifications, unreadCount, onMarkAsRe
             </p>
           </div>
           <div className="header-actions">
-            {notifications && (
+            {notificationsEnabled && notifications && (
               <NotificationBell
                 notifications={notifications}
                 unreadCount={unreadCount}

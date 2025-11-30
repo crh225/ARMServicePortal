@@ -21,6 +21,7 @@ import { GitHubProvisionService } from "../services/GitHubProvisionService.js";
 import { GitHubPromoteService } from "../services/GitHubPromoteService.js";
 import { AzureResourceService } from "../services/AzureResourceService.js";
 import { ResourceEnrichmentService } from "../services/ResourceEnrichmentService.js";
+import { featureFlagService } from "../services/FeatureFlagService.js";
 import { cache } from "../utils/Cache.js";
 
 // Handlers
@@ -50,6 +51,9 @@ import { GenerateTerraformCodeHandler } from "../../application/terraform/handle
 import { GetContainerRepositoriesHandler } from "../../application/registry/handlers/GetContainerRepositoriesHandler.js";
 import { GetContainerTagsHandler } from "../../application/registry/handlers/GetContainerTagsHandler.js";
 import { GetHomeStatsHandler } from "../../application/stats/handlers/GetHomeStatsHandler.js";
+import { GetAllFeatureFlagsHandler } from "../../application/featureflags/handlers/GetAllFeatureFlagsHandler.js";
+import { GetFeatureFlagHandler } from "../../application/featureflags/handlers/GetFeatureFlagHandler.js";
+import { IsFeatureEnabledHandler } from "../../application/featureflags/handlers/IsFeatureEnabledHandler.js";
 
 // Queries & Commands
 import { GetBlueprintCatalogQuery } from "../../application/blueprints/queries/GetBlueprintCatalogQuery.js";
@@ -78,6 +82,9 @@ import { GenerateTerraformCodeQuery } from "../../application/terraform/queries/
 import { GetContainerRepositoriesQuery } from "../../application/registry/queries/GetContainerRepositoriesQuery.js";
 import { GetContainerTagsQuery } from "../../application/registry/queries/GetContainerTagsQuery.js";
 import { GetHomeStatsQuery } from "../../application/stats/queries/GetHomeStatsQuery.js";
+import { GetAllFeatureFlagsQuery } from "../../application/featureflags/queries/GetAllFeatureFlagsQuery.js";
+import { GetFeatureFlagQuery } from "../../application/featureflags/queries/GetFeatureFlagQuery.js";
+import { IsFeatureEnabledQuery } from "../../application/featureflags/queries/IsFeatureEnabledQuery.js";
 
 // Pipeline Behaviors
 import { ValidationBehavior } from "../behaviors/ValidationBehavior.js";
@@ -209,6 +216,11 @@ export function createMediator() {
 
     // Stats Queries
     [GetHomeStatsQuery, GetHomeStatsHandler, [repos.blueprint, services.azureResource, repos.job, cache]],
+
+    // Feature Flags Queries
+    [GetAllFeatureFlagsQuery, GetAllFeatureFlagsHandler, [featureFlagService]],
+    [GetFeatureFlagQuery, GetFeatureFlagHandler, [featureFlagService]],
+    [IsFeatureEnabledQuery, IsFeatureEnabledHandler, [featureFlagService]],
 
     // Provision Commands
     [ProvisionBlueprintCommand, ProvisionBlueprintHandler, [repos.blueprint, services.policy, services.gitHubProvision]],

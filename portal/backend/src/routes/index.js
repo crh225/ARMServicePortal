@@ -17,6 +17,7 @@ import terraformRoutes from "./terraform.routes.js";
 import registryRoutes from "./registry.routes.js";
 import statsRoutes from "./stats.routes.js";
 import adminRoutes from "./admin.routes.js";
+import featureflagsRoutes from "./featureflags.routes.js";
 
 const router = express.Router();
 
@@ -39,5 +40,6 @@ router.use("/terraform", terraformRoutes);
 router.use("/registry", registryRoutes);
 router.use("/stats", statsRoutes);
 router.use("/admin", adminRoutes);
+router.use("/features", featureflagsRoutes);
 
 export default router;
