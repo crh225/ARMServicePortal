@@ -68,6 +68,15 @@ const serviceIcons = {
     ),
     color: "#0062ad"
   },
+  "azure-app-configuration": {
+    icon: (
+      <svg width="24" height="24" viewBox="0 0 18 18" fill="currentColor">
+        <path d="M9 1L1 5v8l8 4 8-4V5L9 1zm0 2.18L14.5 5.5 9 7.82 3.5 5.5 9 3.18zM2 6.27l6 3v6.46l-6-3V6.27zm8 9.46V9.27l6-3v6.46l-6 3z"/>
+        <circle cx="9" cy="9" r="2" opacity=".6"/>
+      </svg>
+    ),
+    color: "#0078d4"
+  },
   // Crossplane/K8s services
   "xp-application-environment": {
     icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/kubernetes/kubernetes-plain.svg" alt="" width="24" height="24" />,
@@ -93,6 +102,7 @@ const categoryConfig = {
   "Networking": { color: "#0078d4" },
   "Web": { color: "#06b6d4" },
   "Security": { color: "#0078d4" },
+  "Configuration": { color: "#0078d4" },
   "Analytics & Monitoring": { color: "#005571" },
   "default": { color: "#6b7280" }
 };
@@ -107,6 +117,7 @@ const defaultCategoryIcons = {
   "Networking": "🌐",
   "Web": "🌍",
   "Security": "🔐",
+  "Configuration": "⚙️",
   "Analytics & Monitoring": "📊",
   "default": "📦"
 };

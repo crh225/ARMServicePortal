@@ -805,6 +805,114 @@ export const BLUEPRINTS = [
       dedicated: "B1 ~$13/month, S1 ~$73/month, P1v2 ~$81/month"
     }
   },
+  {
+    id: "azure-app-configuration",
+    version: "1.0.0",
+    displayName: "Azure App Configuration",
+    description: "Centralized configuration and feature flag management service. Perfect for externalizing app settings, managing feature flags, and A/B testing across environments.",
+    category: "Configuration",
+    moduleSource: "../../modules/azure-app-configuration",
+    variables: [
+      {
+        name: "project_name",
+        label: "Project Name",
+        type: "string",
+        required: true
+      },
+      {
+        name: "environment",
+        label: "Environment",
+        type: "select",
+        required: true,
+        options: ["dev", "qa", "staging", "prod"],
+        default: "dev"
+      },
+      {
+        name: "subscription_id",
+        label: "Azure Subscription",
+        type: "string",
+        required: true
+      },
+      {
+        name: "resource_group_name",
+        label: "Resource Group Name",
+        type: "string",
+        required: true
+      },
+      {
+        name: "location",
+        label: "Location",
+        type: "select",
+        required: true,
+        options: ["eastus", "eastus2", "westus", "westus2", "westus3", "centralus", "northcentralus", "southcentralus", "westcentralus"],
+        default: "eastus2"
+      },
+      {
+        name: "sku",
+        label: "SKU",
+        type: "select",
+        required: true,
+        options: ["free", "standard"],
+        default: "free",
+        helpText: "Free: 10 MB storage, 1000 requests/day. Standard: 1 GB storage, unlimited requests."
+      },
+      {
+        name: "soft_delete_retention_days",
+        label: "Soft Delete Retention (days)",
+        type: "select",
+        required: false,
+        options: ["1", "7"],
+        default: "7",
+        helpText: "Days to retain deleted configuration stores (1-7 for free, 1-90 for standard)"
+      },
+      {
+        name: "public_network_access",
+        label: "Public Network Access",
+        type: "select",
+        required: false,
+        options: ["Enabled", "Disabled"],
+        default: "Enabled"
+      },
+      {
+        name: "local_auth_enabled",
+        label: "Enable Access Keys",
+        type: "select",
+        required: false,
+        options: ["true", "false"],
+        default: "true",
+        helpText: "Enable connection strings and access keys. Disable to require Azure AD only."
+      }
+    ],
+    outputs: [
+      {
+        name: "app_configuration_name",
+        description: "Name of the App Configuration store"
+      },
+      {
+        name: "endpoint",
+        description: "App Configuration endpoint URL"
+      },
+      {
+        name: "primary_read_key",
+        description: "Primary read-only connection string",
+        sensitive: true
+      },
+      {
+        name: "primary_write_key",
+        description: "Primary read-write connection string",
+        sensitive: true
+      },
+      {
+        name: "resource_id",
+        description: "Azure resource ID"
+      }
+    ],
+    estimatedMonthlyCost: 0,
+    costDetails: {
+      free: "Free tier: 10 MB storage, 1,000 requests/day",
+      standard: "Standard tier: $1.20/day (~$36/month) + $0.06 per 10,000 requests over 200K"
+    }
+  },
   // ============================================================
   // CROSSPLANE BLUEPRINTS
   // ============================================================
