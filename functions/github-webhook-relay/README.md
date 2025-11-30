@@ -1,20 +1,20 @@
-# GitHub Webhook Relay Function
+# GitHub Webhook Relay
 
-Azure Function that receives GitHub webhooks and publishes notification messages to RabbitMQ for real-time UI updates.
+Receives GitHub webhooks and publishes notification messages to RabbitMQ for real-time UI updates. Runs as a container in AKS.
 
 ## Architecture
 
 ```
-GitHub Webhooks → Azure Function → RabbitMQ → Backend API → SSE → Frontend UI
-                  (transform &      (message    (consume &   (real-time
-                   publish)          queue)      broadcast)   updates)
+GitHub Webhooks → Webhook Relay (AKS) → RabbitMQ → Backend API → SSE → Frontend UI
+                  (transform &           (message    (consume &   (real-time
+                   publish)               queue)      broadcast)   updates)
 ```
 
 ### Flow
 
-1. **GitHub** sends webhook events to the Azure Function
-2. **Azure Function** verifies the signature, transforms the payload to a notification, and publishes to RabbitMQ
-3. **RabbitMQ** queues messages (exposed via Azure Load Balancer from AKS)
+1. **GitHub** sends webhook events to the webhook relay
+2. **Webhook Relay** verifies the signature, transforms the payload to a notification, and publishes to RabbitMQ
+3. **RabbitMQ** queues messages (internal K8s service)
 4. **Backend API** consumes messages from RabbitMQ and stores in Redis
 5. **SSE** broadcasts notifications to connected frontend clients
 6. **Frontend** displays real-time toast notifications
@@ -23,6 +23,7 @@ GitHub Webhooks → Azure Function → RabbitMQ → Backend API → SSE → Fron
 
 | Variable | Description | Required |
 |----------|-------------|----------|
+| `PORT` | HTTP port (default: 3000) | No |
 | `RABBITMQ_URL` | AMQP connection URL (e.g., `amqp://user:pass@host:5672`) | Yes |
 | `GH_WEBHOOK_SECRET` | Secret for verifying GitHub webhook signatures | Recommended |
 
@@ -32,10 +33,12 @@ GitHub Webhooks → Azure Function → RabbitMQ → Backend API → SSE → Fron
 |----------|--------|-------------|
 | `/api/webhooks/github` | POST | Receives GitHub webhooks |
 | `/api/health` | GET | Health check (includes RabbitMQ connectivity) |
+| `/healthz` | GET | Liveness probe |
+| `/readyz` | GET | Readiness probe |
 
 ## Supported GitHub Events
 
-The function transforms these GitHub events into notifications:
+The relay transforms these GitHub events into notifications:
 
 - `workflow_run` - CI/CD workflow completed/started
 - `workflow_job` - Individual job in a workflow
@@ -71,45 +74,47 @@ Messages published to RabbitMQ:
    npm install
    ```
 
-2. Start RabbitMQ locally (or use the dev instance):
+2. Start RabbitMQ locally:
    ```bash
    docker run -d --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3.13-management
    ```
 
-3. Update `local.settings.json`:
-   ```json
-   {
-     "Values": {
-       "RABBITMQ_URL": "amqp://guest:guest@localhost:5672",
-       "GH_WEBHOOK_SECRET": "your-secret-here"
-     }
-   }
+3. Set environment variables:
+   ```bash
+   export RABBITMQ_URL="amqp://guest:guest@localhost:5672"
+   export GH_WEBHOOK_SECRET="your-secret-here"
    ```
 
-4. Run the function:
+4. Run the server:
    ```bash
    npm start
    ```
 
 5. Test with curl:
    ```bash
-   curl -X POST http://localhost:7071/api/webhooks/github \
+   curl -X POST http://localhost:3000/api/webhooks/github \
      -H "Content-Type: application/json" \
      -H "X-GitHub-Event: workflow_run" \
      -d '{"action":"completed","workflow_run":{"name":"Test","conclusion":"success"}}'
    ```
 
-## Deployment
+## Deployment (AKS)
 
 ### Automated (GitHub Actions)
 
 Push changes to `functions/github-webhook-relay/**` to trigger the deployment workflow.
 
 The workflow:
-1. Builds the function
-2. Fetches secrets from Azure Key Vault
-3. Deploys to Azure Functions
-4. Configures app settings
+1. Builds the Docker image
+2. Pushes to Azure Container Registry
+3. Fetches secrets from Azure Key Vault
+4. Creates/updates K8s secrets
+5. Deploys to AKS
+
+### Production URL
+
+- **Webhook Endpoint**: `https://webhooks.chrishouse.io/api/webhooks/github`
+- **Health Check**: `https://webhooks.chrishouse.io/api/health`
 
 ### Required GitHub Secrets
 
@@ -118,53 +123,49 @@ The workflow:
 | `AZURE_CLIENT_ID` | Azure service principal client ID |
 | `AZURE_TENANT_ID` | Azure AD tenant ID |
 | `AZURE_SUBSCRIPTION_ID` | Azure subscription ID |
-| `AZURE_KEYVAULT_NAME` | Key Vault name (e.g., `akvnotintf1`) |
-| `AZURE_RESOURCE_GROUP` | Resource group containing the Function App |
 
 ### Required Key Vault Secrets
 
 | Secret Name | Description |
 |-------------|-------------|
-| `rabbitmq-url` | AMQP URL: `amqp://admin:password@rabbit-xp1-amqp.eastus.cloudapp.azure.com:5672` |
+| `rabbitmq-url` | AMQP URL for internal RabbitMQ service |
 | `gh-webhook-secret` | Webhook secret configured in GitHub |
 
 ### Configure GitHub Webhook
 
 1. Go to your GitHub repository > Settings > Webhooks > Add webhook
-2. **Payload URL**: `https://<function-app>.azurewebsites.net/api/webhooks/github`
+2. **Payload URL**: `https://webhooks.chrishouse.io/api/webhooks/github`
 3. **Content type**: `application/json`
 4. **Secret**: Same value as `gh-webhook-secret` in Key Vault
 5. **Events**: Select events you want to receive (or "Send me everything")
 
-## RabbitMQ Access
+## Kubernetes Resources
 
-RabbitMQ is deployed in AKS via Crossplane and exposed externally:
+Located in `infra/crossplane/applications/webhook-relay/`:
 
-- **AMQP**: `amqp://rabbit-xp1-amqp.eastus.cloudapp.azure.com:5672`
-- **Management UI**: `https://rabbit-xp1.pr.chrishouse.io`
-- **Namespace**: `rabbit-xp1-dev`
-
-Credentials are in the `rabbit-xp1-dev-rabbitmq-credentials` secret.
+- `deployment.yaml` - Deployment and Service
+- `ingress.yaml` - Ingress with TLS
+- `kustomization.yaml` - Kustomize config
 
 ## Troubleshooting
 
-### Function can't connect to RabbitMQ
+### Webhook relay can't connect to RabbitMQ
 
-1. Verify the RABBITMQ_URL is correct
-2. Check if the RabbitMQ LoadBalancer service has an external IP:
+1. Verify the RABBITMQ_URL uses the internal K8s DNS name
+2. Check RabbitMQ pod is running:
    ```bash
-   kubectl get svc -n rabbit-xp1-dev | grep amqp
+   kubectl get pods -n rabbit-xp1-dev
    ```
-3. Test connectivity from your local machine:
+3. Check webhook-relay logs:
    ```bash
-   nc -zv rabbit-xp1-amqp.eastus.cloudapp.azure.com 5672
+   kubectl logs -n webhook-relay -l app=webhook-relay
    ```
 
 ### Webhook signature verification failed
 
 1. Verify the `GH_WEBHOOK_SECRET` matches what's configured in GitHub
 2. Check the webhook delivery in GitHub > Settings > Webhooks > Recent Deliveries
-3. Look at the Function logs in Azure Portal
+3. Check pod logs for error details
 
 ### Messages not appearing in UI
 

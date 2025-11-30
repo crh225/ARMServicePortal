@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: webhook-relay
+
+resources:
+  - deployment.yaml
+  - ingress.yaml
+
+# Note: Secrets are created by the GitHub Actions workflow from Azure Key Vault.
+# To deploy manually:
+#   kubectl create secret generic webhook-relay-secrets \
+#     --namespace webhook-relay \
+#     --from-literal=RABBITMQ_URL='amqp://user:pass@host:5672' \
+#     --from-literal=GH_WEBHOOK_SECRET='your-secret'
