@@ -84,6 +84,36 @@ function verifySignature(payload, signature, secret) {
 }
 
 /**
+ * Truncate text to max length
+ */
+function truncate(text, maxLength = 80) {
+  if (!text) return "";
+  const firstLine = text.split("\n")[0].trim();
+  return firstLine.length > maxLength ? firstLine.slice(0, maxLength - 3) + "..." : firstLine;
+}
+
+/**
+ * Get status emoji based on action/conclusion
+ */
+function getStatusEmoji(status) {
+  const map = {
+    success: "✅",
+    completed: "✅",
+    failure: "❌",
+    failed: "❌",
+    cancelled: "⚪",
+    skipped: "⏭️",
+    in_progress: "🔄",
+    queued: "⏳",
+    requested: "📋",
+    opened: "📬",
+    closed: "📭",
+    merged: "🔀"
+  };
+  return map[status?.toLowerCase()] || "📌";
+}
+
+/**
  * Transform GitHub webhook into notification format
  */
 function transformToNotification(event, payload) {
@@ -96,58 +126,75 @@ function transformToNotification(event, payload) {
   };
 
   switch (event) {
-    case "workflow_run":
-      notification.title = `Workflow ${data.action}: ${data.workflow_run?.name || "Unknown"}`;
-      notification.message = `${data.workflow_run?.head_commit?.message || "No message"} - ${data.workflow_run?.conclusion || data.action}`;
+    case "workflow_run": {
+      const status = data.workflow_run?.conclusion || data.action;
+      const emoji = getStatusEmoji(status);
+      const workflowName = data.workflow_run?.name || "Workflow";
+      notification.title = `${emoji} ${workflowName}`;
+      notification.message = status;
       notification.prNumber = data.workflow_run?.pull_requests?.[0]?.number || null;
       notification.repository = data.repository?.full_name;
       notification.url = data.workflow_run?.html_url;
       break;
+    }
 
-    case "workflow_job":
-      notification.title = `Job ${data.action}: ${data.workflow_job?.name || "Unknown"}`;
-      notification.message = `${data.workflow_job?.conclusion || data.action} in ${data.workflow?.name || "workflow"}`;
+    case "workflow_job": {
+      const status = data.workflow_job?.conclusion || data.action;
+      const emoji = getStatusEmoji(status);
+      notification.title = `${emoji} ${data.workflow_job?.name || "Job"}`;
+      notification.message = status;
       notification.prNumber = null;
       notification.repository = data.repository?.full_name;
       notification.url = data.workflow_job?.html_url;
       break;
+    }
 
-    case "check_run":
-      notification.title = `Check ${data.action}: ${data.check_run?.name || "Unknown"}`;
-      notification.message = `${data.check_run?.conclusion || data.action}`;
+    case "check_run": {
+      const status = data.check_run?.conclusion || data.action;
+      const emoji = getStatusEmoji(status);
+      notification.title = `${emoji} ${data.check_run?.name || "Check"}`;
+      notification.message = status;
       notification.prNumber = data.check_run?.pull_requests?.[0]?.number || null;
       notification.repository = data.repository?.full_name;
       notification.url = data.check_run?.html_url;
       break;
+    }
 
-    case "pull_request":
-      notification.title = `PR ${data.action}: #${data.pull_request?.number}`;
-      notification.message = data.pull_request?.title || "No title";
+    case "pull_request": {
+      const emoji = getStatusEmoji(data.action);
+      notification.title = `${emoji} PR #${data.pull_request?.number} ${data.action}`;
+      notification.message = truncate(data.pull_request?.title);
       notification.prNumber = data.pull_request?.number;
       notification.repository = data.repository?.full_name;
       notification.url = data.pull_request?.html_url;
       break;
+    }
 
-    case "push":
-      notification.title = `Push to ${data.ref?.replace("refs/heads/", "") || "branch"}`;
-      notification.message = data.head_commit?.message || "No message";
+    case "push": {
+      const branch = data.ref?.replace("refs/heads/", "") || "branch";
+      notification.title = `📦 Push to ${branch}`;
+      notification.message = truncate(data.head_commit?.message);
       notification.prNumber = null;
       notification.repository = data.repository?.full_name;
       notification.url = data.compare;
       break;
+    }
 
     case "deployment":
-    case "deployment_status":
-      notification.title = `Deployment ${data.action || data.deployment_status?.state}`;
-      notification.message = `${data.deployment?.environment || "environment"}: ${data.deployment_status?.description || ""}`;
+    case "deployment_status": {
+      const status = data.deployment_status?.state || data.action;
+      const emoji = getStatusEmoji(status);
+      notification.title = `${emoji} Deploy: ${data.deployment?.environment || "env"}`;
+      notification.message = status;
       notification.prNumber = null;
       notification.repository = data.repository?.full_name;
       notification.url = data.deployment?.url || data.deployment_status?.target_url;
       break;
+    }
 
     default:
-      notification.title = `GitHub Event: ${event}`;
-      notification.message = `Action: ${data.action || "unknown"}`;
+      notification.title = `📌 ${event}`;
+      notification.message = data.action || "";
       notification.repository = data.repository?.full_name;
       notification.url = data.repository?.html_url;
   }

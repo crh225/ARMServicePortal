@@ -8,12 +8,53 @@ The backend runs on AKS (Azure Kubernetes Service) with the following infrastruc
 
 - **Argo Rollouts** — Blue-green deployments with automated pre/post analysis
 - **Istio Service Mesh** — Traffic management, mTLS, observability
-- **Redis** — Distributed caching across pods (deployed via Crossplane)
+- **Redis** — Distributed caching and notification storage (deployed via Crossplane)
+- **RabbitMQ** — Message queue for real-time notifications (deployed via Crossplane)
 - **Azure Key Vault** — Secrets synced via CSI driver
 
 ### URLs
 - Production: `https://portal-api.chrishouse.io`
 - Preview (Canary): `https://portal-api-preview.chrishouse.io`
+
+## Real-Time Notifications
+
+The portal supports real-time notifications for GitHub events (workflow runs, PRs, etc.) using the following architecture:
+
+```
+GitHub Webhooks → Webhook Relay (AKS) → RabbitMQ → Backend API → SSE → Frontend
+```
+
+### Components
+
+1. **Webhook Relay** (`functions/github-webhook-relay/`)
+   - Standalone Express server deployed to AKS
+   - Receives GitHub webhooks at `https://webhooks.chrishouse.io/api/webhooks/github`
+   - Verifies webhook signatures
+   - Transforms payloads into notifications
+   - Publishes to RabbitMQ exchange `github-webhooks`
+
+2. **RabbitMQ** (deployed via Crossplane)
+   - Topic exchange for routing notifications
+   - Durable queue `notifications` for message persistence
+   - Management UI at `https://rabbit-xp1-dev.pr.chrishouse.io`
+
+3. **Backend NotificationService** (`src/infrastructure/messaging/`)
+   - Consumes messages from RabbitMQ queue
+   - Stores notifications in Redis
+   - Broadcasts to connected clients via Server-Sent Events (SSE)
+
+4. **Frontend**
+   - Connects to SSE endpoint `/api/notifications/live`
+   - Displays toast notifications in real-time
+   - Persists notification state in context
+
+### Supported GitHub Events
+- `workflow_run` — CI/CD workflow status
+- `workflow_job` — Individual job status
+- `check_run` — Check suite results
+- `pull_request` — PR opened/closed/merged
+- `push` — Code pushed to branches
+- `deployment` / `deployment_status` — Deployment events
 
 ## Architecture Patterns
 
@@ -178,7 +219,16 @@ src/
 - `POST /api/terraform/generate` - Generate Terraform import code for unmanaged resources
 
 ### Webhooks
-- `POST /api/webhooks/github` - GitHub webhook endpoint
+- `POST /api/webhooks/github` - GitHub webhook endpoint (legacy, use webhook-relay instead)
+
+### Notifications
+- `GET /api/notifications` - List all notifications
+- `GET /api/notifications/live` - SSE endpoint for real-time notifications
+- `GET /api/notifications/status` - Get notification service status
+- `POST /api/notifications/:id/read` - Mark notification as read
+- `POST /api/notifications/mark-all-read` - Mark all notifications as read
+- `DELETE /api/notifications/:id` - Delete a notification
+- `DELETE /api/notifications` - Clear all notifications
 
 ### Health & Auth
 - `GET /api/health` - Health check endpoint (used by K8s probes)
@@ -209,9 +259,13 @@ src/
 - `AZURE_CLIENT_SECRET` - Service principal secret
 
 ### Redis Configuration
-- `REDIS_HOST` - Redis server hostname (default: `localhost`)
+- `REDIS_URL` - Redis connection URL (e.g., `redis://host:6379`)
+- `REDIS_HOST` - Redis server hostname (default: `localhost`, used if REDIS_URL not set)
 - `REDIS_PORT` - Redis server port (default: `6379`)
 - `REDIS_PASSWORD` - Redis authentication password
+
+### RabbitMQ Configuration
+- `RABBITMQ_URL` - AMQP connection URL (e.g., `amqp://user:pass@host:5672`)
 
 ## Caching
 

@@ -41,4 +41,11 @@ export class Notification {
       url: this.url
     };
   }
+
+  /**
+   * Convert to JSON-serializable object (alias for toDTO)
+   */
+  toJSON() {
+    return this.toDTO();
+  }
 }
