@@ -9,7 +9,6 @@ function NotificationBell({ notifications, unreadCount, onMarkAsRead, onNavigate
   const [isOpen, setIsOpen] = useState(false);
   const [hasNewNotification, setHasNewNotification] = useState(false);
   const dropdownRef = useRef(null);
-  const prevUnreadCount = useRef(unreadCount);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -26,14 +25,24 @@ function NotificationBell({ notifications, unreadCount, onMarkAsRead, onNavigate
     };
   }, [isOpen]);
 
-  // Animate bell when new notification arrives
+  // Animate bell when new notification arrives (based on filtered count)
+  const prevFilteredCount = useRef(0);
   useEffect(() => {
-    if (unreadCount > prevUnreadCount.current) {
+    // Filter and count unread for animation purposes
+    const currentFilteredUnread = notifications.filter(n => {
+      const content = ((n.title || '') + ' ' + (n.message || '')).toLowerCase();
+      const isRelevant = content.includes('success') || content.includes('failure') ||
+             content.includes('completed') || content.includes('failed') ||
+             content.includes('✅') || content.includes('❌');
+      return isRelevant && !n.read;
+    }).length;
+
+    if (currentFilteredUnread > prevFilteredCount.current) {
       setHasNewNotification(true);
       setTimeout(() => setHasNewNotification(false), 1000);
     }
-    prevUnreadCount.current = unreadCount;
-  }, [unreadCount]);
+    prevFilteredCount.current = currentFilteredUnread;
+  }, [notifications]);
 
   const toggleDropdown = () => {
     setIsOpen(!isOpen);
@@ -86,6 +95,9 @@ function NotificationBell({ notifications, unreadCount, onMarkAsRead, onNavigate
            content.includes('✅') || content.includes('❌');
   });
 
+  // Calculate unread count from filtered notifications only
+  const filteredUnreadCount = filteredNotifications.filter(n => !n.read).length;
+
   const getNotificationIcon = (notification) => {
     const { type, title, message } = notification;
 
@@ -128,9 +140,9 @@ function NotificationBell({ notifications, unreadCount, onMarkAsRead, onNavigate
         <svg className="notification-bell-icon" viewBox="0 0 20 20" fill="currentColor">
           <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
         </svg>
-        {unreadCount > 0 && (
+        {filteredUnreadCount > 0 && (
           <span className="notification-bell-badge">
-            {unreadCount > 99 ? '99+' : unreadCount}
+            {filteredUnreadCount > 99 ? '99+' : filteredUnreadCount}
           </span>
         )}
       </button>
@@ -139,7 +151,7 @@ function NotificationBell({ notifications, unreadCount, onMarkAsRead, onNavigate
         <div className="notification-dropdown">
           <div className="notification-dropdown-header">
             <h3 className="notification-dropdown-title">Notifications</h3>
-            {unreadCount > 0 && (
+            {filteredUnreadCount > 0 && (
               <button
                 className="notification-dropdown-mark-all"
                 onClick={handleMarkAllRead}

@@ -44,13 +44,16 @@ The system consists of four core components:
 - Creates branches, commits, and pull requests via the GitHub App installation
 - Extracts Terraform outputs from GitHub Action comments
 - Normalizes job history for the UI
-- Uses Redis for distributed caching across pods
+- Uses Redis for distributed caching and notification storage
+- Consumes GitHub webhooks via RabbitMQ for real-time notifications
+- Broadcasts notifications to clients via Server-Sent Events (SSE)
 
 ### 3. Kubernetes Platform (AKS)
 - **Argo Rollouts** — Blue-green deployments with automated analysis
 - **Istio Service Mesh** — Traffic management, mTLS, observability
 - **Crossplane** — GitOps-driven infrastructure provisioning
-- **Redis** — Shared cache for session and data caching
+- **Redis** — Distributed cache and notification storage (deployed via Crossplane)
+- **RabbitMQ** — Message queue for webhook-to-notification pipeline (deployed via Crossplane)
 - **Cert-Manager** — Automated TLS certificate management via Let's Encrypt
 
 ### 4. Infrastructure (Terraform + GitHub Actions)
@@ -73,24 +76,29 @@ The system consists of four core components:
                                     |     React / Vite          |
                                     +-------------+-------------+
                                                   |
-                                                  | HTTPS
+                                                  | HTTPS + SSE
                                                   v
 +-------------------------------------------------------------------------------------------+
 |                              Azure Kubernetes Service (AKS)                               |
 |  +-------------------------------------------------------------------------------------+  |
 |  |                              Istio Service Mesh                                     |  |
 |  |  +---------------------------+    +---------------------------+                     |  |
-|  |  |    Ingress Gateway        |--->|   Backend Service         |                     |  |
-|  |  |    (TLS Termination)      |    |   (Argo Rollouts)         |                     |  |
-|  |  +---------------------------+    +-------------+-------------+                     |  |
-|  |                                                 |                                   |  |
-|  |                    +----------------------------+----------------------------+      |  |
-|  |                    |                            |                            |      |  |
-|  |                    v                            v                            v      |  |
-|  |  +------------------+         +------------------+         +------------------+     |  |
-|  |  |  Active Pods     |         |  Preview Pods    |         |  Redis Cluster   |     |  |
-|  |  |  (Blue/Green)    |         |  (Canary)        |         |  (Cache)         |     |  |
-|  |  +------------------+         +------------------+         +------------------+     |  |
+|  |  |    Ingress Gateway        |--->|   Backend Service         |<----+              |  |
+|  |  |    (TLS Termination)      |    |   (Argo Rollouts)         |     |              |  |
+|  |  +---------------------------+    +-------------+-------------+     |              |  |
+|  |                                                 |                   |              |  |
+|  |                    +----------------------------+--------+          |              |  |
+|  |                    |                            |        |          |              |  |
+|  |                    v                            v        v          |              |  |
+|  |  +------------------+         +------------------+    +-------+     |              |  |
+|  |  |  Active Pods     |         |  Preview Pods    |    | Redis |     |              |  |
+|  |  |  (Blue/Green)    |         |  (Canary)        |    +-------+     |              |  |
+|  |  +------------------+         +------------------+                  |              |  |
+|  |                                                                     |              |  |
+|  |  +---------------------------+    +---------------------------+     |              |  |
+|  |  |  Webhook Relay            |    |  RabbitMQ                 |-----+              |  |
+|  |  |  (GitHub Webhooks)        |--->|  (Message Queue)          |                    |  |
+|  |  +---------------------------+    +---------------------------+                    |  |
 |  +-------------------------------------------------------------------------------------+  |
 |                                                                                           |
 |  +----------------------------------+    +----------------------------------+             |
@@ -98,9 +106,9 @@ The system consists of four core components:
 |  |  (Infrastructure Provisioning)   |    |  (TLS Certificates)             |             |
 |  +----------------------------------+    +----------------------------------+             |
 +-------------------------------------------------------------------------------------------+
-              |                                              |
-              | GitHub App API                               | Azure Resource Graph
-              v                                              v
+              |                 ^                                |
+              | GitHub App API  | Webhooks                       | Azure Resource Graph
+              v                 |                                v
 +-------------------------------+              +-------------------------------+
 |      GitHub Repository        |              |         Azure                 |
 |  - Terraform modules          |              |  - Container Registry         |
@@ -159,6 +167,28 @@ User Request
 | Frontend Jobs Dashboard   |
 +---------------------------+
 ```
+
+---
+
+## Real-Time Notifications
+
+The portal provides real-time notifications for GitHub events using a webhook-to-SSE pipeline:
+
+```text
+GitHub Webhooks → Webhook Relay → RabbitMQ → Backend API → SSE → Frontend
+```
+
+### Components
+- **Webhook Relay** — Standalone service that receives GitHub webhooks, validates signatures, and publishes to RabbitMQ
+- **RabbitMQ** — Topic exchange with durable queue for reliable message delivery
+- **Backend NotificationService** — Consumes messages, stores in Redis, broadcasts via SSE
+- **Frontend** — Connects to SSE endpoint for live updates, displays toast notifications
+
+### Supported Events
+- `workflow_run` — CI/CD workflow success/failure
+- `pull_request` — PR opened/closed/merged
+- `push` — Code pushed to main branch
+- `deployment` — Deployment status changes
 
 ---
 
@@ -233,13 +263,15 @@ Deployed to Azure Static Web Apps via GitHub Actions. The build uses `VITE_API_U
 /portal
   /frontend          # React/Vite SPA
   /backend           # Node.js API (DDD architecture)
+/functions
+  /github-webhook-relay  # Webhook receiver → RabbitMQ publisher
 /infra
   /modules           # Terraform modules (blueprints)
   /environments      # Per-environment Terraform configs
   /crossplane        # Kubernetes infrastructure manifests
     /cluster-setup   # Argo, Istio, Cert-Manager configs
-    /apps            # Application deployments (Rollouts)
-    /redis           # Redis cluster via Crossplane
+    /applications    # Application deployments (Rollouts)
+    /claims          # Redis, RabbitMQ via Crossplane
 /.github
   /workflows         # CI/CD pipelines
 ```
