@@ -35,7 +35,10 @@ export function generateFromBlueprintTemplate(blueprintId, resource, tfResourceT
 
   // Add mapped variables
   for (const [key, value] of Object.entries(moduleVars)) {
-    if (typeof value === 'string') {
+    // Handle boolean strings ("true"/"false") as actual booleans
+    if (value === 'true' || value === 'false') {
+      config += `  ${key} = ${value}\n`;
+    } else if (typeof value === 'string') {
       config += `  ${key} = "${value}"\n`;
     } else if (typeof value === 'number') {
       config += `  ${key} = ${value}\n`;
