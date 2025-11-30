@@ -71,27 +71,51 @@ function NotificationBell({ notifications, unreadCount, onMarkAsRead, onNavigate
     return date.toLocaleDateString();
   };
 
-  const getNotificationIcon = (type) => {
-    switch (type) {
-      case 'job_success':
-        return (
-          <svg className="notification-item-icon notification-item-icon--success" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-          </svg>
-        );
-      case 'job_failure':
-        return (
-          <svg className="notification-item-icon notification-item-icon--error" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-          </svg>
-        );
-      default:
-        return (
-          <svg className="notification-item-icon notification-item-icon--info" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-          </svg>
-        );
+  // Truncate long messages
+  const truncateMessage = (msg, maxLength = 60) => {
+    if (!msg) return '';
+    const firstLine = msg.split('\n')[0].trim();
+    return firstLine.length > maxLength ? firstLine.slice(0, maxLength - 3) + '...' : firstLine;
+  };
+
+  // Filter to only show success/failure notifications (reduce noise)
+  const filteredNotifications = notifications.filter(n => {
+    const content = ((n.title || '') + ' ' + (n.message || '')).toLowerCase();
+    return content.includes('success') || content.includes('failure') ||
+           content.includes('completed') || content.includes('failed') ||
+           content.includes('✅') || content.includes('❌');
+  });
+
+  const getNotificationIcon = (notification) => {
+    const { type, title, message } = notification;
+
+    // Determine status from title or message content
+    const content = ((title || '') + ' ' + (message || '')).toLowerCase();
+    const isSuccess = content.includes('success') || content.includes('completed') || content.includes('✅');
+    const isFailure = content.includes('failure') || content.includes('failed') || content.includes('❌');
+
+    if (isSuccess || type === 'job_success') {
+      return (
+        <svg className="notification-item-icon notification-item-icon--success" viewBox="0 0 20 20" fill="currentColor">
+          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+        </svg>
+      );
     }
+
+    if (isFailure || type === 'job_failure') {
+      return (
+        <svg className="notification-item-icon notification-item-icon--error" viewBox="0 0 20 20" fill="currentColor">
+          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+        </svg>
+      );
+    }
+
+    // Default info icon
+    return (
+      <svg className="notification-item-icon notification-item-icon--info" viewBox="0 0 20 20" fill="currentColor">
+        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+      </svg>
+    );
   };
 
   return (
@@ -126,7 +150,7 @@ function NotificationBell({ notifications, unreadCount, onMarkAsRead, onNavigate
           </div>
 
           <div className="notification-dropdown-list">
-            {notifications.length === 0 ? (
+            {filteredNotifications.length === 0 ? (
               <div className="notification-empty">
                 <svg className="notification-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -134,18 +158,18 @@ function NotificationBell({ notifications, unreadCount, onMarkAsRead, onNavigate
                 <p className="notification-empty-text">No notifications</p>
               </div>
             ) : (
-              notifications.slice(0, 10).map((notification) => (
+              filteredNotifications.slice(0, 10).map((notification) => (
                 <div
                   key={notification.id}
                   className={`notification-item ${!notification.read ? 'notification-item--unread' : ''}`}
                   onClick={() => handleNotificationClick(notification)}
                 >
                   <div className="notification-item-icon-wrapper">
-                    {getNotificationIcon(notification.type)}
+                    {getNotificationIcon(notification)}
                   </div>
                   <div className="notification-item-content">
                     <div className="notification-item-title">{notification.title}</div>
-                    <div className="notification-item-message">{notification.message}</div>
+                    <div className="notification-item-message">{truncateMessage(notification.message)}</div>
                     <div className="notification-item-time">{formatTimestamp(notification.timestamp)}</div>
                   </div>
                   {!notification.read && (

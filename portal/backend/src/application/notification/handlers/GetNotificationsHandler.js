@@ -20,7 +20,7 @@ export class GetNotificationsHandler extends IRequestHandler {
     try {
       const notifications = await this.notificationRepository.getAll(query.options);
       const total = notifications.length;
-      const unreadCount = this.notificationRepository.getUnreadCount();
+      const unreadCount = await this.notificationRepository.getUnreadCount();
 
       return Result.success({
         notifications: notifications.map(n => n.toDTO()),
