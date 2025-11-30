@@ -155,6 +155,16 @@ export async function estimateBlueprintCost(blueprintId, variables, blueprint = 
       });
       break;
 
+    case "azure-function":
+      const functionCost = await estimateFunctionCost(
+        location,
+        variables.sku_name || "Y1",
+        variables.os_type || "Linux",
+        variables.runtime_stack || "node"
+      );
+      estimates.push(functionCost);
+      break;
+
     case "xp-application-environment": {
       // Crossplane Application Environment - Kubernetes-based deployment
       // Cost is based on AKS node resources consumed, not Azure-managed services
@@ -718,6 +728,135 @@ async function estimateElkStackCost(
   });
 
   return estimates;
+}
+
+/**
+ * Estimate Azure Function costs
+ */
+async function estimateFunctionCost(location, skuName, osType, runtimeStack) {
+  // Azure Functions pricing tiers:
+  // - Y1 (Consumption): Pay per execution + execution time
+  // - EP1/EP2/EP3 (Premium): Monthly base + compute
+  // - B1/S1/P1v2 etc (Dedicated): Fixed monthly cost
+
+  const isConsumption = skuName === "Y1";
+  const isPremium = skuName.startsWith("EP");
+
+  if (isConsumption) {
+    // Consumption plan: First 1M executions free, then $0.20/million
+    // First 400,000 GB-s free, then $0.000016/GB-s
+    // For baseline estimate, assume light usage within free tier
+    return {
+      resourceType: "Azure Function (Consumption)",
+      skuName: `${skuName} - ${osType}/${runtimeStack}`,
+      monthlyEstimate: 0,
+      currency: "USD",
+      note: "Consumption plan: Pay-per-execution. First 1M executions and 400,000 GB-s/month free. Estimated $0 for light usage.",
+      breakdown: {
+        plan: "Consumption (Y1)",
+        executionsIncluded: "1,000,000 free",
+        gbSecondsIncluded: "400,000 free",
+        executionPricePerMillion: 0.20,
+        gbSecondPrice: 0.000016
+      }
+    };
+  }
+
+  if (isPremium) {
+    // Premium plan pricing (approximate rates)
+    const premiumPricing = {
+      EP1: { vcpu: 1, memoryGb: 3.5, pricePerHour: 0.173 },
+      EP2: { vcpu: 2, memoryGb: 7, pricePerHour: 0.346 },
+      EP3: { vcpu: 4, memoryGb: 14, pricePerHour: 0.692 }
+    };
+
+    const planDetails = premiumPricing[skuName] || premiumPricing.EP1;
+    const hoursPerMonth = 730;
+    const monthlyComputeCost = planDetails.pricePerHour * hoursPerMonth;
+
+    // Storage Account for function (~$1/month for minimal usage)
+    const storageCost = 1;
+    // Application Insights (~$2.30/GB, estimate 1GB/month)
+    const appInsightsCost = 2.30;
+
+    const totalMonthlyCost = monthlyComputeCost + storageCost + appInsightsCost;
+
+    return {
+      resourceType: "Azure Function (Premium)",
+      skuName: `${skuName} - ${osType}/${runtimeStack}`,
+      monthlyEstimate: parseFloat(totalMonthlyCost.toFixed(2)),
+      currency: "USD",
+      note: `Premium plan with ${planDetails.vcpu} vCPU, ${planDetails.memoryGb}GB RAM. Always-on, VNet integration, no cold starts. Includes storage + App Insights.`,
+      breakdown: {
+        plan: `Premium (${skuName})`,
+        vcpu: planDetails.vcpu,
+        memoryGb: planDetails.memoryGb,
+        computeCost: parseFloat(monthlyComputeCost.toFixed(2)),
+        storageCost: storageCost,
+        appInsightsCost: appInsightsCost,
+        hoursPerMonth: hoursPerMonth
+      }
+    };
+  }
+
+  // Dedicated (App Service) plans
+  const prices = await fetchAzurePricing({
+    serviceName: "Azure App Service",
+    armRegionName: location
+  });
+
+  // Fallback pricing for common dedicated plans
+  const dedicatedPricing = {
+    B1: 13.14,
+    B2: 26.28,
+    B3: 52.56,
+    S1: 73.00,
+    S2: 146.00,
+    S3: 292.00,
+    P1v2: 73.00,
+    P2v2: 146.00,
+    P3v2: 292.00,
+    P1v3: 109.50,
+    P2v3: 219.00,
+    P3v3: 438.00
+  };
+
+  // Try to find actual price from API
+  const appServicePrice = prices.find(
+    (p) =>
+      p.skuName && p.skuName.includes(skuName) &&
+      p.meterName && !p.meterName.includes("Slot")
+  );
+
+  const hoursPerMonth = 730;
+  let monthlyComputeCost;
+
+  if (appServicePrice) {
+    monthlyComputeCost = appServicePrice.retailPrice * hoursPerMonth;
+  } else {
+    monthlyComputeCost = dedicatedPricing[skuName] || 73.00; // Default to S1 price
+  }
+
+  // Storage Account for function (~$1/month for minimal usage)
+  const storageCost = 1;
+  // Application Insights (~$2.30/GB, estimate 1GB/month)
+  const appInsightsCost = 2.30;
+
+  const totalMonthlyCost = monthlyComputeCost + storageCost + appInsightsCost;
+
+  return {
+    resourceType: "Azure Function (Dedicated)",
+    skuName: `${skuName} - ${osType}/${runtimeStack}`,
+    monthlyEstimate: parseFloat(totalMonthlyCost.toFixed(2)),
+    currency: "USD",
+    note: `Dedicated App Service plan (${skuName}). Fixed cost regardless of executions. Includes storage + App Insights.`,
+    breakdown: {
+      plan: `Dedicated (${skuName})`,
+      computeCost: parseFloat(monthlyComputeCost.toFixed(2)),
+      storageCost: storageCost,
+      appInsightsCost: appInsightsCost
+    }
+  };
 }
 
 /**

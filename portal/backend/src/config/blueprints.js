@@ -682,6 +682,129 @@ export const BLUEPRINTS = [
     ],
     estimatedMonthlyCost: 95
   },
+  {
+    id: "azure-function",
+    version: "1.0.0",
+    displayName: "Azure Function App",
+    description: "Serverless compute for event-driven applications. Automatically scales based on demand with pay-per-execution pricing. Perfect for APIs, webhooks, scheduled tasks, and event processing.",
+    category: "Compute",
+    moduleSource: "../../modules/azure-function",
+    variables: [
+      {
+        name: "project_name",
+        label: "Project Name",
+        type: "string",
+        required: true
+      },
+      {
+        name: "environment",
+        label: "Environment",
+        type: "select",
+        required: true,
+        options: ["dev", "qa", "staging", "prod"],
+        default: "dev"
+      },
+      {
+        name: "subscription_id",
+        label: "Azure Subscription",
+        type: "string",
+        required: true
+      },
+      {
+        name: "resource_group_name",
+        label: "Resource Group Name",
+        type: "string",
+        required: true
+      },
+      {
+        name: "location",
+        label: "Location",
+        type: "select",
+        required: true,
+        options: ["eastus", "eastus2", "westus", "westus2", "westus3", "centralus", "northcentralus", "southcentralus", "westcentralus"],
+        default: "eastus2"
+      },
+      {
+        name: "runtime_stack",
+        label: "Runtime Stack",
+        type: "select",
+        required: true,
+        options: ["node", "dotnet", "python", "java", "powershell"],
+        default: "node"
+      },
+      {
+        name: "runtime_version",
+        label: "Runtime Version",
+        type: "select",
+        required: true,
+        options: ["18", "20", "22"],
+        default: "20",
+        helpText: "For Node.js: 18, 20, 22. For other runtimes, version numbers may vary."
+      },
+      {
+        name: "os_type",
+        label: "Operating System",
+        type: "select",
+        required: true,
+        options: ["Linux", "Windows"],
+        default: "Linux"
+      },
+      {
+        name: "sku_name",
+        label: "Pricing Plan",
+        type: "select",
+        required: true,
+        options: ["Y1", "EP1", "EP2", "EP3", "B1", "S1", "P1v2", "P1v3"],
+        default: "Y1",
+        helpText: "Y1 = Consumption (pay per execution). EP = Elastic Premium. B/S/P = Dedicated plans."
+      },
+      {
+        name: "always_on",
+        label: "Always On",
+        type: "select",
+        required: false,
+        options: ["true", "false"],
+        default: "false",
+        helpText: "Keep the function app always running (not available on Consumption plan)"
+      }
+    ],
+    outputs: [
+      {
+        name: "function_app_name",
+        description: "Name of the Function App"
+      },
+      {
+        name: "function_app_url",
+        description: "URL to access the Function App"
+      },
+      {
+        name: "default_hostname",
+        description: "Default hostname of the Function App"
+      },
+      {
+        name: "storage_account_name",
+        description: "Storage account used by the Function App"
+      },
+      {
+        name: "app_service_plan_name",
+        description: "App Service Plan name"
+      },
+      {
+        name: "application_insights_name",
+        description: "Application Insights instance name"
+      },
+      {
+        name: "resource_group_name",
+        description: "Resource group containing the Function App"
+      }
+    ],
+    estimatedMonthlyCost: 0,
+    costDetails: {
+      consumption: "Pay-per-execution: First 1M executions/month free, then $0.20 per million. First 400,000 GB-s free, then $0.000016/GB-s.",
+      premium: "EP1 starts at ~$173/month, EP2 ~$345/month, EP3 ~$690/month",
+      dedicated: "B1 ~$13/month, S1 ~$73/month, P1v2 ~$81/month"
+    }
+  },
   // ============================================================
   // CROSSPLANE BLUEPRINTS
   // ============================================================
