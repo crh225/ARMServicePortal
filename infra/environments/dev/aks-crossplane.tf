@@ -38,6 +38,11 @@ resource "azurerm_kubernetes_cluster" "crossplane" {
     type = "SystemAssigned"
   }
 
+  # Enable OIDC issuer and Workload Identity for Azure AD integration
+  # Required for Azure App Configuration feature flags via managed identity
+  oidc_issuer_enabled       = true
+  workload_identity_enabled = true
+
   # Enable RBAC
   role_based_access_control_enabled = true
 
@@ -84,4 +89,9 @@ output "aks_crossplane_resource_group" {
 
 output "aks_crossplane_principal_id" {
   value = azurerm_kubernetes_cluster.crossplane.identity[0].principal_id
+}
+
+output "aks_crossplane_oidc_issuer_url" {
+  value       = azurerm_kubernetes_cluster.crossplane.oidc_issuer_url
+  description = "OIDC issuer URL for Workload Identity federation"
 }
