@@ -13,6 +13,8 @@ import Footer from "./components/shared/Footer";
 import ToastContainer from "./components/shared/Toast";
 import useNotifications from "./hooks/useNotifications";
 import notificationService from "./services/notificationService";
+import { useFeatureFlag } from "./hooks/useFeatureFlags";
+import { useFeaturePreferences } from "./contexts/FeaturePreferencesContext";
 
 /**
  * Main App component
@@ -25,6 +27,11 @@ function App() {
     return searchParams.get("tab") || "home";
   });
   const [updateResourceData, setUpdateResourceData] = useState(null);
+
+  // Feature flag for notifications (user preference overrides server flag)
+  const serverNotificationsEnabled = useFeatureFlag("notifications");
+  const { getFeatureEnabled } = useFeaturePreferences();
+  const notificationsEnabled = getFeatureEnabled("notifications", serverNotificationsEnabled);
 
   // Handle notification click - navigate to job
   const handleNotificationNavigate = (notification) => {
@@ -131,12 +138,14 @@ function App() {
             <Footer />
           </div>
 
-          {/* Toast notifications */}
-          <ToastContainer
-            toasts={toasts}
-            onClose={removeToast}
-            onNavigate={handleNotificationNavigate}
-          />
+          {/* Toast notifications - only show when notifications feature is enabled */}
+          {notificationsEnabled && (
+            <ToastContainer
+              toasts={toasts}
+              onClose={removeToast}
+              onNavigate={handleNotificationNavigate}
+            />
+          )}
         </div>
       } />
     </Routes>

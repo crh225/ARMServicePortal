@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import NotificationBell from "./NotificationBell";
 import { useFeatureFlag } from "../../hooks/useFeatureFlags";
+import { useFeaturePreferences } from "../../contexts/FeaturePreferencesContext";
 import "../../styles/Header.css";
 
 function Header({ activeTab, onTabChange, notifications, unreadCount, onMarkAsRead, onNavigate, onMarkAllAsRead }) {
@@ -9,8 +10,12 @@ function Header({ activeTab, onTabChange, notifications, unreadCount, onMarkAsRe
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
 
-  // Feature flag for notifications - defaults to true if flag service unavailable
-  const notificationsEnabled = useFeatureFlag("notifications");
+  // Server-side feature flag for notifications
+  const serverNotificationsEnabled = useFeatureFlag("notifications");
+
+  // User preferences (can override server flags, defaults to server flag if not set)
+  const { getFeatureEnabled, setFeatureEnabled } = useFeaturePreferences();
+  const notificationsEnabled = getFeatureEnabled("notifications", serverNotificationsEnabled);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -77,6 +82,23 @@ function Header({ activeTab, onTabChange, notifications, unreadCount, onMarkAsRe
                       <div className="user-dropdown-name">{user.name || user.login}</div>
                       <div className="user-dropdown-username">@{user.login}</div>
                     </div>
+                    <div className="user-dropdown-divider" />
+                    <div className="user-dropdown-section">
+                      <div className="user-dropdown-section-title">Features</div>
+                      <label className="feature-toggle">
+                        <span className="feature-toggle-label">Notifications</span>
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={notificationsEnabled}
+                          className={`toggle-pill ${notificationsEnabled ? "toggle-pill--on" : ""}`}
+                          onClick={() => setFeatureEnabled("notifications", !notificationsEnabled)}
+                        >
+                          <span className="toggle-pill-knob" />
+                        </button>
+                      </label>
+                    </div>
+                    <div className="user-dropdown-divider" />
                     <button className="user-dropdown-logout" onClick={logout}>
                       Logout
                     </button>
