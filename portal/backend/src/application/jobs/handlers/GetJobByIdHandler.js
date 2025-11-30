@@ -22,9 +22,9 @@ export class GetJobByIdHandler extends IRequestHandler {
       // Validate job ID
       const jobId = new JobId(query.jobIdValue);
 
-      // Get job from repository
-      const job = await this.jobRepository.getById(jobId);
-      return Result.success(job);
+      // Repository now returns Result
+      const result = await this.jobRepository.getById(jobId);
+      return result;
     } catch (error) {
       return Result.failure(error);
     }

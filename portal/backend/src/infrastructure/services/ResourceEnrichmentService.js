@@ -9,53 +9,37 @@ import { getSubscriptionCosts } from "../external/AzureCostManagementClient.js";
 import { estimateResourceCost } from "../external/ResourceCostEstimator.js";
 
 export class ResourceEnrichmentService extends IResourceEnrichmentService {
-  /**
-   * Extract PR numbers from resources
-   */
-  extractPRNumbers(resources) {
-    const prNumbers = new Set();
-    const moduleNames = new Set();
+  async enrichResourcesWithPRs(resources, includeCosts = false) {
+    // Convert raw resources to Resource entities for domain logic access
+    const resourceEntities = resources.map(r =>
+      r instanceof Resource ? r : new Resource(r)
+    );
 
-    resources.forEach(resource => {
-      const requestId = resource.tags?.["armportal-request-id"];
-      if (requestId) {
-        const prNumber = parseInt(requestId, 10);
-        if (!isNaN(prNumber)) {
-          prNumbers.add(prNumber);
-        } else {
-          // Legacy: module name (for resources created before PR number tagging)
-          moduleNames.add(requestId);
-        }
+    // Use domain entity's static method for extracting request IDs
+    const { prNumbers, moduleNames } = Resource.extractRequestIds(resourceEntities);
+
+    // Fetch all PRs in parallel (handle Result pattern)
+    const prPromises = prNumbers.map(async prNumber => {
+      try {
+        const result = await getGitHubRequestByNumber(prNumber);
+        // Handle Result pattern - extract value if successful
+        const pr = result.isSuccess ? result.value : null;
+        return { prNumber, pr };
+      } catch {
+        return { prNumber, pr: null };
       }
     });
-
-    return {
-      prNumbers: Array.from(prNumbers),
-      moduleNames: Array.from(moduleNames)
-    };
-  }
-
-  async enrichResourcesWithPRs(resources, includeCosts = false) {
-    const { prNumbers, moduleNames } = this.extractPRNumbers(resources);
-
-    // Fetch all PRs in parallel
-    const prPromises = prNumbers.map(prNumber =>
-      getGitHubRequestByNumber(prNumber)
-        .then(pr => ({ prNumber, pr }))
-        .catch(() => ({ prNumber, pr: null }))
-    );
 
     const prResults = await Promise.all(prPromises);
     const prMap = new Map(prResults.map(({ prNumber, pr }) => [prNumber, pr]));
 
-    // For legacy module names, look up the PR
+    // For legacy module names, look up the PR using domain method
     const moduleNameMap = new Map();
     const baseModuleNameMap = new Map();
 
     moduleNames.forEach(moduleName => {
-      const baseModuleName = moduleName.includes('_')
-        ? moduleName.split('_').slice(0, -1).join('_')
-        : moduleName;
+      // Use domain entity's static method for base module name extraction
+      const baseModuleName = Resource.getBaseModuleName(moduleName);
 
       if (!baseModuleNameMap.has(baseModuleName)) {
         baseModuleNameMap.set(baseModuleName, []);
@@ -65,7 +49,9 @@ export class ResourceEnrichmentService extends IResourceEnrichmentService {
 
     const uniqueBaseModulePromises = Array.from(baseModuleNameMap.keys()).map(async baseModuleName => {
       try {
-        const pr = await findPRByModuleName(baseModuleName);
+        const result = await findPRByModuleName(baseModuleName);
+        // Handle Result pattern - extract value if successful
+        const pr = result.isSuccess ? result.value : null;
         return { baseModuleName, pr };
       } catch (error) {
         console.error(`Failed to find PR for module ${baseModuleName}:`, error);
@@ -134,60 +120,50 @@ export class ResourceEnrichmentService extends IResourceEnrichmentService {
       estimatedCostsResults.map(({ id, estimatedCost }) => [id, estimatedCost])
     );
 
-    // Enrich each resource
-    return resources.map(resource => {
-      const requestId = resource.tags?.["armportal-request-id"];
-      const prNumber = requestId ? parseInt(requestId, 10) : null;
+    // Enrich each resource using domain entity methods
+    return resourceEntities.map((resourceEntity, index) => {
+      const resource = resources[index]; // Keep reference to original raw resource
 
+      // Use domain entity's method for parsing request ID
+      const { prNumber, moduleName } = resourceEntity.parseRequestId();
+
+      // Look up PR from maps
       let pr = null;
-      if (prNumber && !isNaN(prNumber)) {
+      if (prNumber) {
         pr = prMap.get(prNumber);
-      } else if (requestId && moduleNameMap.has(requestId)) {
-        pr = moduleNameMap.get(requestId);
+      } else if (moduleName && moduleNameMap.has(moduleName)) {
+        pr = moduleNameMap.get(moduleName);
       }
 
-      let provisioningState = null;
-      let health = null;
+      // Use domain entity's method for deriving health state
+      const { provisioningState, health } = resourceEntity.deriveHealthState();
 
-      const resourceType = (resource.type || "").toLowerCase();
-      const isResourceGroup = resourceType === "microsoft.resources/resourcegroups";
-
-      if (resourceType !== "microsoft.resources/subscriptions" && !isResourceGroup) {
-        provisioningState = resource.properties?.provisioningState || null;
-        health = provisioningState;
-      }
-
+      // Determine cost based on resource type (uses domain entity methods)
       let cost = null;
       if (includeCosts) {
-        if (isResourceGroup) {
-          const rgKey = `${resource.subscriptionId}|${resource.name}`;
+        if (resourceEntity.isResourceGroup()) {
+          const rgKey = `${resourceEntity.subscriptionId}|${resourceEntity.name}`;
           cost = allRgTotals.get(rgKey);
           cost = cost !== undefined ? cost : 0;
         } else {
-          const resourceCost = allCostsMap.get(resource.id.toLowerCase());
+          const resourceCost = allCostsMap.get(resourceEntity.id.toLowerCase());
           cost = resourceCost !== undefined ? resourceCost : 0;
         }
       }
 
-      const estimatedMonthlyCost = estimatedCostsMap.get(resource.id);
+      const estimatedMonthlyCost = estimatedCostsMap.get(resourceEntity.id);
 
-      // Create Resource entity with business logic
-      return new Resource({
-        id: resource.id,
-        name: resource.name,
-        type: resource.type,
-        location: resource.location,
-        resourceGroup: resource.resourceGroup,
-        subscriptionId: resource.subscriptionId,
-        tags: resource.tags || {},
-        properties: resource.properties || {},
-        provisioningState,
-        health,
-        cost,
-        estimatedMonthlyCost,
-        prNumber,
-        pr
-      });
+      // Enrich the entity using domain methods
+      resourceEntity.enrichWithPR(pr);
+      resourceEntity.enrichWithCost(cost);
+      resourceEntity.enrichWithEstimatedCost(estimatedMonthlyCost);
+
+      // Update provisioning state and health
+      resourceEntity.provisioningState = provisioningState;
+      resourceEntity.health = health;
+      resourceEntity.prNumber = prNumber;
+
+      return resourceEntity;
     });
   }
 }

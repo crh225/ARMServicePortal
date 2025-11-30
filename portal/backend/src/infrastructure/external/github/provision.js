@@ -8,6 +8,7 @@ import { isCrossplane, renderCrossplaneClaim, getCrossplaneFilePath } from "../.
 import { ensureBranch, commitFile, getFileContent } from "./utils/gitOperations.js";
 import { createPR, generatePRBody } from "./utils/prOperations.js";
 import { DEFAULT_BASE_BRANCH } from "../../../config/githubConstants.js";
+import { Result } from "../../../domain/common/Result.js";
 
 /**
  * Generate a unique branch name for provision request
@@ -74,13 +75,13 @@ async function getExistingFileSha(octokit, owner, repo, filePath, baseBranch) {
 export async function createGitHubRequest({ environment, blueprintId, blueprintVersion, variables, moduleName: providedModuleName, createdBy }) {
   const blueprint = getBlueprintById(blueprintId, blueprintVersion);
   if (!blueprint) {
-    throw new Error(`Unknown blueprintId: ${blueprintId}${blueprintVersion ? `@${blueprintVersion}` : ''}`);
+    return Result.notFound(`Unknown blueprintId: ${blueprintId}${blueprintVersion ? `@${blueprintVersion}` : ''}`);
   }
 
   const { infraOwner, infraRepo } = getGitHubConfig();
 
   if (!infraOwner || !infraRepo) {
-    throw new Error("GH_INFRA_OWNER and GH_INFRA_REPO must be set");
+    return Result.failure("GH_INFRA_OWNER and GH_INFRA_REPO environment variables must be set");
   }
 
   const octokit = await getInstallationClient();
@@ -115,38 +116,44 @@ export async function createGitHubRequest({ environment, blueprintId, blueprintV
   });
 
   // Route to Crossplane or Terraform rendering based on provider
-  if (isCrossplane(blueprint)) {
-    return await createCrossplaneRequest({
-      octokit,
-      infraOwner,
-      infraRepo,
-      baseBranch,
-      branchName,
-      blueprint,
-      variables,
-      moduleName,
-      shortId,
-      isUpdate,
-      environment,
-      createdBy
-    });
+  try {
+    let result;
+    if (isCrossplane(blueprint)) {
+      result = await createCrossplaneRequest({
+        octokit,
+        infraOwner,
+        infraRepo,
+        baseBranch,
+        branchName,
+        blueprint,
+        variables,
+        moduleName,
+        shortId,
+        isUpdate,
+        environment,
+        createdBy
+      });
+    } else {
+      // Terraform path (existing logic)
+      result = await createTerraformRequest({
+        octokit,
+        infraOwner,
+        infraRepo,
+        baseBranch,
+        branchName,
+        blueprint,
+        variables,
+        moduleName,
+        shortId,
+        isUpdate,
+        environment,
+        createdBy
+      });
+    }
+    return Result.success(result);
+  } catch (error) {
+    return Result.failure(error);
   }
-
-  // Terraform path (existing logic)
-  return await createTerraformRequest({
-    octokit,
-    infraOwner,
-    infraRepo,
-    baseBranch,
-    branchName,
-    blueprint,
-    variables,
-    moduleName,
-    shortId,
-    isUpdate,
-    environment,
-    createdBy
-  });
 }
 
 /**

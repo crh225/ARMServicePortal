@@ -5,6 +5,7 @@ import { fetchTerraformOutputs } from "./terraform.js";
 import { fileExists } from "./utils/gitOperations.js";
 import { DEFAULT_BASE_BRANCH } from "../../../config/githubConstants.js";
 import { cache } from "../../utils/Cache.js";
+import { Result } from "../../../domain/common/Result.js";
 
 // Cache TTL: 10 minutes for PR data
 const PR_CACHE_TTL = 10 * 60 * 1000;
@@ -20,15 +21,16 @@ const MODULE_INDEX_TTL = 5 * 60 * 1000; // 5 minutes
 
 /**
  * Validate GitHub configuration
+ * @returns {Result<{infraOwner: string, infraRepo: string}>} Result with config or error
  */
 function validateGitHubConfig() {
   const { infraOwner, infraRepo } = getGitHubConfig();
 
   if (!infraOwner || !infraRepo) {
-    throw new Error("GH_INFRA_OWNER and GH_INFRA_REPO must be set");
+    return Result.failure("GH_INFRA_OWNER and GH_INFRA_REPO environment variables must be set");
   }
 
-  return { infraOwner, infraRepo };
+  return Result.success({ infraOwner, infraRepo });
 }
 
 /**
@@ -197,9 +199,14 @@ async function checkResourceExists(octokit, owner, repo, filePath, baseBranch, i
 
 /**
  * List all pull requests that match the "requests/" pattern
+ * @returns {Promise<Result>} Result containing jobs array or error
  */
 export async function listGitHubRequests({ environment } = {}) {
-  const { infraOwner, infraRepo } = validateGitHubConfig();
+  const configResult = validateGitHubConfig();
+  if (configResult.isFailure) {
+    return configResult;
+  }
+  const { infraOwner, infraRepo } = configResult.value;
   const octokit = await getInstallationClient();
 
   // Fetch all PRs using pagination (GitHub max is 100 per page)
@@ -224,11 +231,12 @@ export async function listGitHubRequests({ environment } = {}) {
     jobs.push(buildBasicJob(pr, environment));
   }
 
-  return jobs;
+  return Result.success(jobs);
 }
 
 /**
  * Get detailed information for a specific pull request (with caching)
+ * @returns {Promise<Result>} Result containing PR data or error
  */
 export async function getGitHubRequestByNumber(prNumber) {
   const cacheKey = `pr:details:${prNumber}`;
@@ -237,12 +245,16 @@ export async function getGitHubRequestByNumber(prNumber) {
   const cached = await cache.get(cacheKey);
   if (cached) {
     console.log(`[Cache HIT] Using cached PR data for #${prNumber}`);
-    return cached;
+    return Result.success(cached);
   }
 
   console.log(`[Cache MISS] Fetching fresh PR data for #${prNumber}`);
 
-  const { infraOwner, infraRepo } = validateGitHubConfig();
+  const configResult = validateGitHubConfig();
+  if (configResult.isFailure) {
+    return configResult;
+  }
+  const { infraOwner, infraRepo } = configResult.value;
   const octokit = await getInstallationClient();
 
   // Get PR details
@@ -290,15 +302,21 @@ export async function getGitHubRequestByNumber(prNumber) {
   await cache.set(cacheKey, prData, PR_CACHE_TTL);
   console.log(`[Cache STORED] Cached PR #${prNumber} (TTL: 1hr)`);
 
-  return prData;
+  return Result.success(prData);
 }
 
 /**
  * Build an index of module names to PR numbers
  * This parses PR branch names to extract module names (very efficient - just 1 API call!)
+ * @returns {Promise<Map>} Map of file paths to PR numbers
  */
 async function buildModuleIndex(environment = 'dev') {
-  const { infraOwner, infraRepo } = validateGitHubConfig();
+  const configResult = validateGitHubConfig();
+  if (configResult.isFailure) {
+    console.error('Failed to build module index:', configResult.error.message);
+    return new Map();
+  }
+  const { infraOwner, infraRepo } = configResult.value;
   const octokit = await getInstallationClient();
 
   const index = new Map(); // filepath -> PR number
@@ -355,6 +373,7 @@ async function buildModuleIndex(environment = 'dev') {
  * Find PR that created a specific module/stack by looking for the .tf file
  * This is used for stack components where the request-id is the module name, not a PR number
  * Uses a cached index to minimize GitHub API calls
+ * @returns {Promise<Result|null>} Result containing PR data, null if not found, or error
  */
 export async function findPRByModuleName(moduleName, environment = 'dev') {
   const cacheKey = `${environment}:${moduleName}`;
@@ -363,7 +382,7 @@ export async function findPRByModuleName(moduleName, environment = 'dev') {
   if (modulePRCache.has(cacheKey)) {
     const cachedPRNumber = modulePRCache.get(cacheKey);
     if (cachedPRNumber === null) {
-      return null; // Previously failed to find PR
+      return Result.notFound(`PR not found for module: ${moduleName}`);
     }
     return getGitHubRequestByNumber(cachedPRNumber);
   }
@@ -387,5 +406,5 @@ export async function findPRByModuleName(moduleName, environment = 'dev') {
 
   // Not found - cache negative result
   modulePRCache.set(cacheKey, null);
-  return null;
+  return Result.notFound(`PR not found for module: ${moduleName}`);
 }

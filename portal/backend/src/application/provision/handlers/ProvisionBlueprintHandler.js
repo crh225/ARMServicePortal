@@ -65,8 +65,8 @@ export class ProvisionBlueprintHandler extends IRequestHandler {
       // Apply auto-fill (entity handles logic)
       const finalVariables = provisionRequest.applyAutoFill(this.policyService);
 
-      // Create GitHub request
-      const gh = await this.gitHubProvisionService.createRequest({
+      // Create GitHub request (returns Result)
+      const ghResult = await this.gitHubProvisionService.createRequest({
         environment: provisionRequest.environment,
         blueprintId: provisionRequest.blueprintId,
         blueprintVersion: blueprint.version,
@@ -75,8 +75,13 @@ export class ProvisionBlueprintHandler extends IRequestHandler {
         createdBy: provisionRequest.createdBy
       });
 
+      // Handle GitHub service failure
+      if (ghResult.isFailure) {
+        return ghResult;
+      }
+
       // Mark as submitted (entity handles state change)
-      provisionRequest.markAsSubmitted(gh);
+      provisionRequest.markAsSubmitted(ghResult.value);
 
       return Result.success({
         ...provisionRequest.toResult(),

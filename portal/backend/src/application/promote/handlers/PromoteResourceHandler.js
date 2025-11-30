@@ -30,8 +30,12 @@ export class PromoteResourceHandler extends IRequestHandler {
       // Create JobId value object
       const jobId = new JobId(command.prNumber);
 
-      // Get the source job/resource details as raw data
-      const sourceJobData = await this.jobRepository.getById(jobId);
+      // Get the source job/resource details (returns Result)
+      const sourceJobResult = await this.jobRepository.getById(jobId);
+      if (sourceJobResult.isFailure) {
+        return sourceJobResult;
+      }
+      const sourceJobData = sourceJobResult.value;
 
       // Create Job entity with business logic
       const sourceJob = new Job(sourceJobData);

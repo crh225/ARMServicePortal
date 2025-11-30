@@ -60,6 +60,42 @@ export class Resource {
   }
 
   /**
+   * Parse request ID to determine if it's a PR number or module name
+   * @returns {{ prNumber: number|null, moduleName: string|null }}
+   */
+  parseRequestId() {
+    const requestId = this.getRequestId();
+    if (!requestId) {
+      return { prNumber: null, moduleName: null };
+    }
+
+    const prNumber = parseInt(requestId, 10);
+    if (!isNaN(prNumber)) {
+      return { prNumber, moduleName: null };
+    }
+
+    // Legacy: module name (for resources created before PR number tagging)
+    return { prNumber: null, moduleName: requestId };
+  }
+
+  /**
+   * Derive provisioning state and health based on resource type
+   * Some resource types don't have these properties
+   */
+  deriveHealthState() {
+    // Subscriptions and resource groups don't have provisioning state
+    if (this.isSubscription() || this.isResourceGroup()) {
+      return { provisioningState: null, health: null };
+    }
+
+    const provisioningState = this.properties?.provisioningState || null;
+    return {
+      provisioningState,
+      health: provisioningState // Health is derived from provisioning state
+    };
+  }
+
+  /**
    * Get the owner of this resource
    */
   getOwner() {
@@ -219,5 +255,43 @@ export class Resource {
       isHealthy: this.isHealthy(),
       hasCostData: this.hasCostData()
     };
+  }
+
+  /**
+   * Extract PR numbers and module names from a collection of resources
+   * @param {Resource[]} resources - Array of Resource entities
+   * @returns {{ prNumbers: number[], moduleNames: string[] }}
+   */
+  static extractRequestIds(resources) {
+    const prNumbers = new Set();
+    const moduleNames = new Set();
+
+    resources.forEach(resource => {
+      const { prNumber, moduleName } = resource.parseRequestId();
+      if (prNumber) {
+        prNumbers.add(prNumber);
+      }
+      if (moduleName) {
+        moduleNames.add(moduleName);
+      }
+    });
+
+    return {
+      prNumbers: Array.from(prNumbers),
+      moduleNames: Array.from(moduleNames)
+    };
+  }
+
+  /**
+   * Get the base module name (strips the unique suffix)
+   * Used for looking up PRs for legacy module names
+   * @param {string} moduleName - The module name from the tag
+   * @returns {string} The base module name
+   */
+  static getBaseModuleName(moduleName) {
+    if (!moduleName) return null;
+    return moduleName.includes('_')
+      ? moduleName.split('_').slice(0, -1).join('_')
+      : moduleName;
   }
 }

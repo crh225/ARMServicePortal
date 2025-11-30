@@ -26,8 +26,9 @@ export class GetAllJobsHandler extends IRequestHandler {
             : undefined
       };
 
-      const jobs = await this.jobRepository.getAll(filterOptions);
-      return Result.success(jobs);
+      // Repository now returns Result
+      const result = await this.jobRepository.getAll(filterOptions);
+      return result;
     } catch (error) {
       return Result.failure(error);
     }

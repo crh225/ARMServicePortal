@@ -1,6 +1,7 @@
 /**
  * GitHub Job Repository
  * Implements IJobRepository using GitHub PR services
+ * Returns Result objects following the Result pattern
  */
 import { IJobRepository } from "../../../domain/repositories/IJobRepository.js";
 import { listGitHubRequests, getGitHubRequestByNumber } from "../../external/github/pullRequests.js";
@@ -8,6 +9,8 @@ import { listGitHubRequests, getGitHubRequestByNumber } from "../../external/git
 export class GitHubJobRepository extends IJobRepository {
   /**
    * Get all jobs with optional environment filter
+   * @param {object} options - Filter options
+   * @returns {Promise<Result>} Result containing jobs array or error
    */
   async getAll(options = {}) {
     return await listGitHubRequests(options);
@@ -15,6 +18,8 @@ export class GitHubJobRepository extends IJobRepository {
 
   /**
    * Get job by ID
+   * @param {JobId} jobId - The job ID value object
+   * @returns {Promise<Result>} Result containing job data or error
    */
   async getById(jobId) {
     return await getGitHubRequestByNumber(jobId.value);

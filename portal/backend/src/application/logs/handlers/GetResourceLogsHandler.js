@@ -28,13 +28,13 @@ export class GetResourceLogsHandler extends IRequestHandler {
         return Result.validationFailure([{ field: 'tail', message: 'tail must be a number between 1 and 1000' }]);
       }
 
-      // Fetch logs from repository
-      const logsData = await this.logsRepository.getLogs(resourceId, {
+      // Fetch logs from repository (returns Result)
+      const result = await this.logsRepository.getLogs(resourceId, {
         tail,
         timeRange: query.timeRange || '1h'
       });
 
-      return Result.success(logsData);
+      return result;
     } catch (error) {
       return Result.failure(error);
     }

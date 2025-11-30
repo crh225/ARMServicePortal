@@ -1,7 +1,12 @@
 import crypto from "crypto";
+import { getSessionRepository } from "../infrastructure/persistence/repositories/InMemorySessionRepository.js";
 
-// (replace with Redis/DB in production)
-const sessions = new Map();
+// Get the session repository instance
+const sessionRepository = getSessionRepository();
+
+// Session TTL constants
+const STATE_TTL_MS = 10 * 60 * 1000; // 10 minutes for OAuth state
+const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days for user sessions
 
 /**
  * Initiate GitHub OAuth flow
@@ -16,8 +21,12 @@ export async function initiateGitHubLogin(req, res) {
   // Generate random state for CSRF protection
   const state = crypto.randomBytes(16).toString("hex");
 
-  // Store state in session (expires in 10 minutes)
-  sessions.set(state, { createdAt: Date.now() });
+  // Store state in session repository (expires in 10 minutes)
+  await sessionRepository.create(`state:${state}`, {
+    type: "oauth_state",
+    createdAt: Date.now(),
+    expiresAt: Date.now() + STATE_TTL_MS
+  });
 
   const redirectUri = `${process.env.APP_URL || "http://localhost:4000"}/api/auth/github/callback`;
   const scope = "read:user,repo"; // Permissions needed
@@ -38,18 +47,13 @@ export async function handleGitHubCallback(req, res) {
   }
 
   // Validate state (CSRF protection)
-  const storedState = sessions.get(state);
+  const storedState = await sessionRepository.get(`state:${state}`);
   if (!storedState) {
     return res.status(400).json({ error: "Invalid or expired state" });
   }
 
-  // Check if state is expired (10 minutes)
-  if (Date.now() - storedState.createdAt > 10 * 60 * 1000) {
-    sessions.delete(state);
-    return res.status(400).json({ error: "State expired" });
-  }
-
-  sessions.delete(state); // Clean up used state
+  // Clean up used state
+  await sessionRepository.delete(`state:${state}`);
 
   const clientId = process.env.GH_OAUTH_CLIENT_ID;
   const clientSecret = process.env.GH_OAUTH_CLIENT_SECRET;
@@ -94,8 +98,9 @@ export async function handleGitHubCallback(req, res) {
     // Create session token
     const sessionToken = crypto.randomBytes(32).toString("hex");
 
-    // Store session (expires in 7 days)
-    sessions.set(sessionToken, {
+    // Store session via repository (expires in 7 days)
+    await sessionRepository.create(sessionToken, {
+      type: "user_session",
       accessToken,
       user: {
         id: userData.id,
@@ -105,7 +110,7 @@ export async function handleGitHubCallback(req, res) {
         avatar_url: userData.avatar_url
       },
       createdAt: Date.now(),
-      expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000 // 7 days
+      expiresAt: Date.now() + SESSION_TTL_MS
     });
 
     // Redirect to frontend with session token
@@ -128,16 +133,10 @@ export async function getCurrentUser(req, res) {
   }
 
   const token = authHeader.substring(7);
-  const session = sessions.get(token);
+  const session = await sessionRepository.get(token);
 
   if (!session) {
     return res.status(401).json({ error: "Invalid or expired session" });
-  }
-
-  // Check if session is expired
-  if (Date.now() > session.expiresAt) {
-    sessions.delete(token);
-    return res.status(401).json({ error: "Session expired" });
   }
 
   res.json({
@@ -154,7 +153,7 @@ export async function logout(req, res) {
 
   if (authHeader && authHeader.startsWith("Bearer ")) {
     const token = authHeader.substring(7);
-    sessions.delete(token);
+    await sessionRepository.delete(token);
   }
 
   res.json({ success: true });
@@ -163,7 +162,7 @@ export async function logout(req, res) {
 /**
  * Middleware to require authentication
  */
-export function requireAuth(req, res, next) {
+export async function requireAuth(req, res, next) {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -171,10 +170,9 @@ export function requireAuth(req, res, next) {
   }
 
   const token = authHeader.substring(7);
-  const session = sessions.get(token);
+  const session = await sessionRepository.get(token);
 
-  if (!session || Date.now() > session.expiresAt) {
-    if (session) sessions.delete(token);
+  if (!session) {
     return res.status(401).json({ error: "Invalid or expired session" });
   }
 

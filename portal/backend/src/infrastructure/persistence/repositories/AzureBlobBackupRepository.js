@@ -1,11 +1,10 @@
 /**
  * Azure Blob Backup Repository
  * Implements IBackupRepository using Azure Blob Storage
+ * Uses RBAC authentication (Storage Blob Data Reader role) instead of storage account keys
  */
 import { DefaultAzureCredential } from "@azure/identity";
-import { StorageManagementClient } from "@azure/arm-storage";
-import { ResourceGraphClient } from "@azure/arm-resourcegraph";
-import { BlobServiceClient, StorageSharedKeyCredential } from "@azure/storage-blob";
+import { BlobServiceClient } from "@azure/storage-blob";
 import { IBackupRepository } from "../../../domain/repositories/IBackupRepository.js";
 import { Backup } from "../../../domain/entities/Backup.js";
 import { Environment } from "../../../domain/value-objects/Environment.js";
@@ -33,50 +32,9 @@ const STORAGE_ACCOUNTS = {
 export class AzureBlobBackupRepository extends IBackupRepository {
   constructor() {
     super();
+    // Use DefaultAzureCredential for RBAC-based authentication
+    // Requires "Storage Blob Data Reader" role on the storage accounts
     this.credential = new DefaultAzureCredential();
-    this.cachedSubscriptionId = null;
-  }
-
-  /**
-   * Get Azure subscription ID
-   */
-  async getSubscriptionId() {
-    if (this.cachedSubscriptionId) {
-      return this.cachedSubscriptionId;
-    }
-
-    const envSubscriptionId = process.env.ARM_SUBSCRIPTION_ID || process.env.AZURE_SUBSCRIPTION_ID;
-    if (envSubscriptionId) {
-      this.cachedSubscriptionId = envSubscriptionId;
-      console.log(`[BackupRepository] Using subscription from env: ${this.cachedSubscriptionId}`);
-      return this.cachedSubscriptionId;
-    }
-
-    try {
-      const resourceGraphClient = new ResourceGraphClient(this.credential);
-      const query = { query: "Resources | project subscriptionId | limit 1" };
-      const result = await resourceGraphClient.resources(query);
-
-      if (result.data && result.data.length > 0) {
-        this.cachedSubscriptionId = result.data[0].subscriptionId;
-        console.log(`[BackupRepository] Using subscription from Resource Graph: ${this.cachedSubscriptionId}`);
-        return this.cachedSubscriptionId;
-      }
-    } catch (error) {
-      console.error("[BackupRepository] Failed to query subscription from Resource Graph:", error.message);
-    }
-
-    throw new Error("No accessible subscriptions found");
-  }
-
-  /**
-   * Get storage account key for authentication
-   */
-  async getStorageAccountKey(accountName, resourceGroup) {
-    const subscriptionId = await this.getSubscriptionId();
-    const storageClient = new StorageManagementClient(this.credential, subscriptionId);
-    const keys = await storageClient.storageAccounts.listKeys(resourceGroup, accountName);
-    return keys.keys[0].value;
   }
 
   /**
@@ -91,11 +49,9 @@ export class AzureBlobBackupRepository extends IBackupRepository {
     const accountUrl = `https://${config.name}.blob.core.windows.net`;
     console.log(`[BackupRepository] Fetching backups for ${environment.value} from ${accountUrl}`);
 
-    // Get storage account key for authentication
-    const accountKey = await this.getStorageAccountKey(config.name, config.resourceGroup);
-    const sharedKeyCredential = new StorageSharedKeyCredential(config.name, accountKey);
-
-    const blobServiceClient = new BlobServiceClient(accountUrl, sharedKeyCredential);
+    // Use DefaultAzureCredential directly with BlobServiceClient (RBAC authentication)
+    // This requires "Storage Blob Data Reader" role instead of listKeys permission
+    const blobServiceClient = new BlobServiceClient(accountUrl, this.credential);
     const containerClient = blobServiceClient.getContainerClient("tfstate");
 
     const backups = [];

@@ -37,11 +37,14 @@ export class GetHomeStatsHandler extends IRequestHandler {
       }
 
       // Fetch all stats in parallel
-      const [blueprints, resources, jobs] = await Promise.all([
+      const [blueprints, resources, jobsResult] = await Promise.all([
         this.blueprintRepository.getAllLatest().catch(() => []),
         this.azureResourceService.queryArmPortalResources({}).catch(() => []),
-        this.jobRepository.getAll({}).catch(() => [])
+        this.jobRepository.getAll({}).catch(() => ({ isSuccess: false }))
       ]);
+
+      // Extract jobs from Result if successful
+      const jobs = jobsResult.isSuccess ? jobsResult.value : [];
 
       const stats = {
         blueprints: Array.isArray(blueprints) ? blueprints.length : 0,
