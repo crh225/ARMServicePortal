@@ -1,0 +1,177 @@
+name: "Webhook Relay: Build & Deploy (AKS)"
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "functions/github-webhook-relay/**"
+      - "infra/crossplane/applications/webhook-relay/**"
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      NODE_VERSION: 20.x
+      ACR_NAME: armportalacre4k9
+      IMAGE_NAME: webhook-relay
+      AKS_CLUSTER_NAME: aks-armportal-crossplane-dev
+      AKS_RESOURCE_GROUP: rg-armportal-aks-crossplane-dev
+      KEYVAULT_NAME: akvnotintf1
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          auth-type: SERVICE_PRINCIPAL
+          allow-no-subscriptions: false
+          environment: azurecloud
+          audience: api://AzureADTokenExchange
+
+      - name: Get ACR login server
+        id: acr
+        run: |
+          LOGIN_SERVER=$(az acr show -n $ACR_NAME --query loginServer -o tsv)
+          echo "login_server=$LOGIN_SERVER" >> $GITHUB_OUTPUT
+
+      - name: Build and push Docker image
+        run: |
+          LOGIN_SERVER="${{ steps.acr.outputs.login_server }}"
+          IMAGE_SHA="$LOGIN_SERVER/$IMAGE_NAME:${{ github.sha }}"
+          IMAGE_LATEST="$LOGIN_SERVER/$IMAGE_NAME:latest"
+
+          echo "Building Docker image..."
+          echo "Image with SHA: $IMAGE_SHA"
+          echo "Image latest: $IMAGE_LATEST"
+
+          # Build the Docker image
+          docker build \
+            -t "$IMAGE_SHA" \
+            -t "$IMAGE_LATEST" \
+            -f functions/github-webhook-relay/Dockerfile \
+            functions/github-webhook-relay
+
+          # Login to ACR
+          az acr login --name $ACR_NAME
+
+          # Push both tags
+          echo "Pushing image with SHA tag..."
+          docker push "$IMAGE_SHA"
+
+          echo "Pushing image with latest tag..."
+          docker push "$IMAGE_LATEST"
+
+          echo "✅ Successfully pushed images to ACR"
+
+      - name: Set up kubectl for AKS
+        run: |
+          az aks get-credentials \
+            --resource-group $AKS_RESOURCE_GROUP \
+            --name $AKS_CLUSTER_NAME \
+            --overwrite-existing
+
+      - name: Get secrets from Key Vault
+        id: secrets
+        run: |
+          # Fetch secrets from Azure Key Vault
+          RABBITMQ_URL=$(az keyvault secret show --vault-name $KEYVAULT_NAME --name rabbitmq-url --query value -o tsv)
+          GH_WEBHOOK_SECRET=$(az keyvault secret show --vault-name $KEYVAULT_NAME --name gh-webhook-secret --query value -o tsv)
+
+          # Mask the secrets in logs
+          echo "::add-mask::$RABBITMQ_URL"
+          echo "::add-mask::$GH_WEBHOOK_SECRET"
+
+          # Set outputs
+          echo "rabbitmq_url=$RABBITMQ_URL" >> $GITHUB_OUTPUT
+          echo "gh_webhook_secret=$GH_WEBHOOK_SECRET" >> $GITHUB_OUTPUT
+
+      - name: Create namespace if not exists
+        run: |
+          kubectl create namespace webhook-relay --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Create/Update secrets
+        run: |
+          # Create or update the secrets in Kubernetes
+          kubectl create secret generic webhook-relay-secrets \
+            --namespace webhook-relay \
+            --from-literal=RABBITMQ_URL='${{ steps.secrets.outputs.rabbitmq_url }}' \
+            --from-literal=GH_WEBHOOK_SECRET='${{ steps.secrets.outputs.gh_webhook_secret }}' \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Create ACR pull secret
+        run: |
+          # Get ACR credentials
+          ACR_USERNAME=$(az acr credential show -n $ACR_NAME --query username -o tsv)
+          ACR_PASSWORD=$(az acr credential show -n $ACR_NAME --query "passwords[0].value" -o tsv)
+
+          # Create docker registry secret
+          kubectl create secret docker-registry acr-credentials \
+            --namespace webhook-relay \
+            --docker-server=${{ steps.acr.outputs.login_server }} \
+            --docker-username=$ACR_USERNAME \
+            --docker-password=$ACR_PASSWORD \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Update deployment manifest with new image tag
+        run: |
+          LOGIN_SERVER="${{ steps.acr.outputs.login_server }}"
+          NEW_IMAGE="$LOGIN_SERVER/$IMAGE_NAME:${{ github.sha }}"
+
+          echo "Updating deployment manifest with new image: $NEW_IMAGE"
+
+          # Update the image tag in the deployment manifest
+          sed -i "s|image: armportalacre4k9.azurecr.io/webhook-relay:.*|image: $NEW_IMAGE|g" \
+            infra/crossplane/applications/webhook-relay/deployment.yaml
+
+          # Configure Git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Commit and push the change
+          git add infra/crossplane/applications/webhook-relay/deployment.yaml
+          git commit -m "chore: update webhook-relay image to ${{ github.sha }}
+
+          Automated deployment update from GitHub Actions
+          Image: $NEW_IMAGE
+
+          Triggered by: ${{ github.event_name }}
+          Workflow: ${{ github.workflow }}
+          Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" || echo "No changes to commit"
+
+          git push || echo "Nothing to push"
+
+      - name: Deploy to AKS
+        run: |
+          # Apply the Kubernetes manifests
+          kubectl apply -k infra/crossplane/applications/webhook-relay/
+
+          # Wait for deployment to be ready
+          kubectl rollout status deployment/webhook-relay -n webhook-relay --timeout=120s
+
+      - name: Deployment summary
+        run: |
+          echo "✅ Webhook Relay deployed successfully!"
+          echo ""
+          echo "📦 Image: ${{ steps.acr.outputs.login_server }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+          echo ""
+          echo "🌐 Endpoint: https://webhooks.chrishouse.io/api/webhooks/github"
+          echo ""
+          echo "🔍 Health check: https://webhooks.chrishouse.io/api/health"
+          echo ""
+          echo "📋 To configure GitHub webhook:"
+          echo "   1. Go to your repo > Settings > Webhooks > Add webhook"
+          echo "   2. Payload URL: https://webhooks.chrishouse.io/api/webhooks/github"
+          echo "   3. Content type: application/json"
+          echo "   4. Secret: (from Key Vault: gh-webhook-secret)"
+          echo "   5. Events: Select events you want (workflow_run, pull_request, push, etc.)"
