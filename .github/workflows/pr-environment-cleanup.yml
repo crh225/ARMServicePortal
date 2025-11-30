@@ -1,4 +1,4 @@
-name: Cleanup PR Environment
+name: "PR Environment: Cleanup"
 
 on:
   pull_request:

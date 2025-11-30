@@ -1,4 +1,4 @@
-name: Cleanup Stale PR Environments
+name: "PR Environment: Stale Cleanup"
 
 on:
   schedule:

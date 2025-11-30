@@ -1,4 +1,4 @@
-name: Crossplane Claims
+name: "Crossplane: Validate Claims"
 
 on:
   pull_request:

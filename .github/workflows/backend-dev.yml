@@ -1,11 +1,14 @@
-name: Backend Dev
+name: "[DEPRECATED] Backend: Container Apps"
 
+# DEPRECATED: This workflow deployed to Azure Container Apps.
+# We've migrated to AKS - see backend-docker-aks.yml instead.
+# Keeping this file for reference but disabling triggers.
 on:
-  push:
-    branches: [ main ]
-    paths:
-      - "portal/backend/**"
   workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type DEPLOY to confirm (this deploys to legacy Container Apps)'
+        required: true
 
 permissions:
   id-token: write

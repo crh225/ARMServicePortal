@@ -1,4 +1,4 @@
-name: Backend Docker Build (AKS)
+name: "Backend: Build & Deploy (AKS)"
 
 on:
   push:

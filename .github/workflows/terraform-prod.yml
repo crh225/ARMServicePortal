@@ -1,4 +1,4 @@
-name: Terraform Production
+name: "Terraform: Prod"
 
 on:
   pull_request:

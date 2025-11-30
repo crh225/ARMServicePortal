@@ -1,4 +1,4 @@
-name: Deploy PR Environment
+name: "PR Environment: Deploy"
 
 on:
   pull_request:

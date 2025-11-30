@@ -1,4 +1,4 @@
-name: Terraform Drift Detection (Dev)
+name: "Terraform Drift: Dev"
 
 on:
   schedule:

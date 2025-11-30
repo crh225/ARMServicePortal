@@ -1,4 +1,4 @@
-name: Promote to Production
+name: "Backend: Promote to Production (AKS)"
 
 on:
   workflow_dispatch:

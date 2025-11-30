@@ -1,4 +1,4 @@
-name: Frontend Dev
+name: "Frontend: Test & Deploy"
 
 on:
   push:

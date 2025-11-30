@@ -1,4 +1,4 @@
-name: Terraform QA
+name: "Terraform: QA"
 
 on:
   pull_request:

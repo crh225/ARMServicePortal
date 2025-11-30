@@ -1,4 +1,4 @@
-name: Terraform Drift Detection - Staging
+name: "Terraform Drift: Staging"
 
 on:
   schedule:
