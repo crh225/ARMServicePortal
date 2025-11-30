@@ -32,26 +32,24 @@ class NotificationService {
       return false;
     }
 
-    // Connect to RabbitMQ
+    // Register event handler BEFORE connecting so it catches both initial and reconnect events
+    // This ensures the queue setup and consumer are started even if initial connect fails
+    // and succeeds on a background retry
+    rabbitMQClient.on("connected", async () => {
+      console.log("[NotificationService] RabbitMQ connected/reconnected - setting up consumer");
+      this.isRunning = false; // Reset so we can restart consuming
+      await rabbitMQClient.setupNotificationQueue(this.exchange, this.queue, this.routingPattern);
+      await this.startConsuming();
+    });
+
+    // Attempt to connect to RabbitMQ
     const connected = await rabbitMQClient.connect(rabbitmqUrl);
 
     if (!connected) {
       console.warn("[NotificationService] Failed to connect to RabbitMQ - will retry in background");
-      return false;
+      // Don't return false - the event handler above will set up the consumer when connection succeeds
+      return true; // Return true since we've set up the handler and will connect eventually
     }
-
-    // Setup exchange and queue
-    await rabbitMQClient.setupNotificationQueue(this.exchange, this.queue, this.routingPattern);
-
-    // Start consuming messages
-    await this.startConsuming();
-
-    // Handle reconnection
-    rabbitMQClient.on("connected", async () => {
-      console.log("[NotificationService] RabbitMQ reconnected - restarting consumer");
-      await rabbitMQClient.setupNotificationQueue(this.exchange, this.queue, this.routingPattern);
-      await this.startConsuming();
-    });
 
     console.log("[NotificationService] Initialized successfully");
     return true;
