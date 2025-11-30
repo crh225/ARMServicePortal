@@ -23,7 +23,7 @@ resource "azurerm_kubernetes_cluster" "crossplane" {
   # B2s = 2 vCPU, 4GB RAM - sufficient for Crossplane
   default_node_pool {
     name       = "default"
-    node_count = 1
+    node_count = 5
     vm_size    = "Standard_B2s"
 
     tags = {
