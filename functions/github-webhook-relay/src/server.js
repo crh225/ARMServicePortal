@@ -46,9 +46,14 @@ async function getRabbitChannel() {
     }
   }
 
-  console.log("Connecting to RabbitMQ...");
-  rabbitConnection = await amqp.connect(rabbitUrl);
-  rabbitChannel = await rabbitConnection.createChannel();
+  console.log("Connecting to RabbitMQ at:", rabbitUrl.replace(/:[^:@]+@/, ':****@'));
+  try {
+    rabbitConnection = await amqp.connect(rabbitUrl);
+    rabbitChannel = await rabbitConnection.createChannel();
+  } catch (err) {
+    console.error("Failed to connect to RabbitMQ:", err.message);
+    throw err;
+  }
 
   // Declare exchange (idempotent)
   await rabbitChannel.assertExchange(EXCHANGE_NAME, "topic", { durable: true });
