@@ -47,6 +47,7 @@ The system consists of four core components:
 - Uses Redis for distributed caching and notification storage
 - Consumes GitHub webhooks via RabbitMQ for real-time notifications
 - Broadcasts notifications to clients via Server-Sent Events (SSE)
+- Feature flags via Azure App Configuration for runtime feature toggles
 
 ### 3. Kubernetes Platform (AKS)
 - **Argo Rollouts** — Blue-green deployments with automated analysis
@@ -192,6 +193,41 @@ GitHub Webhooks → Webhook Relay → RabbitMQ → Backend API → SSE → Front
 
 ---
 
+## Feature Flags (Azure App Configuration)
+
+The portal uses Azure App Configuration for runtime feature flag management. This enables features to be toggled without code deployments.
+
+### Architecture
+```text
+Azure App Configuration → Backend API → Frontend
+        ↑
+   Azure Workload Identity (AKS Pod)
+```
+
+### Configuration
+- **Azure App Configuration** — Stores feature flags with labels for environment targeting
+- **Backend FeatureFlagService** — Connects via Azure SDK with managed identity
+- **Frontend useFeatureFlags Hook** — Fetches flags via `/api/features/batch` endpoint
+- **User Preferences** — Stored in localStorage to override server flags per-user
+
+### Current Feature Flags
+| Flag | Description | Default |
+|------|-------------|---------|
+| `notifications` | Real-time notification toasts and bell icon | `true` |
+
+### API Endpoints
+- `GET /api/features` — List all feature flags
+- `GET /api/features/:key` — Get a specific flag
+- `GET /api/features/:key/enabled` — Check if a feature is enabled
+- `POST /api/features/batch` — Check multiple flags at once (used by frontend)
+
+### Adding New Feature Flags
+1. Create the flag in Azure App Configuration portal
+2. Add to backend catalog in `FeatureFlagService.js` if using local fallback
+3. Use `useFeatureFlag("flag-key")` hook in frontend components
+
+---
+
 ## How the GitHub App Works
 
 ### Authentication Flow
@@ -296,6 +332,7 @@ Deployed to Azure Static Web Apps via GitHub Actions. The build uses `VITE_API_U
 - Done: workflows with approval gates
 - Done: Blueprint versioning
 - Done: Notifications
+- Done: Feature flags (Azure App Configuration)
 
 ---
 

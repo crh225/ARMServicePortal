@@ -230,6 +230,12 @@ src/
 - `DELETE /api/notifications/:id` - Delete a notification
 - `DELETE /api/notifications` - Clear all notifications
 
+### Feature Flags
+- `GET /api/features` - List all feature flags
+- `GET /api/features/:key` - Get a specific feature flag
+- `GET /api/features/:key/enabled` - Check if a feature is enabled
+- `POST /api/features/batch` - Check multiple features at once
+
 ### Health & Auth
 - `GET /api/health` - Health check endpoint (used by K8s probes)
 - `GET /api/auth/github` - Initiate GitHub OAuth login
@@ -266,6 +272,109 @@ src/
 
 ### RabbitMQ Configuration
 - `RABBITMQ_URL` - AMQP connection URL (e.g., `amqp://user:pass@host:5672`)
+
+### Azure App Configuration (Feature Flags)
+- `AZURE_APPCONFIG_ENDPOINT` - App Configuration endpoint (e.g., `https://appconfig-name.azconfig.io`)
+- Uses Azure Workload Identity (no client secret needed when running in AKS)
+
+## Feature Flags
+
+The backend integrates with Azure App Configuration for runtime feature flag management. Feature flags can be toggled in Azure without redeploying the application.
+
+### How It Works
+
+1. **Azure App Configuration** stores feature flags with optional environment labels
+2. **FeatureFlagService** connects using Azure Workload Identity (managed identity)
+3. **Frontend** fetches flags via `/api/features/batch` endpoint
+4. **Users** can override flags locally via the UI toggle (stored in localStorage)
+
+### Architecture
+
+```
+Azure App Configuration
+        │
+        ▼ (Azure SDK + Workload Identity)
+┌─────────────────────────────┐
+│  FeatureFlagService         │
+│  - Connects to App Config   │
+│  - Caches flags (5 min TTL) │
+│  - Falls back to defaults   │
+└─────────────────────────────┘
+        │
+        ▼ (MediatR pipeline)
+┌─────────────────────────────┐
+│  Feature Flag Controller    │
+│  /api/features/*            │
+└─────────────────────────────┘
+        │
+        ▼ (HTTP)
+┌─────────────────────────────┐
+│  Frontend                   │
+│  useFeatureFlag() hook      │
+│  FeaturePreferencesContext  │
+└─────────────────────────────┘
+```
+
+### API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/features` | GET | List all feature flags |
+| `/api/features/:key` | GET | Get a specific flag |
+| `/api/features/:key/enabled` | GET | Check if enabled (with targeting) |
+| `/api/features/batch` | POST | Check multiple flags at once |
+
+### Current Feature Flags
+
+| Flag Key | Description | Default |
+|----------|-------------|---------|
+| `notifications` | Show notification bell and toast popups | `true` |
+
+### Backend Implementation
+
+Located in `src/infrastructure/services/FeatureFlagService.js`:
+
+```javascript
+import { featureFlagService } from "../infrastructure/services/FeatureFlagService.js";
+
+// Check if a feature is enabled
+const isEnabled = await featureFlagService.isEnabled("notifications");
+
+// Check with user context for targeting rules
+const isEnabled = await featureFlagService.isEnabled("beta-feature", {
+  userId: "user123",
+  groups: ["beta-testers"]
+});
+```
+
+### Caching
+
+Feature flags are cached for 5 minutes to reduce Azure API calls:
+- **Cache Key**: `featureflag:{key}`
+- **TTL**: 5 minutes
+- **Invalidation**: Automatic on TTL expiry
+
+### Azure Setup
+
+1. Create Azure App Configuration resource
+2. Add feature flags under **Feature manager** in the portal
+3. Grant the AKS pod identity **App Configuration Data Reader** role
+4. Set `AZURE_APPCONFIG_ENDPOINT` environment variable
+
+### Adding New Feature Flags
+
+1. **Azure Portal**: Create flag in App Configuration → Feature manager
+2. **Backend**: Flag will be auto-discovered via the API
+3. **Frontend**: Use the `useFeatureFlag("new-flag")` hook
+
+```javascript
+// In React component
+const myFeatureEnabled = useFeatureFlag("my-new-feature");
+
+if (myFeatureEnabled) {
+  return <NewFeatureComponent />;
+}
+```
 
 ## Caching
 
