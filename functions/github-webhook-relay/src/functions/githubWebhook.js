@@ -84,6 +84,41 @@ function verifySignature(payload, signature, secret) {
 }
 
 /**
+ * Determine if an event should be processed (filter out noise)
+ * Only allow: workflow_run completed/failed, pull_request, deployment events
+ */
+function shouldProcessEvent(event, data) {
+  switch (event) {
+    case "workflow_run":
+      // Only completed or failed workflows (skip queued, in_progress, requested)
+      const conclusion = data.workflow_run?.conclusion;
+      return conclusion === "success" || conclusion === "failure";
+
+    case "pull_request":
+      // Only opened, closed, merged
+      return ["opened", "closed", "merged"].includes(data.action);
+
+    case "deployment":
+    case "deployment_status":
+      return true;
+
+    case "push":
+      // Only pushes to main/master
+      const branch = data.ref?.replace("refs/heads/", "");
+      return branch === "main" || branch === "master";
+
+    // Skip these noisy events entirely
+    case "workflow_job":
+    case "check_run":
+    case "check_suite":
+      return false;
+
+    default:
+      return false;
+  }
+}
+
+/**
  * Truncate text to max length
  */
 function truncate(text, maxLength = 80) {
@@ -254,6 +289,19 @@ app.http("githubWebhook", {
         return {
           status: 200,
           jsonBody: { message: "Pong! Webhook configured successfully." }
+        };
+      }
+
+      // Filter: only process completed/failed workflow_run events
+      // Skip workflow_job, check_run, and in-progress states to reduce noise
+      const data = JSON.parse(rawBody);
+      const shouldProcess = shouldProcessEvent(event, data);
+
+      if (!shouldProcess) {
+        context.log(`Skipping ${event} event (filtered out)`);
+        return {
+          status: 200,
+          jsonBody: { success: true, message: "Event filtered out", skipped: true }
         };
       }
 
