@@ -1,0 +1,11 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "RABBITMQ_URL": "amqp://admin:password@localhost:5672",
+    "RABBITMQ_EXCHANGE": "github-webhooks",
+    "RABBITMQ_QUEUE": "notifications",
+    "GITHUB_WEBHOOK_SECRET": ""
+  }
+}
