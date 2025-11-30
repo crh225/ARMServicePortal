@@ -1,8 +1,9 @@
 /**
- * Notifications Routes 
+ * Notifications Routes
  */
 import express from "express";
 import { mediator } from "../infrastructure/di/mediatorContainer.js";
+import { notificationService } from "../infrastructure/messaging/NotificationService.js";
 import {
   createGetNotificationsHandler,
   createGetNotificationByIdHandler,
@@ -60,5 +61,26 @@ router.delete("/:id", deleteNotificationHandler);
  * Clear all notifications
  */
 router.delete("/", clearAllNotificationsHandler);
+
+/**
+ * GET /api/notifications/live
+ * Server-Sent Events endpoint for real-time notifications
+ */
+router.get("/live", (req, res) => {
+  console.log("[SSE] New client connecting for live notifications...");
+
+  // Handle SSE connection
+  const clientId = notificationService.handleSSEConnection(res);
+  console.log(`[SSE] Client ${clientId} connected`);
+});
+
+/**
+ * GET /api/notifications/status
+ * Get notification service status (RabbitMQ + SSE connections)
+ */
+router.get("/status", (req, res) => {
+  const status = notificationService.getStatus();
+  res.json(status);
+});
 
 export default router;

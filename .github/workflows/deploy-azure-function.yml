@@ -1,0 +1,171 @@
+name: "Azure Function: Deploy GitHub Webhook Relay"
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "functions/github-webhook-relay/**"
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Deployment environment"
+        required: true
+        default: "dev"
+        type: choice
+        options:
+          - dev
+          - prod
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AZURE_FUNCTIONAPP_NAME: "func-github-webhook-dev"  # Update with your function app name
+  AZURE_FUNCTIONAPP_PACKAGE_PATH: "functions/github-webhook-relay"
+  NODE_VERSION: "20.x"
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'dev' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: "${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}/package-lock.json"
+
+      - name: Install dependencies
+        working-directory: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+        run: npm ci
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Get Function App settings from Key Vault
+        id: keyvault
+        run: |
+          # Fetch secrets from Key Vault
+          # Note: Key Vault secret names use dashes, GitHub secrets use underscores
+          RABBITMQ_URL=$(az keyvault secret show --vault-name akvnotintf1 --name rabbitmq-url --query value -o tsv 2>/dev/null || echo "")
+          GH_WEBHOOK_SECRET=$(az keyvault secret show --vault-name akvnotintf1 --name github-webhook-secret --query value -o tsv 2>/dev/null || echo "")
+
+          # Set outputs (masked)
+          echo "::add-mask::$RABBITMQ_URL"
+          echo "::add-mask::$GH_WEBHOOK_SECRET"
+          echo "rabbitmq_url=$RABBITMQ_URL" >> $GITHUB_OUTPUT
+          echo "gh_webhook_secret=$GH_WEBHOOK_SECRET" >> $GITHUB_OUTPUT
+
+      - name: Configure Function App settings
+        run: |
+          echo "Configuring Function App settings..."
+
+          # Set app settings from Key Vault values
+          az functionapp config appsettings set \
+            --name ${{ env.AZURE_FUNCTIONAPP_NAME }} \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+            --settings \
+              "RABBITMQ_URL=${{ steps.keyvault.outputs.rabbitmq_url }}" \
+              "GH_WEBHOOK_SECRET=${{ steps.keyvault.outputs.gh_webhook_secret }}" \
+              "FUNCTIONS_WORKER_RUNTIME=node" \
+              "NODE_ENV=production"
+
+          echo "Function App settings configured"
+
+      - name: Deploy to Azure Functions
+        uses: Azure/functions-action@v1
+        with:
+          app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
+          package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+          respect-funcignore: true
+
+      - name: Verify deployment
+        run: |
+          echo "Verifying deployment..."
+
+          # Get function URL
+          FUNCTION_URL=$(az functionapp show \
+            --name ${{ env.AZURE_FUNCTIONAPP_NAME }} \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+            --query defaultHostName -o tsv)
+
+          echo "Function App URL: https://$FUNCTION_URL"
+          echo ""
+
+          # Test health endpoint
+          echo "Testing health endpoint..."
+          curl -s "https://$FUNCTION_URL/api/health" | jq . || echo "Health check returned non-JSON response"
+
+          echo ""
+          echo "Deployment complete!"
+          echo ""
+          echo "GitHub Webhook URL: https://$FUNCTION_URL/api/webhooks/github"
+          echo ""
+          echo "Configure this URL in your GitHub repository webhooks:"
+          echo "  1. Go to GitHub repo > Settings > Webhooks > Add webhook"
+          echo "  2. Payload URL: https://$FUNCTION_URL/api/webhooks/github"
+          echo "  3. Content type: application/json"
+          echo "  4. Secret: (same as gh-webhook-secret in Key Vault)"
+          echo "  5. Events: Select the events you want to receive"
+
+  # Optional: Create the Function App if it doesn't exist
+  create-function-app:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.create_if_missing == 'true'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Create Function App (if not exists)
+        run: |
+          # Check if function app exists
+          EXISTS=$(az functionapp show \
+            --name ${{ env.AZURE_FUNCTIONAPP_NAME }} \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+            --query name -o tsv 2>/dev/null || echo "")
+
+          if [ -z "$EXISTS" ]; then
+            echo "Creating Function App..."
+
+            # Create storage account for function
+            STORAGE_NAME="stfunc$(echo ${{ env.AZURE_FUNCTIONAPP_NAME }} | tr -d '-' | cut -c1-20)"
+
+            az storage account create \
+              --name $STORAGE_NAME \
+              --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+              --location ${{ secrets.AZURE_LOCATION || 'eastus' }} \
+              --sku Standard_LRS
+
+            # Create function app
+            az functionapp create \
+              --name ${{ env.AZURE_FUNCTIONAPP_NAME }} \
+              --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+              --storage-account $STORAGE_NAME \
+              --consumption-plan-location ${{ secrets.AZURE_LOCATION || 'eastus' }} \
+              --runtime node \
+              --runtime-version 20 \
+              --functions-version 4 \
+              --os-type Linux
+
+            echo "✅ Function App created"
+          else
+            echo "Function App already exists"
+          fi

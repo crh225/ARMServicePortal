@@ -3,12 +3,13 @@ import notificationService from "../services/notificationService";
 
 /**
  * Custom hook for managing notifications
- * Handles polling, state management, and toast triggering
+ * Uses SSE for real-time updates with polling as fallback
  */
 function useNotifications(options = {}) {
   const {
-    pollingInterval = 30000, // 30 seconds
+    pollingInterval = 60000, // Increased to 60 seconds (SSE is primary now)
     enableBrowserNotifications = true,
+    enableSSE = true, // Enable SSE by default
     onNavigate
   } = options;
 
@@ -17,10 +18,12 @@ function useNotifications(options = {}) {
   const [toasts, setToasts] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [sseConnected, setSSEConnected] = useState(false);
 
   const pollingTimer = useRef(null);
   const lastNotificationId = useRef(null);
   const isPollingActive = useRef(true);
+  const sseUnsubscribe = useRef(null);
 
   /**
    * Fetch notifications from the API
@@ -178,12 +181,91 @@ function useNotifications(options = {}) {
     fetchNotifications();
   }, [fetchNotifications]);
 
-  // Start polling on mount
+  /**
+   * Handle SSE events
+   */
+  const handleSSEEvent = useCallback((event) => {
+    switch (event.type) {
+      case 'connected':
+        console.log('[Notifications] SSE connected');
+        setSSEConnected(true);
+        break;
+
+      case 'disconnected':
+        console.log('[Notifications] SSE disconnected');
+        setSSEConnected(false);
+        break;
+
+      case 'notification':
+        const newNotification = event.data;
+        console.log('[Notifications] Received live notification:', newNotification.title);
+
+        // Add to notifications list (at the beginning)
+        setNotifications((prev) => {
+          // Check if notification already exists
+          if (prev.some(n => n.id === newNotification.id)) {
+            return prev;
+          }
+          return [newNotification, ...prev];
+        });
+
+        // Update unread count if notification is unread
+        if (!newNotification.read) {
+          setUnreadCount((prev) => prev + 1);
+        }
+
+        // Add to toasts for in-app notification
+        setToasts((prev) => [...prev, newNotification]);
+
+        // Browser notification is already handled by notificationService
+        break;
+
+      case 'error':
+        console.error('[Notifications] SSE error');
+        setSSEConnected(false);
+        break;
+
+      default:
+        break;
+    }
+  }, []);
+
+  /**
+   * Start SSE connection
+   */
+  const startSSE = useCallback(() => {
+    if (!enableSSE) return;
+
+    // Add listener for SSE events
+    sseUnsubscribe.current = notificationService.addListener(handleSSEEvent);
+
+    // Connect to SSE
+    notificationService.connectSSE();
+  }, [enableSSE, handleSSEEvent]);
+
+  /**
+   * Stop SSE connection
+   */
+  const stopSSE = useCallback(() => {
+    if (sseUnsubscribe.current) {
+      sseUnsubscribe.current();
+      sseUnsubscribe.current = null;
+    }
+    notificationService.disconnectSSE();
+    setSSEConnected(false);
+  }, []);
+
+  // Start SSE and polling on mount
   useEffect(() => {
+    // Start SSE for real-time updates
+    startSSE();
+
+    // Start polling as fallback
     startPolling();
 
     // Clean up on unmount
     return () => {
+      stopSSE();
       stopPolling();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -213,6 +295,7 @@ function useNotifications(options = {}) {
     toasts,
     isLoading,
     error,
+    sseConnected, // SSE connection status
     markAsRead,
     markAllAsRead,
     deleteNotification,

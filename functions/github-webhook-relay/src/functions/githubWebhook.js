@@ -2,9 +2,63 @@ import { app } from "@azure/functions";
 import crypto from "crypto";
 import amqp from "amqplib";
 
-// RabbitMQ connection (reused across invocations)
-let channel = null;
-let connection = null;
+/**
+ * Azure Function: GitHub Webhook → RabbitMQ Publisher
+ *
+ * This function receives GitHub webhooks and publishes them to RabbitMQ.
+ * The backend API consumes messages from RabbitMQ and broadcasts via SSE.
+ *
+ * Architecture:
+ * GitHub → Azure Function → RabbitMQ → Backend API → Redis + SSE → Frontend
+ *
+ * Why publish to RabbitMQ?
+ * - Decouples webhook ingestion from notification processing
+ * - RabbitMQ handles message persistence and delivery guarantees
+ * - Backend can process messages at its own pace
+ * - Enables future scaling and multiple consumers
+ */
+
+// RabbitMQ connection (cached for reuse across invocations)
+let rabbitConnection = null;
+let rabbitChannel = null;
+
+const EXCHANGE_NAME = "github-webhooks";
+const ROUTING_KEY = "webhook.github";
+
+/**
+ * Get or create RabbitMQ connection
+ */
+async function getRabbitChannel(context) {
+  const rabbitUrl = process.env.RABBITMQ_URL;
+
+  if (!rabbitUrl) {
+    throw new Error("RABBITMQ_URL environment variable not configured");
+  }
+
+  // Reuse existing connection if available
+  if (rabbitConnection && rabbitChannel) {
+    try {
+      // Check if connection is still alive
+      await rabbitChannel.checkExchange(EXCHANGE_NAME);
+      return rabbitChannel;
+    } catch {
+      // Connection lost, recreate
+      context.log("RabbitMQ connection lost, reconnecting...");
+      rabbitConnection = null;
+      rabbitChannel = null;
+    }
+  }
+
+  context.log("Connecting to RabbitMQ...");
+  rabbitConnection = await amqp.connect(rabbitUrl);
+  rabbitChannel = await rabbitConnection.createChannel();
+
+  // Declare exchange (idempotent)
+  await rabbitChannel.assertExchange(EXCHANGE_NAME, "topic", { durable: true });
+  context.log("RabbitMQ connection established");
+
+  return rabbitChannel;
+}
 
 /**
  * Verify GitHub webhook signature
@@ -30,115 +84,92 @@ function verifySignature(payload, signature, secret) {
 }
 
 /**
- * Get or create RabbitMQ channel
+ * Transform GitHub webhook into notification format
  */
-async function getRabbitMQChannel(context) {
-  const rabbitmqUrl = process.env.RABBITMQ_URL;
+function transformToNotification(event, payload) {
+  const data = JSON.parse(payload);
+  const notification = {
+    id: crypto.randomUUID(),
+    timestamp: new Date().toISOString(),
+    type: event,
+    read: false
+  };
 
-  if (!rabbitmqUrl) {
-    throw new Error("RABBITMQ_URL environment variable not configured");
+  switch (event) {
+    case "workflow_run":
+      notification.title = `Workflow ${data.action}: ${data.workflow_run?.name || "Unknown"}`;
+      notification.message = `${data.workflow_run?.head_commit?.message || "No message"} - ${data.workflow_run?.conclusion || data.action}`;
+      notification.prNumber = data.workflow_run?.pull_requests?.[0]?.number || null;
+      notification.repository = data.repository?.full_name;
+      notification.url = data.workflow_run?.html_url;
+      break;
+
+    case "workflow_job":
+      notification.title = `Job ${data.action}: ${data.workflow_job?.name || "Unknown"}`;
+      notification.message = `${data.workflow_job?.conclusion || data.action} in ${data.workflow?.name || "workflow"}`;
+      notification.prNumber = null;
+      notification.repository = data.repository?.full_name;
+      notification.url = data.workflow_job?.html_url;
+      break;
+
+    case "check_run":
+      notification.title = `Check ${data.action}: ${data.check_run?.name || "Unknown"}`;
+      notification.message = `${data.check_run?.conclusion || data.action}`;
+      notification.prNumber = data.check_run?.pull_requests?.[0]?.number || null;
+      notification.repository = data.repository?.full_name;
+      notification.url = data.check_run?.html_url;
+      break;
+
+    case "pull_request":
+      notification.title = `PR ${data.action}: #${data.pull_request?.number}`;
+      notification.message = data.pull_request?.title || "No title";
+      notification.prNumber = data.pull_request?.number;
+      notification.repository = data.repository?.full_name;
+      notification.url = data.pull_request?.html_url;
+      break;
+
+    case "push":
+      notification.title = `Push to ${data.ref?.replace("refs/heads/", "") || "branch"}`;
+      notification.message = data.head_commit?.message || "No message";
+      notification.prNumber = null;
+      notification.repository = data.repository?.full_name;
+      notification.url = data.compare;
+      break;
+
+    case "deployment":
+    case "deployment_status":
+      notification.title = `Deployment ${data.action || data.deployment_status?.state}`;
+      notification.message = `${data.deployment?.environment || "environment"}: ${data.deployment_status?.description || ""}`;
+      notification.prNumber = null;
+      notification.repository = data.repository?.full_name;
+      notification.url = data.deployment?.url || data.deployment_status?.target_url;
+      break;
+
+    default:
+      notification.title = `GitHub Event: ${event}`;
+      notification.message = `Action: ${data.action || "unknown"}`;
+      notification.repository = data.repository?.full_name;
+      notification.url = data.repository?.html_url;
   }
 
-  // Return existing channel if still open
-  if (channel && connection) {
-    return channel;
-  }
-
-  try {
-    context.log("Connecting to RabbitMQ...");
-    connection = await amqp.connect(rabbitmqUrl);
-    channel = await connection.createChannel();
-
-    // Declare exchange and queue
-    const exchange = process.env.RABBITMQ_EXCHANGE || "github-webhooks";
-    const queue = process.env.RABBITMQ_QUEUE || "notifications";
-
-    await channel.assertExchange(exchange, "topic", { durable: true });
-    await channel.assertQueue(queue, { durable: true });
-    await channel.bindQueue(queue, exchange, "workflow.*");
-
-    context.log(`Connected to RabbitMQ, exchange: ${exchange}, queue: ${queue}`);
-
-    // Handle connection close
-    connection.on("close", () => {
-      context.log("RabbitMQ connection closed");
-      channel = null;
-      connection = null;
-    });
-
-    return channel;
-  } catch (error) {
-    context.error("Failed to connect to RabbitMQ:", error.message);
-    channel = null;
-    connection = null;
-    throw error;
-  }
+  return notification;
 }
 
 /**
- * Parse workflow run data into notification message
+ * Publish notification to RabbitMQ
  */
-function parseWorkflowRun(webhookData) {
-  const { action, workflow_run } = webhookData;
+async function publishToRabbitMQ(notification, context) {
+  const channel = await getRabbitChannel(context);
 
-  if (!workflow_run) {
-    return null;
-  }
+  const message = Buffer.from(JSON.stringify(notification));
 
-  // Extract PR number from pull_requests array
-  let prNumber = null;
-  if (workflow_run.pull_requests && workflow_run.pull_requests.length > 0) {
-    prNumber = workflow_run.pull_requests[0].number;
-  }
+  channel.publish(EXCHANGE_NAME, ROUTING_KEY, message, {
+    persistent: true,
+    contentType: "application/json",
+    timestamp: Date.now()
+  });
 
-  // Parse job info from workflow name (e.g., "terraform-plan-azure-storage-basic-dev")
-  let environment = null;
-  let blueprint = null;
-  const workflowName = workflow_run.name || "";
-
-  // Try to extract from display_title or name
-  const match = workflowName.match(/terraform-(plan|apply)-([a-z0-9-]+)-(\w+)$/i);
-  if (match) {
-    blueprint = match[2];
-    environment = match[3];
-  }
-
-  // Determine notification type
-  let type = "info";
-  if (workflow_run.conclusion === "success") {
-    type = "success";
-  } else if (workflow_run.conclusion === "failure") {
-    type = "error";
-  } else if (workflow_run.status === "in_progress") {
-    type = "info";
-  }
-
-  // Create notification title
-  let title = "";
-  if (action === "completed") {
-    title = workflow_run.conclusion === "success"
-      ? `Workflow Completed: ${workflow_run.name}`
-      : `Workflow Failed: ${workflow_run.name}`;
-  } else if (action === "requested" || action === "in_progress") {
-    title = `Workflow Started: ${workflow_run.name}`;
-  } else {
-    title = `Workflow ${action}: ${workflow_run.name}`;
-  }
-
-  return {
-    type,
-    title,
-    message: workflow_run.display_title || workflow_run.name,
-    prNumber,
-    jobId: workflow_run.id?.toString(),
-    environment,
-    blueprint,
-    url: workflow_run.html_url,
-    action,
-    status: workflow_run.status,
-    conclusion: workflow_run.conclusion,
-    timestamp: new Date().toISOString()
-  };
+  context.log(`Published notification to RabbitMQ: ${notification.title}`);
 }
 
 /**
@@ -156,68 +187,42 @@ app.http("githubWebhook", {
       const rawBody = await request.text();
       const signature = request.headers.get("x-hub-signature-256");
       const event = request.headers.get("x-github-event");
+      const deliveryId = request.headers.get("x-github-delivery");
 
-      context.log(`Event: ${event}, Signature present: ${!!signature}`);
+      context.log(`Event: ${event}, Delivery: ${deliveryId}, Signature present: ${!!signature}`);
 
-      // Verify signature
-      const secret = process.env.GITHUB_WEBHOOK_SECRET;
-      if (!verifySignature(rawBody, signature, secret)) {
-        context.warn("Invalid webhook signature");
+      // Verify signature (GH_ prefix required by GitHub Actions)
+      const secret = process.env.GH_WEBHOOK_SECRET;
+      if (secret && !verifySignature(rawBody, signature, secret)) {
+        context.warn("Invalid webhook signature - rejecting");
         return {
           status: 401,
           jsonBody: { error: "Invalid signature" }
         };
       }
 
-      // Parse body
-      const webhookData = JSON.parse(rawBody);
-
-      // Only process workflow_run events
-      if (event !== "workflow_run") {
-        context.log(`Ignoring event type: ${event}`);
+      // Handle ping event (GitHub sends this when webhook is first configured)
+      if (event === "ping") {
+        context.log("Ping event received - webhook configured successfully");
         return {
           status: 200,
-          jsonBody: { message: `Event type '${event}' not processed` }
+          jsonBody: { message: "Pong! Webhook configured successfully." }
         };
       }
 
-      const { action } = webhookData;
-      context.log(`Workflow run action: ${action}`);
-
-      // Parse notification message
-      const notification = parseWorkflowRun(webhookData);
-
-      if (!notification) {
-        return {
-          status: 200,
-          jsonBody: { message: "No notification to send" }
-        };
-      }
+      // Transform webhook to notification
+      const notification = transformToNotification(event, rawBody);
+      notification.deliveryId = deliveryId;
 
       // Publish to RabbitMQ
-      const ch = await getRabbitMQChannel(context);
-      const exchange = process.env.RABBITMQ_EXCHANGE || "github-webhooks";
-      const routingKey = `workflow.${action}`;
-
-      const messageBuffer = Buffer.from(JSON.stringify(notification));
-
-      ch.publish(exchange, routingKey, messageBuffer, {
-        persistent: true,
-        contentType: "application/json"
-      });
-
-      context.log(`Published notification to RabbitMQ: ${routingKey}`, notification.title);
+      await publishToRabbitMQ(notification, context);
 
       return {
         status: 200,
         jsonBody: {
           success: true,
-          message: "Webhook processed and published to RabbitMQ",
-          notification: {
-            type: notification.type,
-            title: notification.title,
-            prNumber: notification.prNumber
-          }
+          notificationId: notification.id,
+          message: "Webhook processed and published to queue"
         }
       };
     } catch (error) {
@@ -238,12 +243,27 @@ app.http("health", {
   authLevel: "anonymous",
   route: "health",
   handler: async (request, context) => {
+    const rabbitUrl = process.env.RABBITMQ_URL;
+
+    // Check RabbitMQ connectivity
+    let rabbitHealthy = false;
+    if (rabbitUrl) {
+      try {
+        const channel = await getRabbitChannel(context);
+        rabbitHealthy = !!channel;
+      } catch (error) {
+        context.warn("RabbitMQ health check failed:", error.message);
+        rabbitHealthy = false;
+      }
+    }
+
     return {
       status: 200,
       jsonBody: {
         status: "healthy",
         timestamp: new Date().toISOString(),
-        rabbitmqConnected: !!channel
+        rabbitMQConfigured: !!rabbitUrl,
+        rabbitMQHealthy: rabbitHealthy
       }
     };
   }

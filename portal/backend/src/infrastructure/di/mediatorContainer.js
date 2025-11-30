@@ -238,5 +238,8 @@ export function createMediator() {
   return mediator;
 }
 
+// Create singleton notification repository for use outside mediator
+export const notificationRepository = new RedisNotificationRepository();
+
 // Export a singleton instance
 export const mediator = createMediator();

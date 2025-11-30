@@ -7,6 +7,12 @@ class NotificationService {
   constructor() {
     this.permission = 'default';
     this.enabled = false;
+    this.eventSource = null;
+    this.isConnected = false;
+    this.reconnectAttempts = 0;
+    this.maxReconnectAttempts = 10;
+    this.reconnectDelay = 3000;
+    this.listeners = new Set();
     this.loadPreferences();
   }
 
@@ -239,6 +245,139 @@ class NotificationService {
     }
 
     return response.json();
+  }
+
+  // ============================================
+  // Server-Sent Events (SSE) for Live Updates
+  // ============================================
+
+  /**
+   * Connect to the SSE endpoint for live notifications
+   * @returns {boolean} True if connection started
+   */
+  connectSSE() {
+    if (this.eventSource) {
+      console.log('[SSE] Already connected');
+      return true;
+    }
+
+    try {
+      const sseUrl = `${API_BASE_URL}/api/notifications/live`;
+      console.log('[SSE] Connecting to:', sseUrl);
+
+      this.eventSource = new EventSource(sseUrl);
+
+      // Connection opened
+      this.eventSource.addEventListener('connected', (event) => {
+        const data = JSON.parse(event.data);
+        console.log('[SSE] Connected:', data.clientId);
+        this.isConnected = true;
+        this.reconnectAttempts = 0;
+        this.notifyListeners({ type: 'connected', data });
+      });
+
+      // Notification received
+      this.eventSource.addEventListener('notification', (event) => {
+        const notification = JSON.parse(event.data);
+        console.log('[SSE] Notification received:', notification.title);
+
+        // Show browser notification
+        this.showBrowserNotification(notification);
+
+        // Notify all listeners
+        this.notifyListeners({ type: 'notification', data: notification });
+      });
+
+      // Handle errors
+      this.eventSource.onerror = (error) => {
+        console.error('[SSE] Connection error:', error);
+        this.isConnected = false;
+        this.notifyListeners({ type: 'error', data: error });
+
+        // Close the connection and attempt reconnect
+        this.eventSource.close();
+        this.eventSource = null;
+        this.scheduleReconnect();
+      };
+
+      return true;
+    } catch (error) {
+      console.error('[SSE] Failed to connect:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Schedule a reconnection attempt
+   */
+  scheduleReconnect() {
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      console.error('[SSE] Max reconnection attempts reached');
+      this.notifyListeners({ type: 'maxRetriesReached' });
+      return;
+    }
+
+    this.reconnectAttempts++;
+    const delay = this.reconnectDelay * Math.min(this.reconnectAttempts, 5);
+
+    console.log(`[SSE] Scheduling reconnect in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+
+    setTimeout(() => {
+      this.connectSSE();
+    }, delay);
+  }
+
+  /**
+   * Disconnect from SSE
+   */
+  disconnectSSE() {
+    if (this.eventSource) {
+      console.log('[SSE] Disconnecting');
+      this.eventSource.close();
+      this.eventSource = null;
+      this.isConnected = false;
+      this.notifyListeners({ type: 'disconnected' });
+    }
+  }
+
+  /**
+   * Add a listener for SSE events
+   * @param {Function} callback - Function to call when events occur
+   * @returns {Function} Unsubscribe function
+   */
+  addListener(callback) {
+    this.listeners.add(callback);
+
+    // Return unsubscribe function
+    return () => {
+      this.listeners.delete(callback);
+    };
+  }
+
+  /**
+   * Notify all listeners of an event
+   * @param {object} event - Event object with type and data
+   */
+  notifyListeners(event) {
+    this.listeners.forEach(callback => {
+      try {
+        callback(event);
+      } catch (error) {
+        console.error('[SSE] Listener error:', error);
+      }
+    });
+  }
+
+  /**
+   * Get SSE connection status
+   * @returns {object} Status object
+   */
+  getSSEStatus() {
+    return {
+      connected: this.isConnected,
+      reconnectAttempts: this.reconnectAttempts,
+      listenersCount: this.listeners.size
+    };
   }
 }
 

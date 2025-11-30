@@ -16,6 +16,8 @@ import cors from "cors";
 import apiRoutes from "./routes/index.js";
 import { requestLogger } from "./middleware/requestLogger.js";
 import { errorHandler } from "./middleware/errorHandler.js";
+import { notificationService } from "./infrastructure/messaging/NotificationService.js";
+import { notificationRepository } from "./infrastructure/di/mediatorContainer.js";
 
 const app = express();
 
@@ -58,6 +60,31 @@ app.use(errorHandler);
 
 // Start server
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`Backend listening on http://localhost:${PORT}`);
+
+  // Initialize notification service for live updates via RabbitMQ
+  try {
+    await notificationService.initialize(notificationRepository, {
+      exchange: process.env.RABBITMQ_EXCHANGE || "github-webhooks",
+      queue: process.env.RABBITMQ_QUEUE || "notifications",
+      routingPattern: "workflow.*"
+    });
+  } catch (error) {
+    console.error("Failed to initialize notification service:", error.message);
+    // Non-fatal - the backend can still function without live notifications
+  }
+});
+
+// Graceful shutdown
+process.on("SIGTERM", async () => {
+  console.log("Received SIGTERM, shutting down gracefully...");
+  await notificationService.stop();
+  process.exit(0);
+});
+
+process.on("SIGINT", async () => {
+  console.log("Received SIGINT, shutting down gracefully...");
+  await notificationService.stop();
+  process.exit(0);
 });
