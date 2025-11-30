@@ -91,14 +91,27 @@ function ResourcesTable({ resources, subscriptions, onSelectResource, selectedRe
       let aVal = a[sortColumn];
       let bVal = b[sortColumn];
 
-      // Handle null/undefined
-      if (aVal == null) aVal = "";
-      if (bVal == null) bVal = "";
+      // Handle null/undefined - sort nulls to end
+      const aIsNull = aVal == null || aVal === "";
+      const bIsNull = bVal == null || bVal === "";
+
+      if (aIsNull && bIsNull) return 0;
+      if (aIsNull) return sortDirection === "asc" ? 1 : -1;
+      if (bIsNull) return sortDirection === "asc" ? -1 : 1;
+
+      // Numeric comparison for number fields
+      if (typeof aVal === "number" && typeof bVal === "number") {
+        return sortDirection === "asc" ? aVal - bVal : bVal - aVal;
+      }
 
       // String comparison
       if (typeof aVal === "string") {
         aVal = aVal.toLowerCase();
+        bVal = String(bVal).toLowerCase();
+      }
+      if (typeof bVal === "string") {
         bVal = bVal.toLowerCase();
+        aVal = String(aVal).toLowerCase();
       }
 
       if (aVal < bVal) return sortDirection === "asc" ? -1 : 1;
