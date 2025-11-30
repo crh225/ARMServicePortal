@@ -86,7 +86,7 @@ jobs:
         run: |
           # Fetch secrets from Azure Key Vault
           RABBITMQ_URL=$(az keyvault secret show --vault-name $KEYVAULT_NAME --name rabbitmq-url --query value -o tsv)
-          GH_WEBHOOK_SECRET=$(az keyvault secret show --vault-name $KEYVAULT_NAME --name gh-webhook-secret --query value -o tsv)
+          GH_WEBHOOK_SECRET=$(az keyvault secret show --vault-name $KEYVAULT_NAME --name GITHUB-WEBHOOK-SECRET --query value -o tsv)
 
           # Mask the secrets in logs
           echo "::add-mask::$RABBITMQ_URL"
