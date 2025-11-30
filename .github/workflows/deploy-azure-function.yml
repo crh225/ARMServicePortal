@@ -21,8 +21,11 @@ permissions:
   contents: read
 
 env:
-  AZURE_FUNCTIONAPP_NAME: "func-github-webhook-dev"  # Update with your function app name
+  # Function app created by Terraform: func-{project_name}-{env}-{random}
+  # The suffix comes from Terraform's random_string resource
+  AZURE_FUNCTIONAPP_NAME: "func-fnnotification-dev-a2c8"
   AZURE_FUNCTIONAPP_PACKAGE_PATH: "functions/github-webhook-relay"
+  AZURE_RESOURCE_GROUP: "rg-testpr3-dev-rg"
   NODE_VERSION: "20.x"
 
 jobs:
@@ -52,11 +55,27 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
+      - name: Check if Function App exists
+        id: check_app
+        run: |
+          EXISTS=$(az functionapp show \
+            --name ${{ env.AZURE_FUNCTIONAPP_NAME }} \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --query name -o tsv 2>/dev/null || echo "")
+
+          if [ -z "$EXISTS" ]; then
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "Function App does not exist. Run terraform-dev workflow first to create it."
+          else
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Function App exists: $EXISTS"
+          fi
+
       - name: Get Function App settings from Key Vault
+        if: steps.check_app.outputs.exists == 'true'
         id: keyvault
         run: |
           # Fetch secrets from Key Vault
-          # Note: Key Vault secret names use dashes, GitHub secrets use underscores
           RABBITMQ_URL=$(az keyvault secret show --vault-name akvnotintf1 --name rabbitmq-url --query value -o tsv 2>/dev/null || echo "")
           GH_WEBHOOK_SECRET=$(az keyvault secret show --vault-name akvnotintf1 --name github-webhook-secret --query value -o tsv 2>/dev/null || echo "")
 
@@ -67,13 +86,13 @@ jobs:
           echo "gh_webhook_secret=$GH_WEBHOOK_SECRET" >> $GITHUB_OUTPUT
 
       - name: Configure Function App settings
+        if: steps.check_app.outputs.exists == 'true'
         run: |
           echo "Configuring Function App settings..."
 
-          # Set app settings from Key Vault values
           az functionapp config appsettings set \
             --name ${{ env.AZURE_FUNCTIONAPP_NAME }} \
-            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
             --settings \
               "RABBITMQ_URL=${{ steps.keyvault.outputs.rabbitmq_url }}" \
               "GH_WEBHOOK_SECRET=${{ steps.keyvault.outputs.gh_webhook_secret }}" \
@@ -83,6 +102,7 @@ jobs:
           echo "Function App settings configured"
 
       - name: Deploy to Azure Functions
+        if: steps.check_app.outputs.exists == 'true'
         uses: Azure/functions-action@v1
         with:
           app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
@@ -90,13 +110,13 @@ jobs:
           respect-funcignore: true
 
       - name: Verify deployment
+        if: steps.check_app.outputs.exists == 'true'
         run: |
           echo "Verifying deployment..."
 
-          # Get function URL
           FUNCTION_URL=$(az functionapp show \
             --name ${{ env.AZURE_FUNCTIONAPP_NAME }} \
-            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
             --query defaultHostName -o tsv)
 
           echo "Function App URL: https://$FUNCTION_URL"
@@ -115,57 +135,20 @@ jobs:
           echo "  1. Go to GitHub repo > Settings > Webhooks > Add webhook"
           echo "  2. Payload URL: https://$FUNCTION_URL/api/webhooks/github"
           echo "  3. Content type: application/json"
-          echo "  4. Secret: (same as gh-webhook-secret in Key Vault)"
+          echo "  4. Secret: (same as github-webhook-secret in Key Vault)"
           echo "  5. Events: Select the events you want to receive"
 
-  # Optional: Create the Function App if it doesn't exist
-  create-function-app:
-    runs-on: ubuntu-latest
-    if: github.event.inputs.create_if_missing == 'true'
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Azure login (OIDC)
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Create Function App (if not exists)
+      - name: Function App not found
+        if: steps.check_app.outputs.exists == 'false'
         run: |
-          # Check if function app exists
-          EXISTS=$(az functionapp show \
-            --name ${{ env.AZURE_FUNCTIONAPP_NAME }} \
-            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
-            --query name -o tsv 2>/dev/null || echo "")
-
-          if [ -z "$EXISTS" ]; then
-            echo "Creating Function App..."
-
-            # Create storage account for function
-            STORAGE_NAME="stfunc$(echo ${{ env.AZURE_FUNCTIONAPP_NAME }} | tr -d '-' | cut -c1-20)"
-
-            az storage account create \
-              --name $STORAGE_NAME \
-              --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
-              --location ${{ secrets.AZURE_LOCATION || 'eastus' }} \
-              --sku Standard_LRS
-
-            # Create function app
-            az functionapp create \
-              --name ${{ env.AZURE_FUNCTIONAPP_NAME }} \
-              --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
-              --storage-account $STORAGE_NAME \
-              --consumption-plan-location ${{ secrets.AZURE_LOCATION || 'eastus' }} \
-              --runtime node \
-              --runtime-version 20 \
-              --functions-version 4 \
-              --os-type Linux
-
-            echo "✅ Function App created"
-          else
-            echo "Function App already exists"
-          fi
+          echo "::error::Function App '${{ env.AZURE_FUNCTIONAPP_NAME }}' does not exist in resource group '${{ env.AZURE_RESOURCE_GROUP }}'"
+          echo ""
+          echo "Please run the terraform-dev workflow first to create the Function App infrastructure."
+          echo "The Azure Function blueprint (azure-function) in ARM Portal creates:"
+          echo "  - Storage Account"
+          echo "  - App Service Plan"
+          echo "  - Application Insights"
+          echo "  - Linux Function App"
+          echo ""
+          echo "After Terraform creates the Function App, this workflow will deploy the code."
+          exit 1
