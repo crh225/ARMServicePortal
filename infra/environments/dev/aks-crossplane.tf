@@ -1,4 +1,4 @@
-# AKS Cluster for Crossplane Demo
+# AKS Cluster for Crossplane
 # This cluster hosts Crossplane for Kubernetes-native infrastructure provisioning
 
 resource "azurerm_resource_group" "aks_crossplane" {
@@ -25,7 +25,7 @@ resource "azurerm_kubernetes_cluster" "crossplane" {
     name                = "default"
     vm_size             = "Standard_B2s"
     auto_scaling_enabled = true
-    min_count           = 1
+    min_count           = 3
     max_count           = 5
 
     tags = {
