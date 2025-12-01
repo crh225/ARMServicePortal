@@ -109,7 +109,7 @@ resource "azurerm_container_app" "backend" {
   }
 
   template {
-    min_replicas = 1
+    min_replicas = 0  # Scaled to zero to save costs - set to 1 to re-enable
     max_replicas = 2
 
     container {
