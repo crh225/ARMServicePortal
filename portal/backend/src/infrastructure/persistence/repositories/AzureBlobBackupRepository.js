@@ -57,47 +57,56 @@ export class AzureBlobBackupRepository extends IBackupRepository {
     const backups = [];
     const backupPrefix = `${environment.value}/backups/`;
 
-    // Use maxPageSize to limit the number of results fetched
+    // Fetch all blobs with the backup prefix, then sort and limit
+    // Azure returns blobs in lexicographical order, but our filenames have timestamps
+    // that sort correctly (e.g., backup-20250130-143022)
     const iterator = containerClient.listBlobsFlat({
       prefix: backupPrefix
-    }).byPage({ maxPageSize: limit });
+    });
 
-    // Only fetch first page for speed
-    const page = await iterator.next();
+    // Collect all backups to sort properly
+    const allBlobs = [];
+    for await (const blob of iterator) {
+      allBlobs.push(blob);
+    }
 
-    if (!page.done && page.value) {
-      for (const blob of page.value.segment.blobItems) {
-        // Skip if this is the current state file (not a backup)
-        if (blob.name === `${environment.value}/terraform.tfstate`) {
-          continue;
-        }
+    // Sort by name descending (newest first since timestamps are in filename)
+    allBlobs.sort((a, b) => b.name.localeCompare(a.name));
 
-        // Parse backup metadata from filename
-        const filename = blob.name.split("/").pop();
-        const backupMatch = filename.match(/terraform\.tfstate\.(backup|pre-restore)-(\d{8}-\d{6})(?:-([a-f0-9]+))?/);
+    // Take only the requested limit
+    const limitedBlobs = allBlobs.slice(0, limit);
 
-        let backupType = "unknown";
-        let timestamp = null;
-        let gitSha = null;
-
-        if (backupMatch) {
-          backupType = backupMatch[1];
-          timestamp = backupMatch[2];
-          gitSha = backupMatch[3] || null;
-        }
-
-        backups.push(new Backup({
-          environment,
-          name: filename,
-          blobPath: blob.name,
-          backupType,
-          timestamp,
-          gitSha,
-          createdAt: blob.properties.createdOn,
-          lastModified: blob.properties.lastModified,
-          sizeBytes: blob.properties.contentLength
-        }));
+    for (const blob of limitedBlobs) {
+      // Skip if this is the current state file (not a backup)
+      if (blob.name === `${environment.value}/terraform.tfstate`) {
+        continue;
       }
+
+      // Parse backup metadata from filename
+      const filename = blob.name.split("/").pop();
+      const backupMatch = filename.match(/terraform\.tfstate\.(backup|pre-restore)-(\d{8}-\d{6})(?:-([a-f0-9]+))?/);
+
+      let backupType = "unknown";
+      let timestamp = null;
+      let gitSha = null;
+
+      if (backupMatch) {
+        backupType = backupMatch[1];
+        timestamp = backupMatch[2];
+        gitSha = backupMatch[3] || null;
+      }
+
+      backups.push(new Backup({
+        environment,
+        name: filename,
+        blobPath: blob.name,
+        backupType,
+        timestamp,
+        gitSha,
+        createdAt: blob.properties.createdOn,
+        lastModified: blob.properties.lastModified,
+        sizeBytes: blob.properties.contentLength
+      }));
     }
 
     return backups;
@@ -106,7 +115,7 @@ export class AzureBlobBackupRepository extends IBackupRepository {
   /**
    * Get backups for a specific environment
    */
-  async getByEnvironment(environment, limit = 10) {
+  async getByEnvironment(environment, limit = 20) {
     const backups = await this.fetchEnvironmentBackups(environment, limit);
     // Sort by creation time (newest first)
     backups.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -116,7 +125,7 @@ export class AzureBlobBackupRepository extends IBackupRepository {
   /**
    * Get backups across all environments
    */
-  async getAll(limit = 10) {
+  async getAll(limit = 20) {
     const environments = Environment.all();
 
     // Fetch backups from all environments in parallel
