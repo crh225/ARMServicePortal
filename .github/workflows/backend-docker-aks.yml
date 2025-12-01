@@ -91,14 +91,14 @@ jobs:
 
           # Update the image tag in the rollout manifest
           sed -i "s|image: armportalacre4k9.azurecr.io/armportal-backend:.*|image: $NEW_IMAGE|g" \
-            infra/crossplane/applications/armportal-backend/rollout.yaml
+            infra/kubernetes/armportal-backend/rollout.yaml
 
           # Configure Git
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           # Commit and push the change
-          git add infra/crossplane/applications/armportal-backend/rollout.yaml
+          git add infra/kubernetes/armportal-backend/rollout.yaml
           git commit -m "chore: update backend image to ${{ github.sha }}
 
           Automated deployment update from GitHub Actions

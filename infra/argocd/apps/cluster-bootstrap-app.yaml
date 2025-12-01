@@ -1,10 +1,10 @@
-# Argo CD Application for ARM Portal Backend API
-# Tracks backend deployment manifests from the GitHub repository
+# Argo CD Application for Cluster Bootstrap
+# Tracks cluster-level infrastructure resources (cert-manager, ingress, etc.)
 
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: armportal-backend
+  name: cluster-bootstrap
   namespace: argocd
 spec:
   project: default
@@ -12,11 +12,11 @@ spec:
   source:
     repoURL: https://github.com/crh225/ARMServicePortal.git
     targetRevision: main
-    path: infra/crossplane/applications/armportal-backend
+    path: infra/cluster-bootstrap
 
   destination:
     server: https://kubernetes.default.svc
-    namespace: armportal-backend
+    namespace: default
 
   syncPolicy:
     automated:

@@ -12,7 +12,7 @@ spec:
   source:
     repoURL: https://github.com/crh225/ARMServicePortal.git
     targetRevision: main
-    path: infra/crossplane/applications/webhook-relay
+    path: infra/kubernetes/webhook-relay
 
   destination:
     server: https://kubernetes.default.svc
