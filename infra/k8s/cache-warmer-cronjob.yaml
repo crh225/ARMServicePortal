@@ -8,8 +8,8 @@ metadata:
     app.kubernetes.io/component: job
     app.kubernetes.io/part-of: armportal
 spec:
-  # Run every hour at minute 0
-  schedule: "0 * * * *"
+  # Run every 5 minutes to keep home stats fresh
+  schedule: "*/5 * * * *"
   # Also support running on demand
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
@@ -47,6 +47,37 @@ spec:
                     secretKeyRef:
                       name: backend-secrets
                       key: AZURE_CLIENT_ID
+                      optional: true
+                # GitHub App credentials for job count
+                - name: GH_APP_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: backend-secrets
+                      key: GH_APP_ID
+                      optional: true
+                - name: GH_INSTALLATION_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: backend-secrets
+                      key: GH_INSTALLATION_ID
+                      optional: true
+                - name: GH_APP_PRIVATE_KEY_BASE64
+                  valueFrom:
+                    secretKeyRef:
+                      name: backend-secrets
+                      key: GH_APP_PRIVATE_KEY_BASE64
+                      optional: true
+                - name: GH_INFRA_OWNER
+                  valueFrom:
+                    secretKeyRef:
+                      name: backend-secrets
+                      key: GH_INFRA_OWNER
+                      optional: true
+                - name: GH_INFRA_REPO
+                  valueFrom:
+                    secretKeyRef:
+                      name: backend-secrets
+                      key: GH_INFRA_REPO
                       optional: true
               resources:
                 requests:

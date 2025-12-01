@@ -4,7 +4,7 @@
  * Returns Result objects following the Result pattern
  */
 import { IJobRepository } from "../../../domain/repositories/IJobRepository.js";
-import { listGitHubRequests, getGitHubRequestByNumber } from "../../external/github/pullRequests.js";
+import { listGitHubRequests, getGitHubRequestByNumber, getGitHubRequestsCount } from "../../external/github/pullRequests.js";
 
 export class GitHubJobRepository extends IJobRepository {
   /**
@@ -14,6 +14,16 @@ export class GitHubJobRepository extends IJobRepository {
    */
   async getAll(options = {}) {
     return await listGitHubRequests(options);
+  }
+
+  /**
+   * Get count of jobs (faster than getAll for stats)
+   * Uses GitHub Search API - single call instead of pagination
+   * @param {object} options - Filter options
+   * @returns {Promise<Result>} Result containing count number or error
+   */
+  async getCount(options = {}) {
+    return await getGitHubRequestsCount(options);
   }
 
   /**

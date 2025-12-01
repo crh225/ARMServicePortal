@@ -9,6 +9,8 @@ import { Result } from "../../../domain/common/Result.js";
 
 // Cache TTL: 10 minutes for PR data
 const PR_CACHE_TTL = 10 * 60 * 1000;
+// Cache TTL: 10 minutes for job count (used by home stats)
+const JOB_COUNT_CACHE_TTL = 10 * 60 * 1000;
 
 // In-memory cache for module name to PR number mapping
 // This prevents excessive GitHub API calls when looking up the same module multiple times
@@ -195,6 +197,58 @@ async function checkResourceExists(octokit, owner, repo, filePath, baseBranch, i
     path: filePath,
     ref: baseBranch || DEFAULT_BASE_BRANCH
   });
+}
+
+/**
+ * Get count of pull requests matching the "requests/" pattern using GitHub Search API
+ * Much faster than listGitHubRequests() - single API call instead of pagination
+ * @returns {Promise<Result>} Result containing count number or error
+ */
+export async function getGitHubRequestsCount({ environment } = {}) {
+  const cacheKey = environment ? `jobs:count:${environment}` : "jobs:count:all";
+
+  // Check cache first
+  const cached = await cache.get(cacheKey);
+  if (cached !== null && cached !== undefined) {
+    console.log(`[Cache HIT] Job count: ${cached}`);
+    return Result.success(cached);
+  }
+
+  const configResult = validateGitHubConfig();
+  if (configResult.isFailure) {
+    return configResult;
+  }
+  const { infraOwner, infraRepo } = configResult.value;
+  const octokit = await getInstallationClient();
+
+  try {
+    // Use Search API - returns total_count in a single call
+    // Search for PRs with branch names starting with "requests/"
+    const branchPattern = environment
+      ? `requests/${environment}/`
+      : "requests/";
+
+    const { data } = await octokit.search.issuesAndPullRequests({
+      q: `repo:${infraOwner}/${infraRepo} is:pr head:${branchPattern}`,
+      per_page: 1 // We only need the count, not the actual PRs
+    });
+
+    const count = data.total_count;
+
+    // Cache the count
+    await cache.set(cacheKey, count, JOB_COUNT_CACHE_TTL);
+    console.log(`[Cache STORED] Job count: ${count}`);
+
+    return Result.success(count);
+  } catch (error) {
+    console.error("[GitHub] Failed to get job count:", error.message);
+    // Fallback to full list if search fails (some GitHub instances don't support search)
+    const listResult = await listGitHubRequests({ environment });
+    if (listResult.isSuccess) {
+      return Result.success(listResult.value.length);
+    }
+    return Result.failure(error.message);
+  }
 }
 
 /**

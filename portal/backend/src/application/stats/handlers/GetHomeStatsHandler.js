@@ -1,7 +1,11 @@
 /**
  * Handler for GetHomeStatsQuery
  * Returns cached homepage statistics (blueprint count, resource count, job count)
- * Cache TTL: 12 hours
+ *
+ * Strategy: Cache-first with background refresh
+ * - Cache is pre-populated by cache-warmer CronJob (every 5 min)
+ * - Handler always serves from cache for instant response
+ * - Only fetches fresh data if cache is completely empty
  */
 import { IRequestHandler } from "../../contracts/IRequestHandler.js";
 import { Result } from "../../../domain/common/Result.js";
@@ -25,10 +29,12 @@ export class GetHomeStatsHandler extends IRequestHandler {
    */
   async handle(query) {
     try {
-      // Check Redis cache first
+      // Check Redis cache first - serve immediately if available (even if stale)
+      // Cache is refreshed by cache-warmer CronJob every 5 minutes
       const cached = await this.cache.get(CACHE_KEY);
-      if (cached && cached.timestamp && (Date.now() - cached.timestamp) < CACHE_TTL_MS) {
-        console.log(`[HomeStats] Cache HIT (age: ${Math.round((Date.now() - cached.timestamp) / 1000)}s)`);
+      if (cached && cached.stats) {
+        const age = Math.round((Date.now() - cached.timestamp) / 1000);
+        console.log(`[HomeStats] Cache HIT (age: ${age}s)`);
         return Result.success({
           ...cached.stats,
           cached: true,
@@ -36,20 +42,24 @@ export class GetHomeStatsHandler extends IRequestHandler {
         });
       }
 
+      // Cache empty - fetch fresh data (first request or Redis cleared)
+      console.log("[HomeStats] Cache MISS - fetching fresh data");
+
       // Fetch all stats in parallel
-      const [blueprints, resources, jobsResult] = await Promise.all([
+      // Use getCount() for jobs - much faster (1 API call vs pagination)
+      const [blueprints, resources, jobCountResult] = await Promise.all([
         this.blueprintRepository.getAllLatest().catch(() => []),
         this.azureResourceService.queryArmPortalResources({}).catch(() => []),
-        this.jobRepository.getAll({}).catch(() => ({ isSuccess: false }))
+        this.jobRepository.getCount({}).catch(() => ({ isSuccess: false, value: 0 }))
       ]);
 
-      // Extract jobs from Result if successful
-      const jobs = jobsResult.isSuccess ? jobsResult.value : [];
+      // Extract job count from Result
+      const jobCount = jobCountResult.isSuccess ? jobCountResult.value : 0;
 
       const stats = {
         blueprints: Array.isArray(blueprints) ? blueprints.length : 0,
         resources: Array.isArray(resources) ? resources.length : 0,
-        jobs: Array.isArray(jobs) ? jobs.length : 0
+        jobs: jobCount
       };
 
       const now = Date.now();
@@ -59,7 +69,6 @@ export class GetHomeStatsHandler extends IRequestHandler {
         stats,
         timestamp: now
       }, CACHE_TTL_MS);
-      console.log("[HomeStats] Cache MISS - fetched fresh data");
 
       return Result.success({
         ...stats,

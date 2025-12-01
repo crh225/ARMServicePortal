@@ -14,6 +14,8 @@ const client = new ResourceGraphClient(credential);
 // Cache keys and TTL
 const RESOURCE_GROUPS_CACHE_KEY = "resourceGroups:all";
 const RESOURCE_GROUPS_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+const RESOURCES_CACHE_KEY = "resources:all";
+const RESOURCES_CACHE_TTL = 5 * 60 * 1000; // 5 minutes for resource list
 
 /**
  * Query Azure Resource Graph for ARM Portal resources
@@ -30,6 +32,16 @@ export async function queryArmPortalResources(options = {}) {
     skip = 0, // For pagination
     top = 1000 // Default limit
   } = options;
+
+  // Check Redis cache for unfiltered queries (used by home stats)
+  const isUnfilteredQuery = !environment && !blueprintId && !requestId && !resourceGroup && skip === 0;
+  if (isUnfilteredQuery) {
+    const cached = await cache.get(RESOURCES_CACHE_KEY);
+    if (cached && cached.timestamp && (Date.now() - cached.timestamp) < RESOURCES_CACHE_TTL) {
+      console.log(`[Resources] Cache HIT (age: ${Math.round((Date.now() - cached.timestamp) / 1000)}s, count: ${cached.data.length})`);
+      return cached.data;
+    }
+  }
 
   // Build KQL query - get ALL resources and resource groups
   let query = "ResourceContainers | union Resources";
@@ -84,8 +96,18 @@ export async function queryArmPortalResources(options = {}) {
     console.log("Subscriptions:", queryRequest.subscriptions || "ALL accessible subscriptions");
 
     const result = await client.resources(queryRequest);
-    console.log("Query result:", result);
-    return result.data || [];
+    const resources = result.data || [];
+
+    // Cache unfiltered query results to Redis
+    if (isUnfilteredQuery) {
+      await cache.set(RESOURCES_CACHE_KEY, {
+        data: resources,
+        timestamp: Date.now()
+      }, RESOURCES_CACHE_TTL);
+      console.log(`[Resources] Cache MISS - Cached ${resources.length} resources`);
+    }
+
+    return resources;
   } catch (error) {
     console.error("Azure Resource Graph query failed:", error);
     throw new Error(`Failed to query Azure resources: ${error.message}`);
