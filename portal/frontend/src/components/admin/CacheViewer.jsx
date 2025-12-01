@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import api from "../../services/api";
 import "../../styles/CacheViewer.css";
 
@@ -6,6 +6,7 @@ function CacheViewer() {
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [expandedGroups, setExpandedGroups] = useState(new Set());
   const [expandedKey, setExpandedKey] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [totalSize, setTotalSize] = useState(0);
@@ -42,6 +43,26 @@ function CacheViewer() {
     } catch (err) {
       console.error("Failed to delete cache entry:", err);
       alert(`Failed to delete: ${err.message}`);
+    }
+  };
+
+  const handleDeleteGroup = async (groupKey, groupEntries) => {
+    if (!window.confirm(`Delete all ${groupEntries.length} entries in "${groupKey}"?`)) return;
+
+    try {
+      for (const entry of groupEntries) {
+        await api.deleteCacheEntry(entry.key);
+      }
+      const keysToDelete = new Set(groupEntries.map(e => e.key));
+      setEntries(entries.filter(e => !keysToDelete.has(e.key)));
+      setExpandedGroups(prev => {
+        const next = new Set(prev);
+        next.delete(groupKey);
+        return next;
+      });
+    } catch (err) {
+      console.error("Failed to delete group:", err);
+      alert(`Failed to delete group: ${err.message}`);
     }
   };
 
@@ -85,9 +106,51 @@ function CacheViewer() {
     return str.length > 50 ? str.substring(0, 50) + "..." : str;
   };
 
-  const filteredEntries = entries.filter(entry =>
-    entry.key.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Group entries by prefix (first part before colon)
+  const groupedEntries = useMemo(() => {
+    const filtered = entries.filter(entry =>
+      entry.key.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const groups = new Map();
+
+    filtered.forEach(entry => {
+      const colonIndex = entry.key.indexOf(":");
+      const prefix = colonIndex > 0 ? entry.key.substring(0, colonIndex) : entry.key;
+      const suffix = colonIndex > 0 ? entry.key.substring(colonIndex + 1) : null;
+
+      if (!groups.has(prefix)) {
+        groups.set(prefix, {
+          prefix,
+          entries: [],
+          totalSize: 0,
+          minTTL: Infinity
+        });
+      }
+
+      const group = groups.get(prefix);
+      group.entries.push({ ...entry, suffix });
+      group.totalSize += entry.size;
+      if (entry.ttl > 0 && entry.ttl < group.minTTL) {
+        group.minTTL = entry.ttl;
+      }
+    });
+
+    // Sort groups by prefix
+    return Array.from(groups.values()).sort((a, b) => a.prefix.localeCompare(b.prefix));
+  }, [entries, searchTerm]);
+
+  const toggleGroup = (prefix) => {
+    setExpandedGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(prefix)) {
+        next.delete(prefix);
+      } else {
+        next.add(prefix);
+      }
+      return next;
+    });
+  };
 
   if (loading) {
     return (
@@ -111,6 +174,8 @@ function CacheViewer() {
     );
   }
 
+  const totalEntries = groupedEntries.reduce((sum, g) => sum + g.entries.length, 0);
+
   return (
     <div className="admin-section">
       <div className="cache-header">
@@ -133,47 +198,87 @@ function CacheViewer() {
         <span className={`cache-backend ${usingRedis ? "redis" : "memory"}`}>
           {usingRedis ? "Redis" : "In-Memory"}
         </span>
-        <span className="cache-count">{filteredEntries.length} entries</span>
+        <span className="cache-count">{totalEntries} entries</span>
+        <span className="cache-count">{groupedEntries.length} groups</span>
         <span className="cache-size">{formatSize(totalSize)}</span>
       </div>
 
-      {filteredEntries.length === 0 ? (
+      {groupedEntries.length === 0 ? (
         <div className="empty-state">
           {searchTerm ? `No entries matching "${searchTerm}"` : "No cache entries"}
         </div>
       ) : (
-        <div className="cache-entries">
-          {filteredEntries.map((entry) => (
-            <div key={entry.key} className="cache-entry">
+        <div className="cache-tree">
+          {groupedEntries.map((group) => (
+            <div key={group.prefix} className="cache-group">
               <div
-                className="cache-entry-header"
-                onClick={() => setExpandedKey(expandedKey === entry.key ? null : entry.key)}
+                className="cache-group-header"
+                onClick={() => toggleGroup(group.prefix)}
               >
-                <div className="cache-entry-key">
-                  <span className="expand-icon">{expandedKey === entry.key ? "▼" : "▶"}</span>
-                  <code>{entry.key}</code>
-                </div>
-                <div className="cache-entry-meta">
-                  <span className="cache-entry-preview">{getValuePreview(entry.value)}</span>
-                  <span className="cache-entry-size">{formatSize(entry.size)}</span>
-                  <span className={`cache-entry-ttl ${entry.ttl <= 60 ? "expiring-soon" : ""}`}>
-                    {formatTTL(entry.ttl)}
+                <div className="cache-group-key">
+                  <span className="expand-icon">
+                    {expandedGroups.has(group.prefix) ? "▼" : "▶"}
                   </span>
+                  <code className="cache-group-prefix">{group.prefix}</code>
+                  <span className="cache-group-count">({group.entries.length})</span>
+                </div>
+                <div className="cache-group-meta">
+                  <span className="cache-entry-size">{formatSize(group.totalSize)}</span>
+                  {group.minTTL < Infinity && (
+                    <span className={`cache-entry-ttl ${group.minTTL <= 60 ? "expiring-soon" : ""}`}>
+                      {formatTTL(group.minTTL)}
+                    </span>
+                  )}
                   <button
                     className="btn-delete-entry"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleDelete(entry.key);
+                      handleDeleteGroup(group.prefix, group.entries);
                     }}
-                    title="Delete entry"
+                    title={`Delete all ${group.entries.length} entries`}
                   >
                     ×
                   </button>
                 </div>
               </div>
-              {expandedKey === entry.key && (
-                <div className="cache-entry-value">
-                  <pre>{formatValue(entry.value)}</pre>
+
+              {expandedGroups.has(group.prefix) && (
+                <div className="cache-group-entries">
+                  {group.entries.map((entry) => (
+                    <div key={entry.key} className="cache-entry cache-entry--nested">
+                      <div
+                        className="cache-entry-header"
+                        onClick={() => setExpandedKey(expandedKey === entry.key ? null : entry.key)}
+                      >
+                        <div className="cache-entry-key">
+                          <span className="expand-icon">{expandedKey === entry.key ? "▼" : "▶"}</span>
+                          <code>{entry.suffix || entry.key}</code>
+                        </div>
+                        <div className="cache-entry-meta">
+                          <span className="cache-entry-preview">{getValuePreview(entry.value)}</span>
+                          <span className="cache-entry-size">{formatSize(entry.size)}</span>
+                          <span className={`cache-entry-ttl ${entry.ttl <= 60 ? "expiring-soon" : ""}`}>
+                            {formatTTL(entry.ttl)}
+                          </span>
+                          <button
+                            className="btn-delete-entry"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(entry.key);
+                            }}
+                            title="Delete entry"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      </div>
+                      {expandedKey === entry.key && (
+                        <div className="cache-entry-value">
+                          <pre>{formatValue(entry.value)}</pre>
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

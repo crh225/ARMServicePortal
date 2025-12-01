@@ -68,6 +68,70 @@
   margin-left: auto;
 }
 
+/* Tree View */
+.cache-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cache-group {
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.cache-group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  cursor: pointer;
+  background: var(--bg-secondary);
+  transition: background 0.15s;
+}
+
+.cache-group-header:hover {
+  background: var(--bg-hover);
+}
+
+.cache-group-key {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.cache-group-prefix {
+  font-family: "SF Mono", Monaco, "Cascadia Code", monospace;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.cache-group-count {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  background: var(--bg-hover-subtle);
+  padding: 2px 6px;
+  border-radius: 10px;
+}
+
+.cache-group-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+
+.cache-group-entries {
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-primary);
+}
+
+/* Entry list (legacy) */
 .cache-entries {
   display: flex;
   flex-direction: column;
@@ -78,6 +142,29 @@
   border: 1px solid var(--border-subtle);
   border-radius: 6px;
   overflow: hidden;
+}
+
+.cache-entry--nested {
+  border: none;
+  border-radius: 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.cache-entry--nested:last-child {
+  border-bottom: none;
+}
+
+.cache-entry--nested .cache-entry-header {
+  padding-left: 32px;
+  background: transparent;
+}
+
+.cache-entry--nested .cache-entry-header:hover {
+  background: var(--bg-hover-subtle);
+}
+
+.cache-group-header:hover .btn-delete-entry {
+  opacity: 1;
 }
 
 .cache-entry-header {
