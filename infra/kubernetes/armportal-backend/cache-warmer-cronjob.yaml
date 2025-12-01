@@ -27,7 +27,7 @@ spec:
           restartPolicy: OnFailure
           containers:
             - name: cache-warmer
-              image: ghcr.io/crh225/armserviceportal/backend:latest
+              image: armportalacre4k9.azurecr.io/armportal-backend:latest
               imagePullPolicy: Always
               command:
                 - node
