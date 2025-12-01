@@ -23,7 +23,7 @@ spec:
           labels:
             app.kubernetes.io/name: cache-warmer
         spec:
-          serviceAccountName: armportal-backend
+          serviceAccountName: armportal-backend-sa
           restartPolicy: OnFailure
           containers:
             - name: cache-warmer
