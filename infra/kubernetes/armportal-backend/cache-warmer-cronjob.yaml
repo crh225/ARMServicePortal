@@ -23,6 +23,9 @@ spec:
           labels:
             app.kubernetes.io/name: cache-warmer
             azure.workload.identity/use: "true"
+          annotations:
+            # Disable Istio sidecar for jobs - sidecars don't exit cleanly with Jobs
+            sidecar.istio.io/inject: "false"
         spec:
           serviceAccountName: armportal-backend-sa
           restartPolicy: OnFailure
