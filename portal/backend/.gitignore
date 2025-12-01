@@ -1,0 +1,6 @@
+node_modules/
+.env
+.env.local
+
+# Copied during Docker build - don't commit
+modules/

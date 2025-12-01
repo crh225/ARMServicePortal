@@ -11,21 +11,29 @@ const __dirname = path.dirname(__filename);
 
 /**
  * Load blueprint template from module directory
+ * Checks: MODULES_PATH env var, /app/modules (Docker), or infra/modules (local dev)
  * @param {string} blueprintId - Blueprint ID
  * @returns {string|null} Template content or null if not found
  */
 export function loadBlueprintTemplate(blueprintId) {
-  try {
-    // Navigate from backend/src/infrastructure/terraform/blueprints to infra/modules
-    const modulePath = path.join(__dirname, "..", "..", "..", "..", "..", "..", "infra", "modules", blueprintId, "main.tf");
+  const searchPaths = [
+    process.env.MODULES_PATH && path.join(process.env.MODULES_PATH, blueprintId, "main.tf"),
+    "/app/modules/" + blueprintId + "/main.tf",
+    path.join(__dirname, "..", "..", "..", "..", "..", "..", "infra", "modules", blueprintId, "main.tf"),
+  ].filter(Boolean);
 
-    if (fs.existsSync(modulePath)) {
-      return fs.readFileSync(modulePath, "utf8");
+  for (const modulePath of searchPaths) {
+    try {
+      if (fs.existsSync(modulePath)) {
+        console.log(`[BlueprintTemplateLoader] Loaded template from: ${modulePath}`);
+        return fs.readFileSync(modulePath, "utf8");
+      }
+    } catch (error) {
+      // Continue to next path
     }
-  } catch (error) {
-    console.error(`Failed to load blueprint template for ${blueprintId}:`, error);
   }
 
+  console.warn(`[BlueprintTemplateLoader] No template found for: ${blueprintId}`);
   return null;
 }
 

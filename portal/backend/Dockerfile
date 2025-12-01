@@ -7,13 +7,18 @@ WORKDIR /app
 # Install dependencies
 COPY package*.json ./
 RUN npm i
+
 # Copy the rest of the source
 COPY . .
 
+# Copy blueprint modules for Terraform code generation
+# These are copied from the build context (set in workflow)
+COPY modules/ /app/modules/
+
 # Environment
 ENV NODE_ENV=production
-# App listens on PORT (App Services / Containers will set this)
 ENV PORT=4000
+ENV MODULES_PATH=/app/modules
 
 EXPOSE 4000
 

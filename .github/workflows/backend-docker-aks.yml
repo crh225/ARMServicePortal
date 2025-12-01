@@ -50,6 +50,12 @@ jobs:
           LOGIN_SERVER=$(az acr show -n $ACR_NAME --query loginServer -o tsv)
           echo "login_server=$LOGIN_SERVER" >> $GITHUB_OUTPUT
 
+      - name: Prepare build context
+        run: |
+          # Copy blueprint modules into backend build context
+          cp -r infra/modules portal/backend/modules
+          echo "✅ Copied blueprint modules to build context"
+
       - name: Build and push Docker image
         run: |
           LOGIN_SERVER="${{ steps.acr.outputs.login_server }}"
