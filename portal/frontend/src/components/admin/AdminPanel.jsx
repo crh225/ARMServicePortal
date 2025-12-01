@@ -6,6 +6,7 @@ import DashboardMetrics from "./DashboardMetrics";
 import RecentActivityList from "./RecentActivityList";
 import BackupsList from "./BackupsList";
 import AdminUserFilter from "./AdminUserFilter";
+import CacheViewer from "./CacheViewer";
 import "../../styles/AdminPanel.css";
 
 // Redis icon SVG component
@@ -292,6 +293,9 @@ function AdminPanel() {
             {/* Terraform Backups */}
             <BackupsList />
           </div>
+
+          {/* Cache Viewer */}
+          <CacheViewer />
         </>
       )}
     </div>

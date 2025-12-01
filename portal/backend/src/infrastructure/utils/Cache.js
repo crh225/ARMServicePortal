@@ -191,6 +191,69 @@ class Cache {
   isUsingRedis() {
     return redisClient.isAvailable();
   }
+
+  /**
+   * Get all cache entries with their TTLs (for Redis viewer)
+   * @returns {Promise<Array>} Array of { key, value, ttl, size } objects
+   */
+  async getAll() {
+    const redis = redisClient.get();
+    const entries = [];
+
+    if (redis) {
+      try {
+        const keys = await redis.keys(KEY_PREFIX + "*");
+
+        for (const prefixedKey of keys) {
+          const key = prefixedKey.replace(KEY_PREFIX, "");
+          const data = await redis.get(prefixedKey);
+          const ttl = await redis.ttl(prefixedKey);
+
+          let value = null;
+          let size = 0;
+
+          if (data) {
+            size = Buffer.byteLength(data, "utf8");
+            try {
+              value = JSON.parse(data);
+            } catch {
+              value = data; // Keep as string if not JSON
+            }
+          }
+
+          entries.push({
+            key,
+            value,
+            ttl, // TTL in seconds (-1 means no expiry, -2 means key doesn't exist)
+            size,
+          });
+        }
+
+        // Sort by key name
+        entries.sort((a, b) => a.key.localeCompare(b.key));
+      } catch (error) {
+        console.warn("[Cache] Redis getAll failed:", error.message);
+      }
+    } else {
+      // Memory store fallback
+      const now = Date.now();
+      for (const [key, entry] of memoryStore) {
+        if (now <= entry.expiresAt) {
+          const ttl = Math.ceil((entry.expiresAt - now) / 1000);
+          const valueStr = JSON.stringify(entry.value);
+          entries.push({
+            key,
+            value: entry.value,
+            ttl,
+            size: Buffer.byteLength(valueStr, "utf8"),
+          });
+        }
+      }
+      entries.sort((a, b) => a.key.localeCompare(b.key));
+    }
+
+    return entries;
+  }
 }
 
 // Export singleton instance

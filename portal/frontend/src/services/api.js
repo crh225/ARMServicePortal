@@ -379,6 +379,32 @@ const api = {
       throw new Error("Failed to clear cache");
     }
     return response.json();
+  },
+
+  /**
+   * Get all cache entries (admin only)
+   * Returns: { success, entries, count, totalSize, usingRedis }
+   */
+  async getCacheEntries() {
+    const response = await fetchWithLogRocket(`${API_BASE_URL}/api/admin/cache/entries`);
+    if (!response.ok) {
+      throw new Error("Failed to get cache entries");
+    }
+    return response.json();
+  },
+
+  /**
+   * Delete a specific cache entry (admin only)
+   * Returns: { success, message }
+   */
+  async deleteCacheEntry(key) {
+    const response = await fetchWithLogRocket(`${API_BASE_URL}/api/admin/cache/entries/${encodeURIComponent(key)}`, {
+      method: "DELETE"
+    });
+    if (!response.ok) {
+      throw new Error("Failed to delete cache entry");
+    }
+    return response.json();
   }
 };
 

@@ -29,6 +29,57 @@ router.get("/cache/stats", async (req, res) => {
 });
 
 /**
+ * GET /api/admin/cache/entries
+ * Get all cache entries with keys, values, and TTLs
+ */
+router.get("/cache/entries", async (req, res) => {
+  try {
+    const entries = await cache.getAll();
+
+    // Calculate total size
+    const totalSize = entries.reduce((sum, e) => sum + e.size, 0);
+
+    res.json({
+      success: true,
+      entries,
+      count: entries.length,
+      totalSize,
+      usingRedis: cache.isUsingRedis()
+    });
+  } catch (error) {
+    console.error("[Admin] Failed to get cache entries:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to get cache entries"
+    });
+  }
+});
+
+/**
+ * DELETE /api/admin/cache/entries/:key
+ * Delete a specific cache entry
+ */
+router.delete("/cache/entries/:key(*)", async (req, res) => {
+  try {
+    const { key } = req.params;
+    await cache.delete(key);
+
+    console.log(`[Admin] Cache entry deleted: ${key}`);
+
+    res.json({
+      success: true,
+      message: `Cache entry '${key}' deleted`
+    });
+  } catch (error) {
+    console.error("[Admin] Failed to delete cache entry:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to delete cache entry"
+    });
+  }
+});
+
+/**
  * POST /api/admin/cache/clear
  * Clear all cache entries (Redis + in-memory)
  */
