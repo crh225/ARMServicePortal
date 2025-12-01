@@ -154,7 +154,7 @@ jobs:
       - name: Deploy to AKS
         run: |
           # Apply the Kubernetes manifests
-          kubectl apply -k infra/crossplane/applications/webhook-relay/
+          kubectl apply -k infra/kubernetes/webhook-relay/
 
           # Wait for deployment to be ready
           kubectl rollout status deployment/webhook-relay -n webhook-relay --timeout=120s
