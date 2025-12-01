@@ -1,7 +1,0 @@
-# Azure Container Instance Provider
-apiVersion: pkg.crossplane.io/v1
-kind: Provider
-metadata:
-  name: provider-azure-containerinstance
-spec:
-  package: xpkg.upbound.io/upbound/provider-azure-containerinstance:v0.42.0
