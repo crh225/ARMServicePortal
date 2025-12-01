@@ -129,25 +129,22 @@ function HomePanel({ onNavigate }) {
 
         {/* Technologies Section - Full Width */}
         <section className="home-section home-section--full">
-          <h2 className="home-section-title">Technologies</h2>
+          <h2 className="home-section-title">Technologies Used</h2>
           <div className="home-tech-grid">
             <div className="home-tech-card">
-              <div className="home-tech-icon" style={{ background: "#5c4ee5" }}>
-                {/* Terraform logo - official HashiCorp mark */}
-                <svg width="28" height="28" viewBox="0 0 128 128">
-                  <g fillRule="evenodd">
-                    <path d="M77.941 44.5v36.836L46.324 62.918V26.082zm0 0" fill="white"/>
-                    <path d="M81.41 81.336l31.633-18.418V26.082L81.41 44.5zm0 0" fill="white" fillOpacity="0.6"/>
-                    <path d="M11.242 42.36L42.86 60.776V23.941L11.242 5.523zm0 0M77.941 85.375L46.324 66.957v36.82l31.617 18.418zm0 0" fill="white"/>
-                  </g>
-                </svg>
+              <div className="home-tech-icon" style={{ background: "transparent" }}>
+                <img
+                  src="https://cdn.simpleicons.org/terraform/844FBA"
+                  alt="Terraform"
+                  width="40"
+                  height="40"
+                />
               </div>
               <h3>Terraform</h3>
               <p>Infrastructure as Code for provisioning and managing cloud resources declaratively.</p>
             </div>
             <div className="home-tech-card">
               <div className="home-tech-icon" style={{ background: "transparent" }}>
-                {/* Crossplane logo - official CNCF artwork */}
                 <img
                   src="https://raw.githubusercontent.com/cncf/artwork/main/projects/crossplane/icon/color/crossplane-icon-color.svg"
                   alt="Crossplane"
@@ -160,9 +157,8 @@ function HomePanel({ onNavigate }) {
             </div>
             <div className="home-tech-card">
               <div className="home-tech-icon" style={{ background: "transparent" }}>
-                {/* ArgoCD logo - official devicon */}
                 <img
-                  src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/argocd/argocd-original.svg"
+                  src="https://cdn.simpleicons.org/argo/EF7B4D"
                   alt="ArgoCD"
                   width="40"
                   height="40"
@@ -172,14 +168,64 @@ function HomePanel({ onNavigate }) {
               <p>GitOps continuous delivery tool for Kubernetes that syncs desired state from Git.</p>
             </div>
             <div className="home-tech-card">
-              <div className="home-tech-icon" style={{ background: "#24292e" }}>
-                {/* GitHub logo - Octocat mark */}
-                <svg width="28" height="28" viewBox="0 0 98 96" fill="white">
-                  <path fillRule="evenodd" clipRule="evenodd" d="M48.854 0C21.839 0 0 22 0 49.217c0 21.756 13.993 40.172 33.405 46.69 2.427.49 3.316-1.059 3.316-2.362 0-1.141-.08-5.052-.08-9.127-13.59 2.934-16.42-5.867-16.42-5.867-2.184-5.704-5.42-7.17-5.42-7.17-4.448-3.015.324-3.015.324-3.015 4.934.326 7.523 5.052 7.523 5.052 4.367 7.496 11.404 5.378 14.235 4.074.404-3.178 1.699-5.378 3.074-6.6-10.839-1.141-22.243-5.378-22.243-24.283 0-5.378 1.94-9.778 5.014-13.2-.485-1.222-2.184-6.275.486-13.038 0 0 4.125-1.304 13.426 5.052a46.97 46.97 0 0 1 12.214-1.63c4.125 0 8.33.571 12.213 1.63 9.302-6.356 13.427-5.052 13.427-5.052 2.67 6.763.97 11.816.485 13.038 3.155 3.422 5.015 7.822 5.015 13.2 0 18.905-11.404 23.06-22.324 24.283 1.78 1.548 3.316 4.481 3.316 9.126 0 6.6-.08 11.897-.08 13.526 0 1.304.89 2.853 3.316 2.364 19.412-6.52 33.405-24.935 33.405-46.691C97.707 22 75.788 0 48.854 0z"/>
-                </svg>
+              <div className="home-tech-icon" style={{ background: "transparent" }}>
+                <img
+                  src="https://cdn.simpleicons.org/github/181717"
+                  alt="GitHub"
+                  width="40"
+                  height="40"
+                />
               </div>
               <h3>GitHub</h3>
               <p>Pull request-based workflow for infrastructure changes with automated reviews.</p>
+            </div>
+            <div className="home-tech-card">
+              <div className="home-tech-icon" style={{ background: "transparent" }}>
+                <img
+                  src="https://cdn.simpleicons.org/kubernetes/326CE5"
+                  alt="Kubernetes"
+                  width="40"
+                  height="40"
+                />
+              </div>
+              <h3>Kubernetes</h3>
+              <p>Container orchestration platform running on AKS with auto-scaling and self-healing.</p>
+            </div>
+            <div className="home-tech-card">
+              <div className="home-tech-icon" style={{ background: "transparent" }}>
+                <img
+                  src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/redis/redis-original.svg"
+                  alt="Redis"
+                  width="40"
+                  height="40"
+                />
+              </div>
+              <h3>Redis</h3>
+              <p>In-memory data store for caching, session management, and real-time notifications.</p>
+            </div>
+            <div className="home-tech-card">
+              <div className="home-tech-icon" style={{ background: "transparent" }}>
+                <img
+                  src="https://cdn.simpleicons.org/istio/466BB0"
+                  alt="Istio"
+                  width="40"
+                  height="40"
+                />
+              </div>
+              <h3>Istio</h3>
+              <p>Service mesh providing traffic management, security, and observability for microservices.</p>
+            </div>
+            <div className="home-tech-card">
+              <div className="home-tech-icon" style={{ background: "transparent" }}>
+                <img
+                  src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Microsoft_Azure.svg"
+                  alt="Azure"
+                  width="40"
+                  height="40"
+                />
+              </div>
+              <h3>Azure</h3>
+              <p>Microsoft cloud platform hosting AKS, Key Vault, App Configuration, and Cost Management.</p>
             </div>
           </div>
         </section>
