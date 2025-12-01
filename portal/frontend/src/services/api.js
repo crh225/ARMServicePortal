@@ -1,39 +1,64 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 /**
- * Get LogRocket session URL if available
+ * Get LogRocket session URL if available (with timeout)
  * LogRocket.getSessionURL() is async and returns via callback
+ * We add a timeout to avoid blocking API calls if LogRocket is slow
  */
-function getLogRocketSessionURL(callback) {
-  try {
-    if (window.LogRocket && typeof window.LogRocket.getSessionURL === 'function') {
-      window.LogRocket.getSessionURL(callback);
-      return;
+function getLogRocketSessionURL(timeoutMs = 100) {
+  return new Promise((resolve) => {
+    let resolved = false;
+
+    // Timeout - don't block API calls waiting for LogRocket
+    const timeout = setTimeout(() => {
+      if (!resolved) {
+        resolved = true;
+        resolve(null);
+      }
+    }, timeoutMs);
+
+    try {
+      if (window.LogRocket && typeof window.LogRocket.getSessionURL === 'function') {
+        window.LogRocket.getSessionURL((url) => {
+          if (!resolved) {
+            resolved = true;
+            clearTimeout(timeout);
+            resolve(url);
+          }
+        });
+      } else {
+        // LogRocket not available
+        resolved = true;
+        clearTimeout(timeout);
+        resolve(null);
+      }
+    } catch (e) {
+      // LogRocket error - proceed without session URL
+      if (!resolved) {
+        resolved = true;
+        clearTimeout(timeout);
+        resolve(null);
+      }
     }
-  } catch (e) {
-    // LogRocket not available or error getting session URL
-  }
-  callback(null);
+  });
 }
 
 /**
  * Enhanced fetch that includes LogRocket session URL
+ * Non-blocking - proceeds immediately if LogRocket is slow
  */
 async function fetchWithLogRocket(url, options = {}) {
-  const headers = options.headers || {};
+  const headers = { ...options.headers };
 
-  // Add LogRocket session URL if available (async)
-  return new Promise((resolve) => {
-    getLogRocketSessionURL((sessionURL) => {
-      if (sessionURL) {
-        headers['X-LogRocket-Session'] = sessionURL;
-      }
+  // Try to get LogRocket session URL (with 100ms timeout)
+  const sessionURL = await getLogRocketSessionURL(100);
+  if (sessionURL) {
+    headers['X-LogRocket-Session'] = sessionURL;
+  }
 
-      resolve(fetch(url, {
-        ...options,
-        headers
-      }));
-    });
+  return fetch(url, {
+    ...options,
+    headers
   });
 }
 

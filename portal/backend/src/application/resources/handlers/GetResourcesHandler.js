@@ -1,9 +1,18 @@
 /**
  * Handler for GetResourcesQuery
  * Retrieves and enriches ARM Portal resources
+ *
+ * Strategy: Cache-first for unfiltered queries with costs
+ * - Cache is populated on first request
+ * - Unfiltered queries with costs serve from cache for instant response
+ * - Filtered queries always fetch fresh (they're less common)
  */
 import { IRequestHandler } from "../../contracts/IRequestHandler.js";
 import { Result } from "../../../domain/common/Result.js";
+import { cache } from "../../../infrastructure/utils/Cache.js";
+
+const ENRICHED_RESOURCES_CACHE_KEY = "resources:enriched";
+const ENRICHED_RESOURCES_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 export class GetResourcesHandler extends IRequestHandler {
   constructor(azureResourceService, resourceEnrichmentService) {
@@ -43,6 +52,31 @@ export class GetResourcesHandler extends IRequestHandler {
         }
       }
 
+      // Check if this is an unfiltered query with costs (the common case for Resources page)
+      const isUnfilteredWithCosts = !query.environment && !query.blueprintId &&
+        !query.resourceGroup && !query.subscriptions &&
+        !query.skip && !query.top && shouldIncludeCosts;
+
+      // Try cache for unfiltered queries with costs
+      if (isUnfilteredWithCosts) {
+        const cached = await cache.get(ENRICHED_RESOURCES_CACHE_KEY);
+        if (cached && cached.resources) {
+          const age = Math.round((Date.now() - cached.timestamp) / 1000);
+          console.log(`[Resources] Cache HIT (age: ${age}s, count: ${cached.resources.length})`);
+          return Result.success({
+            resources: cached.resources,
+            count: cached.resources.length,
+            skip: 0,
+            top: 1000,
+            cached: true,
+            cachedAt: new Date(cached.timestamp).toISOString()
+          });
+        }
+      }
+
+      // Cache miss or filtered query - fetch fresh data
+      console.log(`[Resources] ${isUnfilteredWithCosts ? 'Cache MISS' : 'Filtered query'} - fetching fresh data`);
+
       // Query Azure Resource Graph
       const resources = await this.azureResourceService.queryArmPortalResources(options);
 
@@ -55,11 +89,21 @@ export class GetResourcesHandler extends IRequestHandler {
       // Convert Resource entities to DTOs for API response
       const enrichedResources = enrichedResourceEntities.map(resource => resource.toDTO());
 
+      // Cache unfiltered results with costs
+      if (isUnfilteredWithCosts) {
+        await cache.set(ENRICHED_RESOURCES_CACHE_KEY, {
+          resources: enrichedResources,
+          timestamp: Date.now()
+        }, ENRICHED_RESOURCES_CACHE_TTL);
+        console.log(`[Resources] Cached ${enrichedResources.length} enriched resources`);
+      }
+
       return Result.success({
         resources: enrichedResources,
         count: enrichedResources.length,
         skip: options.skip || 0,
-        top: options.top || 1000
+        top: options.top || 1000,
+        cached: false
       });
     } catch (error) {
       return Result.failure(error);

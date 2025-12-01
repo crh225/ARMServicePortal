@@ -72,19 +72,27 @@ export async function getResourceCost(resourceId) {
 /**
  * Get costs for all resources in a subscription (with caching)
  * More efficient than querying per-resource-group (avoids rate limiting)
+ *
+ * Strategy: Cache-first with background refresh
+ * - Cache is pre-populated by cache-warmer CronJob (every 5 min)
+ * - Always serves from cache for instant response
+ * - Only fetches fresh data if cache is completely empty
+ *
  * @param {string} subscriptionId - Azure subscription ID
  * @returns {Promise<Object>} Object with costMap (resource ID to cost) and rgTotals (RG name to total cost)
  */
 export async function getSubscriptionCosts(subscriptionId) {
   const cacheKey = `cost:subscription:${subscriptionId}`;
 
-  // Check cache first
+  // Check cache first - serve immediately if available (even if stale)
+  // Cache is refreshed by cache-warmer CronJob every 5 minutes
   const cached = await cache.get(cacheKey);
   if (cached) {
     console.log(`[Cache HIT] Using cached costs for subscription ${subscriptionId}`);
     return cached;
   }
 
+  // Cache empty - fetch fresh data (first request or Redis cleared)
   console.log(`[Cache MISS] Fetching fresh costs for subscription ${subscriptionId}`);
 
   try {
