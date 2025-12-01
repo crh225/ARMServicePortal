@@ -305,6 +305,49 @@ export function getResourceTypeIcon(type) {
     );
   }
 
+  // AKS / Kubernetes / Managed Clusters
+  if (typeLower.includes("managedcluster") || typeLower.includes("kubernetes") || typeLower.includes("containerservice")) {
+    return (
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" className="resource-type-icon">
+        <path d="M8 1l6 3.5v7L8 15l-6-3.5v-7L8 1z" fill="none" stroke="currentColor" strokeWidth="1.2"/>
+        <circle cx="8" cy="8" r="2.5"/>
+        <path d="M8 5.5V3M8 13v-2.5M10.2 6.7l1.8-1M4 10.3l1.8-1M10.2 9.3l1.8 1M4 5.7l1.8 1" stroke="currentColor" strokeWidth="1"/>
+      </svg>
+    );
+  }
+
+  // App Configuration
+  if (typeLower.includes("appconfiguration") || typeLower.includes("configurationstore")) {
+    return (
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" className="resource-type-icon">
+        <rect x="2" y="2" width="12" height="12" rx="2" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+        <path d="M5 5h6M5 8h6M5 11h4" stroke="currentColor" strokeWidth="1.5"/>
+        <circle cx="12" cy="11" r="1"/>
+      </svg>
+    );
+  }
+
+  // Network Watcher
+  if (typeLower.includes("networkwatcher")) {
+    return (
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" className="resource-type-icon">
+        <circle cx="8" cy="7" r="4" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+        <circle cx="8" cy="7" r="1.5"/>
+        <path d="M11 10l3 3" stroke="currentColor" strokeWidth="2"/>
+        <path d="M3 3l2 2M13 3l-2 2M3 11l2-2M13 11l-2-2" stroke="currentColor" strokeWidth="1" opacity="0.6"/>
+      </svg>
+    );
+  }
+
+  // Action Groups (Alerts)
+  if (typeLower.includes("actiongroup")) {
+    return (
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" className="resource-type-icon">
+        <path d="M8 1l1.5 4.5H14l-3.7 2.7 1.4 4.3L8 10l-3.7 2.5 1.4-4.3L2 5.5h4.5L8 1z"/>
+      </svg>
+    );
+  }
+
   // Default icon
   return (
     <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" className="resource-type-icon">
