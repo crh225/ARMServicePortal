@@ -5,7 +5,7 @@ on:
     branches: [main]
     paths:
       - "functions/github-webhook-relay/**"
-      - "infra/crossplane/applications/webhook-relay/**"
+      - "infra/kubernetes/webhook-relay/**"
   workflow_dispatch:
 
 permissions:
@@ -132,14 +132,14 @@ jobs:
 
           # Update the image tag in the deployment manifest
           sed -i "s|image: armportalacre4k9.azurecr.io/webhook-relay:.*|image: $NEW_IMAGE|g" \
-            infra/crossplane/applications/webhook-relay/deployment.yaml
+            infra/kubernetes/webhook-relay/deployment.yaml
 
           # Configure Git
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           # Commit and push the change
-          git add infra/crossplane/applications/webhook-relay/deployment.yaml
+          git add infra/kubernetes/webhook-relay/deployment.yaml
           git commit -m "chore: update webhook-relay image to ${{ github.sha }}
 
           Automated deployment update from GitHub Actions
