@@ -342,6 +342,127 @@ export const BLUEPRINTS = [
     estimatedMonthlyCost: 36.50
   },
   {
+    id: "azure-cdn",
+    version: "1.0.0",
+    displayName: "Azure CDN",
+    description: "Cost-effective content delivery network for static websites. Supports custom domains with HTTPS, compression, and SPA routing. 95% cheaper than Front Door for low-traffic sites.",
+    category: "Networking",
+    icon: "azure-cdn",
+    moduleSource: "../../modules/azure-cdn",
+    variables: [
+      {
+        name: "project_name",
+        label: "Project Name",
+        type: "string",
+        required: true
+      },
+      {
+        name: "environment",
+        label: "Environment",
+        type: "select",
+        required: true,
+        options: ["dev", "qa", "staging", "prod"],
+        default: "dev"
+      },
+      {
+        name: "subscription_id",
+        label: "Azure Subscription",
+        type: "string",
+        required: true
+      },
+      {
+        name: "resource_group_name",
+        label: "Resource Group Name",
+        type: "string",
+        required: true
+      },
+      {
+        name: "origin_hostname",
+        label: "Origin Hostname",
+        type: "string",
+        required: true,
+        placeholder: "mystorageaccount.z20.web.core.windows.net",
+        helpText: "Static website endpoint from Azure Storage"
+      },
+      {
+        name: "custom_domain",
+        label: "Custom Domain (optional)",
+        type: "string",
+        required: false,
+        placeholder: "portal.example.com",
+        helpText: "Requires DNS CNAME pointing to CDN endpoint"
+      },
+      {
+        name: "sku",
+        label: "CDN SKU",
+        type: "select",
+        required: false,
+        options: ["Standard_Microsoft", "Standard_Akamai", "Standard_Verizon", "Premium_Verizon"],
+        default: "Standard_Microsoft",
+        helpText: "Standard_Microsoft is cheapest (~$0.08/GB). Premium adds advanced features."
+      },
+      {
+        name: "optimization_type",
+        label: "Optimization Type",
+        type: "select",
+        required: false,
+        options: ["GeneralWebDelivery", "DynamicSiteAcceleration", "LargeFileDownload", "VideoOnDemandMediaStreaming"],
+        default: "GeneralWebDelivery"
+      },
+      {
+        name: "enable_https",
+        label: "Enable HTTPS",
+        type: "select",
+        required: false,
+        options: ["true", "false"],
+        default: "true",
+        helpText: "Free managed SSL certificate for custom domains"
+      },
+      {
+        name: "enable_compression",
+        label: "Enable Compression",
+        type: "select",
+        required: false,
+        options: ["true", "false"],
+        default: "true",
+        helpText: "Compress HTML, CSS, JS, and other text content"
+      },
+      {
+        name: "query_string_caching",
+        label: "Query String Caching",
+        type: "select",
+        required: false,
+        options: ["IgnoreQueryString", "UseQueryString", "BypassCaching"],
+        default: "IgnoreQueryString"
+      }
+    ],
+    outputs: [
+      {
+        name: "cdn_endpoint_hostname",
+        description: "CDN endpoint hostname (*.azureedge.net)"
+      },
+      {
+        name: "cdn_endpoint_url",
+        description: "CDN endpoint URL"
+      },
+      {
+        name: "custom_domain_url",
+        description: "Custom domain URL (if configured)"
+      },
+      {
+        name: "dns_cname_target",
+        description: "DNS CNAME target - point your custom domain to this"
+      }
+    ],
+    estimatedMonthlyCost: 0,
+    costDetails: {
+      description: "Pay-per-use: No monthly base fee",
+      dataTransfer: "~$0.08/GB for first 10TB/month (Standard_Microsoft)",
+      requests: "Free for Standard_Microsoft tier",
+      comparison: "95% cheaper than Front Door ($36.50/month base) for low-traffic sites"
+    }
+  },
+  {
     id: "azure-aci",
     version: "1.0.0",
     displayName: "Azure Container Instance",

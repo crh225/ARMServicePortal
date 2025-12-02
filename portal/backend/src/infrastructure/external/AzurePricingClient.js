@@ -304,6 +304,46 @@ export async function estimateBlueprintCost(blueprintId, variables, blueprint = 
       break;
     }
 
+    case "azure-cdn": {
+      // Azure CDN (Standard_Microsoft) - Pay-per-use pricing
+      // No base monthly fee, just data transfer costs
+      // Pricing: ~$0.081/GB for first 10TB/month (Zone 1: North America, Europe)
+
+      const estimatedDataTransferGB = 50; // Assume 50GB/month for a typical static site
+      const dataTransferPricePerGB = 0.081; // Standard_Microsoft tier, Zone 1
+      const dataTransferCost = estimatedDataTransferGB * dataTransferPricePerGB;
+
+      estimates.push({
+        resourceType: "CDN Profile",
+        skuName: "Standard_Microsoft",
+        monthlyEstimate: 0,
+        currency: "USD",
+        note: "No monthly base fee for CDN profile"
+      });
+      estimates.push({
+        resourceType: "Data Transfer (Outbound)",
+        skuName: `~${estimatedDataTransferGB}GB/month estimated`,
+        monthlyEstimate: parseFloat(dataTransferCost.toFixed(2)),
+        currency: "USD",
+        note: "$0.081/GB for first 10TB/month (Zone 1: NA, Europe)"
+      });
+      estimates.push({
+        resourceType: "HTTPS Requests",
+        skuName: "Standard_Microsoft tier",
+        monthlyEstimate: 0,
+        currency: "USD",
+        note: "No per-request charges for Standard_Microsoft"
+      });
+      estimates.push({
+        resourceType: "Custom Domain + SSL",
+        skuName: "CDN-managed certificate",
+        monthlyEstimate: 0,
+        currency: "USD",
+        note: "Free managed HTTPS certificate included"
+      });
+      break;
+    }
+
     default:
       estimates.push({
         resourceType: "Unknown",
