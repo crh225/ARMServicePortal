@@ -1,8 +1,32 @@
 # Helm values for NGINX Ingress Controller
-# This file fixes the Git Bash path conversion issue on Windows
-# by explicitly setting the health probe path annotation
+# High availability configuration with pod anti-affinity
 ---
 controller:
+  # Run 2 replicas for HA (with 3 nodes, this ensures coverage if one node fails)
+  replicaCount: 2
+
+  # Spread controller pods across different nodes
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/name: ingress-nginx
+                app.kubernetes.io/component: controller
+            topologyKey: kubernetes.io/hostname
+
+  # Topology spread for even distribution
+  topologySpreadConstraints:
+    - maxSkew: 1
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: ScheduleAnyway
+      labelSelector:
+        matchLabels:
+          app.kubernetes.io/name: ingress-nginx
+          app.kubernetes.io/component: controller
+
   service:
     annotations:
       # Azure LoadBalancer health probe configuration
