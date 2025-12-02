@@ -25,8 +25,8 @@ resource "azurerm_kubernetes_cluster" "crossplane" {
     name                = "default"
     vm_size             = "Standard_B2s"
     auto_scaling_enabled = true
-    min_count           = 3
-    max_count           = 5
+    min_count           = 1
+    max_count           = 3
 
     tags = {
       environment = "dev"
