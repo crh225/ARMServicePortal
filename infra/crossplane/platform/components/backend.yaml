@@ -1,0 +1,216 @@
+# Backend resources for ApplicationEnvironment
+# Creates: Deployment, Service
+resources:
+  - name: backend-deployment
+    base:
+      apiVersion: kubernetes.crossplane.io/v1alpha2
+      kind: Object
+      spec:
+        forProvider:
+          manifest:
+            apiVersion: apps/v1
+            kind: Deployment
+            metadata:
+              name: ""
+              labels:
+                app.kubernetes.io/component: backend
+            spec:
+              replicas: 2
+              selector:
+                matchLabels:
+                  app.kubernetes.io/component: backend
+              template:
+                metadata:
+                  labels:
+                    app.kubernetes.io/component: backend
+                spec:
+                  containers:
+                    - name: backend
+                      image: ""
+                      ports:
+                        - { containerPort: 4000, name: http }
+                      env:
+                        - { name: NODE_ENV, value: "" }
+                        - name: DATABASE_HOST
+                          valueFrom: { secretKeyRef: { name: "", key: host } }
+                        - name: DATABASE_PORT
+                          valueFrom: { secretKeyRef: { name: "", key: port } }
+                        - name: DATABASE_USER
+                          valueFrom: { secretKeyRef: { name: "", key: username } }
+                        - name: DATABASE_PASSWORD
+                          valueFrom: { secretKeyRef: { name: "", key: password } }
+                        - name: DATABASE_NAME
+                          valueFrom: { secretKeyRef: { name: "", key: database } }
+                      resources:
+                        requests: { cpu: "200m", memory: "256Mi" }
+                        limits: { cpu: "500m", memory: "512Mi" }
+    patches:
+      - type: PatchSet
+        patchSetName: common-labels
+      - type: PatchSet
+        patchSetName: namespace-patch
+      # Deployment name
+      - type: CombineFromComposite
+        combine:
+          variables:
+            - fromFieldPath: spec.parameters.appName
+            - fromFieldPath: spec.parameters.environment
+          strategy: string
+          string:
+            fmt: "%s-%s-backend"
+        toFieldPath: spec.forProvider.manifest.metadata.name
+      # Metadata name
+      - type: CombineFromComposite
+        combine:
+          variables:
+            - fromFieldPath: spec.parameters.appName
+            - fromFieldPath: spec.parameters.environment
+          strategy: string
+          string:
+            fmt: "backend-deployment-%s-%s"
+        toFieldPath: metadata.name
+      # Container image
+      - type: CombineFromComposite
+        combine:
+          variables:
+            - fromFieldPath: spec.parameters.backend.imageRepo
+            - fromFieldPath: spec.parameters.backend.tag
+          strategy: string
+          string:
+            fmt: "%s:%s"
+        toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].image
+      # Replicas
+      - type: FromCompositeFieldPath
+        fromFieldPath: spec.parameters.backend.replicas
+        toFieldPath: spec.forProvider.manifest.spec.replicas
+      # Port
+      - type: FromCompositeFieldPath
+        fromFieldPath: spec.parameters.backend.port
+        toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].ports[0].containerPort
+      # NODE_ENV
+      - type: FromCompositeFieldPath
+        fromFieldPath: spec.parameters.environment
+        toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].env[0].value
+        transforms:
+          - type: map
+            map: { dev: development, staging: staging, prod: production }
+      # DB credentials secret refs (all 5 env vars point to same secret)
+      - type: CombineFromComposite
+        combine:
+          variables:
+            - fromFieldPath: spec.parameters.appName
+            - fromFieldPath: spec.parameters.environment
+          strategy: string
+          string:
+            fmt: "%s-%s-db-credentials"
+        toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].env[1].valueFrom.secretKeyRef.name
+      - type: CombineFromComposite
+        combine:
+          variables:
+            - fromFieldPath: spec.parameters.appName
+            - fromFieldPath: spec.parameters.environment
+          strategy: string
+          string:
+            fmt: "%s-%s-db-credentials"
+        toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].env[2].valueFrom.secretKeyRef.name
+      - type: CombineFromComposite
+        combine:
+          variables:
+            - fromFieldPath: spec.parameters.appName
+            - fromFieldPath: spec.parameters.environment
+          strategy: string
+          string:
+            fmt: "%s-%s-db-credentials"
+        toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].env[3].valueFrom.secretKeyRef.name
+      - type: CombineFromComposite
+        combine:
+          variables:
+            - fromFieldPath: spec.parameters.appName
+            - fromFieldPath: spec.parameters.environment
+          strategy: string
+          string:
+            fmt: "%s-%s-db-credentials"
+        toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].env[4].valueFrom.secretKeyRef.name
+      - type: CombineFromComposite
+        combine:
+          variables:
+            - fromFieldPath: spec.parameters.appName
+            - fromFieldPath: spec.parameters.environment
+          strategy: string
+          string:
+            fmt: "%s-%s-db-credentials"
+        toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].env[5].valueFrom.secretKeyRef.name
+      # Instance labels
+      - type: CombineFromComposite
+        combine:
+          variables:
+            - fromFieldPath: spec.parameters.appName
+            - fromFieldPath: spec.parameters.environment
+          strategy: string
+          string:
+            fmt: "%s-%s"
+        toFieldPath: spec.forProvider.manifest.spec.selector.matchLabels["app.kubernetes.io/instance"]
+      - type: CombineFromComposite
+        combine:
+          variables:
+            - fromFieldPath: spec.parameters.appName
+            - fromFieldPath: spec.parameters.environment
+          strategy: string
+          string:
+            fmt: "%s-%s"
+        toFieldPath: spec.forProvider.manifest.spec.template.metadata.labels["app.kubernetes.io/instance"]
+
+  - name: backend-service
+    base:
+      apiVersion: kubernetes.crossplane.io/v1alpha2
+      kind: Object
+      spec:
+        forProvider:
+          manifest:
+            apiVersion: v1
+            kind: Service
+            metadata:
+              name: ""
+              labels:
+                app.kubernetes.io/component: backend
+            spec:
+              type: ClusterIP
+              ports:
+                - { port: 80, targetPort: 4000, protocol: TCP, name: http }
+              selector:
+                app.kubernetes.io/component: backend
+    patches:
+      - type: PatchSet
+        patchSetName: common-labels
+      - type: PatchSet
+        patchSetName: namespace-patch
+      - type: CombineFromComposite
+        combine:
+          variables:
+            - fromFieldPath: spec.parameters.appName
+            - fromFieldPath: spec.parameters.environment
+          strategy: string
+          string:
+            fmt: "%s-%s-backend"
+        toFieldPath: spec.forProvider.manifest.metadata.name
+      - type: CombineFromComposite
+        combine:
+          variables:
+            - fromFieldPath: spec.parameters.appName
+            - fromFieldPath: spec.parameters.environment
+          strategy: string
+          string:
+            fmt: "backend-service-%s-%s"
+        toFieldPath: metadata.name
+      - type: FromCompositeFieldPath
+        fromFieldPath: spec.parameters.backend.port
+        toFieldPath: spec.forProvider.manifest.spec.ports[0].targetPort
+      - type: CombineFromComposite
+        combine:
+          variables:
+            - fromFieldPath: spec.parameters.appName
+            - fromFieldPath: spec.parameters.environment
+          strategy: string
+          string:
+            fmt: "%s-%s"
+        toFieldPath: spec.forProvider.manifest.spec.selector["app.kubernetes.io/instance"]

@@ -1,0 +1,158 @@
+# Frontend resources for ApplicationEnvironment
+# Creates: Deployment, Service
+resources:
+  - name: frontend-deployment
+    base:
+      apiVersion: kubernetes.crossplane.io/v1alpha2
+      kind: Object
+      spec:
+        forProvider:
+          manifest:
+            apiVersion: apps/v1
+            kind: Deployment
+            metadata:
+              name: ""
+              labels:
+                app.kubernetes.io/component: frontend
+            spec:
+              replicas: 2
+              selector:
+                matchLabels:
+                  app.kubernetes.io/component: frontend
+              template:
+                metadata:
+                  labels:
+                    app.kubernetes.io/component: frontend
+                spec:
+                  containers:
+                    - name: frontend
+                      image: ""
+                      ports:
+                        - { containerPort: 80, name: http }
+                      env:
+                        - { name: BACKEND_URL, value: "" }
+                      resources:
+                        requests: { cpu: "100m", memory: "128Mi" }
+                        limits: { cpu: "200m", memory: "256Mi" }
+    patches:
+      - type: PatchSet
+        patchSetName: common-labels
+      - type: PatchSet
+        patchSetName: namespace-patch
+      - type: CombineFromComposite
+        combine:
+          variables:
+            - fromFieldPath: spec.parameters.appName
+            - fromFieldPath: spec.parameters.environment
+          strategy: string
+          string:
+            fmt: "%s-%s-frontend"
+        toFieldPath: spec.forProvider.manifest.metadata.name
+      - type: CombineFromComposite
+        combine:
+          variables:
+            - fromFieldPath: spec.parameters.appName
+            - fromFieldPath: spec.parameters.environment
+          strategy: string
+          string:
+            fmt: "frontend-deployment-%s-%s"
+        toFieldPath: metadata.name
+      - type: CombineFromComposite
+        combine:
+          variables:
+            - fromFieldPath: spec.parameters.frontend.imageRepo
+            - fromFieldPath: spec.parameters.frontend.tag
+          strategy: string
+          string:
+            fmt: "%s:%s"
+        toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].image
+      - type: FromCompositeFieldPath
+        fromFieldPath: spec.parameters.frontend.replicas
+        toFieldPath: spec.forProvider.manifest.spec.replicas
+      - type: FromCompositeFieldPath
+        fromFieldPath: spec.parameters.frontend.port
+        toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].ports[0].containerPort
+      - type: CombineFromComposite
+        combine:
+          variables:
+            - fromFieldPath: spec.parameters.appName
+            - fromFieldPath: spec.parameters.environment
+            - fromFieldPath: spec.parameters.appName
+            - fromFieldPath: spec.parameters.environment
+          strategy: string
+          string:
+            fmt: "http://%s-%s-backend.%s-%s.svc.cluster.local"
+        toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].env[0].value
+      - type: CombineFromComposite
+        combine:
+          variables:
+            - fromFieldPath: spec.parameters.appName
+            - fromFieldPath: spec.parameters.environment
+          strategy: string
+          string:
+            fmt: "%s-%s"
+        toFieldPath: spec.forProvider.manifest.spec.selector.matchLabels["app.kubernetes.io/instance"]
+      - type: CombineFromComposite
+        combine:
+          variables:
+            - fromFieldPath: spec.parameters.appName
+            - fromFieldPath: spec.parameters.environment
+          strategy: string
+          string:
+            fmt: "%s-%s"
+        toFieldPath: spec.forProvider.manifest.spec.template.metadata.labels["app.kubernetes.io/instance"]
+
+  - name: frontend-service
+    base:
+      apiVersion: kubernetes.crossplane.io/v1alpha2
+      kind: Object
+      spec:
+        forProvider:
+          manifest:
+            apiVersion: v1
+            kind: Service
+            metadata:
+              name: ""
+              labels:
+                app.kubernetes.io/component: frontend
+            spec:
+              type: ClusterIP
+              ports:
+                - { port: 80, targetPort: 80, protocol: TCP, name: http }
+              selector:
+                app.kubernetes.io/component: frontend
+    patches:
+      - type: PatchSet
+        patchSetName: common-labels
+      - type: PatchSet
+        patchSetName: namespace-patch
+      - type: CombineFromComposite
+        combine:
+          variables:
+            - fromFieldPath: spec.parameters.appName
+            - fromFieldPath: spec.parameters.environment
+          strategy: string
+          string:
+            fmt: "%s-%s-frontend"
+        toFieldPath: spec.forProvider.manifest.metadata.name
+      - type: CombineFromComposite
+        combine:
+          variables:
+            - fromFieldPath: spec.parameters.appName
+            - fromFieldPath: spec.parameters.environment
+          strategy: string
+          string:
+            fmt: "frontend-service-%s-%s"
+        toFieldPath: metadata.name
+      - type: FromCompositeFieldPath
+        fromFieldPath: spec.parameters.frontend.port
+        toFieldPath: spec.forProvider.manifest.spec.ports[0].targetPort
+      - type: CombineFromComposite
+        combine:
+          variables:
+            - fromFieldPath: spec.parameters.appName
+            - fromFieldPath: spec.parameters.environment
+          strategy: string
+          string:
+            fmt: "%s-%s"
+        toFieldPath: spec.forProvider.manifest.spec.selector["app.kubernetes.io/instance"]

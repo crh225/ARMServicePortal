@@ -1170,6 +1170,71 @@ export const BLUEPRINTS = [
         type: "string",
         required: false,
         default: "letsencrypt-prod"
+      },
+      // Optional Add-ons
+      {
+        name: "redis_enabled",
+        label: "Enable Redis Cache",
+        type: "select",
+        required: false,
+        options: ["true", "false"],
+        default: "false",
+        helpText: "Add a Redis instance for caching and session storage",
+        section: "Add-ons"
+      },
+      {
+        name: "redis_version",
+        label: "Redis Version",
+        type: "select",
+        required: false,
+        options: ["7.2", "7.0", "6.2"],
+        default: "7.2",
+        dependsOn: "redis_enabled",
+        showWhen: "true",
+        section: "Add-ons"
+      },
+      {
+        name: "redis_memoryLimitMB",
+        label: "Redis Memory Limit (MB)",
+        type: "select",
+        required: false,
+        options: ["64", "128", "256", "512", "1024", "2048"],
+        default: "256",
+        dependsOn: "redis_enabled",
+        showWhen: "true",
+        section: "Add-ons"
+      },
+      {
+        name: "rabbitmq_enabled",
+        label: "Enable RabbitMQ",
+        type: "select",
+        required: false,
+        options: ["true", "false"],
+        default: "false",
+        helpText: "Add a RabbitMQ message broker for async messaging",
+        section: "Add-ons"
+      },
+      {
+        name: "rabbitmq_version",
+        label: "RabbitMQ Version",
+        type: "select",
+        required: false,
+        options: ["3.13", "3.12"],
+        default: "3.13",
+        dependsOn: "rabbitmq_enabled",
+        showWhen: "true",
+        section: "Add-ons"
+      },
+      {
+        name: "rabbitmq_memoryLimitMB",
+        label: "RabbitMQ Memory Limit (MB)",
+        type: "select",
+        required: false,
+        options: ["256", "512", "1024", "2048", "4096"],
+        default: "512",
+        dependsOn: "rabbitmq_enabled",
+        showWhen: "true",
+        section: "Add-ons"
       }
     ],
     outputs: [
@@ -1188,6 +1253,14 @@ export const BLUEPRINTS = [
       {
         name: "databaseEndpoint",
         description: "PostgreSQL connection endpoint"
+      },
+      {
+        name: "redisEndpoint",
+        description: "Redis connection endpoint (if enabled)"
+      },
+      {
+        name: "rabbitmqEndpoint",
+        description: "RabbitMQ AMQP endpoint (if enabled)"
       }
     ],
     estimatedMonthlyCost: 80

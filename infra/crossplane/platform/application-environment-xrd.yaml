@@ -23,6 +23,12 @@ spec:
     - database-username
     - database-password
     - database-name
+    - redis-host
+    - redis-port
+    - rabbitmq-host
+    - rabbitmq-port
+    - rabbitmq-username
+    - rabbitmq-password
   versions:
     - name: v1alpha1
       served: true
@@ -161,6 +167,66 @@ spec:
                           additionalProperties:
                             type: string
                           description: "Additional ingress annotations"
+                    # Optional add-on services
+                    redis:
+                      type: object
+                      description: "Optional Redis cache add-on"
+                      properties:
+                        enabled:
+                          type: boolean
+                          description: "Enable Redis for caching"
+                          default: false
+                        version:
+                          type: string
+                          description: "Redis version"
+                          enum:
+                            - "7.2"
+                            - "7.0"
+                            - "6.2"
+                          default: "7.2"
+                        memoryLimitMB:
+                          type: integer
+                          description: "Redis memory limit in MB"
+                          minimum: 64
+                          maximum: 4096
+                          default: 256
+                        storageGB:
+                          type: integer
+                          description: "Persistent storage in GB (0 for no persistence)"
+                          minimum: 0
+                          maximum: 100
+                          default: 1
+                    rabbitmq:
+                      type: object
+                      description: "Optional RabbitMQ message queue add-on"
+                      properties:
+                        enabled:
+                          type: boolean
+                          description: "Enable RabbitMQ for messaging"
+                          default: false
+                        version:
+                          type: string
+                          description: "RabbitMQ version"
+                          enum:
+                            - "3.13"
+                            - "3.12"
+                          default: "3.13"
+                        memoryLimitMB:
+                          type: integer
+                          description: "RabbitMQ memory limit in MB"
+                          minimum: 256
+                          maximum: 4096
+                          default: 512
+                        storageGB:
+                          type: integer
+                          description: "Persistent storage in GB"
+                          minimum: 1
+                          maximum: 100
+                          default: 5
+                        exposeManagement:
+                          type: boolean
+                          description: "Expose RabbitMQ management UI via ingress"
+                          default: true
             status:
               type: object
               properties:
