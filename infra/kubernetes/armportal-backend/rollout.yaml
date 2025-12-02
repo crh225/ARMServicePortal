@@ -10,7 +10,7 @@ metadata:
     environment: dev
 spec:
   revisionHistoryLimit: 2
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: armportal-backend
@@ -24,16 +24,6 @@ spec:
       serviceAccountName: armportal-backend-sa
       imagePullSecrets:
         - name: acr-credentials
-
-      # Spread backend pods across different nodes for HA
-      topologySpreadConstraints:
-        - maxSkew: 1
-          topologyKey: kubernetes.io/hostname
-          whenUnsatisfiable: ScheduleAnyway
-          labelSelector:
-            matchLabels:
-              app: armportal-backend
-
       containers:
       - name: armportal-api
         image: armportalacre4k9.azurecr.io/armportal-backend:3136a7c35e62111fc692b6ca4bcec04652c1a568
