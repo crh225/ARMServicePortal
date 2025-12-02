@@ -11,11 +11,7 @@ import { CostManagementClient } from "@azure/arm-costmanagement";
 import { Octokit } from "@octokit/rest";
 import { createAppAuth } from "@octokit/auth-app";
 import { cache } from "../infrastructure/utils/Cache.js";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+import { getLatestBlueprints } from "../config/blueprints.js";
 
 // Constants
 const COST_CACHE_TTL = 60 * 60 * 1000; // 1 hour
@@ -158,21 +154,15 @@ async function fetchJobCount(octokit) {
 }
 
 /**
- * Fetch blueprint count from config files
+ * Fetch blueprint count from config
  */
-async function fetchBlueprintCount() {
+function fetchBlueprintCount() {
   console.log("[CacheWarmer] Counting blueprints...");
 
   try {
-    const blueprintsDir = path.join(__dirname, "../../config/blueprints");
-    if (!fs.existsSync(blueprintsDir)) {
-      console.log("[CacheWarmer] Blueprints directory not found");
-      return 0;
-    }
-
-    const files = fs.readdirSync(blueprintsDir).filter(f => f.endsWith(".json"));
-    console.log(`[CacheWarmer] Found ${files.length} blueprints`);
-    return files.length;
+    const blueprints = getLatestBlueprints();
+    console.log(`[CacheWarmer] Found ${blueprints.length} blueprints`);
+    return blueprints.length;
   } catch (error) {
     console.error("[CacheWarmer] Failed to count blueprints:", error.message);
     return 0;
