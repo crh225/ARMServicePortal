@@ -243,6 +243,9 @@ export function useBlueprints(updateResourceData, onClearUpdate) {
           }
         });
 
+        // Scroll to top to show the result
+        window.scrollTo({ top: 0, behavior: "smooth" });
+
         // Clear update resource data so they can start fresh
         if (onClearUpdate) {
           onClearUpdate();
