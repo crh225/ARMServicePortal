@@ -3,95 +3,95 @@ import "../../styles/CrossplaneCredentials.css";
 
 /**
  * Generate kubectl commands based on blueprint type and configuration
+ * Returns commands with both PowerShell and Bash variants
  */
 function generateKubectlCommands(blueprintId, name, environment, crossplaneYaml) {
   const namespace = `${name}-${environment}`;
 
+  // Helper to create command with both shell variants
+  const cmd = (label, description, { powershell, bash }) => ({
+    label,
+    description,
+    powershell: powershell || bash,
+    bash: bash || powershell
+  });
+
+  // Base64 decode helpers
+  const psBase64 = (secretName, key) =>
+    `kubectl get secret ${secretName} -n ${namespace} -o jsonpath="{.data.${key}}" | % { [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($_)) }`;
+  const bashBase64 = (secretName, key) =>
+    `kubectl get secret ${secretName} -n ${namespace} -o jsonpath='{.data.${key}}' | base64 -d`;
+
   // Standalone RabbitMQ blueprint
   if (blueprintId === "xp-rabbitmq") {
     return [
-      {
-        label: "Get RabbitMQ credentials",
-        command: `kubectl get secret ${namespace}-rabbitmq-admin -n ${namespace} -o jsonpath='{.data.username}' | base64 -d && echo`,
-        description: "Decode the admin username"
-      },
-      {
-        label: "Get RabbitMQ password",
-        command: `kubectl get secret ${namespace}-rabbitmq-admin -n ${namespace} -o jsonpath='{.data.password}' | base64 -d && echo`,
-        description: "Decode the admin password"
-      },
-      {
-        label: "Get Management URL",
-        command: `kubectl get ingress -n ${namespace} -o jsonpath='{.items[0].spec.rules[0].host}'`,
-        description: "Get the external management UI URL"
-      },
-      {
-        label: "Check pod status",
-        command: `kubectl get pods -n ${namespace}`,
-        description: "View RabbitMQ pod status"
-      }
+      cmd("Get RabbitMQ username", "Decode the admin username", {
+        powershell: psBase64(`${namespace}-rabbitmq-admin`, "username"),
+        bash: bashBase64(`${namespace}-rabbitmq-admin`, "username")
+      }),
+      cmd("Get RabbitMQ password", "Decode the admin password", {
+        powershell: psBase64(`${namespace}-rabbitmq-admin`, "password"),
+        bash: bashBase64(`${namespace}-rabbitmq-admin`, "password")
+      }),
+      cmd("Get Management URL", "Get the external management UI URL", {
+        powershell: `kubectl get ingress -n ${namespace} -o jsonpath="{.items[0].spec.rules[0].host}"`,
+        bash: `kubectl get ingress -n ${namespace} -o jsonpath='{.items[0].spec.rules[0].host}'`
+      }),
+      cmd("Check pod status", "View RabbitMQ pod status", {
+        bash: `kubectl get pods -n ${namespace}`
+      })
     ];
   }
 
   // Standalone Redis blueprint
   if (blueprintId === "xp-redis") {
     return [
-      {
-        label: "Check Redis pod status",
-        command: `kubectl get pods -n ${namespace}`,
-        description: "View Redis pod status"
-      },
-      {
-        label: "Get Redis service endpoint",
-        command: `kubectl get svc -n ${namespace} -o jsonpath='{.items[0].metadata.name}:{.items[0].spec.ports[0].port}'`,
-        description: "Get the internal Redis service endpoint"
-      },
-      {
-        label: "Connect to Redis CLI",
-        command: `kubectl exec -it deploy/${namespace}-redis -n ${namespace} -- redis-cli`,
-        description: "Open an interactive Redis CLI session"
-      }
+      cmd("Check Redis pod status", "View Redis pod status", {
+        bash: `kubectl get pods -n ${namespace}`
+      }),
+      cmd("Get Redis service endpoint", "Get the internal Redis service endpoint", {
+        powershell: `kubectl get svc -n ${namespace} -o jsonpath="{.items[0].metadata.name}:{.items[0].spec.ports[0].port}"`,
+        bash: `kubectl get svc -n ${namespace} -o jsonpath='{.items[0].metadata.name}:{.items[0].spec.ports[0].port}'`
+      }),
+      cmd("Connect to Redis CLI", "Open an interactive Redis CLI session", {
+        bash: `kubectl exec -it deploy/${namespace}-redis -n ${namespace} -- redis-cli`
+      })
     ];
   }
 
   // ApplicationEnvironment blueprint - check YAML for enabled add-ons
   if (blueprintId === "xp-application-environment") {
     const commands = [
-      {
-        label: "Check pod status",
-        command: `kubectl get pods -n ${namespace}`,
-        description: "View all pods in the namespace"
-      },
-      {
-        label: "Get database credentials",
-        command: `kubectl get secret ${namespace}-db-credentials -n ${namespace} -o jsonpath='{.data.password}' | base64 -d && echo`,
-        description: "Decode the PostgreSQL password"
-      },
-      {
-        label: "View ingress",
-        command: `kubectl get ingress -n ${namespace}`,
-        description: "View ingress configuration"
-      }
+      cmd("Check pod status", "View all pods in the namespace", {
+        bash: `kubectl get pods -n ${namespace}`
+      }),
+      cmd("Get database password", "Decode the PostgreSQL password", {
+        powershell: psBase64(`${namespace}-db-credentials`, "password"),
+        bash: bashBase64(`${namespace}-db-credentials`, "password")
+      }),
+      cmd("View ingress", "View ingress configuration", {
+        bash: `kubectl get ingress -n ${namespace}`
+      })
     ];
 
     // Check if Redis is enabled in the YAML
     const redisEnabled = crossplaneYaml && /redis:\s*\n\s+enabled:\s*true/i.test(crossplaneYaml);
     if (redisEnabled) {
-      commands.push({
-        label: "Connect to Redis",
-        command: `kubectl exec -it deploy/${namespace}-redis -n ${namespace} -- redis-cli`,
-        description: "Open Redis CLI session"
-      });
+      commands.push(
+        cmd("Connect to Redis", "Open Redis CLI session", {
+          bash: `kubectl exec -it deploy/${namespace}-redis -n ${namespace} -- redis-cli`
+        })
+      );
     }
 
     // Check if RabbitMQ is enabled in the YAML
     const rabbitmqEnabled = crossplaneYaml && /rabbitmq:\s*\n\s+enabled:\s*true/i.test(crossplaneYaml);
     if (rabbitmqEnabled) {
-      commands.push({
-        label: "Get RabbitMQ credentials",
-        command: `kubectl get secret ${namespace}-rabbitmq-credentials -n ${namespace} -o yaml`,
-        description: "View RabbitMQ connection details"
-      });
+      commands.push(
+        cmd("Get RabbitMQ credentials", "View RabbitMQ connection details", {
+          bash: `kubectl get secret ${namespace}-rabbitmq-credentials -n ${namespace} -o yaml`
+        })
+      );
     }
 
     return commands;
@@ -99,21 +99,15 @@ function generateKubectlCommands(blueprintId, name, environment, crossplaneYaml)
 
   // Default commands for other blueprint types
   return [
-    {
-      label: "Check pod status",
-      command: `kubectl get pods -n ${namespace}`,
-      description: "View pod status in the namespace"
-    },
-    {
-      label: "View all resources",
-      command: `kubectl get all -n ${namespace}`,
-      description: "List all resources in the namespace"
-    },
-    {
-      label: "View secrets",
-      command: `kubectl get secrets -n ${namespace}`,
-      description: "List available secrets"
-    }
+    cmd("Check pod status", "View pod status in the namespace", {
+      bash: `kubectl get pods -n ${namespace}`
+    }),
+    cmd("View all resources", "List all resources in the namespace", {
+      bash: `kubectl get all -n ${namespace}`
+    }),
+    cmd("View secrets", "List available secrets", {
+      bash: `kubectl get secrets -n ${namespace}`
+    })
   ];
 }
 
@@ -135,6 +129,7 @@ async function copyToClipboard(text) {
  */
 function CrossplaneCredentials({ blueprintId, name, environment, crossplaneYaml }) {
   const [copiedIndex, setCopiedIndex] = useState(null);
+  const [shell, setShell] = useState("powershell");
 
   if (!name || !environment) {
     return (
@@ -161,42 +156,59 @@ function CrossplaneCredentials({ blueprintId, name, environment, crossplaneYaml 
         <span className="credentials-namespace">
           Namespace: <code>{namespace}</code>
         </span>
+        <div className="shell-toggle">
+          <button
+            className={`shell-btn ${shell === "powershell" ? "active" : ""}`}
+            onClick={() => setShell("powershell")}
+          >
+            PowerShell
+          </button>
+          <button
+            className={`shell-btn ${shell === "bash" ? "active" : ""}`}
+            onClick={() => setShell("bash")}
+          >
+            Bash
+          </button>
+        </div>
       </div>
 
       <div className="credentials-commands">
-        {commands.map((cmd, index) => (
-          <div key={index} className="command-item">
-            <div className="command-header">
-              <span className="command-label">{cmd.label}</span>
-              <button
-                className={`copy-btn ${copiedIndex === index ? "copied" : ""}`}
-                onClick={() => handleCopy(cmd.command, index)}
-                title="Copy to clipboard"
-              >
-                {copiedIndex === index ? (
-                  <>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    Copied!
-                  </>
-                ) : (
-                  <>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                    </svg>
-                    Copy
-                  </>
-                )}
-              </button>
+        {commands.map((cmd, index) => {
+          const command = shell === "powershell" ? cmd.powershell : cmd.bash;
+          return (
+            <div key={index} className="command-item">
+              <div className="command-header">
+                <span className="command-label">{cmd.label}</span>
+                <button
+                  className={`copy-btn ${copiedIndex === index ? "copied" : ""}`}
+                  onClick={() => handleCopy(command, index)}
+                  title="Copy to clipboard"
+                >
+                  {copiedIndex === index ? (
+                    <>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                      </svg>
+                      Copy
+                    </>
+                  )}
+                </button>
+              </div>
+              <pre className="command-code">{command}</pre>
+              {cmd.description && (
+                <span className="command-description">{cmd.description}</span>
+              )}
             </div>
-            <pre className="command-code">{cmd.command}</pre>
-            {cmd.description && (
-              <span className="command-description">{cmd.description}</span>
-            )}
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
