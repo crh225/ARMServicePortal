@@ -185,6 +185,15 @@ function BlueprintForm({
 
       <div className="form-grid">
         {(blueprint.variables || []).map((v) => {
+          // Check if this field should be hidden based on dependsOn/showWhen
+          if (v.dependsOn && v.showWhen !== undefined) {
+            const dependentValue = formValues[v.dependsOn];
+            // Hide if the dependent field doesn't match showWhen value
+            if (dependentValue !== v.showWhen) {
+              return null;
+            }
+          }
+
           // Check if this is a resource_group_name or subscription_id field
           const isResourceGroupField = v.name === "resource_group_name";
           const isSubscriptionField = v.name === "subscription_id";
