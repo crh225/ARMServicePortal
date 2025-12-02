@@ -7,10 +7,10 @@ metadata:
     app.kubernetes.io/managed-by: armportal
     armportal.chrishouse.io/blueprint: "xp-application-environment"
     armportal.chrishouse.io/version: "1.0.0"
-    armportal.chrishouse.io/request-id: "xp-application-environment-6689b1ed"
+    armportal.chrishouse.io/request-id: "195"
     armportal.chrishouse.io/created-by: crh225
   annotations:
-    armportal.chrishouse.io/provisioned-at: "2025-12-02T14:18:21.731Z"
+    armportal.chrishouse.io/provisioned-at: "2025-12-02T14:18:23.538Z"
 spec:
   parameters:
     appName: fullstacktest
