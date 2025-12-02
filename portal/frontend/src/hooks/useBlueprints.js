@@ -1,6 +1,6 @@
 import { useReducer, useEffect } from "react";
 import api from "../services/api";
-import { parseTerraformVariables, initializeFormValues, parsePolicyErrors } from "../utils/terraformParser";
+import { parseTerraformVariables, parseCrossplaneVariables, initializeFormValues, parsePolicyErrors } from "../utils/terraformParser";
 
 /**
  * Initial state for blueprint management
@@ -150,14 +150,18 @@ export function useBlueprints(updateResourceData, onClearUpdate) {
       if (blueprintId) {
         const bp = state.blueprints.find((b) => b.id === blueprintId);
         if (bp) {
-          const parsedVars = parseTerraformVariables(updateResourceData.terraformModule);
+          // Use appropriate parser based on provider type
+          const isCrossplane = bp.provider === "crossplane";
+          const parsedVars = isCrossplane
+            ? parseCrossplaneVariables(updateResourceData.crossplaneYaml)
+            : parseTerraformVariables(updateResourceData.terraformModule);
 
           dispatch({
             type: ACTIONS.LOAD_UPDATE_DATA,
             payload: {
               blueprint: bp,
               formValues: parsedVars,
-              moduleName: updateResourceData.moduleName
+              moduleName: updateResourceData.moduleName || updateResourceData.crossplaneResourceName
             }
           });
         }

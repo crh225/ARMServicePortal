@@ -12,6 +12,8 @@ function ResourceActions({ job, onPromote, onUpdate, onDelete, promoteLoading })
   }
 
   // Determine next environment for promotion
+  // Crossplane resources don't support promotion yet
+  const isCrossplane = job.provider === "crossplane";
   const environmentPath = {
     dev: "qa",
     qa: "staging",
@@ -19,7 +21,7 @@ function ResourceActions({ job, onPromote, onUpdate, onDelete, promoteLoading })
     prod: null
   };
   const nextEnvironment = environmentPath[job.environment];
-  const canPromote = nextEnvironment !== null;
+  const canPromote = nextEnvironment !== null && !isCrossplane;
 
   return (
     <div className="resource-actions">
