@@ -172,6 +172,30 @@
   border-color: #3b82f6;
 }
 
+/* Title row with optional deprecated badge */
+.blueprint-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.blueprint-title-row .blueprint-title {
+  margin: 0;
+}
+
+.blueprint-deprecated-badge {
+  font-size: 0.625rem;
+  font-weight: 500;
+  padding: 2px 6px;
+  background: var(--bg-hover);
+  border: 1px solid var(--border-default);
+  border-radius: 3px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
 /* Card header with icon */
 .blueprint-card-header {
   display: flex;
@@ -345,6 +369,7 @@
   .blueprint-card {
     min-height: auto;
   }
+
 }
 
 /* Skeleton loading states */

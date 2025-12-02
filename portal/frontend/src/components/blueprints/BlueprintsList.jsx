@@ -133,6 +133,14 @@ const defaultCategoryIcons = {
   "default": "📦"
 };
 
+// Deprecated blueprints - these will show a deprecated badge
+const deprecatedBlueprints = {
+  "azure-cdn": {
+    reason: "Azure CDN Classic deprecated Oct 2025",
+    alternative: "azure-frontdoor"
+  }
+};
+
 // Provider/engine configuration with official logos
 const providerConfig = {
   "terraform": {
@@ -324,13 +332,15 @@ function BlueprintsList({ blueprints, selectedBlueprint, onSelectBlueprint, load
           const serviceIcon = serviceIcons[bp.id];
           const iconColor = serviceIcon?.color || categoryColor;
           const icon = serviceIcon?.icon || defaultCategoryIcons[category] || defaultCategoryIcons.default;
+          const isDeprecated = deprecatedBlueprints[bp.id];
 
           return (
             <button
               key={bp.id}
               className={
                 "blueprint-card" +
-                (selectedBlueprint?.id === bp.id ? " blueprint-card--active" : "")
+                (selectedBlueprint?.id === bp.id ? " blueprint-card--active" : "") +
+                (isDeprecated ? " blueprint-card--deprecated" : "")
               }
               onClick={() => handleBlueprintClick(bp.id)}
             >
@@ -354,7 +364,12 @@ function BlueprintsList({ blueprints, selectedBlueprint, onSelectBlueprint, load
                 </div>
               </div>
 
-              <h3 className="blueprint-title">{bp.displayName}</h3>
+              <div className="blueprint-title-row">
+                <h3 className="blueprint-title">{bp.displayName}</h3>
+                {isDeprecated && (
+                  <span className="blueprint-deprecated-badge">Deprecated</span>
+                )}
+              </div>
               <p className="blueprint-desc">{bp.description}</p>
 
               <div className="blueprint-footer">
