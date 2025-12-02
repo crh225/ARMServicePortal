@@ -75,6 +75,28 @@ spec:
                 combine: { variables: [{ fromFieldPath: spec.parameters.appName }, { fromFieldPath: spec.parameters.environment }], strategy: string, string: { fmt: "namespace-%s-%s" } }
                 toFieldPath: metadata.name
 
+          # === ISTIO PEER AUTHENTICATION (allow ingress to reach pods) ===
+          - name: peer-authentication
+            base:
+              apiVersion: kubernetes.crossplane.io/v1alpha2
+              kind: Object
+              spec:
+                forProvider:
+                  manifest:
+                    apiVersion: security.istio.io/v1beta1
+                    kind: PeerAuthentication
+                    metadata:
+                      name: default
+                    spec:
+                      mtls:
+                        mode: PERMISSIVE
+            patches:
+              - { type: PatchSet, patchSetName: common-labels }
+              - { type: PatchSet, patchSetName: namespace-patch }
+              - type: CombineFromComposite
+                combine: { variables: [{ fromFieldPath: spec.parameters.appName }, { fromFieldPath: spec.parameters.environment }], strategy: string, string: { fmt: "peerauth-%s-%s" } }
+                toFieldPath: metadata.name
+
           # === POSTGRESQL ===
           - name: postgres-pvc
             base:
