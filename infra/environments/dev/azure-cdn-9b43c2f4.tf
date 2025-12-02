@@ -15,7 +15,7 @@ module "azure-cdn-9b43c2f4" {
   tags = {
     armportal-environment = "dev"
     armportal-blueprint   = "azure-cdn"
-    armportal-request-id  = "azure-cdn-9b43c2f4"
+    armportal-request-id  = "193"
   }
 }
 
