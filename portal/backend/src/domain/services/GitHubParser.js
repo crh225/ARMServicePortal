@@ -39,15 +39,23 @@ function extractCodeBlock(body, pattern) {
 
 /**
  * Extract resource name from Crossplane claim YAML
- * Looks for spec.parameters.name in the YAML content
+ * Looks for spec.parameters.name or spec.parameters.appName in the YAML content
  * @param {string} yamlContent - YAML content
  * @returns {string|null} - Resource name or null
  */
 function extractCrossplaneResourceName(yamlContent) {
   if (!yamlContent) return null;
 
-  // Look for name: "value" or name: value after parameters:
-  const nameMatch = yamlContent.match(/parameters:\s*\n(?:.*\n)*?\s+name:\s*["']?([a-z0-9-]+)["']?/);
+  // Look for appName: (used by ApplicationEnvironment) - check this first as it's more specific
+  // Match appName anywhere after parameters: with flexible whitespace
+  const appNameMatch = yamlContent.match(/parameters:[\s\S]*?appName:\s*["']?([a-z0-9-]+)["']?/);
+  if (appNameMatch && appNameMatch[1]) {
+    return appNameMatch[1];
+  }
+
+  // Fall back to name: (used by other blueprints like Redis, RabbitMQ)
+  // Match name as a direct child of parameters (not nested in a sub-object)
+  const nameMatch = yamlContent.match(/parameters:\s*\n\s+name:\s*["']?([a-z0-9-]+)["']?/);
   if (nameMatch && nameMatch[1]) {
     return nameMatch[1];
   }
