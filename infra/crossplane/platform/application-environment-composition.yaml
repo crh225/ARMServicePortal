@@ -546,4 +546,38 @@ spec:
                   kind: Secret
                   metadata: { name: {{ $ns }}-rabbitmq-credentials, namespace: {{ $ns }} }
                   stringData: { host: {{ $ns }}-rabbitmq, port: "5672", username: admin, password: rabbitmq-{{ $p.appName }} }
+            {{- if $p.rabbitmq.exposeManagement }}
+            ---
+            apiVersion: kubernetes.crossplane.io/v1alpha2
+            kind: Object
+            metadata:
+              name: rabbitmq-ingress-{{ $ns }}
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: rabbitmq-ingress-{{ $ns }}
+            spec:
+              forProvider:
+                manifest:
+                  apiVersion: networking.k8s.io/v1
+                  kind: Ingress
+                  metadata:
+                    name: {{ $ns }}-rabbitmq
+                    namespace: {{ $ns }}
+                    annotations:
+                      cert-manager.io/cluster-issuer: {{ default "letsencrypt-prod" $p.ingress.clusterIssuer }}
+                  spec:
+                    ingressClassName: nginx
+                    tls:
+                      - hosts: [rabbitmq-{{ $ns }}.pr.chrishouse.io]
+                        secretName: {{ $ns }}-rabbitmq-tls
+                    rules:
+                      - host: rabbitmq-{{ $ns }}.pr.chrishouse.io
+                        http:
+                          paths:
+                            - path: /
+                              pathType: Prefix
+                              backend:
+                                service:
+                                  name: {{ $ns }}-rabbitmq
+                                  port: { number: 15672 }
+            {{- end }}
             {{- end }}
