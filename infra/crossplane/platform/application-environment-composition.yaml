@@ -237,8 +237,12 @@ spec:
               - type: CombineFromComposite
                 combine: { variables: [{ fromFieldPath: spec.parameters.backend.imageRepo }, { fromFieldPath: spec.parameters.backend.tag }], strategy: string, string: { fmt: "%s:%s" } }
                 toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].image
-              - { type: FromCompositeFieldPath, fromFieldPath: spec.parameters.backend.replicas, toFieldPath: spec.forProvider.manifest.spec.replicas }
-              - { type: FromCompositeFieldPath, fromFieldPath: spec.parameters.backend.port, toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].ports[0].containerPort }
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.backend.replicas
+                toFieldPath: spec.forProvider.manifest.spec.replicas
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.backend.port
+                toFieldPath: "spec.forProvider.manifest.spec.template.spec.containers[0].ports[0].containerPort"
               - type: FromCompositeFieldPath
                 fromFieldPath: spec.parameters.environment
                 toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].env[0].value
@@ -285,7 +289,9 @@ spec:
               - type: CombineFromComposite
                 combine: { variables: [{ fromFieldPath: spec.parameters.appName }, { fromFieldPath: spec.parameters.environment }], strategy: string, string: { fmt: "backend-svc-%s-%s" } }
                 toFieldPath: metadata.name
-              - { type: FromCompositeFieldPath, fromFieldPath: spec.parameters.backend.port, toFieldPath: spec.forProvider.manifest.spec.ports[0].targetPort }
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.backend.port
+                toFieldPath: "spec.forProvider.manifest.spec.ports[0].targetPort"
               - type: CombineFromComposite
                 combine: { variables: [{ fromFieldPath: spec.parameters.appName }, { fromFieldPath: spec.parameters.environment }], strategy: string, string: { fmt: "%s-%s" } }
                 toFieldPath: spec.forProvider.manifest.spec.selector["app.kubernetes.io/instance"]
@@ -324,8 +330,12 @@ spec:
               - type: CombineFromComposite
                 combine: { variables: [{ fromFieldPath: spec.parameters.frontend.imageRepo }, { fromFieldPath: spec.parameters.frontend.tag }], strategy: string, string: { fmt: "%s:%s" } }
                 toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].image
-              - { type: FromCompositeFieldPath, fromFieldPath: spec.parameters.frontend.replicas, toFieldPath: spec.forProvider.manifest.spec.replicas }
-              - { type: FromCompositeFieldPath, fromFieldPath: spec.parameters.frontend.port, toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].ports[0].containerPort }
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.frontend.replicas
+                toFieldPath: spec.forProvider.manifest.spec.replicas
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.frontend.port
+                toFieldPath: "spec.forProvider.manifest.spec.template.spec.containers[0].ports[0].containerPort"
               - type: CombineFromComposite
                 combine:
                   variables: [{ fromFieldPath: spec.parameters.appName }, { fromFieldPath: spec.parameters.environment }, { fromFieldPath: spec.parameters.appName }, { fromFieldPath: spec.parameters.environment }]
@@ -359,7 +369,9 @@ spec:
               - type: CombineFromComposite
                 combine: { variables: [{ fromFieldPath: spec.parameters.appName }, { fromFieldPath: spec.parameters.environment }], strategy: string, string: { fmt: "frontend-svc-%s-%s" } }
                 toFieldPath: metadata.name
-              - { type: FromCompositeFieldPath, fromFieldPath: spec.parameters.frontend.port, toFieldPath: spec.forProvider.manifest.spec.ports[0].targetPort }
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.frontend.port
+                toFieldPath: "spec.forProvider.manifest.spec.ports[0].targetPort"
               - type: CombineFromComposite
                 combine: { variables: [{ fromFieldPath: spec.parameters.appName }, { fromFieldPath: spec.parameters.environment }], strategy: string, string: { fmt: "%s-%s" } }
                 toFieldPath: spec.forProvider.manifest.spec.selector["app.kubernetes.io/instance"]
@@ -395,12 +407,18 @@ spec:
               - type: CombineFromComposite
                 combine: { variables: [{ fromFieldPath: spec.parameters.appName }, { fromFieldPath: spec.parameters.environment }], strategy: string, string: { fmt: "ingress-%s-%s" } }
                 toFieldPath: metadata.name
-              - { type: FromCompositeFieldPath, fromFieldPath: spec.parameters.ingress.host, toFieldPath: spec.forProvider.manifest.spec.rules[0].host }
-              - { type: FromCompositeFieldPath, fromFieldPath: spec.parameters.ingress.host, toFieldPath: spec.forProvider.manifest.spec.tls[0].hosts[0] }
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.ingress.host
+                toFieldPath: "spec.forProvider.manifest.spec.rules[0].host"
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.ingress.host
+                toFieldPath: "spec.forProvider.manifest.spec.tls[0].hosts[0]"
               - type: CombineFromComposite
                 combine: { variables: [{ fromFieldPath: spec.parameters.appName }, { fromFieldPath: spec.parameters.environment }], strategy: string, string: { fmt: "%s-%s-tls" } }
                 toFieldPath: spec.forProvider.manifest.spec.tls[0].secretName
-              - { type: FromCompositeFieldPath, fromFieldPath: spec.parameters.ingress.clusterIssuer, toFieldPath: "spec.forProvider.manifest.metadata.annotations[cert-manager.io/cluster-issuer]" }
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.ingress.clusterIssuer
+                toFieldPath: "spec.forProvider.manifest.metadata.annotations[cert-manager.io/cluster-issuer]"
               - type: CombineFromComposite
                 combine: { variables: [{ fromFieldPath: spec.parameters.appName }, { fromFieldPath: spec.parameters.environment }], strategy: string, string: { fmt: "%s-%s-frontend" } }
                 toFieldPath: spec.forProvider.manifest.spec.rules[0].http.paths[0].backend.service.name
