@@ -373,7 +373,41 @@ spec:
                 toFieldPath: spec.forProvider.manifest.spec.template.metadata.labels["app.kubernetes.io/instance"]
 
           # ============================================================
-          # 5. REDIS SERVICE
+          # 5. ISTIO PEER AUTHENTICATION (allow non-mTLS clients)
+          # ============================================================
+          - name: peer-authentication
+            base:
+              apiVersion: kubernetes.crossplane.io/v1alpha2
+              kind: Object
+              spec:
+                forProvider:
+                  manifest:
+                    apiVersion: security.istio.io/v1beta1
+                    kind: PeerAuthentication
+                    metadata:
+                      name: redis-permissive
+                      labels:
+                        app.kubernetes.io/component: redis
+                    spec:
+                      mtls:
+                        mode: PERMISSIVE
+            patches:
+              - type: PatchSet
+                patchSetName: common-labels
+              - type: PatchSet
+                patchSetName: namespace-patch
+              - type: CombineFromComposite
+                combine:
+                  variables:
+                    - fromFieldPath: spec.parameters.name
+                    - fromFieldPath: spec.parameters.environment
+                  strategy: string
+                  string:
+                    fmt: "peerauth-%s-%s"
+                toFieldPath: metadata.name
+
+          # ============================================================
+          # 6. REDIS SERVICE
           # ============================================================
           - name: redis-service
             base:
