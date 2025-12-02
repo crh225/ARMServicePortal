@@ -2,22 +2,22 @@ import React, { useState } from "react";
 import "../../styles/CrossplaneCredentials.css";
 
 /**
- * Generate kubectl commands for retrieving Crossplane resource credentials
+ * Generate kubectl commands based on blueprint type and configuration
  */
-function generateKubectlCommands(blueprintId, name, environment) {
+function generateKubectlCommands(blueprintId, name, environment, crossplaneYaml) {
   const namespace = `${name}-${environment}`;
 
-  // Different blueprints have different secret patterns
-  const commands = {
-    "xp-rabbitmq": [
+  // Standalone RabbitMQ blueprint
+  if (blueprintId === "xp-rabbitmq") {
+    return [
       {
         label: "Get RabbitMQ credentials",
-        command: `kubectl get secret ${name}-${environment}-rabbitmq-admin -n ${namespace} -o jsonpath='{.data.username}' | base64 -d && echo`,
+        command: `kubectl get secret ${namespace}-rabbitmq-admin -n ${namespace} -o jsonpath='{.data.username}' | base64 -d && echo`,
         description: "Decode the admin username"
       },
       {
         label: "Get RabbitMQ password",
-        command: `kubectl get secret ${name}-${environment}-rabbitmq-admin -n ${namespace} -o jsonpath='{.data.password}' | base64 -d && echo`,
+        command: `kubectl get secret ${namespace}-rabbitmq-admin -n ${namespace} -o jsonpath='{.data.password}' | base64 -d && echo`,
         description: "Decode the admin password"
       },
       {
@@ -30,8 +30,12 @@ function generateKubectlCommands(blueprintId, name, environment) {
         command: `kubectl get pods -n ${namespace}`,
         description: "View RabbitMQ pod status"
       }
-    ],
-    "xp-redis": [
+    ];
+  }
+
+  // Standalone Redis blueprint
+  if (blueprintId === "xp-redis") {
+    return [
       {
         label: "Check Redis pod status",
         command: `kubectl get pods -n ${namespace}`,
@@ -44,14 +48,57 @@ function generateKubectlCommands(blueprintId, name, environment) {
       },
       {
         label: "Connect to Redis CLI",
-        command: `kubectl exec -it deploy/${name}-${environment}-redis -n ${namespace} -- redis-cli`,
+        command: `kubectl exec -it deploy/${namespace}-redis -n ${namespace} -- redis-cli`,
         description: "Open an interactive Redis CLI session"
       }
-    ]
-  };
+    ];
+  }
 
-  // Default commands for unknown blueprint types
-  const defaultCommands = [
+  // ApplicationEnvironment blueprint - check YAML for enabled add-ons
+  if (blueprintId === "xp-application-environment") {
+    const commands = [
+      {
+        label: "Check pod status",
+        command: `kubectl get pods -n ${namespace}`,
+        description: "View all pods in the namespace"
+      },
+      {
+        label: "Get database credentials",
+        command: `kubectl get secret ${namespace}-db-credentials -n ${namespace} -o jsonpath='{.data.password}' | base64 -d && echo`,
+        description: "Decode the PostgreSQL password"
+      },
+      {
+        label: "View ingress",
+        command: `kubectl get ingress -n ${namespace}`,
+        description: "View ingress configuration"
+      }
+    ];
+
+    // Check if Redis is enabled in the YAML
+    const redisEnabled = crossplaneYaml && /redis:\s*\n\s+enabled:\s*true/i.test(crossplaneYaml);
+    if (redisEnabled) {
+      commands.push({
+        label: "Connect to Redis",
+        command: `kubectl exec -it deploy/${namespace}-redis -n ${namespace} -- redis-cli`,
+        description: "Open Redis CLI session"
+      });
+    }
+
+    // Check if RabbitMQ is enabled in the YAML
+    const rabbitmqEnabled = crossplaneYaml && /rabbitmq:\s*\n\s+enabled:\s*true/i.test(crossplaneYaml);
+    if (rabbitmqEnabled) {
+      commands.push({
+        label: "Get RabbitMQ credentials",
+        command: `kubectl get secret ${namespace}-rabbitmq-credentials -n ${namespace} -o yaml`,
+        description: "View RabbitMQ connection details"
+      });
+    }
+
+    return commands;
+  }
+
+  // Default commands for other blueprint types
+  return [
     {
       label: "Check pod status",
       command: `kubectl get pods -n ${namespace}`,
@@ -68,8 +115,6 @@ function generateKubectlCommands(blueprintId, name, environment) {
       description: "List available secrets"
     }
   ];
-
-  return commands[blueprintId] || defaultCommands;
 }
 
 /**
@@ -88,7 +133,7 @@ async function copyToClipboard(text) {
 /**
  * Component to display kubectl commands for Crossplane resources
  */
-function CrossplaneCredentials({ blueprintId, name, environment }) {
+function CrossplaneCredentials({ blueprintId, name, environment, crossplaneYaml }) {
   const [copiedIndex, setCopiedIndex] = useState(null);
 
   if (!name || !environment) {
@@ -99,7 +144,7 @@ function CrossplaneCredentials({ blueprintId, name, environment }) {
     );
   }
 
-  const commands = generateKubectlCommands(blueprintId, name, environment);
+  const commands = generateKubectlCommands(blueprintId, name, environment, crossplaneYaml);
   const namespace = `${name}-${environment}`;
 
   const handleCopy = async (command, index) => {

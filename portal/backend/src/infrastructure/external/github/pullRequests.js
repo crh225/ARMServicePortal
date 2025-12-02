@@ -80,6 +80,16 @@ function findTerraformFile(files) {
 }
 
 /**
+ * Find Crossplane claim file in PR files
+ */
+function findCrossplaneFile(files) {
+  const claimFile = files.find(f =>
+    f.filename.includes("crossplane/claims/") && f.filename.endsWith(".yaml")
+  );
+  return claimFile ? claimFile.filename : null;
+}
+
+/**
  * Extract module name from Terraform file path
  * e.g., "infra/environments/dev/azure-rg-basic_92b8015f.tf" -> "azure-rg-basic_92b8015f"
  */
@@ -321,7 +331,7 @@ export async function getGitHubRequestByNumber(prNumber) {
   // Parse metadata
   const metadata = parseBlueprintMetadataFromBody(pr.body || "");
 
-  // Get Terraform file path
+  // Get file paths from PR
   const { data: files } = await octokit.pulls.listFiles({
     owner: infraOwner,
     repo: infraRepo,
@@ -329,9 +339,10 @@ export async function getGitHubRequestByNumber(prNumber) {
   });
 
   const terraformFilePath = findTerraformFile(files);
+  const crossplaneFilePath = findCrossplaneFile(files);
   const moduleName = extractModuleName(terraformFilePath);
 
-  // Fetch Terraform outputs
+  // Fetch Terraform outputs (only for Terraform PRs)
   const outputs = await fetchTerraformOutputs({
     octokit,
     owner: infraOwner,
@@ -340,12 +351,13 @@ export async function getGitHubRequestByNumber(prNumber) {
     moduleName
   });
 
-  // Check if resource exists on base branch
+  // Check if resource exists on base branch (works for both Terraform and Crossplane)
+  const resourceFilePath = terraformFilePath || crossplaneFilePath;
   const resourceExists = await checkResourceExists(
     octokit,
     infraOwner,
     infraRepo,
-    terraformFilePath,
+    resourceFilePath,
     pr.base?.ref,
     Boolean(pr.merged_at)
   );

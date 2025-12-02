@@ -173,6 +173,7 @@ function JobDetail({ job, loading, error, onUpdate, onDelete, onPromote, promote
                 blueprintId={job.blueprintId}
                 name={job.crossplaneResourceName}
                 environment={job.environment}
+                crossplaneYaml={job.crossplaneYaml}
               />
             </div>
           </div>
