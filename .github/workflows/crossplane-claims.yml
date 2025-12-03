@@ -50,8 +50,8 @@ jobs:
           echo "Validating YAML syntax for changed files..."
           for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
             echo "Checking: $file"
-            # Basic YAML syntax check
-            python3 -c "import yaml; yaml.safe_load(open('$file'))" || exit 1
+            # Basic YAML syntax check (supports multi-document YAML with ---)
+            python3 -c "import yaml; list(yaml.safe_load_all(open('$file')))" || exit 1
             echo "✅ $file - Valid YAML"
           done
 
