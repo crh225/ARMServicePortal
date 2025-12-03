@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/instance: "xtest-dev"
     armportal.chrishouse.io/blueprint: "xp-building-blocks"
     armportal.chrishouse.io/version: "2.0.0"
-    armportal.chrishouse.io/request-id: "204"
+    armportal.chrishouse.io/request-id: "null"
     armportal.chrishouse.io/created-by: crh225
     istio-injection: enabled
 ---
@@ -24,7 +24,7 @@ metadata:
     app.kubernetes.io/instance: "xtest-dev"
     armportal.chrishouse.io/blueprint: "xp-building-blocks"
     armportal.chrishouse.io/version: "2.0.0"
-    armportal.chrishouse.io/request-id: "204"
+    armportal.chrishouse.io/request-id: "null"
     armportal.chrishouse.io/created-by: crh225
     armportal.chrishouse.io/component: redis
 spec:
@@ -43,7 +43,7 @@ metadata:
     app.kubernetes.io/instance: "xtest-dev"
     armportal.chrishouse.io/blueprint: "xp-building-blocks"
     armportal.chrishouse.io/version: "2.0.0"
-    armportal.chrishouse.io/request-id: "204"
+    armportal.chrishouse.io/request-id: "null"
     armportal.chrishouse.io/created-by: crh225
     armportal.chrishouse.io/component: rabbitmq
 spec:
@@ -63,7 +63,7 @@ metadata:
     app.kubernetes.io/instance: "xtest-dev"
     armportal.chrishouse.io/blueprint: "xp-building-blocks"
     armportal.chrishouse.io/version: "2.0.0"
-    armportal.chrishouse.io/request-id: "204"
+    armportal.chrishouse.io/request-id: "null"
     armportal.chrishouse.io/created-by: crh225
     armportal.chrishouse.io/component: backend
 spec:
@@ -72,3 +72,23 @@ spec:
     replicas: 2
     port: 4000
     env: dev
+---
+apiVersion: platform.chrishouse.io/v1alpha1
+kind: FrontendClaim
+metadata:
+  name: "xtest-frontend"
+  namespace: "xtest-dev"
+  labels:
+    app.kubernetes.io/managed-by: armportal
+    app.kubernetes.io/name: xtest
+    app.kubernetes.io/instance: "xtest-dev"
+    armportal.chrishouse.io/blueprint: "xp-building-blocks"
+    armportal.chrishouse.io/version: "2.0.0"
+    armportal.chrishouse.io/request-id: "null"
+    armportal.chrishouse.io/created-by: crh225
+    armportal.chrishouse.io/component: frontend
+spec:
+  parameters:
+    image: "armportalacre4k9.azurecr.io/armportal-backend:latest"
+    replicas: 2
+    backendUrl: "http://xtest-backend"
