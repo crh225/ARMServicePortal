@@ -44,7 +44,8 @@ export class BlueprintRepository extends IBlueprintRepository {
       category: data.category,
       outputs: data.outputs,
       estimatedMonthlyCost: data.estimatedMonthlyCost,
-      crossplane: data.crossplane
+      crossplane: data.crossplane,
+      costDetails: data.costDetails
     });
   }
 

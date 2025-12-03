@@ -3,7 +3,7 @@
  * Represents a blueprint with business logic and validation
  */
 export class Blueprint {
-  constructor({ id, name, version, description, variables, policies, metadata, provider, category, outputs, estimatedMonthlyCost, crossplane }) {
+  constructor({ id, name, version, description, variables, policies, metadata, provider, category, outputs, estimatedMonthlyCost, crossplane, costDetails }) {
     if (!id) {
       throw new Error("Blueprint must have an id");
     }
@@ -26,6 +26,7 @@ export class Blueprint {
     this.outputs = outputs || [];
     this.estimatedMonthlyCost = estimatedMonthlyCost !== undefined ? estimatedMonthlyCost : null;
     this.crossplane = crossplane || null;
+    this.costDetails = costDetails || null;
   }
 
   /**

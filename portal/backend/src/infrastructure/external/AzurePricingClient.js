@@ -344,6 +344,117 @@ export async function estimateBlueprintCost(blueprintId, variables, blueprint = 
       break;
     }
 
+    case "xp-building-blocks": {
+      // Dynamic pricing based on selected components
+      // Uses componentCosts from blueprint configuration
+      const componentCosts = blueprint?.costDetails?.componentCosts;
+
+      if (!componentCosts) {
+        estimates.push({
+          resourceType: "Building Blocks",
+          skuName: "N/A",
+          monthlyEstimate: 0,
+          currency: "USD",
+          note: "Cost depends on selected components"
+        });
+        break;
+      }
+
+      // PostgreSQL
+      if (variables.postgres_enabled === true || variables.postgres_enabled === "true") {
+        const costs = componentCosts.postgres;
+        const storageGB = parseInt(variables.postgres_storageGB || "10", 10);
+        const cost = costs.base + (storageGB * costs.perGB);
+        estimates.push({
+          resourceType: "PostgreSQL",
+          skuName: `${storageGB}GB storage`,
+          monthlyEstimate: parseFloat(cost.toFixed(2)),
+          currency: "USD",
+          note: costs.description
+        });
+      }
+
+      // Redis
+      if (variables.redis_enabled === true || variables.redis_enabled === "true") {
+        const costs = componentCosts.redis;
+        const memoryMB = parseInt(variables.redis_memoryLimitMB || "256", 10);
+        const cost = costs.base + (memoryMB * costs.perMB);
+        estimates.push({
+          resourceType: "Redis Cache",
+          skuName: `${memoryMB}MB memory`,
+          monthlyEstimate: parseFloat(cost.toFixed(2)),
+          currency: "USD",
+          note: costs.description
+        });
+      }
+
+      // RabbitMQ
+      if (variables.rabbitmq_enabled === true || variables.rabbitmq_enabled === "true") {
+        const costs = componentCosts.rabbitmq;
+        const memoryMB = parseInt(variables.rabbitmq_memoryLimitMB || "512", 10);
+        const cost = costs.base + (memoryMB * costs.perMB);
+        estimates.push({
+          resourceType: "RabbitMQ",
+          skuName: `${memoryMB}MB memory`,
+          monthlyEstimate: parseFloat(cost.toFixed(2)),
+          currency: "USD",
+          note: costs.description
+        });
+      }
+
+      // Backend
+      if (variables.backend_enabled === true || variables.backend_enabled === "true") {
+        const costs = componentCosts.backend;
+        const replicas = parseInt(variables.backend_replicas || "2", 10);
+        const cost = costs.base + (replicas * costs.perReplica);
+        estimates.push({
+          resourceType: "Backend Service",
+          skuName: `${replicas} replica${replicas > 1 ? "s" : ""}`,
+          monthlyEstimate: parseFloat(cost.toFixed(2)),
+          currency: "USD",
+          note: costs.description
+        });
+      }
+
+      // Frontend
+      if (variables.frontend_enabled === true || variables.frontend_enabled === "true") {
+        const costs = componentCosts.frontend;
+        const replicas = parseInt(variables.frontend_replicas || "2", 10);
+        const cost = costs.base + (replicas * costs.perReplica);
+        estimates.push({
+          resourceType: "Frontend Service",
+          skuName: `${replicas} replica${replicas > 1 ? "s" : ""}`,
+          monthlyEstimate: parseFloat(cost.toFixed(2)),
+          currency: "USD",
+          note: costs.description
+        });
+      }
+
+      // Ingress
+      if (variables.ingress_enabled === true || variables.ingress_enabled === "true") {
+        const costs = componentCosts.ingress;
+        estimates.push({
+          resourceType: "Ingress",
+          skuName: "TLS certificate",
+          monthlyEstimate: parseFloat(costs.base.toFixed(2)),
+          currency: "USD",
+          note: costs.description
+        });
+      }
+
+      // If no components selected, show info message
+      if (estimates.length === 0) {
+        estimates.push({
+          resourceType: "No Components Selected",
+          skuName: "N/A",
+          monthlyEstimate: 0,
+          currency: "USD",
+          note: "Select components to see estimated costs"
+        });
+      }
+      break;
+    }
+
     default:
       estimates.push({
         resourceType: "Unknown",

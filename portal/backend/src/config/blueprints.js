@@ -1304,7 +1304,16 @@ export const BLUEPRINTS = [
     ],
     estimatedMonthlyCost: 0,
     costDetails: {
-      description: "Cost depends on selected components. Base Kubernetes resources only."
+      description: "Cost depends on selected components. Base Kubernetes resources only.",
+      isDynamic: true,
+      componentCosts: {
+        postgres: { base: 5, perGB: 0.10, description: "PostgreSQL with persistent storage" },
+        redis: { base: 2, perMB: 0.005, description: "Redis cache instance" },
+        rabbitmq: { base: 3, perMB: 0.003, description: "RabbitMQ message broker" },
+        backend: { base: 5, perReplica: 2, description: "Backend service pods" },
+        frontend: { base: 3, perReplica: 1.5, description: "Frontend service pods" },
+        ingress: { base: 1, description: "Ingress with TLS certificate" }
+      }
     }
   }
 ];
