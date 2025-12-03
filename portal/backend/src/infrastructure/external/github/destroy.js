@@ -145,7 +145,7 @@ function generateDestroyPRBody(prNumber, filePath, fileExistsOnBase, provider) {
 }
 
 /**
- * Create a PR to delete a deployed resource (runs terraform destroy)
+ * Create a PR to delete a deployed resource (Terraform or Crossplane)
  * @param {number} prNumber - The PR number of the deployed resource
  * @returns {Promise<Object>} - The created PR details
  */
@@ -161,8 +161,8 @@ export async function createDestroyPR(prNumber) {
   // Get and validate original PR
   const originalPR = await getOriginalPR(octokit, infraOwner, infraRepo, prNumber);
 
-  // Find Terraform file
-  const tfFile = await findTerraformFile(octokit, infraOwner, infraRepo, prNumber);
+  // Find resource file (Terraform or Crossplane)
+  const { file: resourceFile, provider } = await findResourceFile(octokit, infraOwner, infraRepo, prNumber);
 
   // Generate destroy branch name
   const destroyBranchName = generateDestroyBranchName(originalPR.head.ref);
@@ -188,13 +188,14 @@ export async function createDestroyPR(prNumber) {
   const { fileExistsOnBase } = await handleFileDestruction(octokit, {
     owner: infraOwner,
     repo: infraRepo,
-    filePath: tfFile.filename,
+    filePath: resourceFile.filename,
     baseBranch,
-    destroyBranch: destroyBranchName
+    destroyBranch: destroyBranchName,
+    provider
   });
 
   // Generate PR body
-  const prBody = generateDestroyPRBody(prNumber, tfFile.filename, fileExistsOnBase);
+  const prBody = generateDestroyPRBody(prNumber, resourceFile.filename, fileExistsOnBase, provider);
 
   // Create destroy PR
   const destroyPR = await createPR(octokit, {
@@ -206,12 +207,16 @@ export async function createDestroyPR(prNumber) {
     body: prBody
   });
 
-  // Add labels
+  // Add labels based on provider
+  const labels = provider === "crossplane"
+    ? ["crossplane-destroy", `destroys-pr-${prNumber}`]
+    : ["terraform-destroy", `destroys-pr-${prNumber}`];
+
   await updatePRLabels(octokit, {
     owner: infraOwner,
     repo: infraRepo,
     issueNumber: destroyPR.number,
-    labels: ["terraform-destroy", `destroys-pr-${prNumber}`]
+    labels
   });
 
   return {
