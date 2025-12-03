@@ -120,7 +120,12 @@ async function handleFileDestruction(octokit, config) {
 /**
  * Generate destroy PR body
  */
-function generateDestroyPRBody(prNumber, filePath, fileExistsOnBase) {
+function generateDestroyPRBody(prNumber, filePath, fileExistsOnBase, provider) {
+  const isCrossplane = provider === "crossplane";
+  const actionDescription = isCrossplane
+    ? "ArgoCD will remove the Crossplane claims and Crossplane will delete the associated resources."
+    : "Merging this PR will run `terraform destroy` and permanently delete the deployed resources.";
+
   return [
     `## Destroy Resource`,
     ``,
@@ -128,12 +133,14 @@ function generateDestroyPRBody(prNumber, filePath, fileExistsOnBase) {
     ``,
     `**Original PR**: #${prNumber}`,
     `**Resource File**: \`${filePath}\``,
-    fileExistsOnBase ? `` : `**Note**: Resource file not on base branch - using marker file for destroy`,
+    `**Provider**: ${isCrossplane ? "Crossplane" : "Terraform"}`,
+    fileExistsOnBase ? `` : (isCrossplane ? `` : `**Note**: Resource file not on base branch - using marker file for destroy`),
     ``,
-    `Warning: Merging this PR will run \`terraform destroy\` and permanently delete the deployed resources.`,
+    `Warning: ${actionDescription}`,
     ``,
     `---`,
     `<!-- metadata:destroys-pr:${prNumber} -->`,
+    `<!-- metadata:provider:${provider} -->`,
   ].filter(Boolean).join("\n");
 }
 
