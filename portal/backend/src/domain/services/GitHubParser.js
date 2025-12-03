@@ -40,11 +40,35 @@ function extractCodeBlock(body, pattern) {
 /**
  * Extract resource name from Crossplane claim YAML
  * Looks for spec.parameters.name or spec.parameters.appName in the YAML content
+ * Also handles building blocks multi-document YAML by extracting from Namespace
  * @param {string} yamlContent - YAML content
  * @returns {string|null} - Resource name or null
  */
 function extractCrossplaneResourceName(yamlContent) {
   if (!yamlContent) return null;
+
+  // Check if this is multi-document building blocks YAML
+  const isMultiDocument = yamlContent.includes('\n---\n') || yamlContent.startsWith('---\n');
+
+  if (isMultiDocument) {
+    // For building blocks, extract appName from app.kubernetes.io/name label
+    const appNameLabelMatch = yamlContent.match(/app\.kubernetes\.io\/name:\s*["']?([a-z0-9-]+)["']?/);
+    if (appNameLabelMatch && appNameLabelMatch[1]) {
+      return appNameLabelMatch[1];
+    }
+
+    // Fallback: extract from Namespace name (format: {appName}-{env})
+    const namespaceMatch = yamlContent.match(/kind:\s*Namespace[\s\S]*?name:\s*["']?([a-z0-9-]+)["']?/);
+    if (namespaceMatch && namespaceMatch[1]) {
+      // Namespace name is {appName}-{env}, extract appName by removing last segment
+      const parts = namespaceMatch[1].split('-');
+      if (parts.length >= 2) {
+        parts.pop(); // Remove environment suffix
+        return parts.join('-');
+      }
+      return namespaceMatch[1];
+    }
+  }
 
   // Look for appName: (used by ApplicationEnvironment) - check this first as it's more specific
   // Match appName anywhere after parameters: with flexible whitespace

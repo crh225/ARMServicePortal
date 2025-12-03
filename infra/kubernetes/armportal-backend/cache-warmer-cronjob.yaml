@@ -42,7 +42,7 @@ spec:
                     name: backend-config
               env:
                 - name: REDIS_URL
-                  value: "redis://redis-xp1-dev-redis.redis-xp1-dev.svc.cluster.local:6379"
+                  value: "redis://xportalinfra-cache.xportalinfra-dev.svc.cluster.local:6379"
                 - name: AZURE_SUBSCRIPTION_ID
                   value: "f989de0f-8697-4a05-8c34-b82c941767c0"
                 # AZURE_CLIENT_ID is injected by workload identity webhook - don't set it manually

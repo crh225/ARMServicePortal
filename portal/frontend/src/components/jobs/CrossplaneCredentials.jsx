@@ -2,6 +2,46 @@ import React, { useState } from "react";
 import "../../styles/CrossplaneCredentials.css";
 
 /**
+ * Parse building blocks YAML to determine which components are enabled
+ */
+function parseBuildingBlocksComponents(crossplaneYaml) {
+  if (!crossplaneYaml) return {};
+
+  const components = {
+    redis: false,
+    rabbitmq: false,
+    postgres: false,
+    backend: false,
+    frontend: false,
+    ingress: false
+  };
+
+  // Check for each claim type in the multi-document YAML
+  if (/kind:\s*RedisClaim/i.test(crossplaneYaml)) components.redis = true;
+  if (/kind:\s*RabbitMQClaim/i.test(crossplaneYaml)) components.rabbitmq = true;
+  if (/kind:\s*PostgresClaim/i.test(crossplaneYaml)) components.postgres = true;
+  if (/kind:\s*BackendClaim/i.test(crossplaneYaml)) components.backend = true;
+  if (/kind:\s*FrontendClaim/i.test(crossplaneYaml)) components.frontend = true;
+  if (/kind:\s*IngressClaim/i.test(crossplaneYaml)) components.ingress = true;
+
+  // Extract specific resource names from claims
+  const redisNameMatch = crossplaneYaml.match(/kind:\s*RedisClaim[\s\S]*?name:\s*["']?([a-z0-9-]+)["']?/);
+  const rabbitNameMatch = crossplaneYaml.match(/kind:\s*RabbitMQClaim[\s\S]*?name:\s*["']?([a-z0-9-]+)["']?/);
+  const postgresNameMatch = crossplaneYaml.match(/kind:\s*PostgresClaim[\s\S]*?name:\s*["']?([a-z0-9-]+)["']?/);
+  const backendNameMatch = crossplaneYaml.match(/kind:\s*BackendClaim[\s\S]*?name:\s*["']?([a-z0-9-]+)["']?/);
+  const frontendNameMatch = crossplaneYaml.match(/kind:\s*FrontendClaim[\s\S]*?name:\s*["']?([a-z0-9-]+)["']?/);
+
+  return {
+    ...components,
+    redisName: redisNameMatch ? redisNameMatch[1] : null,
+    rabbitName: rabbitNameMatch ? rabbitNameMatch[1] : null,
+    postgresName: postgresNameMatch ? postgresNameMatch[1] : null,
+    backendName: backendNameMatch ? backendNameMatch[1] : null,
+    frontendName: frontendNameMatch ? frontendNameMatch[1] : null
+  };
+}
+
+/**
  * Generate kubectl commands based on blueprint type and configuration
  * Returns commands with both PowerShell and Bash variants
  */
@@ -21,6 +61,111 @@ function generateKubectlCommands(blueprintId, name, environment, crossplaneYaml)
     `kubectl get secret ${secretName} -n ${namespace} -o jsonpath="{.data.${key}}" | % { [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($_)) }`;
   const bashBase64 = (secretName, key) =>
     `kubectl get secret ${secretName} -n ${namespace} -o jsonpath='{.data.${key}}' | base64 -d`;
+
+  // Building blocks blueprint - modular components
+  if (blueprintId === "xp-building-blocks") {
+    const components = parseBuildingBlocksComponents(crossplaneYaml);
+    const commands = [
+      cmd("Check all pods", "View all pods in the namespace", {
+        bash: `kubectl get pods -n ${namespace}`
+      }),
+      cmd("View all services", "List all services and their endpoints", {
+        bash: `kubectl get svc -n ${namespace}`
+      }),
+      cmd("View all secrets", "List available secrets", {
+        bash: `kubectl get secrets -n ${namespace}`
+      })
+    ];
+
+    // Redis commands
+    if (components.redis) {
+      const redisService = components.redisName || `${name}-cache`;
+      commands.push(
+        cmd("Redis connection URL", "Get the Redis connection URL for your application", {
+          powershell: psBase64(`${redisService}-credentials`, "url"),
+          bash: bashBase64(`${redisService}-credentials`, "url")
+        }),
+        cmd("Connect to Redis CLI", "Open an interactive Redis CLI session", {
+          bash: `kubectl exec -it deploy/${redisService} -n ${namespace} -- redis-cli`
+        })
+      );
+    }
+
+    // RabbitMQ commands
+    if (components.rabbitmq) {
+      const rabbitService = components.rabbitName || `${name}-mq`;
+      commands.push(
+        cmd("RabbitMQ connection URL", "Get the AMQP connection URL for your application", {
+          powershell: psBase64(`${rabbitService}-credentials`, "url"),
+          bash: bashBase64(`${rabbitService}-credentials`, "url")
+        }),
+        cmd("RabbitMQ username", "Decode the admin username", {
+          powershell: psBase64(`${rabbitService}-credentials`, "username"),
+          bash: bashBase64(`${rabbitService}-credentials`, "username")
+        }),
+        cmd("RabbitMQ password", "Decode the admin password", {
+          powershell: psBase64(`${rabbitService}-credentials`, "password"),
+          bash: bashBase64(`${rabbitService}-credentials`, "password")
+        })
+      );
+    }
+
+    // PostgreSQL commands
+    if (components.postgres) {
+      const pgService = components.postgresName || `${name}-db`;
+      commands.push(
+        cmd("PostgreSQL connection URL", "Get the PostgreSQL connection URL", {
+          powershell: psBase64(`${pgService}-credentials`, "url"),
+          bash: bashBase64(`${pgService}-credentials`, "url")
+        }),
+        cmd("PostgreSQL password", "Decode the database password", {
+          powershell: psBase64(`${pgService}-credentials`, "password"),
+          bash: bashBase64(`${pgService}-credentials`, "password")
+        }),
+        cmd("Connect to PostgreSQL", "Open an interactive psql session", {
+          bash: `kubectl exec -it deploy/${pgService} -n ${namespace} -- psql -U postgres`
+        })
+      );
+    }
+
+    // Backend commands
+    if (components.backend) {
+      const backendService = components.backendName || `${name}-backend`;
+      commands.push(
+        cmd("View backend logs", "Stream logs from the backend service", {
+          bash: `kubectl logs -f deploy/${backendService} -n ${namespace}`
+        }),
+        cmd("Backend pod details", "View backend pod status and events", {
+          bash: `kubectl describe pod -l app=${backendService} -n ${namespace}`
+        })
+      );
+    }
+
+    // Frontend commands
+    if (components.frontend) {
+      const frontendService = components.frontendName || `${name}-frontend`;
+      commands.push(
+        cmd("View frontend logs", "Stream logs from the frontend service", {
+          bash: `kubectl logs -f deploy/${frontendService} -n ${namespace}`
+        })
+      );
+    }
+
+    // Ingress commands
+    if (components.ingress) {
+      commands.push(
+        cmd("View ingress", "View ingress configuration and hosts", {
+          bash: `kubectl get ingress -n ${namespace}`
+        }),
+        cmd("Get ingress host", "Get the external hostname", {
+          powershell: `kubectl get ingress -n ${namespace} -o jsonpath="{.items[0].spec.rules[0].host}"`,
+          bash: `kubectl get ingress -n ${namespace} -o jsonpath='{.items[0].spec.rules[0].host}'`
+        })
+      );
+    }
+
+    return commands;
+  }
 
   // Standalone RabbitMQ blueprint
   if (blueprintId === "xp-rabbitmq") {
