@@ -28,15 +28,30 @@ export function parseTerraformVariables(terraformModule) {
 
 /**
  * Parse variables from Crossplane YAML claim
+ * Supports both single-document claims and multi-document building blocks
  * Extracts spec.parameters into flat form values using underscore notation
  * e.g. frontend.imageRepo -> frontend_imageRepo
  *
- * @param {string} yamlContent - Crossplane claim YAML
+ * @param {string} yamlContent - Crossplane claim YAML (single or multi-document)
  * @returns {Object} - Parsed variables as key-value pairs
  */
 export function parseCrossplaneVariables(yamlContent) {
   if (!yamlContent) return {};
 
+  // Check if this is multi-document YAML (building blocks)
+  const isMultiDocument = yamlContent.includes('\n---\n') || yamlContent.startsWith('---\n');
+
+  if (isMultiDocument) {
+    return parseBuildingBlocksVariables(yamlContent);
+  }
+
+  return parseSingleClaimVariables(yamlContent);
+}
+
+/**
+ * Parse variables from a single Crossplane claim document
+ */
+function parseSingleClaimVariables(yamlContent) {
   const variables = {};
 
   // Extract the parameters section from YAML
@@ -94,6 +109,115 @@ export function parseCrossplaneVariables(yamlContent) {
     } else {
       // This is a section header - push to path
       currentPath.push(key);
+    }
+  }
+
+  return variables;
+}
+
+/**
+ * Parse variables from multi-document building blocks YAML
+ * Extracts enabled components and their parameters from each claim
+ */
+function parseBuildingBlocksVariables(yamlContent) {
+  const variables = {};
+
+  // Split by document separator
+  const documents = yamlContent.split(/\n---\n|^---\n/);
+
+  // Map of claim kinds to component names and their variable prefixes
+  const kindToComponent = {
+    'PostgresClaim': 'postgres',
+    'RedisClaim': 'redis',
+    'RabbitMQClaim': 'rabbitmq',
+    'BackendClaim': 'backend',
+    'FrontendClaim': 'frontend',
+    'IngressClaim': 'ingress'
+  };
+
+  // Map of parameter names to form field names for each component
+  const parameterMappings = {
+    postgres: {
+      storageGB: 'postgres_storageGB',
+      version: 'postgres_version'
+    },
+    redis: {
+      version: 'redis_version',
+      memoryLimitMB: 'redis_memoryLimitMB'
+    },
+    rabbitmq: {
+      version: 'rabbitmq_version',
+      memoryLimitMB: 'rabbitmq_memoryLimitMB',
+      exposeManagement: 'rabbitmq_exposeManagement'
+    },
+    backend: {
+      image: 'backend_image',
+      replicas: 'backend_replicas',
+      port: 'backend_port',
+      connectToDb: 'backend_connectToDb'
+    },
+    frontend: {
+      image: 'frontend_image',
+      replicas: 'frontend_replicas'
+    },
+    ingress: {
+      host: 'ingress_host',
+      clusterIssuer: 'ingress_clusterIssuer'
+    }
+  };
+
+  for (const doc of documents) {
+    if (!doc.trim()) continue;
+
+    // Extract kind
+    const kindMatch = doc.match(/kind:\s*(\w+)/);
+    if (!kindMatch) continue;
+
+    const kind = kindMatch[1];
+
+    // Handle Namespace - extract appName and environment
+    if (kind === 'Namespace') {
+      const nameMatch = doc.match(/name:\s*([a-z0-9-]+)/);
+      if (nameMatch) {
+        // Namespace is named {appName}-{environment}
+        const nsName = nameMatch[1];
+        const parts = nsName.split('-');
+        if (parts.length >= 2) {
+          const env = parts.pop();
+          const appName = parts.join('-');
+          variables.appName = appName;
+          variables.environment = env;
+        }
+      }
+      continue;
+    }
+
+    // Handle claim types
+    const component = kindToComponent[kind];
+    if (!component) continue;
+
+    // Mark component as enabled
+    variables[`${component}_enabled`] = true;
+
+    // Extract parameters from the claim
+    const parametersMatch = doc.match(/parameters:\s*\n([\s\S]*?)(?=\n\s{2}\w+:|$)/);
+    if (parametersMatch) {
+      const parametersBlock = parametersMatch[1];
+      const mapping = parameterMappings[component] || {};
+
+      // Parse each parameter line
+      const paramLines = parametersBlock.split('\n');
+      for (const line of paramLines) {
+        const paramMatch = line.match(/^\s{4}(\w+):\s*(.+)$/);
+        if (paramMatch) {
+          const [, paramName, rawValue] = paramMatch;
+          const value = rawValue.replace(/^["']|["']$/g, '').trim();
+
+          // Use mapping if available, otherwise create generic key
+          const formKey = mapping[paramName] || `${component}_${paramName}`;
+          variables[formKey] = value;
+        }
+      }
     }
   }
 
