@@ -39,8 +39,8 @@ spec:
                 - |
                   node src/jobs/cache-warmer.js
                   EXIT_CODE=$?
-                  # Signal Istio sidecar to terminate
-                  curl -sf -XPOST http://localhost:15020/quitquitquit || true
+                  # Signal Istio sidecar to terminate (use wget since alpine doesn't have curl)
+                  wget -q --post-data '' -O - http://localhost:15020/quitquitquit 2>/dev/null || true
                   exit $EXIT_CODE
               # Get all config values from ConfigMap (GH_APP_ID, GH_INSTALLATION_ID, GH_INFRA_OWNER, GH_INFRA_REPO)
               envFrom:
