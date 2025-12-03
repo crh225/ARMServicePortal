@@ -1,0 +1,57 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: "xtestingress-dev"
+  labels:
+    app.kubernetes.io/managed-by: crossplane
+    app.kubernetes.io/name: xtestingress
+    app.kubernetes.io/instance: "xtestingress-dev"
+    armportal.chrishouse.io/blueprint: "xp-building-blocks"
+    armportal.chrishouse.io/version: "2.0.0"
+    armportal.chrishouse.io/request-id: bb8cb89a
+    armportal.chrishouse.io/created-by: crh225
+    istio-injection: enabled
+---
+apiVersion: platform.chrishouse.io/v1alpha1
+kind: RabbitMQClaim
+metadata:
+  name: "xtestingress-mq"
+  namespace: "xtestingress-dev"
+  labels:
+    app.kubernetes.io/managed-by: armportal
+    app.kubernetes.io/name: xtestingress
+    app.kubernetes.io/instance: "xtestingress-dev"
+    armportal.chrishouse.io/blueprint: "xp-building-blocks"
+    armportal.chrishouse.io/version: "2.0.0"
+    armportal.chrishouse.io/request-id: bb8cb89a
+    armportal.chrishouse.io/created-by: crh225
+    armportal.chrishouse.io/component: rabbitmq
+spec:
+  parameters:
+    version: "3.13"
+    memoryLimitMB: 512
+    exposeManagement: true
+---
+apiVersion: platform.chrishouse.io/v1alpha1
+kind: IngressClaim
+metadata:
+  name: "xtestingress-ingress"
+  namespace: "xtestingress-dev"
+  labels:
+    app.kubernetes.io/managed-by: armportal
+    app.kubernetes.io/name: xtestingress
+    app.kubernetes.io/instance: "xtestingress-dev"
+    armportal.chrishouse.io/blueprint: "xp-building-blocks"
+    armportal.chrishouse.io/version: "2.0.0"
+    armportal.chrishouse.io/request-id: bb8cb89a
+    armportal.chrishouse.io/created-by: crh225
+    armportal.chrishouse.io/component: ingress
+spec:
+  parameters:
+    host: xingressdev.pr.chrishouse.io
+    clusterIssuer: "letsencrypt-prod"
+    paths:
+      - path: /
+                serviceName: "xtestingress-backend"
+                servicePort: 80
