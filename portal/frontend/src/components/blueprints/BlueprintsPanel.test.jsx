@@ -193,7 +193,7 @@ describe("BlueprintsPanel", () => {
 
     render(<BlueprintsPanel updateResourceData={null} onClearUpdate={vi.fn()} />);
 
-    expect(screen.getByText(/The portal never applies Terraform directly/)).toBeInTheDocument();
+    expect(screen.getByText(/The portal never applies infrastructure changes directly/)).toBeInTheDocument();
   });
 
   it("shows result panel when result is available", () => {
