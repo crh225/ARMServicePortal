@@ -10,10 +10,10 @@ spec:
   metrics:
   # Health endpoint check - must return "ok"
   - name: preview-health
-    interval: 10s
-    count: 6
+    interval: 5s
+    count: 3
     successCondition: result == "ok"
-    failureLimit: 2
+    failureLimit: 1
     provider:
       web:
         url: https://portal-api-preview.chrishouse.io/api/health

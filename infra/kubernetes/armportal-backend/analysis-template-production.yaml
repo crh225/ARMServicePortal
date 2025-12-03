@@ -10,10 +10,10 @@ spec:
   metrics:
   # Production health endpoint check - must return "ok"
   - name: production-health
-    interval: 30s
-    count: 10
+    interval: 10s
+    count: 3
     successCondition: result == "ok"
-    failureLimit: 3
+    failureLimit: 1
     provider:
       web:
         url: https://portal-api.chrishouse.io/api/health
