@@ -1,32 +1,29 @@
 /**
- * Redis Client with connection pooling and fallback to in-memory cache
+ * Redis Client with automatic reconnection
  * Connects to Kubernetes Redis service when REDIS_URL is set
+ * Uses ioredis native auto-reconnect - never gives up
  */
 import Redis from "ioredis";
 
 // Connection state
 let redis = null;
 let isConnected = false;
-let connectionAttempts = 0;
-const MAX_RETRIES = 3;
 
 /**
  * Get Redis connection URL from environment
- * Default: redis-xp1-dev-redis.redis-xp1-dev.svc.cluster.local:6379
  */
 function getRedisUrl() {
   return process.env.REDIS_URL || "redis://redis-xp1-dev-redis.redis-xp1-dev.svc.cluster.local:6379";
 }
 
 /**
- * Initialize Redis connection with retry logic
+ * Initialize Redis connection
+ * ioredis handles reconnection automatically - we just need to not return null from retryStrategy
  */
 export async function initRedis() {
   if (redis && isConnected) {
     return redis;
   }
-
-  const redisUrl = getRedisUrl();
 
   // Skip Redis in local development if not configured
   if (!process.env.REDIS_URL && process.env.NODE_ENV !== "production") {
@@ -34,51 +31,45 @@ export async function initRedis() {
     return null;
   }
 
+  const redisUrl = getRedisUrl();
+  console.log(`[Redis] Connecting to ${redisUrl}`);
+
+  redis = new Redis(redisUrl, {
+    maxRetriesPerRequest: null, // Never fail commands, wait for reconnection
+    retryStrategy: (times) => {
+      // Always return a delay - never give up reconnecting
+      const delay = Math.min(times * 500, 30000); // Max 30s between retries
+      console.log(`[Redis] Reconnecting in ${delay}ms (attempt ${times})`);
+      return delay;
+    },
+    connectTimeout: 10000,
+    lazyConnect: true,
+  });
+
+  redis.on("connect", () => {
+    isConnected = true;
+    console.log("[Redis] Connected successfully");
+  });
+
+  redis.on("error", (err) => {
+    console.error("[Redis] Connection error:", err.message);
+  });
+
+  redis.on("close", () => {
+    console.log("[Redis] Connection closed");
+    isConnected = false;
+  });
+
+  redis.on("reconnecting", (delay) => {
+    console.log(`[Redis] Reconnecting in ${delay}ms...`);
+  });
+
   try {
-    connectionAttempts++;
-    console.log(`[Redis] Connecting to ${redisUrl} (attempt ${connectionAttempts}/${MAX_RETRIES})`);
-
-    redis = new Redis(redisUrl, {
-      maxRetriesPerRequest: 3,
-      retryStrategy: (times) => {
-        if (times > MAX_RETRIES) {
-          console.warn("[Redis] Max retries reached, falling back to in-memory cache");
-          return null; // Stop retrying
-        }
-        const delay = Math.min(times * 200, 2000);
-        return delay;
-      },
-      connectTimeout: 5000,
-      lazyConnect: true,
-    });
-
-    // Event handlers
-    redis.on("connect", () => {
-      isConnected = true;
-      connectionAttempts = 0;
-      console.log("[Redis] Connected successfully");
-    });
-
-    redis.on("error", (err) => {
-      console.error("[Redis] Connection error:", err.message);
-      isConnected = false;
-    });
-
-    redis.on("close", () => {
-      console.log("[Redis] Connection closed");
-      isConnected = false;
-    });
-
-    redis.on("reconnecting", () => {
-      console.log("[Redis] Reconnecting...");
-    });
-
-    // Attempt connection
     await redis.connect();
     return redis;
   } catch (error) {
-    console.error("[Redis] Failed to connect:", error.message);
-    isConnected = false;
+    console.error("[Redis] Initial connection failed:", error.message);
+    // Don't null out redis - ioredis will keep trying to reconnect
     return null;
   }
 }
