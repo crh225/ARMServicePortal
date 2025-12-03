@@ -158,12 +158,14 @@ function toYaml(obj, indent = 0) {
     if (obj.length === 0) return "[]";
     for (const item of obj) {
       if (typeof item === "object" && item !== null) {
-        const itemYaml = toYaml(item, indent + 1);
-        const firstLine = itemYaml.split("\n")[0];
-        const restLines = itemYaml.split("\n").slice(1);
-        lines.push(`${spaces}- ${firstLine.trim()}`);
-        for (const line of restLines) {
-          lines.push(`${spaces}  ${line}`);
+        // Serialize item with no base indent, we'll handle indentation manually
+        const itemYaml = toYaml(item, 0);
+        const itemLines = itemYaml.split("\n");
+        // First line gets the "- " prefix
+        lines.push(`${spaces}- ${itemLines[0]}`);
+        // Remaining lines get indented to align with first line content (2 extra spaces for "- ")
+        for (let i = 1; i < itemLines.length; i++) {
+          lines.push(`${spaces}  ${itemLines[i]}`);
         }
       } else {
         lines.push(`${spaces}- ${toYaml(item, 0)}`);
