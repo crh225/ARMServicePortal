@@ -177,7 +177,8 @@ function parseBuildingBlocksVariables(yamlContent) {
 
     // Handle Namespace - extract appName and environment
     if (kind === 'Namespace') {
-      const nameMatch = doc.match(/name:\s*([a-z0-9-]+)/);
+      // Match quoted or unquoted namespace name
+      const nameMatch = doc.match(/name:\s*["']?([a-z0-9-]+)["']?/);
       if (nameMatch) {
         // Namespace is named {appName}-{environment}
         const nsName = nameMatch[1];
