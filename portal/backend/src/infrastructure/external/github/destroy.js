@@ -27,21 +27,30 @@ async function getOriginalPR(octokit, owner, repo, prNumber) {
 }
 
 /**
- * Find the Terraform file from the original PR
+ * Find the resource file from the original PR (Terraform or Crossplane)
  */
-async function findTerraformFile(octokit, owner, repo, prNumber) {
+async function findResourceFile(octokit, owner, repo, prNumber) {
   const { data: files } = await octokit.pulls.listFiles({
     owner,
     repo,
     pull_number: prNumber
   });
 
+  // Check for Terraform file first
   const tfFile = files.find(f => f.filename.endsWith(".tf"));
-  if (!tfFile) {
-    throw new Error("No Terraform file found in original PR");
+  if (tfFile) {
+    return { file: tfFile, provider: "terraform" };
   }
 
-  return tfFile;
+  // Check for Crossplane claim file
+  const claimFile = files.find(f =>
+    f.filename.includes("crossplane/claims/") && f.filename.endsWith(".yaml")
+  );
+  if (claimFile) {
+    return { file: claimFile, provider: "crossplane" };
+  }
+
+  throw new Error("No Terraform or Crossplane file found in original PR");
 }
 
 /**
@@ -52,10 +61,10 @@ function generateDestroyBranchName(headRef) {
 }
 
 /**
- * Delete the Terraform file or create destroy marker
+ * Delete the resource file or create destroy marker
  */
 async function handleFileDestruction(octokit, config) {
-  const { owner, repo, filePath, baseBranch, destroyBranch } = config;
+  const { owner, repo, filePath, baseBranch, destroyBranch, provider } = config;
 
   // Check if file exists on base branch
   const exists = await fileExists(octokit, {
@@ -85,7 +94,13 @@ async function handleFileDestruction(octokit, config) {
 
     return { fileExistsOnBase: true };
   } else {
-    // File doesn't exist on base - create marker file
+    // File doesn't exist on base
+    // For Crossplane, just return - ArgoCD will handle cleanup when file is gone
+    if (provider === "crossplane") {
+      return { fileExistsOnBase: false };
+    }
+
+    // For Terraform, create marker file to trigger destroy
     const markerPath = filePath.replace('.tf', '.destroy');
     const markerContent = `# Destroy marker for ${filePath}\n# This file triggers terraform destroy for the associated resources\n`;
 
