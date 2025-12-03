@@ -1,0 +1,76 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: "xportalinfra-dev"
+  labels:
+    app.kubernetes.io/managed-by: crossplane
+    app.kubernetes.io/name: xportalinfra
+    app.kubernetes.io/instance: "xportalinfra-dev"
+    armportal.chrishouse.io/blueprint: "xp-building-blocks"
+    armportal.chrishouse.io/version: "2.0.0"
+    armportal.chrishouse.io/request-id: e8b594f1
+    armportal.chrishouse.io/created-by: crh225
+    istio-injection: enabled
+---
+apiVersion: platform.chrishouse.io/v1alpha1
+kind: RedisClaim
+metadata:
+  name: "xportalinfra-cache"
+  namespace: "xportalinfra-dev"
+  labels:
+    app.kubernetes.io/managed-by: armportal
+    app.kubernetes.io/name: xportalinfra
+    app.kubernetes.io/instance: "xportalinfra-dev"
+    armportal.chrishouse.io/blueprint: "xp-building-blocks"
+    armportal.chrishouse.io/version: "2.0.0"
+    armportal.chrishouse.io/request-id: e8b594f1
+    armportal.chrishouse.io/created-by: crh225
+    armportal.chrishouse.io/component: redis
+spec:
+  parameters:
+    version: "7.2"
+    memoryLimitMB: 256
+---
+apiVersion: platform.chrishouse.io/v1alpha1
+kind: RabbitMQClaim
+metadata:
+  name: "xportalinfra-mq"
+  namespace: "xportalinfra-dev"
+  labels:
+    app.kubernetes.io/managed-by: armportal
+    app.kubernetes.io/name: xportalinfra
+    app.kubernetes.io/instance: "xportalinfra-dev"
+    armportal.chrishouse.io/blueprint: "xp-building-blocks"
+    armportal.chrishouse.io/version: "2.0.0"
+    armportal.chrishouse.io/request-id: e8b594f1
+    armportal.chrishouse.io/created-by: crh225
+    armportal.chrishouse.io/component: rabbitmq
+spec:
+  parameters:
+    version: "3.13"
+    memoryLimitMB: 512
+    exposeManagement: true
+---
+apiVersion: platform.chrishouse.io/v1alpha1
+kind: IngressClaim
+metadata:
+  name: "xportalinfra-ingress"
+  namespace: "xportalinfra-dev"
+  labels:
+    app.kubernetes.io/managed-by: armportal
+    app.kubernetes.io/name: xportalinfra
+    app.kubernetes.io/instance: "xportalinfra-dev"
+    armportal.chrishouse.io/blueprint: "xp-building-blocks"
+    armportal.chrishouse.io/version: "2.0.0"
+    armportal.chrishouse.io/request-id: e8b594f1
+    armportal.chrishouse.io/created-by: crh225
+    armportal.chrishouse.io/component: ingress
+spec:
+  parameters:
+    host: xportalinfra.pr.chrishouse.io
+    clusterIssuer: "letsencrypt-prod"
+    paths:
+      - path: /
+                serviceName: "xportalinfra-backend"
+                servicePort: 80
