@@ -3,6 +3,7 @@ import "../../styles/BlueprintForm.css";
 import { getEnvironmentConfig } from "../../config/environmentConfig";
 import { fetchResourceGroups } from "../../services/resourcesApi";
 import api from "../../services/api";
+import ComponentSelector from "./ComponentSelector";
 
 function BlueprintForm({
   blueprint,
@@ -29,6 +30,15 @@ function BlueprintForm({
   // Get environment value and warning configuration
   const environment = formValues.environment || "dev";
   const envWarning = getEnvironmentConfig(environment);
+
+  // Check if this is a building blocks blueprint
+  const isBuildingBlocks = blueprint?.crossplane?.mode === "building-blocks";
+
+  // Component enable fields to hide from regular form (handled by ComponentSelector)
+  const componentEnableFields = [
+    "postgres_enabled", "redis_enabled", "rabbitmq_enabled",
+    "backend_enabled", "frontend_enabled", "ingress_enabled"
+  ];
 
   // Check if blueprint has ACR fields
   const hasAcrFields = blueprint?.variables?.some(
@@ -183,8 +193,17 @@ function BlueprintForm({
         </div>
       )}
 
+      {/* Component selector cards for building blocks */}
+      {isBuildingBlocks && (
+        <ComponentSelector formValues={formValues} onChange={onChange} />
+      )}
+
       <div className="form-grid">
         {(blueprint.variables || []).map((v) => {
+          // Hide component enable checkboxes for building blocks (handled by ComponentSelector)
+          if (isBuildingBlocks && componentEnableFields.includes(v.name)) {
+            return null;
+          }
           // Check if this field should be hidden based on dependsOn/showWhen
           if (v.dependsOn && v.showWhen !== undefined) {
             const dependentValue = formValues[v.dependsOn];
