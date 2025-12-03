@@ -24,8 +24,7 @@ spec:
             app.kubernetes.io/name: cache-warmer
             azure.workload.identity/use: "true"
           annotations:
-            # Enable Istio sidecar with native job support
-            # The sidecar will exit when the job container completes
+            # Enable Istio sidecar - wait for proxy before starting
             proxy.istio.io/config: '{"holdApplicationUntilProxyStarts": true}'
         spec:
           serviceAccountName: armportal-backend-sa
@@ -35,8 +34,14 @@ spec:
               image: armportalacre4k9.azurecr.io/armportal-backend:latest
               imagePullPolicy: Always
               command:
-                - node
-                - src/jobs/cache-warmer.js
+                - /bin/sh
+                - -c
+                - |
+                  node src/jobs/cache-warmer.js
+                  EXIT_CODE=$?
+                  # Signal Istio sidecar to terminate
+                  curl -sf -XPOST http://localhost:15020/quitquitquit || true
+                  exit $EXIT_CODE
               # Get all config values from ConfigMap (GH_APP_ID, GH_INSTALLATION_ID, GH_INFRA_OWNER, GH_INFRA_REPO)
               envFrom:
                 - configMapRef:
