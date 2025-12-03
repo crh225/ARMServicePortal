@@ -4,7 +4,13 @@ import { getGitHubConfig } from "./config.js";
 import { getBlueprintById } from "../../../config/blueprints.js";
 import { renderTerraformModule } from "../../utils/TerraformRenderer.js";
 import { isStack, renderStackTerraform } from "../../utils/StackRenderer.js";
-import { isCrossplane, renderCrossplaneClaim, getCrossplaneFilePath } from "../../utils/CrossplaneRenderer.js";
+import {
+  isCrossplane,
+  isBuildingBlocks,
+  renderCrossplaneClaim,
+  renderBuildingBlocksClaims,
+  getCrossplaneFilePath
+} from "../../utils/CrossplaneRenderer.js";
 import { ensureBranch, commitFile, getFileContent } from "./utils/gitOperations.js";
 import { createPR, generatePRBody } from "./utils/prOperations.js";
 import { DEFAULT_BASE_BRANCH } from "../../../config/githubConstants.js";
@@ -173,6 +179,24 @@ async function createCrossplaneRequest({
   environment,
   createdBy
 }) {
+  // Check if this is building blocks mode
+  if (isBuildingBlocks(blueprint)) {
+    return createBuildingBlocksRequest({
+      octokit,
+      infraOwner,
+      infraRepo,
+      baseBranch,
+      branchName,
+      blueprint,
+      variables,
+      shortId,
+      isUpdate,
+      environment,
+      createdBy
+    });
+  }
+
+  // Single claim mode (legacy)
   // For Crossplane, the claim name is derived from appName + environment if available
   const claimName = variables.appName && variables.environment
     ? `${variables.appName}-${variables.environment}`
@@ -271,6 +295,134 @@ async function createCrossplaneRequest({
     commitSha: file.commit.sha,
     provider: "crossplane",
     claimName
+  };
+}
+
+/**
+ * Create a building blocks PR with multiple claims
+ */
+async function createBuildingBlocksRequest({
+  octokit,
+  infraOwner,
+  infraRepo,
+  baseBranch,
+  branchName,
+  blueprint,
+  variables,
+  shortId,
+  isUpdate,
+  environment,
+  createdBy
+}) {
+  const appName = variables.appName;
+  const appEnvironment = variables.environment || "dev";
+  const claimName = `${appName}-${appEnvironment}`;
+
+  // Render all claims as multi-document YAML
+  let yamlContent = renderBuildingBlocksClaims({
+    blueprint,
+    variables,
+    prNumber: shortId, // Temporary, will update with actual PR number
+    createdBy
+  });
+
+  // Building blocks go into a single file per app
+  const filePath = getCrossplaneFilePath(environment, claimName);
+
+  // Get existing file SHA if updating
+  const fileSha = isUpdate
+    ? await getExistingFileSha(octokit, infraOwner, infraRepo, filePath, baseBranch)
+    : null;
+
+  // Determine which components are enabled for the commit message
+  const enabledComponents = [];
+  if (variables.postgres_enabled) enabledComponents.push("PostgreSQL");
+  if (variables.redis_enabled) enabledComponents.push("Redis");
+  if (variables.rabbitmq_enabled) enabledComponents.push("RabbitMQ");
+  if (variables.backend_enabled) enabledComponents.push("Backend");
+  if (variables.frontend_enabled) enabledComponents.push("Frontend");
+  if (variables.ingress_enabled) enabledComponents.push("Ingress");
+
+  const componentsStr = enabledComponents.join(", ") || "empty stack";
+
+  // Commit file
+  const commitMessage = isUpdate
+    ? `chore: update ${appName} building blocks in ${environment}`
+    : `chore: provision ${appName} building blocks in ${environment} (${shortId})`;
+
+  const { data: file } = await octokit.repos.createOrUpdateFileContents({
+    owner: infraOwner,
+    repo: infraRepo,
+    path: filePath,
+    message: commitMessage,
+    content: Buffer.from(yamlContent, "utf8").toString("base64"),
+    branch: branchName,
+    ...(fileSha && { sha: fileSha })
+  });
+
+  // Create PR
+  const title = isUpdate
+    ? `Update ${appName} in ${environment}`
+    : `Provision ${appName} in ${environment} (${shortId})`;
+
+  const description = [
+    `**Application**: ${appName}`,
+    `**Environment**: ${appEnvironment}`,
+    `**Provider**: Crossplane Building Blocks`,
+    "",
+    `**Components**: ${componentsStr}`,
+    "",
+    "Rendered claims:",
+    "```yaml",
+    yamlContent,
+    "```"
+  ].join("\n");
+
+  const body = generatePRBody({
+    blueprintId: blueprint.id,
+    environment,
+    createdBy,
+    terraformModule: claimName,
+    version: blueprint.version,
+    provider: "crossplane"
+  }, description);
+
+  const pr = await createPR(octokit, {
+    owner: infraOwner,
+    repo: infraRepo,
+    title,
+    head: branchName,
+    base: baseBranch,
+    body
+  });
+
+  // Update YAML with actual PR number
+  yamlContent = renderBuildingBlocksClaims({
+    blueprint,
+    variables,
+    prNumber: pr.number,
+    createdBy
+  });
+
+  await octokit.repos.createOrUpdateFileContents({
+    owner: infraOwner,
+    repo: infraRepo,
+    path: filePath,
+    message: `chore: update request-id labels with PR number #${pr.number}`,
+    content: Buffer.from(yamlContent, "utf8").toString("base64"),
+    branch: branchName,
+    sha: file.content.sha
+  });
+
+  return {
+    branchName,
+    filePath,
+    pullRequestUrl: pr.html_url,
+    pullRequestNumber: pr.number,
+    commitSha: file.commit.sha,
+    provider: "crossplane",
+    claimName,
+    components: enabledComponents
   };
 }
 

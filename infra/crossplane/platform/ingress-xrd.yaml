@@ -1,0 +1,80 @@
+---
+# Ingress XRD - Building Block
+# A standalone ingress that users can claim directly
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xingresses.platform.chrishouse.io
+spec:
+  group: platform.chrishouse.io
+  names:
+    kind: XIngress
+    plural: xingresses
+    shortNames:
+      - xing
+  claimNames:
+    kind: IngressClaim
+    plural: ingressclaims
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              required:
+                - parameters
+              properties:
+                parameters:
+                  type: object
+                  required:
+                    - host
+                  properties:
+                    host:
+                      type: string
+                      description: "Ingress hostname (e.g., myapp.example.com)"
+                    clusterIssuer:
+                      type: string
+                      description: "cert-manager ClusterIssuer name"
+                      default: "letsencrypt-prod"
+                    paths:
+                      type: array
+                      description: "Path routing rules"
+                      items:
+                        type: object
+                        required:
+                          - path
+                          - serviceName
+                        properties:
+                          path:
+                            type: string
+                            description: "URL path (e.g., /, /api)"
+                          pathType:
+                            type: string
+                            enum: ["Prefix", "Exact", "ImplementationSpecific"]
+                            default: "Prefix"
+                          serviceName:
+                            type: string
+                            description: "Backend service name"
+                          servicePort:
+                            type: integer
+                            description: "Backend service port"
+                            default: 80
+            status:
+              type: object
+              properties:
+                address:
+                  type: string
+      additionalPrinterColumns:
+        - name: Host
+          type: string
+          jsonPath: ".spec.parameters.host"
+        - name: Ready
+          type: string
+          jsonPath: ".status.conditions[?(@.type=='Ready')].status"
+        - name: Age
+          type: date
+          jsonPath: ".metadata.creationTimestamp"

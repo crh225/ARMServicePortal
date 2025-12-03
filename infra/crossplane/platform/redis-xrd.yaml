@@ -1,7 +1,7 @@
 ---
-# Redis XRD (CompositeResourceDefinition)
-# Defines a single-node Redis instance running in Kubernetes with PVC
-# This is the "API" that platform consumers use to request Redis
+# Redis XRD - Building Block
+# A standalone Redis instance that users can claim directly
+# Deploys into the claim's namespace (doesn't create its own)
 apiVersion: apiextensions.crossplane.io/v1
 kind: CompositeResourceDefinition
 metadata:
@@ -17,7 +17,6 @@ spec:
     kind: RedisClaim
     plural: redisclaims
   connectionSecretKeys:
-    - endpoint
     - host
     - port
   versions:
@@ -30,103 +29,46 @@ spec:
           properties:
             spec:
               type: object
-              required:
-                - parameters
               properties:
                 parameters:
                   type: object
-                  required:
-                    - name
-                    - environment
-                    - storageGB
                   properties:
-                    name:
-                      type: string
-                      description: "Redis instance name (used in resource naming)"
-                      pattern: "^[a-z][a-z0-9-]{1,20}$"
-                    environment:
-                      type: string
-                      description: "Environment name (dev, staging, prod)"
-                      enum:
-                        - dev
-                        - staging
-                        - prod
                     storageGB:
                       type: integer
                       description: "Storage size in GB for Redis persistence"
                       minimum: 1
                       maximum: 100
                       default: 1
-                    redisVersion:
+                    version:
                       type: string
                       description: "Redis version"
-                      enum:
-                        - "7.2"
-                        - "7.0"
-                        - "6.2"
+                      enum: ["7.2", "7.0", "6.2"]
                       default: "7.2"
-                    maxMemoryPolicy:
-                      type: string
-                      description: "Policy for evicting keys when max memory is reached"
-                      enum:
-                        - allkeys-lru
-                        - volatile-lru
-                        - allkeys-lfu
-                        - volatile-lfu
-                        - allkeys-random
-                        - volatile-random
-                        - noeviction
-                      default: allkeys-lru
                     memoryLimitMB:
                       type: integer
                       description: "Memory limit in MB"
-                      enum:
-                        - 128
-                        - 256
-                        - 512
-                        - 1024
-                        - 2048
+                      minimum: 64
+                      maximum: 4096
                       default: 256
+                    maxMemoryPolicy:
+                      type: string
+                      description: "Eviction policy"
+                      enum: ["allkeys-lru", "volatile-lru", "allkeys-lfu", "volatile-lfu", "noeviction"]
+                      default: "allkeys-lru"
             status:
               type: object
               properties:
-                phase:
-                  type: string
-                  description: "Current phase of the Redis instance"
-                endpoint:
-                  type: string
-                  description: "Redis connection endpoint (host:port)"
                 serviceName:
                   type: string
-                  description: "Kubernetes service name"
-                namespace:
+                secretName:
                   type: string
-                  description: "Kubernetes namespace"
-                conditions:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      type:
-                        type: string
-                      status:
-                        type: string
-                      reason:
-                        type: string
-                      message:
-                        type: string
-                      lastTransitionTime:
-                        type: string
       additionalPrinterColumns:
-        - name: Name
-          type: string
-          jsonPath: ".spec.parameters.name"
-        - name: Environment
-          type: string
-          jsonPath: ".spec.parameters.environment"
         - name: Version
           type: string
-          jsonPath: ".spec.parameters.redisVersion"
+          jsonPath: ".spec.parameters.version"
+        - name: Memory
+          type: string
+          jsonPath: ".spec.parameters.memoryLimitMB"
         - name: Ready
           type: string
           jsonPath: ".status.conditions[?(@.type=='Ready')].status"

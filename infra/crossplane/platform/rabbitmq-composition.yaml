@@ -1,637 +1,208 @@
 ---
-# RabbitMQ Composition (Crossplane v2 Pipeline Mode)
-# Implements the XRD by creating: Namespace, Secret, PVC, Deployment, Service, Ingress
-# Management UI is exposed at {name}.pr.chrishouse.io using the wildcard cert
+# RabbitMQ Composition - Building Block
+# Creates: PVC, Secret, Deployment, Service, optional Ingress
+# Deploys into the claim's namespace
 apiVersion: apiextensions.crossplane.io/v1
 kind: Composition
 metadata:
   name: rabbitmq
   labels:
     crossplane.io/xrd: rabbitmqs.platform.chrishouse.io
-    provider: kubernetes
 spec:
   compositeTypeRef:
     apiVersion: platform.chrishouse.io/v1alpha1
     kind: RabbitMQ
-
   writeConnectionSecretsToNamespace: crossplane-system
-
   mode: Pipeline
   pipeline:
-    - step: patch-and-transform
+    - step: rabbitmq-resources
       functionRef:
-        name: function-patch-and-transform
+        name: function-go-templating
       input:
-        apiVersion: pt.fn.crossplane.io/v1beta1
-        kind: Resources
-
-        patchSets:
-          # Common labels applied to all resources
-          - name: common-labels
-            patches:
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.name
-                toFieldPath: metadata.labels["app.kubernetes.io/name"]
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.environment
-                toFieldPath: metadata.labels["app.kubernetes.io/environment"]
-              - type: CombineFromComposite
-                combine:
-                  variables:
-                    - fromFieldPath: spec.parameters.name
-                    - fromFieldPath: spec.parameters.environment
-                  strategy: string
-                  string:
-                    fmt: "%s-%s"
-                toFieldPath: metadata.labels["app.kubernetes.io/instance"]
-
-          # Namespace patch - used by all namespaced resources
-          - name: namespace-patch
-            patches:
-              - type: CombineFromComposite
-                combine:
-                  variables:
-                    - fromFieldPath: spec.parameters.name
-                    - fromFieldPath: spec.parameters.environment
-                  strategy: string
-                  string:
-                    fmt: "%s-%s"
-                toFieldPath: spec.forProvider.manifest.metadata.namespace
-
-        resources:
-          # ============================================================
-          # 1. NAMESPACE
-          # ============================================================
-          - name: namespace
-            base:
-              apiVersion: kubernetes.crossplane.io/v1alpha2
-              kind: Object
-              spec:
-                forProvider:
-                  manifest:
-                    apiVersion: v1
-                    kind: Namespace
-                    metadata:
-                      name: ""
-                      labels:
-                        app.kubernetes.io/managed-by: crossplane
-                        platform.chrishouse.io/type: rabbitmq
-                        istio-injection: enabled
-            patches:
-              - type: PatchSet
-                patchSetName: common-labels
-              - type: CombineFromComposite
-                combine:
-                  variables:
-                    - fromFieldPath: spec.parameters.name
-                    - fromFieldPath: spec.parameters.environment
-                  strategy: string
-                  string:
-                    fmt: "%s-%s"
-                toFieldPath: spec.forProvider.manifest.metadata.name
-              - type: CombineFromComposite
-                combine:
-                  variables:
-                    - fromFieldPath: spec.parameters.name
-                    - fromFieldPath: spec.parameters.environment
-                  strategy: string
-                  string:
-                    fmt: "namespace-%s-%s"
-                toFieldPath: metadata.name
-
-          # ============================================================
-          # 2. RABBITMQ CREDENTIALS SECRET
-          # ============================================================
-          - name: rabbitmq-secret
-            base:
-              apiVersion: kubernetes.crossplane.io/v1alpha2
-              kind: Object
-              spec:
-                forProvider:
-                  manifest:
-                    apiVersion: v1
-                    kind: Secret
-                    metadata:
-                      name: ""
-                      labels:
+        apiVersion: gotemplating.fn.crossplane.io/v1beta1
+        kind: GoTemplate
+        source: Inline
+        inline:
+          template: |
+            {{- $xr := .observed.composite.resource }}
+            {{- $ns := index $xr.metadata.labels "crossplane.io/claim-namespace" }}
+            {{- $name := index $xr.metadata.labels "crossplane.io/claim-name" }}
+            {{- $p := $xr.spec.parameters }}
+            {{- $version := default "3.13" $p.version }}
+            {{- $memoryMB := default 512 $p.memoryLimitMB }}
+            {{- $storageGB := default 5 $p.storageGB }}
+            ---
+            # PVC
+            apiVersion: kubernetes.crossplane.io/v1alpha2
+            kind: Object
+            metadata:
+              name: {{ $xr.metadata.name }}-pvc
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: pvc
+            spec:
+              forProvider:
+                manifest:
+                  apiVersion: v1
+                  kind: PersistentVolumeClaim
+                  metadata:
+                    name: {{ $name }}-data
+                    namespace: {{ $ns }}
+                    labels:
+                      app.kubernetes.io/component: rabbitmq
+                      app.kubernetes.io/managed-by: crossplane
+                  spec:
+                    accessModes: [ReadWriteOnce]
+                    storageClassName: managed-csi
+                    resources:
+                      requests:
+                        storage: {{ $storageGB }}Gi
+            ---
+            # Credentials Secret
+            apiVersion: kubernetes.crossplane.io/v1alpha2
+            kind: Object
+            metadata:
+              name: {{ $xr.metadata.name }}-secret
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: secret
+            spec:
+              forProvider:
+                manifest:
+                  apiVersion: v1
+                  kind: Secret
+                  metadata:
+                    name: {{ $name }}-credentials
+                    namespace: {{ $ns }}
+                    labels:
+                      app.kubernetes.io/component: rabbitmq
+                      app.kubernetes.io/managed-by: crossplane
+                  type: Opaque
+                  stringData:
+                    host: {{ $name }}
+                    port: "5672"
+                    username: admin
+                    password: rabbitmq-{{ $name }}-secret
+                    url: "amqp://admin:rabbitmq-{{ $name }}-secret@{{ $name }}:5672"
+            ---
+            # Deployment
+            apiVersion: kubernetes.crossplane.io/v1alpha2
+            kind: Object
+            metadata:
+              name: {{ $xr.metadata.name }}-deploy
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: deployment
+            spec:
+              forProvider:
+                manifest:
+                  apiVersion: apps/v1
+                  kind: Deployment
+                  metadata:
+                    name: {{ $name }}
+                    namespace: {{ $ns }}
+                    labels:
+                      app.kubernetes.io/component: rabbitmq
+                      app.kubernetes.io/managed-by: crossplane
+                  spec:
+                    replicas: 1
+                    strategy:
+                      type: Recreate
+                    selector:
+                      matchLabels:
                         app.kubernetes.io/component: rabbitmq
-                    type: Opaque
-                    stringData:
-                      username: "admin"
-                      # In production, this should use a random password generator
-                      password: "rabbitmq-secret-123"
-            patches:
-              - type: PatchSet
-                patchSetName: common-labels
-              - type: PatchSet
-                patchSetName: namespace-patch
-              - type: CombineFromComposite
-                combine:
-                  variables:
-                    - fromFieldPath: spec.parameters.name
-                    - fromFieldPath: spec.parameters.environment
-                  strategy: string
-                  string:
-                    fmt: "%s-%s-rabbitmq-credentials"
-                toFieldPath: spec.forProvider.manifest.metadata.name
-              - type: CombineFromComposite
-                combine:
-                  variables:
-                    - fromFieldPath: spec.parameters.name
-                    - fromFieldPath: spec.parameters.environment
-                  strategy: string
-                  string:
-                    fmt: "rabbitmq-secret-%s-%s"
-                toFieldPath: metadata.name
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.adminUsername
-                toFieldPath: spec.forProvider.manifest.stringData.username
-
-          # ============================================================
-          # 3. PVC FOR RABBITMQ DATA
-          # ============================================================
-          - name: rabbitmq-pvc
-            base:
-              apiVersion: kubernetes.crossplane.io/v1alpha2
-              kind: Object
-              spec:
-                forProvider:
-                  manifest:
-                    apiVersion: v1
-                    kind: PersistentVolumeClaim
-                    metadata:
-                      name: ""
-                      labels:
-                        app.kubernetes.io/component: rabbitmq
-                    spec:
-                      accessModes:
-                        - ReadWriteOnce
-                      resources:
-                        requests:
-                          storage: "5Gi"
-                      storageClassName: managed-csi
-            patches:
-              - type: PatchSet
-                patchSetName: common-labels
-              - type: PatchSet
-                patchSetName: namespace-patch
-              - type: CombineFromComposite
-                combine:
-                  variables:
-                    - fromFieldPath: spec.parameters.name
-                    - fromFieldPath: spec.parameters.environment
-                  strategy: string
-                  string:
-                    fmt: "%s-%s-rabbitmq-data"
-                toFieldPath: spec.forProvider.manifest.metadata.name
-              - type: CombineFromComposite
-                combine:
-                  variables:
-                    - fromFieldPath: spec.parameters.name
-                    - fromFieldPath: spec.parameters.environment
-                  strategy: string
-                  string:
-                    fmt: "rabbitmq-pvc-%s-%s"
-                toFieldPath: metadata.name
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.storageGB
-                toFieldPath: spec.forProvider.manifest.spec.resources.requests.storage
-                transforms:
-                  - type: convert
-                    convert:
-                      toType: int64
-                  - type: string
-                    string:
-                      type: Format
-                      fmt: "%dGi"
-
-          # ============================================================
-          # 4. RABBITMQ DEPLOYMENT
-          # ============================================================
-          - name: rabbitmq-deployment
-            base:
-              apiVersion: kubernetes.crossplane.io/v1alpha2
-              kind: Object
-              spec:
-                forProvider:
-                  manifest:
-                    apiVersion: apps/v1
-                    kind: Deployment
-                    metadata:
-                      name: ""
-                      labels:
-                        app.kubernetes.io/component: rabbitmq
-                    spec:
-                      replicas: 1
-                      selector:
-                        matchLabels:
+                        app.kubernetes.io/instance: {{ $name }}
+                    template:
+                      metadata:
+                        labels:
                           app.kubernetes.io/component: rabbitmq
-                      strategy:
-                        type: Recreate
-                      template:
-                        metadata:
-                          labels:
-                            app.kubernetes.io/component: rabbitmq
-                        spec:
-                          containers:
-                            - name: rabbitmq
-                              image: rabbitmq:3.13-management-alpine
-                              ports:
-                                - containerPort: 5672
-                                  name: amqp
-                                - containerPort: 15672
-                                  name: management
-                              env:
-                                - name: RABBITMQ_DEFAULT_USER
-                                  valueFrom:
-                                    secretKeyRef:
-                                      name: ""
-                                      key: username
-                                - name: RABBITMQ_DEFAULT_PASS
-                                  valueFrom:
-                                    secretKeyRef:
-                                      name: ""
-                                      key: password
-                              volumeMounts:
-                                - name: rabbitmq-data
-                                  mountPath: /var/lib/rabbitmq
-                              resources:
-                                requests:
-                                  cpu: "200m"
-                                  memory: "256Mi"
-                                limits:
-                                  cpu: "1000m"
-                                  memory: "512Mi"
-                              readinessProbe:
-                                tcpSocket:
-                                  port: 5672
-                                initialDelaySeconds: 10
-                                periodSeconds: 10
-                              livenessProbe:
-                                tcpSocket:
-                                  port: 5672
-                                initialDelaySeconds: 30
-                                periodSeconds: 30
-                          volumes:
-                            - name: rabbitmq-data
-                              persistentVolumeClaim:
-                                claimName: ""
-            patches:
-              - type: PatchSet
-                patchSetName: common-labels
-              - type: PatchSet
-                patchSetName: namespace-patch
-              - type: CombineFromComposite
-                combine:
-                  variables:
-                    - fromFieldPath: spec.parameters.name
-                    - fromFieldPath: spec.parameters.environment
-                  strategy: string
-                  string:
-                    fmt: "%s-%s-rabbitmq"
-                toFieldPath: spec.forProvider.manifest.metadata.name
-              - type: CombineFromComposite
-                combine:
-                  variables:
-                    - fromFieldPath: spec.parameters.name
-                    - fromFieldPath: spec.parameters.environment
-                  strategy: string
-                  string:
-                    fmt: "rabbitmq-deployment-%s-%s"
-                toFieldPath: metadata.name
-              # Image version
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.rabbitmqVersion
-                toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].image
-                transforms:
-                  - type: string
-                    string:
-                      type: Format
-                      fmt: "rabbitmq:%s-management-alpine"
-              # Memory limits
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.memoryLimitMB
-                toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].resources.limits.memory
-                transforms:
-                  - type: convert
-                    convert:
-                      toType: int64
-                  - type: string
-                    string:
-                      type: Format
-                      fmt: "%dMi"
-              # Secret reference for username
-              - type: CombineFromComposite
-                combine:
-                  variables:
-                    - fromFieldPath: spec.parameters.name
-                    - fromFieldPath: spec.parameters.environment
-                  strategy: string
-                  string:
-                    fmt: "%s-%s-rabbitmq-credentials"
-                toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].env[0].valueFrom.secretKeyRef.name
-              # Secret reference for password
-              - type: CombineFromComposite
-                combine:
-                  variables:
-                    - fromFieldPath: spec.parameters.name
-                    - fromFieldPath: spec.parameters.environment
-                  strategy: string
-                  string:
-                    fmt: "%s-%s-rabbitmq-credentials"
-                toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].env[1].valueFrom.secretKeyRef.name
-              # PVC reference
-              - type: CombineFromComposite
-                combine:
-                  variables:
-                    - fromFieldPath: spec.parameters.name
-                    - fromFieldPath: spec.parameters.environment
-                  strategy: string
-                  string:
-                    fmt: "%s-%s-rabbitmq-data"
-                toFieldPath: spec.forProvider.manifest.spec.template.spec.volumes[0].persistentVolumeClaim.claimName
-              # Instance labels for selector
-              - type: CombineFromComposite
-                combine:
-                  variables:
-                    - fromFieldPath: spec.parameters.name
-                    - fromFieldPath: spec.parameters.environment
-                  strategy: string
-                  string:
-                    fmt: "%s-%s"
-                toFieldPath: spec.forProvider.manifest.spec.selector.matchLabels["app.kubernetes.io/instance"]
-              - type: CombineFromComposite
-                combine:
-                  variables:
-                    - fromFieldPath: spec.parameters.name
-                    - fromFieldPath: spec.parameters.environment
-                  strategy: string
-                  string:
-                    fmt: "%s-%s"
-                toFieldPath: spec.forProvider.manifest.spec.template.metadata.labels["app.kubernetes.io/instance"]
-
-          # ============================================================
-          # 5. RABBITMQ SERVICE
-          # ============================================================
-          - name: rabbitmq-service
-            base:
-              apiVersion: kubernetes.crossplane.io/v1alpha2
-              kind: Object
-              spec:
-                forProvider:
-                  manifest:
-                    apiVersion: v1
-                    kind: Service
-                    metadata:
-                      name: ""
-                      labels:
-                        app.kubernetes.io/component: rabbitmq
-                    spec:
-                      type: ClusterIP
-                      ports:
-                        - port: 5672
-                          targetPort: 5672
-                          protocol: TCP
-                          name: amqp
-                        - port: 15672
-                          targetPort: 15672
-                          protocol: TCP
-                          name: management
-                      selector:
-                        app.kubernetes.io/component: rabbitmq
-            patches:
-              - type: PatchSet
-                patchSetName: common-labels
-              - type: PatchSet
-                patchSetName: namespace-patch
-              - type: CombineFromComposite
-                combine:
-                  variables:
-                    - fromFieldPath: spec.parameters.name
-                    - fromFieldPath: spec.parameters.environment
-                  strategy: string
-                  string:
-                    fmt: "%s-%s-rabbitmq"
-                toFieldPath: spec.forProvider.manifest.metadata.name
-              - type: CombineFromComposite
-                combine:
-                  variables:
-                    - fromFieldPath: spec.parameters.name
-                    - fromFieldPath: spec.parameters.environment
-                  strategy: string
-                  string:
-                    fmt: "rabbitmq-service-%s-%s"
-                toFieldPath: metadata.name
-              - type: CombineFromComposite
-                combine:
-                  variables:
-                    - fromFieldPath: spec.parameters.name
-                    - fromFieldPath: spec.parameters.environment
-                  strategy: string
-                  string:
-                    fmt: "%s-%s"
-                toFieldPath: spec.forProvider.manifest.spec.selector["app.kubernetes.io/instance"]
-
-          # ============================================================
-          # 6. COPY WILDCARD TLS SECRET TO NAMESPACE
-          # ============================================================
-          - name: tls-secret-copy
-            base:
-              apiVersion: kubernetes.crossplane.io/v1alpha2
-              kind: Object
-              spec:
-                forProvider:
-                  manifest:
-                    apiVersion: v1
-                    kind: Secret
-                    metadata:
-                      name: pr-wildcard-tls
-                      labels:
-                        app.kubernetes.io/component: tls
-                    type: kubernetes.io/tls
-                    data:
-                      # These will be populated by the secrets-store-csi-driver sync
-                      # or copied from cert-manager namespace
-                      tls.crt: ""
-                      tls.key: ""
-                references:
-                  - patchesFrom:
-                      apiVersion: v1
-                      kind: Secret
-                      name: pr-wildcard-tls
-                      namespace: cert-manager
-                      fieldPath: data
-                    toFieldPath: data
-            patches:
-              - type: PatchSet
-                patchSetName: common-labels
-              - type: PatchSet
-                patchSetName: namespace-patch
-              - type: CombineFromComposite
-                combine:
-                  variables:
-                    - fromFieldPath: spec.parameters.name
-                    - fromFieldPath: spec.parameters.environment
-                  strategy: string
-                  string:
-                    fmt: "tls-secret-%s-%s"
-                toFieldPath: metadata.name
-
-          # ============================================================
-          # 7. INGRESS FOR MANAGEMENT UI
-          # ============================================================
-          - name: rabbitmq-ingress
-            base:
-              apiVersion: kubernetes.crossplane.io/v1alpha2
-              kind: Object
-              spec:
-                forProvider:
-                  manifest:
-                    apiVersion: networking.k8s.io/v1
-                    kind: Ingress
-                    metadata:
-                      name: ""
-                      labels:
-                        app.kubernetes.io/component: ingress
-                      annotations:
-                        nginx.ingress.kubernetes.io/backend-protocol: HTTP
-                    spec:
-                      ingressClassName: nginx
-                      tls:
-                        - hosts:
-                            - ""
-                          secretName: pr-wildcard-tls
-                      rules:
-                        - host: ""
-                          http:
-                            paths:
-                              - path: /
-                                pathType: Prefix
-                                backend:
-                                  service:
-                                    name: ""
-                                    port:
-                                      number: 15672
-            patches:
-              - type: PatchSet
-                patchSetName: common-labels
-              - type: PatchSet
-                patchSetName: namespace-patch
-              - type: CombineFromComposite
-                combine:
-                  variables:
-                    - fromFieldPath: spec.parameters.name
-                    - fromFieldPath: spec.parameters.environment
-                  strategy: string
-                  string:
-                    fmt: "%s-%s-rabbitmq-ingress"
-                toFieldPath: spec.forProvider.manifest.metadata.name
-              - type: CombineFromComposite
-                combine:
-                  variables:
-                    - fromFieldPath: spec.parameters.name
-                    - fromFieldPath: spec.parameters.environment
-                  strategy: string
-                  string:
-                    fmt: "rabbitmq-ingress-%s-%s"
-                toFieldPath: metadata.name
-              # Hostname: {name}.pr.chrishouse.io
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.name
-                toFieldPath: spec.forProvider.manifest.spec.rules[0].host
-                transforms:
-                  - type: string
-                    string:
-                      type: Format
-                      fmt: "%s.pr.chrishouse.io"
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.name
-                toFieldPath: spec.forProvider.manifest.spec.tls[0].hosts[0]
-                transforms:
-                  - type: string
-                    string:
-                      type: Format
-                      fmt: "%s.pr.chrishouse.io"
-              # Service backend
-              - type: CombineFromComposite
-                combine:
-                  variables:
-                    - fromFieldPath: spec.parameters.name
-                    - fromFieldPath: spec.parameters.environment
-                  strategy: string
-                  string:
-                    fmt: "%s-%s-rabbitmq"
-                toFieldPath: spec.forProvider.manifest.spec.rules[0].http.paths[0].backend.service.name
-
-          # ============================================================
-          # 8. EXTERNAL AMQP SERVICE (LoadBalancer for Azure Function)
-          # ============================================================
-          - name: rabbitmq-amqp-external
-            base:
-              apiVersion: kubernetes.crossplane.io/v1alpha2
-              kind: Object
-              spec:
-                forProvider:
-                  manifest:
-                    apiVersion: v1
-                    kind: Service
-                    metadata:
-                      name: ""
-                      labels:
-                        app.kubernetes.io/component: rabbitmq-amqp-external
-                      annotations:
-                        # Azure-specific annotations for internal load balancer
-                        # Remove this annotation if you want a public IP
-                        # service.beta.kubernetes.io/azure-load-balancer-internal: "true"
-                        service.beta.kubernetes.io/azure-dns-label-name: ""
-                    spec:
-                      type: LoadBalancer
-                      ports:
-                        - port: 5672
-                          targetPort: 5672
-                          protocol: TCP
-                          name: amqp
-                      selector:
-                        app.kubernetes.io/component: rabbitmq
-            patches:
-              - type: PatchSet
-                patchSetName: common-labels
-              - type: PatchSet
-                patchSetName: namespace-patch
-              - type: CombineFromComposite
-                combine:
-                  variables:
-                    - fromFieldPath: spec.parameters.name
-                    - fromFieldPath: spec.parameters.environment
-                  strategy: string
-                  string:
-                    fmt: "%s-%s-rabbitmq-amqp"
-                toFieldPath: spec.forProvider.manifest.metadata.name
-              - type: CombineFromComposite
-                combine:
-                  variables:
-                    - fromFieldPath: spec.parameters.name
-                    - fromFieldPath: spec.parameters.environment
-                  strategy: string
-                  string:
-                    fmt: "rabbitmq-amqp-external-%s-%s"
-                toFieldPath: metadata.name
-              # DNS label for Azure (creates {name}-amqp.{region}.cloudapp.azure.com)
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.name
-                toFieldPath: spec.forProvider.manifest.metadata.annotations["service.beta.kubernetes.io/azure-dns-label-name"]
-                transforms:
-                  - type: string
-                    string:
-                      type: Format
-                      fmt: "%s-amqp"
-              # Instance selector
-              - type: CombineFromComposite
-                combine:
-                  variables:
-                    - fromFieldPath: spec.parameters.name
-                    - fromFieldPath: spec.parameters.environment
-                  strategy: string
-                  string:
-                    fmt: "%s-%s"
-                toFieldPath: spec.forProvider.manifest.spec.selector["app.kubernetes.io/instance"]
+                          app.kubernetes.io/instance: {{ $name }}
+                      spec:
+                        containers:
+                          - name: rabbitmq
+                            image: rabbitmq:{{ $version }}-management-alpine
+                            ports:
+                              - { containerPort: 5672, name: amqp }
+                              - { containerPort: 15672, name: management }
+                            env:
+                              - name: RABBITMQ_DEFAULT_USER
+                                valueFrom: { secretKeyRef: { name: {{ $name }}-credentials, key: username } }
+                              - name: RABBITMQ_DEFAULT_PASS
+                                valueFrom: { secretKeyRef: { name: {{ $name }}-credentials, key: password } }
+                            volumeMounts:
+                              - { name: data, mountPath: /var/lib/rabbitmq }
+                            resources:
+                              requests: { cpu: "200m", memory: "256Mi" }
+                              limits: { cpu: "1000m", memory: "{{ $memoryMB }}Mi" }
+                            readinessProbe:
+                              tcpSocket: { port: 5672 }
+                              initialDelaySeconds: 10
+                            livenessProbe:
+                              tcpSocket: { port: 5672 }
+                              initialDelaySeconds: 30
+                        volumes:
+                          - name: data
+                            persistentVolumeClaim:
+                              claimName: {{ $name }}-data
+            ---
+            # Service
+            apiVersion: kubernetes.crossplane.io/v1alpha2
+            kind: Object
+            metadata:
+              name: {{ $xr.metadata.name }}-svc
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: service
+            spec:
+              forProvider:
+                manifest:
+                  apiVersion: v1
+                  kind: Service
+                  metadata:
+                    name: {{ $name }}
+                    namespace: {{ $ns }}
+                    labels:
+                      app.kubernetes.io/component: rabbitmq
+                      app.kubernetes.io/managed-by: crossplane
+                  spec:
+                    type: ClusterIP
+                    ports:
+                      - { port: 5672, targetPort: 5672, name: amqp }
+                      - { port: 15672, targetPort: 15672, name: management }
+                    selector:
+                      app.kubernetes.io/component: rabbitmq
+                      app.kubernetes.io/instance: {{ $name }}
+            {{- if and $p.exposeManagement $p.managementHost }}
+            ---
+            # Management Ingress (optional)
+            apiVersion: kubernetes.crossplane.io/v1alpha2
+            kind: Object
+            metadata:
+              name: {{ $xr.metadata.name }}-ingress
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: ingress
+            spec:
+              forProvider:
+                manifest:
+                  apiVersion: networking.k8s.io/v1
+                  kind: Ingress
+                  metadata:
+                    name: {{ $name }}-management
+                    namespace: {{ $ns }}
+                    labels:
+                      app.kubernetes.io/component: rabbitmq
+                      app.kubernetes.io/managed-by: crossplane
+                    annotations:
+                      cert-manager.io/cluster-issuer: letsencrypt-prod
+                  spec:
+                    ingressClassName: nginx
+                    tls:
+                      - hosts: [{{ $p.managementHost }}]
+                        secretName: {{ $name }}-mgmt-tls
+                    rules:
+                      - host: {{ $p.managementHost }}
+                        http:
+                          paths:
+                            - path: /
+                              pathType: Prefix
+                              backend:
+                                service:
+                                  name: {{ $name }}
+                                  port: { number: 15672 }
+            {{- end }}

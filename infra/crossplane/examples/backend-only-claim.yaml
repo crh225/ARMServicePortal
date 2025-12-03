@@ -1,0 +1,36 @@
+---
+# Backend-only deployment (no database)
+# User just needs a simple API service
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: api-service
+  labels:
+    app.kubernetes.io/managed-by: crossplane
+---
+apiVersion: platform.chrishouse.io/v1alpha1
+kind: BackendClaim
+metadata:
+  name: my-api
+  namespace: api-service
+spec:
+  parameters:
+    image: myregistry/my-api:v1.0.0
+    replicas: 3
+    port: 8080
+    env: prod
+    # No dbSecretName - this backend doesn't need a database
+---
+apiVersion: platform.chrishouse.io/v1alpha1
+kind: IngressClaim
+metadata:
+  name: my-api-ingress
+  namespace: api-service
+spec:
+  parameters:
+    host: api.example.com
+    paths:
+      - path: /
+        serviceName: my-api
+        servicePort: 80

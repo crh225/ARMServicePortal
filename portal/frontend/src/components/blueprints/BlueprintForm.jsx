@@ -32,7 +32,7 @@ function BlueprintForm({
 
   // Check if blueprint has ACR fields
   const hasAcrFields = blueprint?.variables?.some(
-    v => v.type === "acr-repository" || v.type === "acr-tag"
+    v => v.type === "acr-repository" || v.type === "acr-tag" || v.type === "acr-image"
   );
 
   // Fetch subscriptions on component mount
@@ -188,11 +188,23 @@ function BlueprintForm({
           // Check if this field should be hidden based on dependsOn/showWhen
           if (v.dependsOn && v.showWhen !== undefined) {
             const dependentValue = formValues[v.dependsOn];
-            // Hide if the dependent field doesn't match showWhen value
-            if (dependentValue !== v.showWhen) {
-              return null;
+            // For boolean showWhen (checkbox fields), check truthiness
+            if (typeof v.showWhen === "boolean") {
+              const isTruthy = dependentValue === true || dependentValue === "true";
+              if (v.showWhen !== isTruthy) {
+                return null;
+              }
+            } else {
+              // For non-boolean, check exact match
+              if (dependentValue !== v.showWhen) {
+                return null;
+              }
             }
           }
+
+          // Field type flags
+          const isCheckboxField = v.type === "checkbox";
+          const isAcrImageField = v.type === "acr-image";
 
           // Check if this is a resource_group_name or subscription_id field
           const isResourceGroupField = v.name === "resource_group_name";
@@ -234,8 +246,44 @@ function BlueprintForm({
                 )}
               </label>
 
-              {/* ACR Repository field - combobox style */}
-              {isAcrRepoField ? (
+              {/* Checkbox field */}
+              {isCheckboxField ? (
+                <div className="checkbox-field-wrapper">
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      className="field-checkbox"
+                      checked={formValues[v.name] === true || formValues[v.name] === "true"}
+                      onChange={(e) => onChange(v.name, e.target.checked)}
+                    />
+                    <span className="checkbox-text">{v.helpText || `Enable ${v.label}`}</span>
+                  </label>
+                </div>
+              ) : isAcrImageField ? (
+                /* ACR Image field - dropdown with full image path */
+                <div className="acr-field-wrapper">
+                  <select
+                    className="field-input"
+                    value={formValues[v.name] || ""}
+                    onChange={(e) => onChange(v.name, e.target.value)}
+                    disabled={loadingAcrRepos}
+                  >
+                    <option value="">-- Select container image --</option>
+                    {acrRepositories.map((repo) => (
+                      <option key={repo.name} value={`${repo.fullPath}:latest`}>
+                        {repo.name}:latest
+                      </option>
+                    ))}
+                  </select>
+                  {v.helpText && (
+                    <span className="field-help">{v.helpText}</span>
+                  )}
+                  {loadingAcrRepos && (
+                    <span className="field-loading"> (loading...)</span>
+                  )}
+                </div>
+              ) : isAcrRepoField ? (
+                /* ACR Repository field - combobox style */
                 <div className="acr-field-wrapper">
                   <select
                     className="field-input"

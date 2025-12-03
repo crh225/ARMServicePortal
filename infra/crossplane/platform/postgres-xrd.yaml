@@ -1,0 +1,85 @@
+---
+# Postgres XRD - Building Block
+# A standalone PostgreSQL instance that users can claim directly
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xpostgres.platform.chrishouse.io
+spec:
+  group: platform.chrishouse.io
+  names:
+    kind: XPostgres
+    plural: xpostgres
+    shortNames:
+      - xpg
+  claimNames:
+    kind: PostgresClaim
+    plural: postgresclaims
+  connectionSecretKeys:
+    - host
+    - port
+    - username
+    - password
+    - database
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              required:
+                - parameters
+              properties:
+                parameters:
+                  type: object
+                  properties:
+                    storageGB:
+                      type: integer
+                      description: "Database storage size in GB"
+                      minimum: 5
+                      maximum: 1000
+                      default: 10
+                    version:
+                      type: string
+                      description: "PostgreSQL version"
+                      enum: ["14", "15", "16"]
+                      default: "16"
+                    resources:
+                      type: object
+                      properties:
+                        cpuRequest:
+                          type: string
+                          default: "200m"
+                        cpuLimit:
+                          type: string
+                          default: "500m"
+                        memoryRequest:
+                          type: string
+                          default: "256Mi"
+                        memoryLimit:
+                          type: string
+                          default: "512Mi"
+            status:
+              type: object
+              properties:
+                serviceName:
+                  type: string
+                secretName:
+                  type: string
+      additionalPrinterColumns:
+        - name: Version
+          type: string
+          jsonPath: ".spec.parameters.version"
+        - name: Storage
+          type: string
+          jsonPath: ".spec.parameters.storageGB"
+        - name: Ready
+          type: string
+          jsonPath: ".status.conditions[?(@.type=='Ready')].status"
+        - name: Age
+          type: date
+          jsonPath: ".metadata.creationTimestamp"

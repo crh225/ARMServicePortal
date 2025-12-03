@@ -1,0 +1,67 @@
+---
+# Ingress Composition - Building Block
+# Creates: Ingress with TLS
+# Namespace comes from the claim's namespace
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xingress
+  labels:
+    crossplane.io/xrd: xingresses.platform.chrishouse.io
+spec:
+  compositeTypeRef:
+    apiVersion: platform.chrishouse.io/v1alpha1
+    kind: XIngress
+  mode: Pipeline
+  pipeline:
+    - step: ingress-resource
+      functionRef:
+        name: function-go-templating
+      input:
+        apiVersion: gotemplating.fn.crossplane.io/v1beta1
+        kind: GoTemplate
+        source: Inline
+        inline:
+          template: |
+            {{- $xr := .observed.composite.resource }}
+            {{- $ns := index $xr.metadata.labels "crossplane.io/claim-namespace" }}
+            {{- $name := index $xr.metadata.labels "crossplane.io/claim-name" }}
+            {{- $p := $xr.spec.parameters }}
+            ---
+            apiVersion: kubernetes.crossplane.io/v1alpha2
+            kind: Object
+            metadata:
+              name: {{ $xr.metadata.name }}-ingress
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: ingress
+            spec:
+              forProvider:
+                manifest:
+                  apiVersion: networking.k8s.io/v1
+                  kind: Ingress
+                  metadata:
+                    name: {{ $name }}
+                    namespace: {{ $ns }}
+                    labels:
+                      app.kubernetes.io/managed-by: crossplane
+                    annotations:
+                      cert-manager.io/cluster-issuer: {{ default "letsencrypt-prod" $p.clusterIssuer }}
+                  spec:
+                    ingressClassName: nginx
+                    tls:
+                      - hosts:
+                          - {{ $p.host }}
+                        secretName: {{ $name }}-tls
+                    rules:
+                      - host: {{ $p.host }}
+                        http:
+                          paths:
+                            {{- range $p.paths }}
+                            - path: {{ .path }}
+                              pathType: {{ default "Prefix" .pathType }}
+                              backend:
+                                service:
+                                  name: {{ .serviceName }}
+                                  port:
+                                    number: {{ default 80 .servicePort }}
+                            {{- end }}

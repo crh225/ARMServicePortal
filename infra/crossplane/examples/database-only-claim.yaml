@@ -1,0 +1,30 @@
+---
+# Standalone PostgreSQL database
+# User just needs a database for an external application
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: shared-db
+  labels:
+    app.kubernetes.io/managed-by: crossplane
+---
+apiVersion: platform.chrishouse.io/v1alpha1
+kind: PostgresClaim
+metadata:
+  name: shared-postgres
+  namespace: shared-db
+spec:
+  parameters:
+    storageGB: 50
+    version: "16"
+#
+# This creates:
+#   - PVC: shared-postgres-data (50Gi)
+#   - Secret: shared-postgres-credentials (with host, port, username, password, database)
+#   - Deployment: shared-postgres
+#   - Service: shared-postgres (port 5432)
+#
+# External apps can connect using:
+#   Host: shared-postgres.shared-db.svc.cluster.local
+#   Port: 5432

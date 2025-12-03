@@ -182,3 +182,43 @@
   color: var(--text-tertiary);
   font-style: italic;
 }
+
+/* Checkbox Field Styles */
+
+.checkbox-field-wrapper {
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.field-checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent-grad-from, #3b82f6);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.checkbox-text {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+/* Section grouping for building blocks form */
+.form-field[data-section] {
+  margin-top: 8px;
+}
+
+.form-field .checkbox-field-wrapper + .field-help {
+  margin-left: 28px;
+  margin-top: 4px;
+}

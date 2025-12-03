@@ -1,0 +1,86 @@
+---
+# Frontend XRD - Building Block
+# A standalone frontend service that users can claim directly
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xfrontends.platform.chrishouse.io
+spec:
+  group: platform.chrishouse.io
+  names:
+    kind: XFrontend
+    plural: xfrontends
+    shortNames:
+      - xfe
+  claimNames:
+    kind: FrontendClaim
+    plural: frontendclaims
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              required:
+                - parameters
+              properties:
+                parameters:
+                  type: object
+                  required:
+                    - image
+                  properties:
+                    image:
+                      type: string
+                      description: "Full container image (e.g., myregistry/frontend:v1.0)"
+                    replicas:
+                      type: integer
+                      description: "Number of replicas"
+                      default: 2
+                      minimum: 1
+                      maximum: 10
+                    port:
+                      type: integer
+                      description: "Container port"
+                      default: 80
+                    backendUrl:
+                      type: string
+                      description: "Backend service URL for BACKEND_URL env var"
+                    resources:
+                      type: object
+                      properties:
+                        cpuRequest:
+                          type: string
+                          default: "100m"
+                        cpuLimit:
+                          type: string
+                          default: "200m"
+                        memoryRequest:
+                          type: string
+                          default: "128Mi"
+                        memoryLimit:
+                          type: string
+                          default: "256Mi"
+            status:
+              type: object
+              properties:
+                serviceName:
+                  type: string
+                serviceUrl:
+                  type: string
+      additionalPrinterColumns:
+        - name: Image
+          type: string
+          jsonPath: ".spec.parameters.image"
+        - name: Replicas
+          type: integer
+          jsonPath: ".spec.parameters.replicas"
+        - name: Ready
+          type: string
+          jsonPath: ".status.conditions[?(@.type=='Ready')].status"
+        - name: Age
+          type: date
+          jsonPath: ".metadata.creationTimestamp"

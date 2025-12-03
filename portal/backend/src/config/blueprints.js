@@ -1035,29 +1035,31 @@ export const BLUEPRINTS = [
     }
   },
   // ============================================================
-  // CROSSPLANE BLUEPRINTS
+  // CROSSPLANE BUILDING BLOCKS
   // ============================================================
+  // Architecture: User picks components, UI generates multiple claims
+  // Each claim deploys to the target namespace
   {
-    id: "xp-application-environment",
-    version: "1.0.0",
-    displayName: "Application Environment (Full Stack)",
-    description: "Complete application stack with frontend, backend, and PostgreSQL database. Provisions namespace, deployments, services, and ingress with TLS.",
+    id: "xp-building-blocks",
+    version: "2.0.0",
+    displayName: "Kubernetes Application (Building Blocks)",
+    description: "Build your application by selecting components. Each component is optional - pick exactly what you need. Deploys to a dedicated namespace.",
     category: "Compute",
     provider: "crossplane",
-    // Crossplane-specific config
+    // Building blocks mode - generates multiple claims
     crossplane: {
-      apiVersion: "platform.chrishouse.io/v1alpha1",
-      kind: "ApplicationEnvironmentClaim",
-      compositionRef: "application-environment",
-      claimsNamespace: "platform-claims"
+      mode: "building-blocks",
+      apiVersion: "platform.chrishouse.io/v1alpha1"
     },
     variables: [
+      // === Core Settings ===
       {
         name: "appName",
         label: "Application Name",
         type: "string",
         required: true,
-        placeholder: "orders",
+        placeholder: "myapp",
+        section: "Core",
         validation: {
           pattern: "^[a-z][a-z0-9-]{1,20}$",
           message: "Lowercase letters, numbers, hyphens. 2-21 chars. Must start with letter."
@@ -1069,118 +1071,50 @@ export const BLUEPRINTS = [
         type: "select",
         required: true,
         options: ["dev", "staging", "prod"],
-        default: "dev"
+        default: "dev",
+        section: "Core"
+      },
+      // === Database (PostgreSQL) ===
+      {
+        name: "postgres_enabled",
+        label: "PostgreSQL Database",
+        type: "checkbox",
+        required: false,
+        default: false,
+        section: "Database",
+        helpText: "Add a PostgreSQL database with persistent storage"
       },
       {
-        name: "frontend_imageRepo",
-        label: "Frontend Image Repository",
-        type: "acr-repository",
-        required: true,
-        placeholder: "Select from registry or enter custom",
-        helpText: "Select an image from your ACR or enter a full image path"
-      },
-      {
-        name: "frontend_tag",
-        label: "Frontend Image Tag",
-        type: "acr-tag",
-        dependsOn: "frontend_imageRepo",
-        required: true,
-        default: "latest"
-      },
-      {
-        name: "frontend_replicas",
-        label: "Frontend Replicas",
+        name: "postgres_storageGB",
+        label: "Storage (GB)",
         type: "select",
         required: false,
-        options: ["1", "2", "3", "4", "5"],
-        default: "2"
+        options: ["10", "20", "50", "100"],
+        default: "10",
+        section: "Database",
+        dependsOn: "postgres_enabled",
+        showWhen: true
       },
       {
-        name: "frontend_port",
-        label: "Frontend Container Port",
-        type: "string",
-        required: false,
-        default: "80"
-      },
-      {
-        name: "backend_imageRepo",
-        label: "Backend Image Repository",
-        type: "acr-repository",
-        required: true,
-        placeholder: "Select from registry or enter custom",
-        helpText: "Select an image from your ACR or enter a full image path"
-      },
-      {
-        name: "backend_tag",
-        label: "Backend Image Tag",
-        type: "acr-tag",
-        dependsOn: "backend_imageRepo",
-        required: true,
-        default: "latest"
-      },
-      {
-        name: "backend_replicas",
-        label: "Backend Replicas",
-        type: "select",
-        required: false,
-        options: ["1", "2", "3", "4", "5"],
-        default: "2"
-      },
-      {
-        name: "backend_port",
-        label: "Backend Container Port",
-        type: "string",
-        required: false,
-        default: "4000"
-      },
-      {
-        name: "database_storageGB",
-        label: "Database Storage (GB)",
-        type: "select",
-        required: true,
-        options: ["10", "20", "50", "100", "200", "500"],
-        default: "10"
-      },
-      {
-        name: "database_version",
+        name: "postgres_version",
         label: "PostgreSQL Version",
         type: "select",
         required: false,
         options: ["14", "15", "16"],
-        default: "16"
+        default: "16",
+        section: "Database",
+        dependsOn: "postgres_enabled",
+        showWhen: true
       },
-      {
-        name: "ingress_host",
-        label: "Ingress Hostname",
-        type: "string",
-        required: true,
-        placeholder: "myapp-dev.example.com"
-      },
-      {
-        name: "ingress_tlsEnabled",
-        label: "Enable TLS (HTTPS)",
-        type: "select",
-        required: false,
-        options: ["true", "false"],
-        default: "true"
-      },
-      {
-        name: "ingress_clusterIssuer",
-        label: "Cert-Manager Cluster Issuer",
-        type: "string",
-        required: false,
-        default: "letsencrypt-prod"
-      },
-      // Optional Add-ons
+      // === Cache (Redis) ===
       {
         name: "redis_enabled",
-        label: "Enable Redis Cache",
-        type: "select",
+        label: "Redis Cache",
+        type: "checkbox",
         required: false,
-        options: ["true", "false"],
-        default: "false",
-        helpText: "Add a Redis instance for caching and session storage",
-        section: "Add-ons"
+        default: false,
+        section: "Cache",
+        helpText: "Add a Redis instance for caching and session storage"
       },
       {
         name: "redis_version",
@@ -1189,30 +1123,30 @@ export const BLUEPRINTS = [
         required: false,
         options: ["7.2", "7.0", "6.2"],
         default: "7.2",
+        section: "Cache",
         dependsOn: "redis_enabled",
-        showWhen: "true",
-        section: "Add-ons"
+        showWhen: true
       },
       {
         name: "redis_memoryLimitMB",
-        label: "Redis Memory Limit (MB)",
+        label: "Memory Limit (MB)",
         type: "select",
         required: false,
-        options: ["64", "128", "256", "512", "1024", "2048"],
+        options: ["128", "256", "512", "1024"],
         default: "256",
+        section: "Cache",
         dependsOn: "redis_enabled",
-        showWhen: "true",
-        section: "Add-ons"
+        showWhen: true
       },
+      // === Message Queue (RabbitMQ) ===
       {
         name: "rabbitmq_enabled",
-        label: "Enable RabbitMQ",
-        type: "select",
+        label: "RabbitMQ Message Queue",
+        type: "checkbox",
         required: false,
-        options: ["true", "false"],
-        default: "false",
-        helpText: "Add a RabbitMQ message broker for async messaging",
-        section: "Add-ons"
+        default: false,
+        section: "Messaging",
+        helpText: "Add RabbitMQ for async messaging and task queues"
       },
       {
         name: "rabbitmq_version",
@@ -1221,223 +1155,157 @@ export const BLUEPRINTS = [
         required: false,
         options: ["3.13", "3.12"],
         default: "3.13",
+        section: "Messaging",
         dependsOn: "rabbitmq_enabled",
-        showWhen: "true",
-        section: "Add-ons"
+        showWhen: true
       },
       {
         name: "rabbitmq_memoryLimitMB",
-        label: "RabbitMQ Memory Limit (MB)",
+        label: "Memory Limit (MB)",
         type: "select",
         required: false,
-        options: ["256", "512", "1024", "2048", "4096"],
+        options: ["256", "512", "1024", "2048"],
         default: "512",
+        section: "Messaging",
         dependsOn: "rabbitmq_enabled",
-        showWhen: "true",
-        section: "Add-ons"
+        showWhen: true
+      },
+      {
+        name: "rabbitmq_exposeManagement",
+        label: "Expose Management UI",
+        type: "checkbox",
+        required: false,
+        default: false,
+        section: "Messaging",
+        dependsOn: "rabbitmq_enabled",
+        showWhen: true,
+        helpText: "Create ingress for RabbitMQ management UI"
+      },
+      // === Backend Service ===
+      {
+        name: "backend_enabled",
+        label: "Backend Service",
+        type: "checkbox",
+        required: false,
+        default: false,
+        section: "Backend",
+        helpText: "Add a backend API service"
+      },
+      {
+        name: "backend_image",
+        label: "Container Image",
+        type: "acr-image",
+        required: false,
+        placeholder: "myregistry/backend:latest",
+        section: "Backend",
+        dependsOn: "backend_enabled",
+        showWhen: true
+      },
+      {
+        name: "backend_replicas",
+        label: "Replicas",
+        type: "select",
+        required: false,
+        options: ["1", "2", "3", "4", "5"],
+        default: "2",
+        section: "Backend",
+        dependsOn: "backend_enabled",
+        showWhen: true
+      },
+      {
+        name: "backend_port",
+        label: "Container Port",
+        type: "string",
+        required: false,
+        default: "4000",
+        section: "Backend",
+        dependsOn: "backend_enabled",
+        showWhen: true
+      },
+      {
+        name: "backend_connectToDb",
+        label: "Connect to Database",
+        type: "checkbox",
+        required: false,
+        default: true,
+        section: "Backend",
+        dependsOn: "backend_enabled",
+        showWhen: true,
+        helpText: "Inject database credentials into backend (requires PostgreSQL)"
+      },
+      // === Frontend Service ===
+      {
+        name: "frontend_enabled",
+        label: "Frontend Service",
+        type: "checkbox",
+        required: false,
+        default: false,
+        section: "Frontend",
+        helpText: "Add a frontend web UI service"
+      },
+      {
+        name: "frontend_image",
+        label: "Container Image",
+        type: "acr-image",
+        required: false,
+        placeholder: "myregistry/frontend:latest",
+        section: "Frontend",
+        dependsOn: "frontend_enabled",
+        showWhen: true
+      },
+      {
+        name: "frontend_replicas",
+        label: "Replicas",
+        type: "select",
+        required: false,
+        options: ["1", "2", "3", "4", "5"],
+        default: "2",
+        section: "Frontend",
+        dependsOn: "frontend_enabled",
+        showWhen: true
+      },
+      // === Ingress ===
+      {
+        name: "ingress_enabled",
+        label: "Ingress (External Access)",
+        type: "checkbox",
+        required: false,
+        default: false,
+        section: "Ingress",
+        helpText: "Create ingress for external traffic with TLS"
+      },
+      {
+        name: "ingress_host",
+        label: "Hostname",
+        type: "string",
+        required: false,
+        placeholder: "myapp.example.com",
+        section: "Ingress",
+        dependsOn: "ingress_enabled",
+        showWhen: true
+      },
+      {
+        name: "ingress_clusterIssuer",
+        label: "Cert-Manager Issuer",
+        type: "string",
+        required: false,
+        default: "letsencrypt-prod",
+        section: "Ingress",
+        dependsOn: "ingress_enabled",
+        showWhen: true
       }
     ],
     outputs: [
-      {
-        name: "namespaceRef",
-        description: "Created namespace name"
-      },
-      {
-        name: "frontendEndpoint",
-        description: "Frontend URL (https://...)"
-      },
-      {
-        name: "backendEndpoint",
-        description: "Internal backend service endpoint"
-      },
-      {
-        name: "databaseEndpoint",
-        description: "PostgreSQL connection endpoint"
-      },
-      {
-        name: "redisEndpoint",
-        description: "Redis connection endpoint (if enabled)"
-      },
-      {
-        name: "rabbitmqEndpoint",
-        description: "RabbitMQ AMQP endpoint (if enabled)"
-      }
+      { name: "namespace", description: "Created namespace name" },
+      { name: "postgresSecret", description: "PostgreSQL credentials secret (if enabled)" },
+      { name: "redisSecret", description: "Redis credentials secret (if enabled)" },
+      { name: "rabbitmqSecret", description: "RabbitMQ credentials secret (if enabled)" },
+      { name: "ingressHost", description: "Ingress hostname (if enabled)" }
     ],
-    estimatedMonthlyCost: 80
-  },
-  {
-    id: "xp-redis",
-    version: "1.0.0",
-    displayName: "Redis (Single Node)",
-    description: "Single-node Redis instance with persistent storage. Perfect for caching, session storage, and pub/sub messaging in Kubernetes environments.",
-    category: "Cache",
-    provider: "crossplane",
-    crossplane: {
-      apiVersion: "platform.chrishouse.io/v1alpha1",
-      kind: "RedisClaim",
-      compositionRef: "redis",
-      claimsNamespace: "platform-claims"
-    },
-    variables: [
-      {
-        name: "name",
-        label: "Redis Instance Name",
-        type: "string",
-        required: true,
-        placeholder: "myapp-cache",
-        validation: {
-          pattern: "^[a-z][a-z0-9-]{1,20}$",
-          message: "Lowercase letters, numbers, hyphens. 2-21 chars. Must start with letter."
-        }
-      },
-      {
-        name: "environment",
-        label: "Environment",
-        type: "select",
-        required: true,
-        options: ["dev", "staging", "prod"],
-        default: "dev"
-      },
-      {
-        name: "storageGB",
-        label: "Storage Size (GB)",
-        type: "select",
-        required: true,
-        options: ["1", "2", "5", "10", "20"],
-        default: "1"
-      },
-      {
-        name: "redisVersion",
-        label: "Redis Version",
-        type: "select",
-        required: false,
-        options: ["7.2", "7.0", "6.2"],
-        default: "7.2"
-      },
-      {
-        name: "maxMemoryPolicy",
-        label: "Max Memory Policy",
-        type: "select",
-        required: false,
-        options: ["allkeys-lru", "volatile-lru", "allkeys-lfu", "volatile-lfu", "allkeys-random", "volatile-random", "noeviction"],
-        default: "allkeys-lru",
-        helpText: "Policy for evicting keys when max memory is reached"
-      },
-      {
-        name: "memoryLimitMB",
-        label: "Memory Limit (MB)",
-        type: "select",
-        required: false,
-        options: ["128", "256", "512", "1024", "2048"],
-        default: "256"
-      }
-    ],
-    outputs: [
-      {
-        name: "endpoint",
-        description: "Redis connection endpoint (host:port)"
-      },
-      {
-        name: "serviceName",
-        description: "Kubernetes service name"
-      },
-      {
-        name: "namespace",
-        description: "Kubernetes namespace"
-      }
-    ],
-    estimatedMonthlyCost: 5
-  },
-  {
-    id: "xp-rabbitmq",
-    version: "1.0.0",
-    displayName: "RabbitMQ (Single Node)",
-    description: "Single-node RabbitMQ message broker with management UI. Ideal for async messaging, task queues, and event-driven architectures.",
-    category: "Messaging",
-    provider: "crossplane",
-    crossplane: {
-      apiVersion: "platform.chrishouse.io/v1alpha1",
-      kind: "RabbitMQClaim",
-      compositionRef: "rabbitmq",
-      claimsNamespace: "platform-claims"
-    },
-    variables: [
-      {
-        name: "name",
-        label: "RabbitMQ Instance Name",
-        type: "string",
-        required: true,
-        placeholder: "myapp-mq",
-        validation: {
-          pattern: "^[a-z][a-z0-9-]{1,20}$",
-          message: "Lowercase letters, numbers, hyphens. 2-21 chars. Must start with letter."
-        }
-      },
-      {
-        name: "environment",
-        label: "Environment",
-        type: "select",
-        required: true,
-        options: ["dev", "staging", "prod"],
-        default: "dev"
-      },
-      {
-        name: "storageGB",
-        label: "Storage Size (GB)",
-        type: "select",
-        required: true,
-        options: ["5", "10", "20", "50"],
-        default: "5"
-      },
-      {
-        name: "rabbitmqVersion",
-        label: "RabbitMQ Version",
-        type: "select",
-        required: false,
-        options: ["3.13", "3.12", "3.11"],
-        default: "3.13"
-      },
-      {
-        name: "memoryLimitMB",
-        label: "Memory Limit (MB)",
-        type: "select",
-        required: false,
-        options: ["256", "512", "1024", "2048", "4096"],
-        default: "512"
-      },
-      {
-        name: "adminUsername",
-        label: "Admin Username",
-        type: "string",
-        required: false,
-        default: "admin",
-        helpText: "Username for RabbitMQ management UI"
-      }
-    ],
-    outputs: [
-      {
-        name: "amqpEndpoint",
-        description: "AMQP connection endpoint (host:port)"
-      },
-      {
-        name: "managementUrl",
-        description: "Management UI URL (https://...)"
-      },
-      {
-        name: "serviceName",
-        description: "Kubernetes service name"
-      },
-      {
-        name: "namespace",
-        description: "Kubernetes namespace"
-      },
-      {
-        name: "adminPassword",
-        description: "Admin password (from secret)",
-        sensitive: true
-      }
-    ],
-    estimatedMonthlyCost: 10
+    estimatedMonthlyCost: 0,
+    costDetails: {
+      description: "Cost depends on selected components. Base Kubernetes resources only."
+    }
   }
 ];
 

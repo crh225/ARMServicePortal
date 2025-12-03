@@ -1,0 +1,107 @@
+---
+# Full Stack Application using Building Blocks
+# This shows how your Blueprint UI would generate claims
+#
+# User selects components via checkboxes, UI generates claims for each
+# All components are OPTIONAL - user picks what they need
+#
+# Available building blocks:
+#   - PostgresClaim (database)
+#   - RedisClaim (cache)
+#   - RabbitMQClaim (message queue)
+#   - BackendClaim (API service)
+#   - FrontendClaim (web UI)
+#   - IngressClaim (external traffic routing)
+#
+# To test: kubectl apply -f fullstack-app-claims.yaml
+---
+# Step 1: Create namespace (UI does this first)
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: myapp-dev
+  labels:
+    app.kubernetes.io/managed-by: crossplane
+    istio-injection: enabled
+---
+# Step 2: Database - PostgresClaim (OPTIONAL)
+apiVersion: platform.chrishouse.io/v1alpha1
+kind: PostgresClaim
+metadata:
+  name: myapp-db
+  namespace: myapp-dev
+spec:
+  parameters:
+    storageGB: 10
+    version: "16"
+---
+# Step 3: Cache - RedisClaim (OPTIONAL)
+apiVersion: platform.chrishouse.io/v1alpha1
+kind: RedisClaim
+metadata:
+  name: myapp-cache
+  namespace: myapp-dev
+spec:
+  parameters:
+    version: "7.2"
+    memoryLimitMB: 256
+    storageGB: 1
+---
+# Step 4: Message Queue - RabbitMQClaim (OPTIONAL)
+apiVersion: platform.chrishouse.io/v1alpha1
+kind: RabbitMQClaim
+metadata:
+  name: myapp-mq
+  namespace: myapp-dev
+spec:
+  parameters:
+    version: "3.13"
+    memoryLimitMB: 512
+    storageGB: 5
+    exposeManagement: true
+    managementHost: myapp-mq.pr.chrishouse.io
+---
+# Step 5: Backend - BackendClaim (OPTIONAL)
+apiVersion: platform.chrishouse.io/v1alpha1
+kind: BackendClaim
+metadata:
+  name: myapp-backend
+  namespace: myapp-dev
+spec:
+  parameters:
+    image: armportalacre4k9.azurecr.io/sample-backend:latest
+    replicas: 2
+    port: 4000
+    env: dev
+    dbSecretName: myapp-db-credentials  # Reference to PostgresClaim secret
+---
+# Step 6: Frontend - FrontendClaim (OPTIONAL)
+apiVersion: platform.chrishouse.io/v1alpha1
+kind: FrontendClaim
+metadata:
+  name: myapp-frontend
+  namespace: myapp-dev
+spec:
+  parameters:
+    image: armportalacre4k9.azurecr.io/sample-frontend:latest
+    replicas: 2
+    port: 80
+    backendUrl: http://myapp-backend  # Reference to BackendClaim service
+---
+# Step 7: Ingress - IngressClaim (OPTIONAL)
+apiVersion: platform.chrishouse.io/v1alpha1
+kind: IngressClaim
+metadata:
+  name: myapp-ingress
+  namespace: myapp-dev
+spec:
+  parameters:
+    host: myapp.pr.chrishouse.io
+    clusterIssuer: letsencrypt-prod
+    paths:
+      - path: /
+        serviceName: myapp-frontend
+        servicePort: 80
+      - path: /api
+        serviceName: myapp-backend
+        servicePort: 80

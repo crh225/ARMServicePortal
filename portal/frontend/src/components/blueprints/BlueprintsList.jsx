@@ -93,6 +93,10 @@ const serviceIcons = {
     icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/kubernetes/kubernetes-plain.svg" alt="" width="24" height="24" />,
     color: "#326ce5"
   },
+  "xp-building-blocks": {
+    icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/kubernetes/kubernetes-plain.svg" alt="" width="24" height="24" />,
+    color: "#326ce5"
+  },
   "xp-redis": {
     icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/redis/redis-original.svg" alt="" width="24" height="24" />,
     color: "#dc382d"
