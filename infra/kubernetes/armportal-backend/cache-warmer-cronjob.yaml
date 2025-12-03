@@ -8,8 +8,8 @@ metadata:
     app.kubernetes.io/component: job
     app.kubernetes.io/part-of: armportal
 spec:
-  # Run every 5 minutes to keep home stats fresh
-  schedule: "*/5 * * * *"
+  # Run every 10 minutes (Azure Cost Management API has 4 calls/min limit per scope)
+  schedule: "*/15 * * * *"
   # Also support running on demand
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
