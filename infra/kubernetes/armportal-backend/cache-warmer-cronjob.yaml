@@ -24,8 +24,9 @@ spec:
             app.kubernetes.io/name: cache-warmer
             azure.workload.identity/use: "true"
           annotations:
-            # Disable Istio sidecar for jobs - sidecars don't exit cleanly with Jobs
-            sidecar.istio.io/inject: "false"
+            # Enable Istio sidecar with native job support
+            # The sidecar will exit when the job container completes
+            proxy.istio.io/config: '{"holdApplicationUntilProxyStarts": true}'
         spec:
           serviceAccountName: armportal-backend-sa
           restartPolicy: OnFailure
