@@ -1,0 +1,97 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: "test-dev"
+  labels:
+    app.kubernetes.io/managed-by: crossplane
+    app.kubernetes.io/name: test
+    app.kubernetes.io/instance: "test-dev"
+    armportal.chrishouse.io/blueprint: "xp-building-blocks"
+    armportal.chrishouse.io/version: "2.0.0"
+    armportal.chrishouse.io/request-id: 6c5dff7f
+    armportal.chrishouse.io/created-by: crh225
+    istio-injection: enabled
+---
+apiVersion: platform.chrishouse.io/v1alpha1
+kind: RedisClaim
+metadata:
+  name: "test-cache"
+  namespace: "test-dev"
+  labels:
+    app.kubernetes.io/managed-by: armportal
+    app.kubernetes.io/name: test
+    app.kubernetes.io/instance: "test-dev"
+    armportal.chrishouse.io/blueprint: "xp-building-blocks"
+    armportal.chrishouse.io/version: "2.0.0"
+    armportal.chrishouse.io/request-id: 6c5dff7f
+    armportal.chrishouse.io/created-by: crh225
+    armportal.chrishouse.io/component: redis
+spec:
+  parameters:
+    version: "7.2"
+    memoryLimitMB: 256
+---
+apiVersion: platform.chrishouse.io/v1alpha1
+kind: RabbitMQClaim
+metadata:
+  name: "test-mq"
+  namespace: "test-dev"
+  labels:
+    app.kubernetes.io/managed-by: armportal
+    app.kubernetes.io/name: test
+    app.kubernetes.io/instance: "test-dev"
+    armportal.chrishouse.io/blueprint: "xp-building-blocks"
+    armportal.chrishouse.io/version: "2.0.0"
+    armportal.chrishouse.io/request-id: 6c5dff7f
+    armportal.chrishouse.io/created-by: crh225
+    armportal.chrishouse.io/component: rabbitmq
+spec:
+  parameters:
+    version: "3.13"
+    memoryLimitMB: 512
+    exposeManagement: true
+---
+apiVersion: platform.chrishouse.io/v1alpha1
+kind: BackendClaim
+metadata:
+  name: "test-backend"
+  namespace: "test-dev"
+  labels:
+    app.kubernetes.io/managed-by: armportal
+    app.kubernetes.io/name: test
+    app.kubernetes.io/instance: "test-dev"
+    armportal.chrishouse.io/blueprint: "xp-building-blocks"
+    armportal.chrishouse.io/version: "2.0.0"
+    armportal.chrishouse.io/request-id: 6c5dff7f
+    armportal.chrishouse.io/created-by: crh225
+    armportal.chrishouse.io/component: backend
+spec:
+  parameters:
+    image: "armportalacre4k9.azurecr.io/armportal-api-backend:latest"
+    replicas: 2
+    port: 4000
+    env: dev
+---
+apiVersion: platform.chrishouse.io/v1alpha1
+kind: IngressClaim
+metadata:
+  name: "test-ingress"
+  namespace: "test-dev"
+  labels:
+    app.kubernetes.io/managed-by: armportal
+    app.kubernetes.io/name: test
+    app.kubernetes.io/instance: "test-dev"
+    armportal.chrishouse.io/blueprint: "xp-building-blocks"
+    armportal.chrishouse.io/version: "2.0.0"
+    armportal.chrishouse.io/request-id: 6c5dff7f
+    armportal.chrishouse.io/created-by: crh225
+    armportal.chrishouse.io/component: ingress
+spec:
+  parameters:
+    host: xtest.pr.chrishouse.io
+    clusterIssuer: "letsencrypt-prod"
+    paths:
+      - path: /api
+                serviceName: "test-backend"
+                servicePort: 80
