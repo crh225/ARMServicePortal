@@ -163,11 +163,20 @@ function BlueprintForm({
         )}
       </div>
 
+      {/* Component selector cards for building blocks - shown first */}
+      {isBuildingBlocks && (
+        <div className="panel panel--form" style={{ marginBottom: "16px" }}>
+          <ComponentSelector formValues={formValues} onChange={onChange} />
+        </div>
+      )}
+
       <div className="panel panel--form">
         <div>
           <h2 className="panel-title">Configure Parameters</h2>
           <p className="panel-help">
-            {blueprint.provider === "crossplane"
+            {isBuildingBlocks
+              ? "Configure your application settings and component options."
+              : blueprint.provider === "crossplane"
               ? "Specify values for your Crossplane application stack."
               : "Specify values for your Terraform module deployment."}
           </p>
@@ -191,11 +200,6 @@ function BlueprintForm({
             </div>
           ))}
         </div>
-      )}
-
-      {/* Component selector cards for building blocks */}
-      {isBuildingBlocks && (
-        <ComponentSelector formValues={formValues} onChange={onChange} />
       )}
 
       <div className="form-grid">
