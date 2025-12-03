@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/instance: "xportalinfra-dev"
     armportal.chrishouse.io/blueprint: "xp-building-blocks"
     armportal.chrishouse.io/version: "2.0.0"
-    armportal.chrishouse.io/request-id: e8b594f1
+    armportal.chrishouse.io/request-id: "199"
     armportal.chrishouse.io/created-by: crh225
     istio-injection: enabled
 ---
@@ -24,7 +24,7 @@ metadata:
     app.kubernetes.io/instance: "xportalinfra-dev"
     armportal.chrishouse.io/blueprint: "xp-building-blocks"
     armportal.chrishouse.io/version: "2.0.0"
-    armportal.chrishouse.io/request-id: e8b594f1
+    armportal.chrishouse.io/request-id: "199"
     armportal.chrishouse.io/created-by: crh225
     armportal.chrishouse.io/component: redis
 spec:
@@ -43,7 +43,7 @@ metadata:
     app.kubernetes.io/instance: "xportalinfra-dev"
     armportal.chrishouse.io/blueprint: "xp-building-blocks"
     armportal.chrishouse.io/version: "2.0.0"
-    armportal.chrishouse.io/request-id: e8b594f1
+    armportal.chrishouse.io/request-id: "199"
     armportal.chrishouse.io/created-by: crh225
     armportal.chrishouse.io/component: rabbitmq
 spec:
@@ -63,7 +63,7 @@ metadata:
     app.kubernetes.io/instance: "xportalinfra-dev"
     armportal.chrishouse.io/blueprint: "xp-building-blocks"
     armportal.chrishouse.io/version: "2.0.0"
-    armportal.chrishouse.io/request-id: e8b594f1
+    armportal.chrishouse.io/request-id: "199"
     armportal.chrishouse.io/created-by: crh225
     armportal.chrishouse.io/component: ingress
 spec:
