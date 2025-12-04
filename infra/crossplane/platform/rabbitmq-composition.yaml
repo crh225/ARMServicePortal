@@ -114,6 +114,8 @@ spec:
                         labels:
                           app.kubernetes.io/component: rabbitmq
                           app.kubernetes.io/instance: {{ $name }}
+                        annotations:
+                          traffic.sidecar.istio.io/excludeInboundPorts: "15672"
                       spec:
                         containers:
                           - name: rabbitmq
