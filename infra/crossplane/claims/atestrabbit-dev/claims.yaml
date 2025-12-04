@@ -1,0 +1,35 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: "atestrabbit-dev"
+  labels:
+    app.kubernetes.io/managed-by: crossplane
+    app.kubernetes.io/name: atestrabbit
+    app.kubernetes.io/instance: "atestrabbit-dev"
+    armportal.chrishouse.io/blueprint: "xp-building-blocks"
+    armportal.chrishouse.io/version: "2.0.0"
+    armportal.chrishouse.io/request-id: "218"
+    armportal.chrishouse.io/created-by: crh225
+    istio-injection: enabled
+---
+apiVersion: platform.chrishouse.io/v1alpha1
+kind: RabbitMQClaim
+metadata:
+  name: "atestrabbit-mq"
+  namespace: "atestrabbit-dev"
+  labels:
+    app.kubernetes.io/managed-by: armportal
+    app.kubernetes.io/name: atestrabbit
+    app.kubernetes.io/instance: "atestrabbit-dev"
+    armportal.chrishouse.io/blueprint: "xp-building-blocks"
+    armportal.chrishouse.io/version: "2.0.0"
+    armportal.chrishouse.io/request-id: "218"
+    armportal.chrishouse.io/created-by: crh225
+    armportal.chrishouse.io/component: rabbitmq
+spec:
+  parameters:
+    version: "3.13"
+    memoryLimitMB: 512
+    exposeManagement: true
+    managementHost: testxr.pr.chrishouse.io
