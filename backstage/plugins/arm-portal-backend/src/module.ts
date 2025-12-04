@@ -1,4 +1,4 @@
-import { createBackendModule } from '@backstage/backend-plugin-api';
+import { createBackendModule, coreServices } from '@backstage/backend-plugin-api';
 import { scaffolderActionsExtensionPoint } from '@backstage/plugin-scaffolder-node/alpha';
 import { createArmPortalProvisionAction } from './actions/provision';
 
@@ -12,10 +12,17 @@ export const armPortalScaffolderModule = createBackendModule({
     reg.registerInit({
       deps: {
         scaffolder: scaffolderActionsExtensionPoint,
+        config: coreServices.rootConfig,
       },
-      async init({ scaffolder }) {
+      async init({ scaffolder, config }) {
+        // Get ARM Portal configuration
+        const armPortalConfig = {
+          baseUrl: config.getOptionalString('armPortal.baseUrl') || 'http://localhost:4000',
+          apiKey: config.getOptionalString('armPortal.apiKey') || '',
+        };
+
         // Register the ARM Portal provision action
-        scaffolder.addActions(createArmPortalProvisionAction());
+        scaffolder.addActions(createArmPortalProvisionAction(armPortalConfig));
       },
     });
   },

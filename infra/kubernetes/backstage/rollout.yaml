@@ -1,0 +1,156 @@
+# Argo Rollout for Backstage (Blue-Green Deployment)
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: backstage
+  namespace: backstage
+  labels:
+    app: backstage
+    environment: dev
+spec:
+  revisionHistoryLimit: 2
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backstage
+
+  template:
+    metadata:
+      labels:
+        app: backstage
+        azure.workload.identity/use: "true"
+    spec:
+      serviceAccountName: backstage-sa
+      containers:
+      - name: backstage
+        image: armportalacre4k9.azurecr.io/backstage:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 7007
+          name: http
+          protocol: TCP
+
+        envFrom:
+        - configMapRef:
+            name: backstage-config
+
+        env:
+        - name: BACKEND_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: backstage-secrets
+              key: BACKEND_SECRET
+        - name: GITHUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: backstage-secrets
+              key: GITHUB_TOKEN
+        - name: ARM_PORTAL_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: backstage-secrets
+              key: ARM_PORTAL_API_KEY
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: backstage-secrets
+              key: POSTGRES_PASSWORD
+        # POSTGRES_DB comes from configmap via envFrom
+
+        resources:
+          requests:
+            cpu: "200m"
+            memory: "512Mi"
+          limits:
+            cpu: "1000m"
+            memory: "1Gi"
+
+        livenessProbe:
+          httpGet:
+            path: /healthcheck
+            port: 7007
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+
+        readinessProbe:
+          httpGet:
+            path: /healthcheck
+            port: 7007
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+
+        startupProbe:
+          httpGet:
+            path: /healthcheck
+            port: 7007
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 30
+
+        # Mount CSI Secret Store volume
+        volumeMounts:
+        - name: secrets-store
+          mountPath: "/mnt/secrets-store"
+          readOnly: true
+
+      # CSI Secret Store volume
+      volumes:
+      - name: secrets-store
+        csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: "azure-backstage-secrets"
+
+  # Blue-Green deployment strategy
+  strategy:
+    blueGreen:
+      activeService: backstage-active
+      previewService: backstage-preview
+      autoPromotionEnabled: false
+      autoPromotionSeconds: 30
+      scaleDownDelaySeconds: 30
+
+---
+# Active Service - Production traffic
+apiVersion: v1
+kind: Service
+metadata:
+  name: backstage-active
+  namespace: backstage
+  labels:
+    app: backstage
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 7007
+    protocol: TCP
+    name: http
+  selector:
+    app: backstage
+
+---
+# Preview Service - Testing new versions
+apiVersion: v1
+kind: Service
+metadata:
+  name: backstage-preview
+  namespace: backstage
+  labels:
+    app: backstage
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 7007
+    protocol: TCP
+    name: http
+  selector:
+    app: backstage

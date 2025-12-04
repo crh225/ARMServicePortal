@@ -38,6 +38,10 @@ backend.add(
   import('@backstage/plugin-catalog-backend-module-scaffolder-entity-model'),
 );
 
+// GitHub Entity Provider - auto-discovers catalog-info.yaml files from the infra repo
+// This enables provisioned infrastructure to automatically appear in the Backstage catalog
+backend.add(import('@backstage/plugin-catalog-backend-module-github'));
+
 // See https://backstage.io/docs/features/software-catalog/configuration#subscribing-to-catalog-errors
 backend.add(import('@backstage/plugin-catalog-backend-module-logs'));
 

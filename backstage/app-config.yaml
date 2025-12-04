@@ -52,8 +52,10 @@ proxy:
         '^/api/proxy/arm-portal': ''
 
 # ARM Portal configuration
+# dev api key, put production key not in here :D
 armPortal:
   baseUrl: http://localhost:4000
+  apiKey: backstage-service-key-2024
 
 # Reference documentation http://backstage.io/docs/features/techdocs/configuration
 # Note: After experimenting with basic setup, use CI/CD to generate docs
@@ -121,6 +123,31 @@ catalog:
       target: ../../templates/xp-building-blocks/template.yaml
       rules:
         - allow: [Template]
+
+    # GitHub Entity Provider - Auto-discover provisioned infrastructure resources
+    # This discovers catalog-info.yaml files in the infra directories
+    - type: url
+      target: https://github.com/crh225/ARMServicePortal/blob/main/infra/environments/**/catalog/*.catalog-info.yaml
+      rules:
+        - allow: [Resource, System]
+    - type: url
+      target: https://github.com/crh225/ARMServicePortal/blob/main/infra/crossplane/claims/**/catalog-info.yaml
+      rules:
+        - allow: [Resource, System]
+
+  # Scheduled refresh for infrastructure resources (every 5 minutes)
+  providers:
+    github:
+      # Production-ready discovery for provisioned infrastructure
+      infrastructureResources:
+        organization: 'crh225'
+        catalogPath: '**/catalog-info.yaml'
+        filters:
+          repository: 'ARMServicePortal'
+          branch: 'main'
+        schedule:
+          frequency: { minutes: 5 }
+          timeout: { minutes: 3 }
 
 kubernetes:
   # see https://backstage.io/docs/features/kubernetes/configuration for kubernetes configuration options

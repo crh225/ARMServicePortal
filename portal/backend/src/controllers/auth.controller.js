@@ -161,10 +161,31 @@ export async function logout(req, res) {
 
 /**
  * Middleware to require authentication
+ * Supports both user sessions (Bearer token) and service accounts (X-API-Key)
  */
 export async function requireAuth(req, res, next) {
   const authHeader = req.headers.authorization;
+  const apiKey = req.headers['x-api-key'];
 
+  // Check for service account API key (for Backstage integration)
+  if (apiKey) {
+    const configuredApiKey = process.env.SERVICE_API_KEY;
+    if (configuredApiKey && apiKey === configuredApiKey) {
+      // Service account - use the configured GitHub App for operations
+      req.user = {
+        id: 'backstage-service',
+        login: 'backstage',
+        name: 'Backstage Service Account',
+        email: null,
+        avatar_url: null
+      };
+      req.isServiceAccount = true;
+      return next();
+    }
+    return res.status(401).json({ error: "Invalid API key" });
+  }
+
+  // Regular user session auth
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({ error: "Unauthorized - Please Login via Admin tab" });
   }

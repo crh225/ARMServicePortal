@@ -79,7 +79,10 @@ spec:
 
   output:
     links:
-      - title: View Provisioning Job
-        url: ${{ steps.provision.output.jobUrl }}
       - title: View Pull Request
         url: ${{ steps.provision.output.prUrl }}
+    text:
+      - title: Status
+        content: ${{ steps.provision.output.status }}
+      - title: Branch
+        content: ${{ steps.provision.output.branchName }}

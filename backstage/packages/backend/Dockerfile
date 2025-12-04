@@ -1,16 +1,13 @@
 # This dockerfile builds an image for the backend package.
-# It should be executed with the root of the repo as docker context.
+# It should be executed with the backstage directory as docker context.
 #
-# Before building this image, be sure to have run the following commands in the repo root:
+# Before building this image, be sure to have run the following commands in the backstage root:
 #
 # yarn install --immutable
 # yarn tsc
 # yarn build:backend
 #
 # Once the commands have been run, you can build the image using `yarn build-image`
-#
-# Alternatively, there is also a multi-stage Dockerfile documented here:
-# https://backstage.io/docs/deployment/docker#multi-stage-build
 
 FROM node:22-bookworm-slim
 
@@ -63,8 +60,18 @@ RUN --mount=type=cache,target=/home/node/.cache/yarn,sharing=locked,uid=1000,gid
 # This will include the examples, if you don't need these simply remove this line
 COPY --chown=node:node examples ./examples
 
+# Copy infrastructure templates for the Backstage catalog
+COPY --chown=node:node templates ./templates
+
 # Then copy the rest of the backend bundle, along with any other files we might want.
 COPY --chown=node:node packages/backend/dist/bundle.tar.gz app-config*.yaml ./
 RUN tar xzf bundle.tar.gz && rm bundle.tar.gz
+
+# Expose Backstage port
+EXPOSE 7007
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD node -e "require('http').get('http://localhost:7007/healthcheck', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"
 
 CMD ["node", "packages/backend", "--config", "app-config.yaml", "--config", "app-config.production.yaml"]
