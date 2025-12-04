@@ -1,9 +1,9 @@
 app:
-  title: Scaffolded Backstage App
+  title: ARM Service Portal
   baseUrl: http://localhost:3000
 
 organization:
-  name: Chris House IDP
+  name: Chris House Platform
 
 backend:
   # Used for enabling authentication, secret is shared by all backend plugins
@@ -44,12 +44,16 @@ integrations:
     #   token: ${GHE_TOKEN}
 
 proxy:
-  ### Example for how to add a proxy endpoint for the frontend.
-  ### A typical reason to do this is to handle HTTPS and CORS for internal services.
-  # endpoints:
-  #   '/test':
-  #     target: 'https://example.com'
-  #     changeOrigin: true
+  endpoints:
+    '/arm-portal':
+      target: http://localhost:4000
+      changeOrigin: true
+      pathRewrite:
+        '^/api/proxy/arm-portal': ''
+
+# ARM Portal configuration
+armPortal:
+  baseUrl: http://localhost:4000
 
 # Reference documentation http://backstage.io/docs/features/techdocs/configuration
 # Note: After experimenting with basic setup, use CI/CD to generate docs
@@ -76,17 +80,11 @@ catalog:
     entityFilename: catalog-info.yaml
     pullRequestBranchName: backstage-integration
   rules:
-    - allow: [Component, System, API, Resource, Location]
+    - allow: [Component, System, API, Resource, Location, Template]
   locations:
-    # Local example data, file locations are relative to the backend process, typically `packages/backend`
+    # Local example data
     - type: file
       target: ../../examples/entities.yaml
-
-    # Local example template
-    - type: file
-      target: ../../examples/template/template.yaml
-      rules:
-        - allow: [Template]
 
     # Local example organizational data
     - type: file
@@ -94,15 +92,35 @@ catalog:
       rules:
         - allow: [User, Group]
 
-    ## Uncomment these lines to add more example data
-    # - type: url
-    #   target: https://github.com/backstage/backstage/blob/master/packages/catalog-model/examples/all.yaml
-
-    ## Uncomment these lines to add an example org
-    # - type: url
-    #   target: https://github.com/backstage/backstage/blob/master/packages/catalog-model/examples/acme-corp.yaml
-    #   rules:
-    #     - allow: [User, Group]
+    # ARM Portal Infrastructure Templates
+    - type: file
+      target: ../../templates/azure-rg-basic/template.yaml
+      rules:
+        - allow: [Template]
+    - type: file
+      target: ../../templates/azure-storage-basic/template.yaml
+      rules:
+        - allow: [Template]
+    - type: file
+      target: ../../templates/azure-key-vault-basic/template.yaml
+      rules:
+        - allow: [Template]
+    - type: file
+      target: ../../templates/azure-postgres-flexible/template.yaml
+      rules:
+        - allow: [Template]
+    - type: file
+      target: ../../templates/azure-function/template.yaml
+      rules:
+        - allow: [Template]
+    - type: file
+      target: ../../templates/azure-container-instance/template.yaml
+      rules:
+        - allow: [Template]
+    - type: file
+      target: ../../templates/xp-building-blocks/template.yaml
+      rules:
+        - allow: [Template]
 
 kubernetes:
   # see https://backstage.io/docs/features/kubernetes/configuration for kubernetes configuration options

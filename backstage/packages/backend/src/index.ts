@@ -20,6 +20,9 @@ backend.add(
   import('@backstage/plugin-scaffolder-backend-module-notifications'),
 );
 
+// ARM Portal scaffolder module - custom actions for infrastructure provisioning
+backend.add(import('@internal/backstage-plugin-arm-portal-backend'));
+
 // techdocs plugin
 backend.add(import('@backstage/plugin-techdocs-backend'));
 

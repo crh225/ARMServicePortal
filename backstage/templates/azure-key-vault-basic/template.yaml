@@ -1,0 +1,82 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: azure-key-vault-basic
+  title: Azure Key Vault
+  description: Creates an Azure Key Vault using RBAC authorization in an existing Resource Group.
+  tags:
+    - azure
+    - infrastructure
+    - security
+    - keyvault
+spec:
+  owner: platform-team
+  type: infrastructure
+
+  parameters:
+    - title: Key Vault Configuration
+      required:
+        - project_name
+        - environment
+        - resource_group_name
+        - location
+      properties:
+        project_name:
+          title: Project Name
+          type: string
+          ui:autofocus: true
+        environment:
+          title: Environment
+          type: string
+          default: dev
+          enum: [dev, prod]
+        resource_group_name:
+          title: Resource Group Name
+          type: string
+        location:
+          title: Azure Region
+          type: string
+          default: eastus2
+          enum: [eastus, eastus2, westus, westus2, westus3, centralus, northcentralus, southcentralus, westcentralus]
+
+    - title: Key Vault Settings
+      properties:
+        sku_name:
+          title: SKU
+          type: string
+          default: standard
+          enum: [standard, premium]
+          enumNames:
+            - Standard
+            - Premium (HSM-backed keys)
+        soft_delete_retention_days:
+          title: Soft Delete Retention (days)
+          type: string
+          default: "7"
+        purge_protection_enabled:
+          title: Enable Purge Protection
+          type: boolean
+          default: true
+          description: Prevents permanent deletion of secrets during retention period
+
+  steps:
+    - id: provision
+      name: Provision Key Vault
+      action: arm-portal:provision
+      input:
+        blueprintId: azure-key-vault-basic
+        parameters:
+          project_name: ${{ parameters.project_name }}
+          environment: ${{ parameters.environment }}
+          resource_group_name: ${{ parameters.resource_group_name }}
+          location: ${{ parameters.location }}
+          sku_name: ${{ parameters.sku_name }}
+          soft_delete_retention_days: ${{ parameters.soft_delete_retention_days }}
+          purge_protection_enabled: ${{ parameters.purge_protection_enabled }}
+
+  output:
+    links:
+      - title: View Provisioning Job
+        url: ${{ steps.provision.output.jobUrl }}
+      - title: View Pull Request
+        url: ${{ steps.provision.output.prUrl }}
