@@ -31,13 +31,19 @@ function parseBuildingBlocksComponents(crossplaneYaml) {
   const backendNameMatch = crossplaneYaml.match(/kind:\s*BackendClaim[\s\S]*?name:\s*["']?([a-z0-9-]+)["']?/);
   const frontendNameMatch = crossplaneYaml.match(/kind:\s*FrontendClaim[\s\S]*?name:\s*["']?([a-z0-9-]+)["']?/);
 
+  // Extract RabbitMQ management configuration
+  const rabbitMgmtEnabled = /exposeManagement:\s*true/i.test(crossplaneYaml);
+  const rabbitMgmtHostMatch = crossplaneYaml.match(/managementHost:\s*["']?([a-z0-9.-]+)["']?/i);
+
   return {
     ...components,
     redisName: redisNameMatch ? redisNameMatch[1] : null,
     rabbitName: rabbitNameMatch ? rabbitNameMatch[1] : null,
     postgresName: postgresNameMatch ? postgresNameMatch[1] : null,
     backendName: backendNameMatch ? backendNameMatch[1] : null,
-    frontendName: frontendNameMatch ? frontendNameMatch[1] : null
+    frontendName: frontendNameMatch ? frontendNameMatch[1] : null,
+    rabbitMgmtEnabled,
+    rabbitMgmtHost: rabbitMgmtHostMatch ? rabbitMgmtHostMatch[1] : null
   };
 }
 
@@ -108,6 +114,25 @@ function generateKubectlCommands(blueprintId, name, environment, crossplaneYaml)
           bash: bashBase64(`${rabbitService}-credentials`, "password")
         })
       );
+
+      // Management UI commands when external ingress is enabled
+      if (components.rabbitMgmtEnabled && components.rabbitMgmtHost) {
+        const mgmtUrl = `https://${components.rabbitMgmtHost}`;
+        commands.push(
+          cmd("Open Management UI", "Open RabbitMQ management console in browser", {
+            powershell: `Start-Process "${mgmtUrl}"`,
+            bash: `open "${mgmtUrl}" || xdg-open "${mgmtUrl}"`
+          }),
+          cmd("Management UI URL", "Copy the management UI URL", {
+            powershell: `Write-Host "${mgmtUrl}"`,
+            bash: `echo "${mgmtUrl}"`
+          }),
+          cmd("Login to Management UI", "Get credentials and open management UI", {
+            powershell: `$user = ${psBase64(`${rabbitService}-credentials`, "username")}; $pass = ${psBase64(`${rabbitService}-credentials`, "password")}; Write-Host "Username: $user"; Write-Host "Password: $pass"; Write-Host "URL: ${mgmtUrl}"; Start-Process "${mgmtUrl}"`,
+            bash: `echo "Username: $(${bashBase64(`${rabbitService}-credentials`, "username")})"; echo "Password: $(${bashBase64(`${rabbitService}-credentials`, "password")})"; echo "URL: ${mgmtUrl}"`
+          })
+        );
+      }
     }
 
     // PostgreSQL commands
