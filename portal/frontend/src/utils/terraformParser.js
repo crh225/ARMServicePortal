@@ -148,7 +148,8 @@ function parseBuildingBlocksVariables(yamlContent) {
     rabbitmq: {
       version: 'rabbitmq_version',
       memoryLimitMB: 'rabbitmq_memoryLimitMB',
-      exposeManagement: 'rabbitmq_exposeManagement'
+      exposeManagement: 'rabbitmq_exposeManagement',
+      managementHost: 'rabbitmq_managementHost'
     },
     backend: {
       image: 'backend_image',
