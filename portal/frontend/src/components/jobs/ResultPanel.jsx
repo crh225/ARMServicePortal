@@ -49,7 +49,7 @@ function ResultPanel({ result, error }) {
 
           {result.filePath && (
             <div className="result-row">
-              <span className="result-label">Terraform file</span>
+              <span className="result-label">Resource file</span>
               <code className="result-code">{result.filePath}</code>
             </div>
           )}

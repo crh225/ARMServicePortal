@@ -1042,8 +1042,8 @@ export const BLUEPRINTS = [
   {
     id: "xp-building-blocks",
     version: "2.0.0",
-    displayName: "Kubernetes Application (Building Blocks)",
-    description: "Build your application by selecting components. Each component is optional - pick exactly what you need. Deploys to a dedicated namespace.",
+    displayName: "Application Stack",
+    description: "Deploy a complete application with optional database, cache, and messaging services. All components are managed and connected automatically.",
     category: "Compute",
     provider: "crossplane",
     // Building blocks mode - generates multiple claims
