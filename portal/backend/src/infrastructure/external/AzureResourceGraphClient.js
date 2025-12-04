@@ -12,8 +12,6 @@ const credential = new DefaultAzureCredential();
 const client = new ResourceGraphClient(credential);
 
 // Cache keys and TTL
-const RESOURCE_GROUPS_CACHE_KEY = "resourceGroups:all";
-const RESOURCE_GROUPS_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 const RESOURCES_CACHE_KEY = "resources:all";
 const RESOURCES_CACHE_TTL = 5 * 60 * 1000; // 5 minutes for resource list
 
@@ -125,51 +123,39 @@ export async function queryResourcesByRequestId(requestId) {
 
 /**
  * Query resource groups, optionally filtered by environment tag or name pattern
+ * Note: Caching disabled to ensure fresh data for dropdown selections
  * @param {string} environment - Environment to filter by (e.g., "dev", "qa", "prod")
  * @param {Array<string>} subscriptions - Optional list of subscription IDs
  * @returns {Promise<Array>} Array of resource group names
  */
 export async function queryResourceGroupsByEnvironment(environment = null, subscriptions = []) {
-  // Check Redis cache first
-  const cached = await cache.get(RESOURCE_GROUPS_CACHE_KEY);
   let allResourceGroups;
 
-  if (cached && cached.timestamp && (Date.now() - cached.timestamp) < RESOURCE_GROUPS_CACHE_TTL) {
-    // Use cached data
-    allResourceGroups = cached.data;
-    console.log(`[ResourceGroups] Cache HIT (age: ${Math.round((Date.now() - cached.timestamp) / 1000)}s)`);
-  } else {
-    // Query Azure Resource Graph
-    const query = "ResourceContainers | union Resources | where type =~ 'microsoft.resources/subscriptions/resourcegroups' | project name | order by name asc";
+  // Query Azure Resource Graph (no cache)
+  const query = "ResourceContainers | union Resources | where type =~ 'microsoft.resources/subscriptions/resourcegroups' | project name | order by name asc";
 
-    try {
-      const queryRequest = {
-        query,
-        options: {
-          resultFormat: "objectArray"
-        }
-      };
-
-      // Add subscriptions if provided, otherwise query ALL accessible subscriptions
-      if (subscriptions && subscriptions.length > 0) {
-        queryRequest.subscriptions = subscriptions;
+  try {
+    const queryRequest = {
+      query,
+      options: {
+        resultFormat: "objectArray"
       }
-      // Note: If subscriptions array is not provided, Azure Resource Graph will automatically
-      // query ALL subscriptions accessible by the managed identity
+    };
 
-      const result = await client.resources(queryRequest);
-      allResourceGroups = (result.data || []).map(rg => rg.name);
-
-      // Cache to Redis
-      await cache.set(RESOURCE_GROUPS_CACHE_KEY, {
-        data: allResourceGroups,
-        timestamp: Date.now()
-      }, RESOURCE_GROUPS_CACHE_TTL);
-      console.log(`[ResourceGroups] Cache MISS - Cached ${allResourceGroups.length} resource groups`);
-    } catch (error) {
-      console.error("Resource Groups query failed:", error);
-      throw new Error(`Failed to query resource groups: ${error.message}`);
+    // Add subscriptions if provided, otherwise query ALL accessible subscriptions
+    if (subscriptions && subscriptions.length > 0) {
+      queryRequest.subscriptions = subscriptions;
     }
+    // Note: If subscriptions array is not provided, Azure Resource Graph will automatically
+    // query ALL subscriptions accessible by the managed identity
+
+    console.log(`[ResourceGroups] Fetching fresh data (no cache)`);
+    const result = await client.resources(queryRequest);
+    allResourceGroups = (result.data || []).map(rg => rg.name);
+    console.log(`[ResourceGroups] Found ${allResourceGroups.length} resource groups`);
+  } catch (error) {
+    console.error("Resource Groups query failed:", error);
+    throw new Error(`Failed to query resource groups: ${error.message}`);
   }
 
   // Filter by environment on the backend if provided
