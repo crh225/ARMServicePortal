@@ -233,8 +233,11 @@ function escapeYamlString(str) {
  * @param {string} claimName - Name of the claim
  * @returns {string} - File path relative to repo root
  */
-export function getCrossplaneFilePath(environment, claimName) {
-  return `infra/crossplane/claims/${environment}/${claimName}.yaml`;
+export function getCrossplaneFilePath(_environment, claimName) {
+  // Each app gets its own folder for ArgoCD ApplicationSet discovery
+  // Folder name is the claim name (e.g., xportalinfra-dev)
+  // Note: environment is embedded in claimName (e.g., "xportalinfra-dev")
+  return `infra/crossplane/claims/${claimName}/claims.yaml`;
 }
 
 /**

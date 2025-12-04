@@ -24,8 +24,8 @@ spec:
 
   template:
     metadata:
-      # App name includes environment (e.g., crossplane-dev, crossplane-prod)
-      name: 'crossplane-{{ .path.basename }}'
+      # App name is the folder name (e.g., xportalinfra-dev, myapp-prod)
+      name: '{{ .path.basename }}'
       namespace: argocd
       labels:
         app.kubernetes.io/part-of: crossplane
