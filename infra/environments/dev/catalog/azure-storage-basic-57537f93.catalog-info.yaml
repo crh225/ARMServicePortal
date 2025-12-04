@@ -1,0 +1,41 @@
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: "azure-storage-basic-57537f93"
+  title: "Azure Storage Account (basic) - azure-storage-basic"
+  description: "Creates a general-purpose v2 Storage Account with standard settings in an existing Resource Group. provisioned via ARM Portal"
+  labels:
+    armportal.chrishouse.io/blueprint: "azure-storage-basic"
+    armportal.chrishouse.io/version: "1.0.0"
+    armportal.chrishouse.io/environment: dev
+    armportal.chrishouse.io/provider: terraform
+  annotations:
+    backstage.io/managed-by-location: "url:https://github.com/crh225/ARMServicePortal/blob/main/infra/environments/dev/azure-storage-basic-57537f93.tf"
+    backstage.io/managed-by-origin-location: "url:https://github.com/crh225/ARMServicePortal/blob/main/infra/environments/dev/azure-storage-basic-57537f93.tf"
+    armportal.chrishouse.io/request-id: "240"
+    armportal.chrishouse.io/created-by: backstage
+    armportal.chrishouse.io/provisioned-at: "2025-12-04T22:23:32.901Z"
+    armportal.chrishouse.io/terraform-module: "azure-storage-basic-57537f93"
+    azure.com/resource-id: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Storage/storageAccounts/testzz"
+  tags:
+    - azure
+    - terraform
+    - dev
+    - storage
+  links:
+    - url: "https://github.com/crh225/ARMServicePortal/blob/main/infra/environments/dev/azure-storage-basic-57537f93.tf"
+      title: Terraform Configuration
+      icon: code
+    - url: "https://github.com/crh225/ARMServicePortal/pull/240"
+      title: Provisioning PR
+      icon: github
+    - url: "https://portal.azure.com/#@/resource/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Storage/storageAccounts/testzz"
+      title: Azure Portal
+      icon: cloud
+spec:
+  type: "azure-storage-account"
+  lifecycle: development
+  owner: "user:backstage"
+  system: "testzz-dev"
+  dependsOn:
+    - "resource:test"
