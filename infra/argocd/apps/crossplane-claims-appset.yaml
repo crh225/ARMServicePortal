@@ -1,0 +1,60 @@
+# ArgoCD ApplicationSet for Crossplane Claims
+# Creates one Application per environment directory
+# Each claim file within defines a complete deployment (namespace + claims)
+# Example: dev/xportalinfra-dev.yaml -> ArgoCD app "xportalinfra-dev"
+
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: crossplane-claims
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: crossplane
+    app.kubernetes.io/component: claims
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    # Git directory generator - one app per environment folder
+    - git:
+        repoURL: https://github.com/crh225/ARMServicePortal.git
+        revision: main
+        directories:
+          - path: infra/crossplane/claims/*
+
+  template:
+    metadata:
+      # App name includes environment (e.g., crossplane-dev, crossplane-prod)
+      name: 'crossplane-{{ .path.basename }}'
+      namespace: argocd
+      labels:
+        app.kubernetes.io/part-of: crossplane
+        app.kubernetes.io/component: claims
+        app.kubernetes.io/instance: '{{ .path.basename }}'
+      annotations:
+        argocd.argoproj.io/manifest-generate-paths: '{{ .path.path }}'
+    spec:
+      project: default
+
+      source:
+        repoURL: https://github.com/crh225/ARMServicePortal.git
+        targetRevision: main
+        path: '{{ .path.path }}'
+
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: 'platform-claims'
+
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+          allowEmpty: true
+        syncOptions:
+          - CreateNamespace=true
+        retry:
+          limit: 5
+          backoff:
+            duration: 5s
+            factor: 2
+            maxDuration: 3m
