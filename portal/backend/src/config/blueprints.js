@@ -1181,6 +1181,17 @@ export const BLUEPRINTS = [
         showWhen: true,
         helpText: "Create ingress for RabbitMQ management UI"
       },
+      {
+        name: "rabbitmq_managementHost",
+        label: "Management UI Hostname",
+        type: "text",
+        required: false,
+        section: "Messaging",
+        dependsOn: "rabbitmq_exposeManagement",
+        showWhen: true,
+        placeholder: "rabbitmq-myapp.example.com",
+        helpText: "External hostname for RabbitMQ management UI (e.g., rabbitmq-myapp.chrishouse.io)"
+      },
       // === Backend Service ===
       {
         name: "backend_enabled",

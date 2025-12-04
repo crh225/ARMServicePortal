@@ -115,23 +115,41 @@ function generateKubectlCommands(blueprintId, name, environment, crossplaneYaml)
         })
       );
 
-      // Management UI commands when external ingress is enabled
-      if (components.rabbitMgmtEnabled && components.rabbitMgmtHost) {
-        const mgmtUrl = `https://${components.rabbitMgmtHost}`;
-        commands.push(
-          cmd("Open Management UI", "Open RabbitMQ management console in browser", {
-            powershell: `Start-Process "${mgmtUrl}"`,
-            bash: `open "${mgmtUrl}" || xdg-open "${mgmtUrl}"`
-          }),
-          cmd("Management UI URL", "Copy the management UI URL", {
-            powershell: `Write-Host "${mgmtUrl}"`,
-            bash: `echo "${mgmtUrl}"`
-          }),
-          cmd("Login to Management UI", "Get credentials and open management UI", {
-            powershell: `$user = ${psBase64(`${rabbitService}-credentials`, "username")}; $pass = ${psBase64(`${rabbitService}-credentials`, "password")}; Write-Host "Username: $user"; Write-Host "Password: $pass"; Write-Host "URL: ${mgmtUrl}"; Start-Process "${mgmtUrl}"`,
-            bash: `echo "Username: $(${bashBase64(`${rabbitService}-credentials`, "username")})"; echo "Password: $(${bashBase64(`${rabbitService}-credentials`, "password")})"; echo "URL: ${mgmtUrl}"`
-          })
-        );
+      // Management UI commands
+      if (components.rabbitMgmtEnabled) {
+        if (components.rabbitMgmtHost) {
+          // External ingress is configured
+          const mgmtUrl = `https://${components.rabbitMgmtHost}`;
+          commands.push(
+            cmd("Open Management UI", "Open RabbitMQ management console in browser", {
+              powershell: `Start-Process "${mgmtUrl}"`,
+              bash: `open "${mgmtUrl}" || xdg-open "${mgmtUrl}"`
+            }),
+            cmd("Management UI URL", "Copy the management UI URL", {
+              powershell: `Write-Host "${mgmtUrl}"`,
+              bash: `echo "${mgmtUrl}"`
+            }),
+            cmd("Login to Management UI", "Get credentials and open management UI", {
+              powershell: `$user = ${psBase64(`${rabbitService}-credentials`, "username")}; $pass = ${psBase64(`${rabbitService}-credentials`, "password")}; Write-Host "Username: $user"; Write-Host "Password: $pass"; Write-Host "URL: ${mgmtUrl}"; Start-Process "${mgmtUrl}"`,
+              bash: `echo "Username: $(${bashBase64(`${rabbitService}-credentials`, "username")})"; echo "Password: $(${bashBase64(`${rabbitService}-credentials`, "password")})"; echo "URL: ${mgmtUrl}"`
+            })
+          );
+        } else {
+          // Management enabled but no external ingress - use port-forward
+          commands.push(
+            cmd("Port-forward Management UI", "Forward local port 15672 to RabbitMQ management", {
+              bash: `kubectl port-forward svc/${rabbitService} 15672:15672 -n ${namespace}`
+            }),
+            cmd("Open Management UI (local)", "Open http://localhost:15672 after port-forward", {
+              powershell: `Start-Process "http://localhost:15672"`,
+              bash: `open "http://localhost:15672" || xdg-open "http://localhost:15672"`
+            }),
+            cmd("Login to Management UI", "Get credentials for management UI login", {
+              powershell: `$user = ${psBase64(`${rabbitService}-credentials`, "username")}; $pass = ${psBase64(`${rabbitService}-credentials`, "password")}; Write-Host "Username: $user"; Write-Host "Password: $pass"; Write-Host "URL: http://localhost:15672"`,
+              bash: `echo "Username: $(${bashBase64(`${rabbitService}-credentials`, "username")})"; echo "Password: $(${bashBase64(`${rabbitService}-credentials`, "password")})"; echo "URL: http://localhost:15672"`
+            })
+          );
+        }
       }
     }
 
