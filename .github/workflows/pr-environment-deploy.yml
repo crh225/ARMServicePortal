@@ -37,6 +37,12 @@ jobs:
         run: |
           az acr login --name armportalacre4k9
 
+      - name: Prepare build context
+        run: |
+          # Copy blueprint modules into backend build context
+          cp -r infra/modules portal/backend/modules
+          echo "✅ Copied blueprint modules to build context"
+
       - name: Build and push PR image
         uses: docker/build-push-action@v5
         with:

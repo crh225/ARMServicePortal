@@ -1,0 +1,62 @@
+# Ingress for Backstage with TLS via cert-manager
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: backstage
+  namespace: backstage
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+    # Enable WebSocket support for Backstage signals/notifications
+    nginx.ingress.kubernetes.io/websocket-services: "backstage-active"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - backstage.chrishouse.io
+    secretName: backstage-tls
+  rules:
+  - host: backstage.chrishouse.io
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: backstage-active
+            port:
+              number: 80
+
+---
+# Preview Ingress for testing new deployments before promotion
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: backstage-preview
+  namespace: backstage
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+    nginx.ingress.kubernetes.io/websocket-services: "backstage-preview"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - backstage-preview.chrishouse.io
+    secretName: backstage-preview-tls
+  rules:
+  - host: backstage-preview.chrishouse.io
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: backstage-preview
+            port:
+              number: 80

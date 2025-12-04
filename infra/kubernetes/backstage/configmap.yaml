@@ -1,0 +1,22 @@
+# ConfigMap for Backstage environment variables
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backstage-config
+  namespace: backstage
+  labels:
+    app: backstage
+data:
+  # Node.js settings
+  NODE_ENV: "production"
+  NODE_OPTIONS: "--no-node-snapshot"
+
+  # PostgreSQL connection (Terraform provisioned)
+  POSTGRES_HOST: "backstage-dev-psql-f9rg.postgres.database.azure.com"
+  POSTGRES_PORT: "5432"
+  POSTGRES_USER: "admin_f9rg"
+  POSTGRES_DB: "backstagedb"
+
+  # Kubernetes cluster for Backstage Kubernetes plugin
+  K8S_CLUSTER_URL: "https://aks-armportal-crossplane-dev.hcp.eastus.azmk8s.io:443"

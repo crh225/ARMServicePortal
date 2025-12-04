@@ -1,0 +1,4 @@
+site_name: Azure Resource Group
+docs_dir: docs
+plugins:
+  - techdocs-core

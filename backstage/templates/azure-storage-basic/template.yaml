@@ -1,0 +1,79 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: azure-storage-basic
+  title: Azure Storage Account
+  description: Creates a general-purpose v2 Storage Account with standard settings in an existing Resource Group.
+  tags:
+    - azure
+    - infrastructure
+    - storage
+spec:
+  owner: platform-team
+  type: infrastructure
+
+  parameters:
+    - title: Storage Account Configuration
+      required:
+        - project_name
+        - environment
+        - resource_group_name
+        - location
+      properties:
+        project_name:
+          title: Project Name
+          type: string
+          ui:autofocus: true
+        environment:
+          title: Environment
+          type: string
+          default: dev
+          enum: [dev, qa, staging, prod]
+        resource_group_name:
+          title: Resource Group Name
+          type: string
+          description: Existing resource group to deploy into
+        location:
+          title: Azure Region
+          type: string
+          default: eastus2
+          enum: [eastus, eastus2, westus, westus2, westus3, centralus, northcentralus, southcentralus, westcentralus]
+
+    - title: Storage Settings
+      properties:
+        account_tier:
+          title: Account Tier
+          type: string
+          default: Standard
+          enum: [Standard, Premium]
+        replication_type:
+          title: Replication Type
+          type: string
+          default: LRS
+          enum: [LRS, GRS, RAGRS, ZRS]
+          enumNames:
+            - Locally Redundant (LRS)
+            - Geo-Redundant (GRS)
+            - Read-Access Geo-Redundant (RAGRS)
+            - Zone Redundant (ZRS)
+
+  steps:
+    - id: provision
+      name: Provision Storage Account
+      action: arm-portal:provision
+      input:
+        blueprintId: azure-storage-basic
+        parameters:
+          project_name: ${{ parameters.project_name }}
+          environment: ${{ parameters.environment }}
+          resource_group_name: ${{ parameters.resource_group_name }}
+          location: ${{ parameters.location }}
+          account_tier: ${{ parameters.account_tier }}
+          replication_type: ${{ parameters.replication_type }}
+
+  output:
+    links:
+      - title: View Provisioning Job
+        url: ${{ steps.provision.output.jobUrl }}
+      - title: View Pull Request
+        url: ${{ steps.provision.output.prUrl }}

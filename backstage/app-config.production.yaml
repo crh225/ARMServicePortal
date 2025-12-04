@@ -1,0 +1,160 @@
+# Production configuration for Backstage
+# This file overrides app-config.yaml settings for production deployment
+# All secrets should be provided via environment variables
+
+app:
+  title: ARM Service Portal
+  baseUrl: https://backstage.chrishouse.io
+
+organization:
+  name: Chris House Platform
+
+backend:
+  baseUrl: https://backstage.chrishouse.io
+  listen:
+    port: 7007
+    host: 0.0.0.0
+
+  # Backend authentication secret - REQUIRED for production
+  auth:
+    keys:
+      - secret: ${BACKEND_SECRET}
+
+  csp:
+    connect-src: ["'self'", 'https:', 'wss:']
+    img-src: ["'self'", 'data:', 'https:']
+    frame-src: ["'self'", 'https://github.com']
+
+  cors:
+    origin: https://backstage.chrishouse.io
+    methods: [GET, HEAD, PATCH, POST, PUT, DELETE]
+    credentials: true
+
+  # PostgreSQL database for production
+  database:
+    client: pg
+    connection:
+      host: ${POSTGRES_HOST}
+      port: ${POSTGRES_PORT}
+      user: ${POSTGRES_USER}
+      password: ${POSTGRES_PASSWORD}
+      database: ${POSTGRES_DB}
+      ssl:
+        require: true
+        rejectUnauthorized: false
+
+  # Cache configuration for production
+  cache:
+    store: memory
+
+integrations:
+  github:
+    - host: github.com
+      token: ${GITHUB_TOKEN}
+
+# ARM Portal API configuration for production
+proxy:
+  endpoints:
+    '/arm-portal':
+      target: https://portal-api.chrishouse.io
+      changeOrigin: true
+      pathRewrite:
+        '^/api/proxy/arm-portal': ''
+
+armPortal:
+  baseUrl: https://portal-api.chrishouse.io
+  apiKey: ${ARM_PORTAL_API_KEY}
+
+techdocs:
+  builder: 'local'
+  generator:
+    runIn: 'local'
+  publisher:
+    type: 'local'
+
+auth:
+  environment: production
+  providers:
+    # Guest auth for now - replace with GitHub OAuth for production security
+    guest: {}
+    # TODO: Enable GitHub OAuth when ready
+    # github:
+    #   development:
+    #     clientId: ${GITHUB_OAUTH_CLIENT_ID}
+    #     clientSecret: ${GITHUB_OAUTH_CLIENT_SECRET}
+
+catalog:
+  import:
+    entityFilename: catalog-info.yaml
+    pullRequestBranchName: backstage-integration
+  rules:
+    - allow: [Component, System, API, Resource, Location, Template]
+  locations:
+    # ARM Portal Infrastructure Templates - bundled in container
+    - type: file
+      target: ./templates/azure-rg-basic/template.yaml
+      rules:
+        - allow: [Template]
+    - type: file
+      target: ./templates/azure-storage-basic/template.yaml
+      rules:
+        - allow: [Template]
+    - type: file
+      target: ./templates/azure-key-vault-basic/template.yaml
+      rules:
+        - allow: [Template]
+    - type: file
+      target: ./templates/azure-postgres-flexible/template.yaml
+      rules:
+        - allow: [Template]
+    - type: file
+      target: ./templates/azure-function/template.yaml
+      rules:
+        - allow: [Template]
+    - type: file
+      target: ./templates/azure-container-instance/template.yaml
+      rules:
+        - allow: [Template]
+    - type: file
+      target: ./templates/xp-building-blocks/template.yaml
+      rules:
+        - allow: [Template]
+
+    # GitHub Entity Provider - Auto-discover provisioned infrastructure resources
+    - type: url
+      target: https://github.com/crh225/ARMServicePortal/blob/main/infra/environments/**/catalog/*.catalog-info.yaml
+      rules:
+        - allow: [Resource, System]
+    - type: url
+      target: https://github.com/crh225/ARMServicePortal/blob/main/infra/crossplane/claims/**/catalog-info.yaml
+      rules:
+        - allow: [Resource, System]
+
+  # Scheduled refresh for infrastructure resources
+  providers:
+    github:
+      infrastructureResources:
+        organization: 'crh225'
+        catalogPath: '**/catalog-info.yaml'
+        filters:
+          repository: 'ARMServicePortal'
+          branch: 'main'
+        schedule:
+          frequency: { minutes: 5 }
+          timeout: { minutes: 3 }
+
+# Kubernetes plugin - disabled until service account token is configured
+# kubernetes:
+#   serviceLocatorMethod:
+#     type: 'multiTenant'
+#   clusterLocatorMethods:
+#     - type: 'config'
+#       clusters:
+#         - url: ${K8S_CLUSTER_URL}
+#           name: aks-armportal-crossplane-dev
+#           authProvider: 'serviceAccount'
+#           serviceAccountToken: ${K8S_SERVICE_ACCOUNT_TOKEN}
+#           skipTLSVerify: true
+
+permission:
+  enabled: true

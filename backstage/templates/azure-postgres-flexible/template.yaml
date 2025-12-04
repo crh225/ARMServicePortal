@@ -1,0 +1,127 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: azure-postgres-flexible
+  title: PostgreSQL Flexible Server
+  description: Managed PostgreSQL database with automatic backups, high availability options, and enterprise security.
+  tags:
+    - azure
+    - infrastructure
+    - database
+    - postgresql
+spec:
+  owner: platform-team
+  type: infrastructure
+
+  parameters:
+    - title: Database Configuration
+      required:
+        - project_name
+        - environment
+        - resource_group_name
+        - location
+      properties:
+        project_name:
+          title: Project Name
+          type: string
+          ui:autofocus: true
+        environment:
+          title: Environment
+          type: string
+          default: dev
+          enum: [dev, qa, staging, prod]
+        resource_group_name:
+          title: Resource Group Name
+          type: string
+        location:
+          title: Azure Region
+          type: string
+          default: eastus2
+          enum: [eastus, eastus2, westus, westus2, westus3, centralus, northcentralus, southcentralus, westcentralus]
+
+    - title: PostgreSQL Settings
+      properties:
+        postgres_version:
+          title: PostgreSQL Version
+          type: string
+          default: "16"
+          enum: ["11", "12", "13", "14", "15", "16"]
+        sku_name:
+          title: SKU / Compute Size
+          type: string
+          default: B_Standard_B1ms
+          enum:
+            - B_Standard_B1ms
+            - B_Standard_B2s
+            - GP_Standard_D2s_v3
+            - GP_Standard_D4s_v3
+            - MO_Standard_E2s_v3
+          enumNames:
+            - Burstable B1ms (1 vCore, 2GB) - $15/mo
+            - Burstable B2s (2 vCores, 4GB) - $30/mo
+            - General Purpose D2s (2 vCores, 8GB) - $100/mo
+            - General Purpose D4s (4 vCores, 16GB) - $200/mo
+            - Memory Optimized E2s (2 vCores, 16GB) - $150/mo
+        storage_mb:
+          title: Storage Size
+          type: string
+          default: "32768"
+          enum: ["32768", "65536", "131072", "262144", "524288", "1048576"]
+          enumNames:
+            - 32 GB
+            - 64 GB
+            - 128 GB
+            - 256 GB
+            - 512 GB
+            - 1 TB
+        database_name:
+          title: Database Name
+          type: string
+          default: appdb
+
+    - title: High Availability & Backup
+      properties:
+        high_availability_mode:
+          title: High Availability
+          type: string
+          default: disabled
+          enum: [disabled, SameZone, ZoneRedundant]
+          enumNames:
+            - Disabled (Single Server)
+            - Same Zone (HA within zone)
+            - Zone Redundant (HA across zones)
+        backup_retention_days:
+          title: Backup Retention (days)
+          type: string
+          default: "7"
+          enum: ["7", "14", "21", "28", "35"]
+        geo_redundant_backup:
+          title: Geo-Redundant Backup
+          type: boolean
+          default: false
+
+  steps:
+    - id: provision
+      name: Provision PostgreSQL Server
+      action: arm-portal:provision
+      input:
+        blueprintId: azure-postgres-flexible
+        parameters:
+          project_name: ${{ parameters.project_name }}
+          environment: ${{ parameters.environment }}
+          resource_group_name: ${{ parameters.resource_group_name }}
+          location: ${{ parameters.location }}
+          postgres_version: ${{ parameters.postgres_version }}
+          sku_name: ${{ parameters.sku_name }}
+          storage_mb: ${{ parameters.storage_mb }}
+          database_name: ${{ parameters.database_name }}
+          high_availability_mode: ${{ parameters.high_availability_mode }}
+          backup_retention_days: ${{ parameters.backup_retention_days }}
+          geo_redundant_backup: ${{ parameters.geo_redundant_backup }}
+
+  output:
+    links:
+      - title: View Provisioning Job
+        url: ${{ steps.provision.output.jobUrl }}
+      - title: View Pull Request
+        url: ${{ steps.provision.output.prUrl }}

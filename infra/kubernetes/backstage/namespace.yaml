@@ -1,0 +1,9 @@
+# Namespace for Backstage deployment
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: backstage
+  labels:
+    app: backstage
+    environment: dev

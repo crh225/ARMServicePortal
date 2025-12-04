@@ -1,0 +1,117 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: azure-function
+  title: Azure Function App
+  description: Serverless compute for event-driven applications. Automatically scales based on demand with pay-per-execution pricing.
+  tags:
+    - azure
+    - infrastructure
+    - serverless
+    - compute
+spec:
+  owner: platform-team
+  type: infrastructure
+
+  parameters:
+    - title: Function App Configuration
+      required:
+        - project_name
+        - environment
+        - resource_group_name
+        - location
+      properties:
+        project_name:
+          title: Project Name
+          type: string
+          ui:autofocus: true
+        environment:
+          title: Environment
+          type: string
+          default: dev
+          enum: [dev, qa, staging, prod]
+        resource_group_name:
+          title: Resource Group Name
+          type: string
+        location:
+          title: Azure Region
+          type: string
+          default: eastus2
+          enum: [eastus, eastus2, westus, westus2, westus3, centralus, northcentralus, southcentralus, westcentralus]
+
+    - title: Runtime Settings
+      required:
+        - runtime_stack
+        - runtime_version
+      properties:
+        runtime_stack:
+          title: Runtime Stack
+          type: string
+          default: node
+          enum: [node, dotnet, python, java, powershell]
+          enumNames:
+            - Node.js
+            - .NET
+            - Python
+            - Java
+            - PowerShell
+        runtime_version:
+          title: Runtime Version
+          type: string
+          default: "20"
+          enum: ["18", "20", "22"]
+          enumNames:
+            - Node 18 LTS
+            - Node 20 LTS
+            - Node 22
+        os_type:
+          title: Operating System
+          type: string
+          default: Linux
+          enum: [Linux, Windows]
+
+    - title: Pricing & Performance
+      properties:
+        sku_name:
+          title: Pricing Plan
+          type: string
+          default: Y1
+          enum: [Y1, EP1, EP2, EP3, B1, S1, P1v2, P1v3]
+          enumNames:
+            - Consumption (Y1) - Pay per execution
+            - Elastic Premium EP1 - ~$173/mo
+            - Elastic Premium EP2 - ~$345/mo
+            - Elastic Premium EP3 - ~$690/mo
+            - Basic B1 - ~$13/mo
+            - Standard S1 - ~$73/mo
+            - Premium v2 P1 - ~$81/mo
+            - Premium v3 P1 - ~$100/mo
+        always_on:
+          title: Always On
+          type: boolean
+          default: false
+          description: Keep the function app always running (not available on Consumption plan)
+
+  steps:
+    - id: provision
+      name: Provision Function App
+      action: arm-portal:provision
+      input:
+        blueprintId: azure-function
+        parameters:
+          project_name: ${{ parameters.project_name }}
+          environment: ${{ parameters.environment }}
+          resource_group_name: ${{ parameters.resource_group_name }}
+          location: ${{ parameters.location }}
+          runtime_stack: ${{ parameters.runtime_stack }}
+          runtime_version: ${{ parameters.runtime_version }}
+          os_type: ${{ parameters.os_type }}
+          sku_name: ${{ parameters.sku_name }}
+          always_on: ${{ parameters.always_on }}
+
+  output:
+    links:
+      - title: View Provisioning Job
+        url: ${{ steps.provision.output.jobUrl }}
+      - title: View Pull Request
+        url: ${{ steps.provision.output.prUrl }}

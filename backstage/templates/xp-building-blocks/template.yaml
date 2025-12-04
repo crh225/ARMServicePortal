@@ -1,0 +1,187 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: xp-building-blocks
+  title: Application Stack (Kubernetes)
+  description: Deploy a complete application with optional database, cache, and messaging services on Kubernetes via Crossplane.
+  tags:
+    - kubernetes
+    - crossplane
+    - infrastructure
+    - full-stack
+spec:
+  owner: platform-team
+  type: infrastructure
+
+  parameters:
+    - title: Application Settings
+      required:
+        - appName
+        - environment
+      properties:
+        appName:
+          title: Application Name
+          type: string
+          pattern: '^[a-z][a-z0-9-]{1,20}$'
+          description: Lowercase letters, numbers, hyphens. 2-21 chars.
+          ui:autofocus: true
+        environment:
+          title: Environment
+          type: string
+          default: dev
+          enum: [dev, staging, prod]
+
+    - title: Database
+      properties:
+        postgres_enabled:
+          title: Enable PostgreSQL Database
+          type: boolean
+          default: false
+        postgres_version:
+          title: PostgreSQL Version
+          type: string
+          default: "16"
+          enum: ["14", "15", "16"]
+          ui:options:
+            hidden: ${{ parameters.postgres_enabled !== true }}
+        postgres_storageGB:
+          title: Storage (GB)
+          type: string
+          default: "10"
+          enum: ["10", "20", "50", "100"]
+          ui:options:
+            hidden: ${{ parameters.postgres_enabled !== true }}
+
+    - title: Cache
+      properties:
+        redis_enabled:
+          title: Enable Redis Cache
+          type: boolean
+          default: false
+        redis_version:
+          title: Redis Version
+          type: string
+          default: "7.2"
+          enum: ["7.2", "7.0", "6.2"]
+          ui:options:
+            hidden: ${{ parameters.redis_enabled !== true }}
+        redis_memoryLimitMB:
+          title: Memory Limit (MB)
+          type: string
+          default: "256"
+          enum: ["128", "256", "512", "1024"]
+          ui:options:
+            hidden: ${{ parameters.redis_enabled !== true }}
+
+    - title: Messaging
+      properties:
+        rabbitmq_enabled:
+          title: Enable RabbitMQ
+          type: boolean
+          default: false
+        rabbitmq_version:
+          title: RabbitMQ Version
+          type: string
+          default: "3.13"
+          enum: ["3.13", "3.12"]
+          ui:options:
+            hidden: ${{ parameters.rabbitmq_enabled !== true }}
+        rabbitmq_memoryLimitMB:
+          title: Memory Limit (MB)
+          type: string
+          default: "512"
+          enum: ["256", "512", "1024", "2048"]
+          ui:options:
+            hidden: ${{ parameters.rabbitmq_enabled !== true }}
+
+    - title: Backend Service
+      properties:
+        backend_enabled:
+          title: Enable Backend Service
+          type: boolean
+          default: false
+        backend_image:
+          title: Container Image
+          type: string
+          ui:options:
+            hidden: ${{ parameters.backend_enabled !== true }}
+        backend_replicas:
+          title: Replicas
+          type: string
+          default: "2"
+          enum: ["1", "2", "3", "4", "5"]
+          ui:options:
+            hidden: ${{ parameters.backend_enabled !== true }}
+        backend_port:
+          title: Container Port
+          type: string
+          default: "4000"
+          ui:options:
+            hidden: ${{ parameters.backend_enabled !== true }}
+
+    - title: Frontend Service
+      properties:
+        frontend_enabled:
+          title: Enable Frontend Service
+          type: boolean
+          default: false
+        frontend_image:
+          title: Container Image
+          type: string
+          ui:options:
+            hidden: ${{ parameters.frontend_enabled !== true }}
+        frontend_replicas:
+          title: Replicas
+          type: string
+          default: "2"
+          enum: ["1", "2", "3", "4", "5"]
+          ui:options:
+            hidden: ${{ parameters.frontend_enabled !== true }}
+
+    - title: Ingress
+      properties:
+        ingress_enabled:
+          title: Enable Ingress (External Access)
+          type: boolean
+          default: false
+        ingress_host:
+          title: Hostname
+          type: string
+          description: e.g., myapp.example.com
+          ui:options:
+            hidden: ${{ parameters.ingress_enabled !== true }}
+
+  steps:
+    - id: provision
+      name: Provision Application Stack
+      action: arm-portal:provision
+      input:
+        blueprintId: xp-building-blocks
+        parameters:
+          appName: ${{ parameters.appName }}
+          environment: ${{ parameters.environment }}
+          postgres_enabled: ${{ parameters.postgres_enabled }}
+          postgres_version: ${{ parameters.postgres_version }}
+          postgres_storageGB: ${{ parameters.postgres_storageGB }}
+          redis_enabled: ${{ parameters.redis_enabled }}
+          redis_version: ${{ parameters.redis_version }}
+          redis_memoryLimitMB: ${{ parameters.redis_memoryLimitMB }}
+          rabbitmq_enabled: ${{ parameters.rabbitmq_enabled }}
+          rabbitmq_version: ${{ parameters.rabbitmq_version }}
+          rabbitmq_memoryLimitMB: ${{ parameters.rabbitmq_memoryLimitMB }}
+          backend_enabled: ${{ parameters.backend_enabled }}
+          backend_image: ${{ parameters.backend_image }}
+          backend_replicas: ${{ parameters.backend_replicas }}
+          backend_port: ${{ parameters.backend_port }}
+          frontend_enabled: ${{ parameters.frontend_enabled }}
+          frontend_image: ${{ parameters.frontend_image }}
+          frontend_replicas: ${{ parameters.frontend_replicas }}
+          ingress_enabled: ${{ parameters.ingress_enabled }}
+          ingress_host: ${{ parameters.ingress_host }}
+
+  output:
+    links:
+      - title: View Provisioning Job
+        url: ${{ steps.provision.output.jobUrl }}
+      - title: View Pull Request
+        url: ${{ steps.provision.output.prUrl }}

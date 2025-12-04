@@ -11,6 +11,12 @@ import {
   renderBuildingBlocksClaims,
   getCrossplaneFilePath
 } from "../../utils/CrossplaneRenderer.js";
+import {
+  renderTerraformCatalogInfo,
+  renderCrossplaneCatalogInfo,
+  renderBuildingBlocksCatalogInfo,
+  getCatalogInfoPath
+} from "../../utils/CatalogInfoRenderer.js";
 import { ensureBranch, commitFile, getFileContent } from "./utils/gitOperations.js";
 import { createPR, generatePRBody } from "./utils/prOperations.js";
 import { DEFAULT_BASE_BRANCH } from "../../../config/githubConstants.js";
@@ -277,7 +283,7 @@ async function createCrossplaneRequest({
     createdBy
   });
 
-  await octokit.repos.createOrUpdateFileContents({
+  const { data: updatedFile } = await octokit.repos.createOrUpdateFileContents({
     owner: infraOwner,
     repo: infraRepo,
     path: filePath,
@@ -287,12 +293,35 @@ async function createCrossplaneRequest({
     sha: file.content.sha
   });
 
+  // Generate and commit Backstage catalog-info.yaml for resource discovery
+  const catalogInfoContent = renderCrossplaneCatalogInfo({
+    claimName,
+    blueprint,
+    variables,
+    environment,
+    createdBy,
+    prNumber: pr.number,
+    infraFilePath: filePath
+  });
+
+  const catalogInfoPath = getCatalogInfoPath(filePath);
+
+  await octokit.repos.createOrUpdateFileContents({
+    owner: infraOwner,
+    repo: infraRepo,
+    path: catalogInfoPath,
+    message: `chore: add Backstage catalog entry for ${claimName}`,
+    content: Buffer.from(catalogInfoContent, "utf8").toString("base64"),
+    branch: branchName
+  });
+
   return {
     branchName,
     filePath,
+    catalogInfoPath,
     pullRequestUrl: pr.html_url,
     pullRequestNumber: pr.number,
-    commitSha: file.commit.sha,
+    commitSha: updatedFile.commit.sha,
     provider: "crossplane",
     claimName
   };
@@ -404,7 +433,7 @@ async function createBuildingBlocksRequest({
     createdBy
   });
 
-  await octokit.repos.createOrUpdateFileContents({
+  const { data: updatedFile } = await octokit.repos.createOrUpdateFileContents({
     owner: infraOwner,
     repo: infraRepo,
     path: filePath,
@@ -414,12 +443,37 @@ async function createBuildingBlocksRequest({
     sha: file.content.sha
   });
 
+  // Generate and commit Backstage catalog-info.yaml for resource discovery
+  // Building blocks create a System with multiple Resource entities
+  const catalogInfoContent = renderBuildingBlocksCatalogInfo({
+    appName,
+    blueprint,
+    variables,
+    environment: appEnvironment,
+    createdBy,
+    prNumber: pr.number,
+    infraFilePath: filePath,
+    enabledComponents
+  });
+
+  const catalogInfoPath = getCatalogInfoPath(filePath);
+
+  await octokit.repos.createOrUpdateFileContents({
+    owner: infraOwner,
+    repo: infraRepo,
+    path: catalogInfoPath,
+    message: `chore: add Backstage catalog entries for ${appName} building blocks`,
+    content: Buffer.from(catalogInfoContent, "utf8").toString("base64"),
+    branch: branchName
+  });
+
   return {
     branchName,
     filePath,
+    catalogInfoPath,
     pullRequestUrl: pr.html_url,
     pullRequestNumber: pr.number,
-    commitSha: file.commit.sha,
+    commitSha: updatedFile.commit.sha,
     provider: "crossplane",
     claimName,
     components: enabledComponents
@@ -521,7 +575,7 @@ async function createTerraformRequest({
     });
   }
 
-  await octokit.repos.createOrUpdateFileContents({
+  const { data: updatedFile } = await octokit.repos.createOrUpdateFileContents({
     owner: infraOwner,
     repo: infraRepo,
     path: filePath,
@@ -531,12 +585,35 @@ async function createTerraformRequest({
     sha: file.content.sha
   });
 
+  // Generate and commit Backstage catalog-info.yaml for resource discovery
+  const catalogInfoContent = renderTerraformCatalogInfo({
+    moduleName,
+    blueprint,
+    variables,
+    environment,
+    createdBy,
+    prNumber: pr.number,
+    infraFilePath: filePath
+  });
+
+  const catalogInfoPath = getCatalogInfoPath(filePath);
+
+  await octokit.repos.createOrUpdateFileContents({
+    owner: infraOwner,
+    repo: infraRepo,
+    path: catalogInfoPath,
+    message: `chore: add Backstage catalog entry for ${moduleName}`,
+    content: Buffer.from(catalogInfoContent, "utf8").toString("base64"),
+    branch: branchName
+  });
+
   return {
     branchName,
     filePath,
+    catalogInfoPath,
     pullRequestUrl: pr.html_url,
     pullRequestNumber: pr.number,
-    commitSha: file.commit.sha,
+    commitSha: updatedFile.commit.sha,
     provider: "terraform"
   };
 }

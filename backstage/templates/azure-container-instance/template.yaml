@@ -1,0 +1,105 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: azure-container-instance
+  title: Azure Container Instance
+  description: Deploy a containerized application using Azure Container Instances. Perfect for simple apps, batch jobs, and development environments.
+  tags:
+    - azure
+    - infrastructure
+    - container
+    - compute
+spec:
+  owner: platform-team
+  type: infrastructure
+
+  parameters:
+    - title: Container Configuration
+      required:
+        - project_name
+        - environment
+        - resource_group_name
+        - location
+        - container_image
+      properties:
+        project_name:
+          title: Project Name
+          type: string
+          ui:autofocus: true
+        environment:
+          title: Environment
+          type: string
+          default: dev
+          enum: [dev, qa, staging, prod]
+        resource_group_name:
+          title: Resource Group Name
+          type: string
+        location:
+          title: Azure Region
+          type: string
+          default: eastus2
+          enum: [eastus, eastus2, westus, westus2, westus3, centralus, northcentralus, southcentralus, westcentralus]
+        container_image:
+          title: Container Image
+          type: string
+          default: mcr.microsoft.com/azuredocs/aci-helloworld:latest
+          description: Full container image path (e.g., myregistry.azurecr.io/myapp:v1)
+
+    - title: Resource Allocation
+      properties:
+        cpu_cores:
+          title: CPU Cores
+          type: string
+          default: "1"
+          enum: ["0.5", "1", "2", "4"]
+        memory_gb:
+          title: Memory (GB)
+          type: string
+          default: "1"
+          enum: ["0.5", "1", "2", "4", "8"]
+        port:
+          title: Container Port
+          type: string
+          default: "80"
+
+    - title: Networking & Behavior
+      properties:
+        ip_address_type:
+          title: IP Address Type
+          type: string
+          default: Public
+          enum: [Public, Private, None]
+          enumNames:
+            - Public (accessible from internet)
+            - Private (VNet only)
+            - None (no IP)
+        restart_policy:
+          title: Restart Policy
+          type: string
+          default: Always
+          enum: [Always, OnFailure, Never]
+
+  steps:
+    - id: provision
+      name: Provision Container Instance
+      action: arm-portal:provision
+      input:
+        blueprintId: azure-aci
+        parameters:
+          project_name: ${{ parameters.project_name }}
+          environment: ${{ parameters.environment }}
+          resource_group_name: ${{ parameters.resource_group_name }}
+          location: ${{ parameters.location }}
+          container_image: ${{ parameters.container_image }}
+          cpu_cores: ${{ parameters.cpu_cores }}
+          memory_gb: ${{ parameters.memory_gb }}
+          port: ${{ parameters.port }}
+          ip_address_type: ${{ parameters.ip_address_type }}
+          restart_policy: ${{ parameters.restart_policy }}
+
+  output:
+    links:
+      - title: View Provisioning Job
+        url: ${{ steps.provision.output.jobUrl }}
+      - title: View Pull Request
+        url: ${{ steps.provision.output.prUrl }}

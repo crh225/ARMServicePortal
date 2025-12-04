@@ -1,0 +1,177 @@
+name: "Backstage: Build & Deploy (AKS)"
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - "backstage/**"
+      - "templates/**"
+  workflow_dispatch:
+    inputs:
+      trigger_rollout:
+        description: 'Trigger AKS deployment rollout restart'
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  id-token: write
+  contents: write
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    env:
+      NODE_VERSION: 22.x
+      ACR_NAME: armportalacre4k9
+      IMAGE_NAME: backstage
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Enable Corepack for Yarn
+        run: corepack enable
+
+      - name: Install dependencies
+        working-directory: backstage
+        run: yarn install --immutable
+
+      - name: Type check
+        working-directory: backstage
+        run: yarn tsc
+
+      - name: Build backend
+        working-directory: backstage
+        run: yarn build:backend
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          auth-type: SERVICE_PRINCIPAL
+          allow-no-subscriptions: false
+          environment: azurecloud
+          audience: api://AzureADTokenExchange
+
+      - name: Get ACR login server
+        id: acr
+        run: |
+          LOGIN_SERVER=$(az acr show -n $ACR_NAME --query loginServer -o tsv)
+          echo "login_server=$LOGIN_SERVER" >> $GITHUB_OUTPUT
+
+      - name: Build and push Docker image
+        run: |
+          LOGIN_SERVER="${{ steps.acr.outputs.login_server }}"
+          IMAGE_SHA="$LOGIN_SERVER/$IMAGE_NAME:${{ github.sha }}"
+          IMAGE_LATEST="$LOGIN_SERVER/$IMAGE_NAME:latest"
+
+          echo "Building Docker image..."
+          echo "Image with SHA: $IMAGE_SHA"
+          echo "Image latest: $IMAGE_LATEST"
+
+          # Build the Docker image from backstage directory
+          docker build \
+            -t "$IMAGE_SHA" \
+            -t "$IMAGE_LATEST" \
+            -f backstage/packages/backend/Dockerfile \
+            backstage
+
+          # Login to ACR
+          az acr login --name $ACR_NAME
+
+          # Push both tags
+          echo "Pushing image with SHA tag..."
+          docker push "$IMAGE_SHA"
+
+          echo "Pushing image with latest tag..."
+          docker push "$IMAGE_LATEST"
+
+          echo "✅ Successfully pushed images to ACR"
+          echo "  - $IMAGE_SHA"
+          echo "  - $IMAGE_LATEST"
+
+      - name: Update deployment manifest with new image tag (GitOps)
+        if: ${{ github.event.inputs.trigger_rollout == 'true' || github.event_name == 'push' }}
+        run: |
+          LOGIN_SERVER="${{ steps.acr.outputs.login_server }}"
+          NEW_IMAGE="$LOGIN_SERVER/$IMAGE_NAME:${{ github.sha }}"
+
+          echo "Updating deployment manifest with new image: $NEW_IMAGE"
+
+          # Update the image tag in the rollout manifest
+          sed -i "s|image: armportalacre4k9.azurecr.io/backstage:.*|image: $NEW_IMAGE|g" \
+            infra/kubernetes/backstage/rollout.yaml
+
+          # Configure Git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Commit and push the change
+          git add infra/kubernetes/backstage/rollout.yaml
+          git commit -m "chore: update backstage image to ${{ github.sha }}
+
+          Automated deployment update from GitHub Actions
+          Image: $NEW_IMAGE
+
+          Triggered by: ${{ github.event_name }}
+          Workflow: ${{ github.workflow }}
+          Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          git push
+
+          echo "✅ Deployment manifest updated in Git"
+          echo "🔄 Triggering Argo CD refresh..."
+
+      - name: Set up kubectl for AKS
+        if: ${{ github.event.inputs.trigger_rollout == 'true' || github.event_name == 'push' }}
+        run: |
+          az aks get-credentials \
+            --resource-group rg-armportal-aks-crossplane-dev \
+            --name aks-armportal-crossplane-dev \
+            --overwrite-existing
+
+      - name: Trigger Argo CD refresh
+        if: ${{ github.event.inputs.trigger_rollout == 'true' || github.event_name == 'push' }}
+        run: |
+          # Tell Argo CD to check Git immediately instead of waiting for the 3-minute poll
+          kubectl patch app backstage -n argocd \
+            --type json \
+            -p='[{"op": "replace", "path": "/operation", "value": {"sync": {"revision": "main"}}}]' \
+            || echo "Note: Argo CD will sync within 3 minutes if patch failed"
+
+          echo ""
+          echo "✅ Argo CD refresh triggered"
+          echo ""
+          echo "🔄 Argo Rollouts will deploy to PREVIEW first (blue-green)"
+          echo ""
+          echo "Monitor deployment:"
+          echo "  kubectl argo rollouts get rollout backstage -n backstage --watch"
+          echo ""
+          echo "Test preview at:"
+          echo "  https://backstage-preview.chrishouse.io"
+          echo ""
+          echo "Promote to production (after testing):"
+          echo "  kubectl argo rollouts promote backstage -n backstage"
+          echo ""
+          echo "View in Argo CD:"
+          echo "  https://argocd.chrishouse.io"
+
+      - name: GitOps deployment skipped
+        if: ${{ github.event.inputs.trigger_rollout == 'false' }}
+        run: |
+          echo "GitOps deployment update was disabled."
+          echo ""
+          echo "Image built and pushed:"
+          echo "  ${{ steps.acr.outputs.login_server }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+          echo ""
+          echo "To deploy manually, update the deployment manifest:"
+          echo "  image: ${{ steps.acr.outputs.login_server }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
