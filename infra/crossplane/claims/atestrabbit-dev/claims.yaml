@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/instance: "atestrabbit-dev"
     armportal.chrishouse.io/blueprint: "xp-building-blocks"
     armportal.chrishouse.io/version: "2.0.0"
-    armportal.chrishouse.io/request-id: "217"
+    armportal.chrishouse.io/request-id: "218"
     armportal.chrishouse.io/created-by: crh225
     istio-injection: enabled
 ---
@@ -24,7 +24,7 @@ metadata:
     app.kubernetes.io/instance: "atestrabbit-dev"
     armportal.chrishouse.io/blueprint: "xp-building-blocks"
     armportal.chrishouse.io/version: "2.0.0"
-    armportal.chrishouse.io/request-id: "217"
+    armportal.chrishouse.io/request-id: "218"
     armportal.chrishouse.io/created-by: crh225
     armportal.chrishouse.io/component: rabbitmq
 spec:
@@ -32,3 +32,4 @@ spec:
     version: "3.13"
     memoryLimitMB: 512
     exposeManagement: true
+    managementHost: testxr.pr.chrishouse.io
