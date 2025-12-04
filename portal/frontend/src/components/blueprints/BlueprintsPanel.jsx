@@ -150,7 +150,7 @@ function BlueprintsPanel({ updateResourceData, onClearUpdate }) {
                 </button>
 
                 <p className="hint-text">
-                  The portal never applies Terraform directly. It just opens a
+                  The portal never applies infrastructure changes directly. It just opens a
                   reviewed PR in your repo.
                 </p>
               </>
