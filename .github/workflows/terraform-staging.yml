@@ -210,9 +210,16 @@ jobs:
                 body += 'No backup created (first apply or state does not exist yet)\n\n';
               }
 
-              // Add TF outputs if we have them
+              // Add TF outputs if we have them (filter out sensitive values)
               if (outputs) {
-                const pretty = JSON.stringify(outputs, null, 2);
+                const sanitizedOutputs = {};
+                for (const [key, value] of Object.entries(outputs)) {
+                  if (typeof value === 'object' && value !== null && value.sensitive === true) {
+                    continue;
+                  }
+                  sanitizedOutputs[key] = value;
+                }
+                const pretty = JSON.stringify(sanitizedOutputs, null, 2);
                 body += '### Terraform Outputs\n\n';
                 body += '```json\n';
                 body += pretty + '\n';
