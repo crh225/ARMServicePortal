@@ -7,6 +7,7 @@ metadata:
   name: webhook-relay
   labels:
     app: webhook-relay
+    istio-injection: enabled
 
 ---
 apiVersion: apps/v1
