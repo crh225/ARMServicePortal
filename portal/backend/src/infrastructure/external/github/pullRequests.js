@@ -7,8 +7,6 @@ import { DEFAULT_BASE_BRANCH } from "../../../config/githubConstants.js";
 import { cache } from "../../utils/Cache.js";
 import { Result } from "../../../domain/common/Result.js";
 
-// Cache TTL: 10 minutes for PR data
-const PR_CACHE_TTL = 10 * 60 * 1000;
 // Cache TTL: 10 minutes for job count (used by home stats)
 const JOB_COUNT_CACHE_TTL = 10 * 60 * 1000;
 
@@ -299,20 +297,12 @@ export async function listGitHubRequests({ environment } = {}) {
 }
 
 /**
- * Get detailed information for a specific pull request (with caching)
+ * Get detailed information for a specific pull request
+ * Note: Caching disabled to ensure Terraform outputs are always fresh
  * @returns {Promise<Result>} Result containing PR data or error
  */
 export async function getGitHubRequestByNumber(prNumber) {
-  const cacheKey = `pr:details:${prNumber}`;
-
-  // Check cache first
-  const cached = await cache.get(cacheKey);
-  if (cached) {
-    console.log(`[Cache HIT] Using cached PR data for #${prNumber}`);
-    return Result.success(cached);
-  }
-
-  console.log(`[Cache MISS] Fetching fresh PR data for #${prNumber}`);
+  console.log(`[PR Details] Fetching PR #${prNumber} (no cache)`);
 
   const configResult = validateGitHubConfig();
   if (configResult.isFailure) {
@@ -363,10 +353,6 @@ export async function getGitHubRequestByNumber(prNumber) {
   );
 
   const prData = buildDetailedJob(pr, metadata, terraformFilePath, moduleName, outputs, resourceExists);
-
-  // Cache the result for 1 hour
-  await cache.set(cacheKey, prData, PR_CACHE_TTL);
-  console.log(`[Cache STORED] Cached PR #${prNumber} (TTL: 1hr)`);
 
   return Result.success(prData);
 }
