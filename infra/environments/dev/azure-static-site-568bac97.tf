@@ -12,7 +12,7 @@ module "azure-static-site-568bac97" {
   tags = {
     armportal-environment = "dev"
     armportal-blueprint   = "azure-static-site"
-    armportal-request-id  = "azure-static-site-568bac97"
+    armportal-request-id  = "216"
   }
 }
 
