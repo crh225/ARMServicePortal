@@ -1,0 +1,33 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: "tredis-dev"
+  labels:
+    app.kubernetes.io/managed-by: crossplane
+    app.kubernetes.io/name: tredis
+    app.kubernetes.io/instance: "tredis-dev"
+    armportal.chrishouse.io/blueprint: "xp-building-blocks"
+    armportal.chrishouse.io/version: "2.0.0"
+    armportal.chrishouse.io/request-id: "229"
+    armportal.chrishouse.io/created-by: crh225
+    istio-injection: enabled
+---
+apiVersion: platform.chrishouse.io/v1alpha1
+kind: RedisClaim
+metadata:
+  name: "tredis-cache"
+  namespace: "tredis-dev"
+  labels:
+    app.kubernetes.io/managed-by: armportal
+    app.kubernetes.io/name: tredis
+    app.kubernetes.io/instance: "tredis-dev"
+    armportal.chrishouse.io/blueprint: "xp-building-blocks"
+    armportal.chrishouse.io/version: "2.0.0"
+    armportal.chrishouse.io/request-id: "229"
+    armportal.chrishouse.io/created-by: crh225
+    armportal.chrishouse.io/component: redis
+spec:
+  parameters:
+    version: "7.2"
+    memoryLimitMB: 256
