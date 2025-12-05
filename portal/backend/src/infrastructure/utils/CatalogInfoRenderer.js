@@ -36,6 +36,19 @@ const ENVIRONMENT_TO_LIFECYCLE = {
 };
 
 /**
+ * Map blueprint IDs to TechDocs URLs for centralized documentation
+ */
+const BLUEPRINT_DOCS_URLS = {
+  'azure-rg-basic': 'url:https://github.com/crh225/ARMServicePortal/tree/main/docs',
+  'azure-storage-basic': 'url:https://github.com/crh225/ARMServicePortal/tree/main/docs',
+  'azure-key-vault-basic': 'url:https://github.com/crh225/ARMServicePortal/tree/main/docs',
+  'azure-postgres-flexible': 'url:https://github.com/crh225/ARMServicePortal/tree/main/docs',
+  'azure-function': 'url:https://github.com/crh225/ARMServicePortal/tree/main/docs',
+  'azure-container-instance': 'url:https://github.com/crh225/ARMServicePortal/tree/main/docs',
+  'xp-building-blocks': 'url:https://github.com/crh225/ARMServicePortal/tree/main/docs'
+};
+
+/**
  * Generate a valid Backstage entity name from module/claim name
  * Must be lowercase, alphanumeric with dashes, max 63 chars
  *
@@ -126,6 +139,7 @@ export function renderTerraformCatalogInfo({
       annotations: {
         'backstage.io/managed-by-location': `url:https://github.com/crh225/ARMServicePortal/blob/main/${infraFilePath}`,
         'backstage.io/managed-by-origin-location': `url:https://github.com/crh225/ARMServicePortal/blob/main/${infraFilePath}`,
+        'backstage.io/techdocs-ref': BLUEPRINT_DOCS_URLS[blueprint.id] || 'url:https://github.com/crh225/ARMServicePortal/tree/main/docs',
         'armportal.chrishouse.io/request-id': String(prNumber),
         'armportal.chrishouse.io/created-by': createdBy || 'unknown',
         'armportal.chrishouse.io/provisioned-at': new Date().toISOString(),
@@ -220,6 +234,7 @@ export function renderCrossplaneCatalogInfo({
       annotations: {
         'backstage.io/managed-by-location': `url:https://github.com/crh225/ARMServicePortal/blob/main/${infraFilePath}`,
         'backstage.io/managed-by-origin-location': `url:https://github.com/crh225/ARMServicePortal/blob/main/${infraFilePath}`,
+        'backstage.io/techdocs-ref': BLUEPRINT_DOCS_URLS[blueprint.id] || 'url:https://github.com/crh225/ARMServicePortal/tree/main/docs',
         'armportal.chrishouse.io/request-id': String(prNumber),
         'armportal.chrishouse.io/created-by': createdBy || 'unknown',
         'armportal.chrishouse.io/provisioned-at': new Date().toISOString(),

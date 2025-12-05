@@ -1,0 +1,15 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: arm-portal-docs
+  title: ARM Portal Documentation
+  description: Documentation for ARM Portal blueprints and infrastructure templates
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+  tags:
+    - documentation
+    - arm-portal
+spec:
+  type: documentation
+  lifecycle: production
+  owner: platform-team

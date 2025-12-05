@@ -122,6 +122,12 @@ catalog:
       rules:
         - allow: [Template]
 
+    # ARM Portal Documentation
+    - type: url
+      target: https://github.com/crh225/ARMServicePortal/blob/main/docs/catalog-info.yaml
+      rules:
+        - allow: [Component]
+
     # GitHub Entity Provider - Auto-discover provisioned infrastructure resources
     - type: url
       target: https://github.com/crh225/ARMServicePortal/blob/main/infra/environments/**/catalog/*.catalog-info.yaml

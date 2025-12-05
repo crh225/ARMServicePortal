@@ -1,0 +1,12 @@
+site_name: ARM Portal Documentation
+nav:
+  - Home: index.md
+  - Blueprints:
+      - Overview: blueprints/index.md
+      - Azure Resource Group: blueprints/azure-rg-basic.md
+      - Azure Storage Account: blueprints/azure-storage-basic.md
+      - Azure Key Vault: blueprints/azure-key-vault-basic.md
+      - Azure PostgreSQL: blueprints/azure-postgres-flexible.md
+
+plugins:
+  - techdocs-core
