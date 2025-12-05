@@ -76,8 +76,10 @@ auth:
   environment: production
   providers:
     # Guest auth for now - replace with GitHub OAuth for production security
-    guest: {}
+    guest:
+      dangerouslyAllowOutsideDevelopment: true
     # TODO: Enable GitHub OAuth when ready
+    # the thing is, you will need a PR to approve the resources so im not worried about it right now
     # github:
     #   development:
     #     clientId: ${GITHUB_OAUTH_CLIENT_ID}
