@@ -1,8 +1,8 @@
 {
   "name": "@internal/backstage-plugin-arm-portal-backend",
   "version": "0.1.0",
-  "main": "dist/index.cjs.js",
-  "types": "dist/index.d.ts",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
   "license": "Apache-2.0",
   "private": true,
   "backstage": {
