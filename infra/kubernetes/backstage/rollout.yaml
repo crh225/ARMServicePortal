@@ -24,7 +24,7 @@ spec:
       serviceAccountName: backstage-sa
       containers:
       - name: backstage
-        image: armportalacre4k9.azurecr.io/backstage:latest
+        image: armportalacre4k9.azurecr.io/backstage:438a81e8b829d8fdb8c64a01f0bbd89b5e35c4b1
         imagePullPolicy: Always
         ports:
         - containerPort: 7007
