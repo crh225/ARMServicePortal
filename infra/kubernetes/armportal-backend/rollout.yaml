@@ -67,6 +67,11 @@ spec:
             secretKeyRef:
               name: backend-secrets
               key: AZURE_APP_CONFIG_ENDPOINT
+        - name: SERVICE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: backend-secrets
+              key: SERVICE_API_KEY
 
         resources:
           requests:
