@@ -90,6 +90,18 @@ resource "azurerm_container_app" "backend" {
     value = var.elasticsearch_api_key
   }
 
+  # GitHub OAuth client secret
+  secret {
+    name  = "gh-oauth-client-secret"
+    value = var.github_oauth_client_secret
+  }
+
+  # Service API key for Backstage
+  secret {
+    name  = "service-api-key"
+    value = var.service_api_key
+  }
+
   registry {
     server               = azurerm_container_registry.backend_acr.login_server
     username             = azurerm_container_registry.backend_acr.admin_username
@@ -109,12 +121,12 @@ resource "azurerm_container_app" "backend" {
   }
 
   template {
-    min_replicas = 0  # Scaled to zero to save costs - set to 1 to re-enable
-    max_replicas = 2
+    min_replicas = 1
+    max_replicas = 3
 
     container {
       name   = "armportal-api-backend"
-      image  = "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest"
+      image  = "${azurerm_container_registry.backend_acr.login_server}/armportal-backend:latest"
       cpu    = 0.5
       memory = "1Gi"
 
@@ -186,10 +198,60 @@ resource "azurerm_container_app" "backend" {
         value = "https://portal.chrishouse.io"
       }
 
+      # App URL
+      env {
+        name  = "APP_URL"
+        value = "https://portal-api.chrishouse.io"
+      }
+
+      # GitHub OAuth
+      env {
+        name  = "GH_OAUTH_CLIENT_ID"
+        value = var.github_oauth_client_id
+      }
+
+      env {
+        name        = "GH_OAUTH_CLIENT_SECRET"
+        secret_name = "gh-oauth-client-secret"
+      }
+
+      # Azure App Configuration
+      env {
+        name  = "AZURE_APP_CONFIG_ENDPOINT"
+        value = var.azure_app_config_endpoint
+      }
+
+      # Service API key for Backstage integration
+      env {
+        name        = "SERVICE_API_KEY"
+        secret_name = "service-api-key"
+      }
+
+      # Elasticsearch
+      env {
+        name        = "ELASTICSEARCH_API_KEY"
+        secret_name = "elasticsearch-api-key"
+      }
+
+      env {
+        name  = "ELASTICSEARCH_URL"
+        value = "https://es-test-az-elk-managed-dev-5a6e80.es.eastus2.azure.elastic-cloud.com:9243"
+      }
+
+      # Azure subscription for cost management
+      env {
+        name  = "AZURE_SUBSCRIPTION_ID"
+        value = "f989de0f-8697-4a05-8c34-b82c941767c0"
+      }
+
     }
   }
 }
 
 output "backend_api_url" {
   value = "https://${azurerm_container_app.backend.ingress[0].fqdn}"
+}
+
+output "backend_acr_login_server" {
+  value = azurerm_container_registry.backend_acr.login_server
 }

@@ -35,3 +35,25 @@ variable "elasticsearch_api_key" {
   description = "Elasticsearch API key for log shipping"
   sensitive   = true
 }
+
+variable "github_oauth_client_id" {
+  type        = string
+  description = "GitHub OAuth App client ID for user authentication"
+}
+
+variable "github_oauth_client_secret" {
+  type        = string
+  description = "GitHub OAuth App client secret"
+  sensitive   = true
+}
+
+variable "azure_app_config_endpoint" {
+  type        = string
+  description = "Azure App Configuration endpoint URL"
+}
+
+variable "service_api_key" {
+  type        = string
+  description = "API key for service-to-service authentication (Backstage)"
+  sensitive   = true
+}

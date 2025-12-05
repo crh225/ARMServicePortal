@@ -38,6 +38,10 @@ spec:
             name: backend-config
 
         env:
+        - name: REDIS_URL
+          value: "redis://xportalinfra-cache.xportalinfra-dev.svc.cluster.local:6379"
+        - name: RABBITMQ_URL
+          value: "amqp://admin:rabbitmq-xportalinfra-mq-secret@xportalinfra-mq.xportalinfra-dev.svc.cluster.local:5672"
         - name: GH_APP_PRIVATE_KEY_BASE64
           valueFrom:
             secretKeyRef:

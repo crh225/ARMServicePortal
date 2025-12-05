@@ -1,168 +1,36 @@
-name: "Backend: Build & Deploy (AKS)"
+name: "[DEPRECATED] Backend: Build & Deploy (AKS)"
+
+# DEPRECATED: This workflow deployed to AKS via ArgoCD GitOps.
+# We've migrated back to Container Apps - see backend-dev.yml instead.
+# Keeping this file for reference but disabling triggers.
 
 on:
-  push:
-    branches: [ main ]
-    paths:
-      - "portal/backend/**"
   workflow_dispatch:
     inputs:
-      trigger_rollout:
-        description: 'Trigger AKS deployment rollout restart'
-        required: false
-        type: boolean
-        default: true
+      confirm:
+        description: 'Type DEPLOY to confirm (this deploys to legacy AKS)'
+        required: true
 
 permissions:
   id-token: write
-  contents: write  # Need write to update deployment manifest
+  contents: write
 
 jobs:
   build-and-push:
+    if: ${{ github.event.inputs.confirm == 'DEPLOY' }}
     runs-on: ubuntu-latest
 
     env:
       NODE_VERSION: 20.x
       ACR_NAME: armportalacre4k9
       IMAGE_NAME: armportal-backend
-      # Note: AKS cluster details below - not used in GitOps workflow
-      # AKS_CLUSTER_NAME: aks-armportal-crossplane-dev
-      # AKS_RESOURCE_GROUP: rg-armportal-aks-crossplane-dev
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Azure login (OIDC)
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          auth-type: SERVICE_PRINCIPAL
-          allow-no-subscriptions: false
-          environment: azurecloud
-          audience: api://AzureADTokenExchange
-
-      - name: Get ACR login server
-        id: acr
+      - name: Deprecated Notice
         run: |
-          LOGIN_SERVER=$(az acr show -n $ACR_NAME --query loginServer -o tsv)
-          echo "login_server=$LOGIN_SERVER" >> $GITHUB_OUTPUT
-
-      - name: Prepare build context
-        run: |
-          # Copy blueprint modules into backend build context
-          cp -r infra/modules portal/backend/modules
-          echo "✅ Copied blueprint modules to build context"
-
-      - name: Build and push Docker image
-        run: |
-          LOGIN_SERVER="${{ steps.acr.outputs.login_server }}"
-          IMAGE_SHA="$LOGIN_SERVER/$IMAGE_NAME:${{ github.sha }}"
-          IMAGE_LATEST="$LOGIN_SERVER/$IMAGE_NAME:latest"
-
-          echo "Building Docker image..."
-          echo "Image with SHA: $IMAGE_SHA"
-          echo "Image latest: $IMAGE_LATEST"
-
-          # Build the Docker image
-          docker build \
-            -t "$IMAGE_SHA" \
-            -t "$IMAGE_LATEST" \
-            -f portal/backend/Dockerfile \
-            portal/backend
-
-          # Login to ACR
-          az acr login --name $ACR_NAME
-
-          # Push both tags
-          echo "Pushing image with SHA tag..."
-          docker push "$IMAGE_SHA"
-
-          echo "Pushing image with latest tag..."
-          docker push "$IMAGE_LATEST"
-
-          echo "✅ Successfully pushed images to ACR"
-          echo "  - $IMAGE_SHA"
-          echo "  - $IMAGE_LATEST"
-
-      - name: Update deployment manifest with new image tag (GitOps)
-        if: ${{ github.event.inputs.trigger_rollout == 'true' || github.event_name == 'push' }}
-        run: |
-          LOGIN_SERVER="${{ steps.acr.outputs.login_server }}"
-          NEW_IMAGE="$LOGIN_SERVER/$IMAGE_NAME:${{ github.sha }}"
-
-          echo "Updating deployment manifest with new image: $NEW_IMAGE"
-
-          # Update the image tag in the rollout manifest
-          sed -i "s|image: armportalacre4k9.azurecr.io/armportal-backend:.*|image: $NEW_IMAGE|g" \
-            infra/kubernetes/armportal-backend/rollout.yaml
-
-          # Configure Git
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          # Commit and push the change
-          git add infra/kubernetes/armportal-backend/rollout.yaml
-          git commit -m "chore: update backend image to ${{ github.sha }}
-
-          Automated deployment update from GitHub Actions
-          Image: $NEW_IMAGE
-
-          Triggered by: ${{ github.event_name }}
-          Workflow: ${{ github.workflow }}
-          Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-
-          git push
-
-          echo "✅ Deployment manifest updated in Git"
-          echo "🔄 Triggering Argo CD refresh..."
-
-      - name: Set up kubectl for AKS
-        if: ${{ github.event.inputs.trigger_rollout == 'true' || github.event_name == 'push' }}
-        run: |
-          az aks get-credentials \
-            --resource-group rg-armportal-aks-crossplane-dev \
-            --name aks-armportal-crossplane-dev \
-            --overwrite-existing
-
-      - name: Trigger Argo CD refresh
-        if: ${{ github.event.inputs.trigger_rollout == 'true' || github.event_name == 'push' }}
-        run: |
-          # Tell Argo CD to check Git immediately instead of waiting for the 3-minute poll
-          kubectl patch app armportal-backend -n argocd \
-            --type json \
-            -p='[{"op": "replace", "path": "/operation", "value": {"sync": {"revision": "main"}}}]' \
-            || echo "Note: Argo CD will sync within 3 minutes if patch failed"
-
+          echo "WARNING: This workflow is deprecated!"
+          echo "The backend has been migrated to Azure Container Apps."
+          echo "Please use the 'Backend: Build & Deploy (Container Apps)' workflow instead."
           echo ""
-          echo "✅ Argo CD refresh triggered"
-          echo ""
-          echo "🔄 Argo Rollouts will deploy to PREVIEW first (blue-green)"
-          echo ""
-          echo "Monitor deployment:"
-          echo "  kubectl argo rollouts get rollout armportal-backend -n armportal-backend --watch"
-          echo ""
-          echo "Test preview at:"
-          echo "  https://portal-api-preview.chrishouse.io/api/health"
-          echo ""
-          echo "Promote to production (after testing):"
-          echo "  kubectl argo rollouts promote armportal-backend -n armportal-backend"
-          echo ""
-          echo "View in Argo CD:"
-          echo "  https://argocd.chrishouse.io"
-
-      - name: GitOps deployment skipped
-        if: ${{ github.event.inputs.trigger_rollout == 'false' }}
-        run: |
-          echo "GitOps deployment update was disabled."
-          echo ""
-          echo "Image built and pushed:"
-          echo "  ${{ steps.acr.outputs.login_server }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
-          echo ""
-          echo "To deploy manually, update the deployment manifest:"
-          echo "  image: ${{ steps.acr.outputs.login_server }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
-          echo ""
-          echo "Or use kubectl (not recommended with GitOps):"
-          echo "  kubectl set image deployment/armportal-backend armportal-api=${{ steps.acr.outputs.login_server }}/${{ env.IMAGE_NAME }}:${{ github.sha }} -n armportal-backend"
+          echo "This workflow will not deploy to AKS."
+          exit 1

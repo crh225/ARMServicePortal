@@ -1,14 +1,11 @@
-name: "[DEPRECATED] Backend: Container Apps"
+name: "Backend: Build & Deploy (Container Apps)"
 
-# DEPRECATED: This workflow deployed to Azure Container Apps.
-# We've migrated to AKS - see backend-docker-aks.yml instead.
-# Keeping this file for reference but disabling triggers.
 on:
+  push:
+    branches: [ main ]
+    paths:
+      - "portal/backend/**"
   workflow_dispatch:
-    inputs:
-      confirm:
-        description: 'Type DEPLOY to confirm (this deploys to legacy Container Apps)'
-        required: true
 
 permissions:
   id-token: write
@@ -20,7 +17,7 @@ jobs:
 
     env:
       NODE_VERSION: 20.x
-      ACR_NAME: armportalacre4k9          # ACR from Terraform
+      ACR_NAME: armportalacre4k9
       RESOURCE_GROUP: rg-testpr3-dev-rg
       CONTAINER_APP_NAME: armportal-api-dev
 
@@ -52,71 +49,73 @@ jobs:
           LOGIN_SERVER=$(az acr show -n $ACR_NAME --query loginServer -o tsv)
           echo "login_server=$LOGIN_SERVER" >> $GITHUB_OUTPUT
 
+      - name: Prepare build context
+        run: |
+          # Copy blueprint modules into backend build context
+          cp -r infra/modules portal/backend/modules
+          echo "Copied blueprint modules to build context"
+
       - name: Build and push image
         run: |
           LOGIN_SERVER="${{ steps.acr.outputs.login_server }}"
-          IMAGE="$LOGIN_SERVER/armportal-api-backend:${{ github.sha }}"
-          LATEST="$LOGIN_SERVER/armportal-api-backend:latest"
+          IMAGE="$LOGIN_SERVER/armportal-backend:${{ github.sha }}"
+          LATEST="$LOGIN_SERVER/armportal-backend:latest"
 
           echo "Building $IMAGE"
           docker build \
             -t "$IMAGE" \
+            -t "$LATEST" \
             -f portal/backend/Dockerfile \
             portal/backend
 
           az acr login --name $ACR_NAME
 
           docker push "$IMAGE"
-          docker tag "$IMAGE" "$LATEST"
           docker push "$LATEST"
 
-      - name: Configure Container App registry
+          echo "Successfully pushed images to ACR"
+          echo "  - $IMAGE"
+          echo "  - $LATEST"
+
+      - name: Update Container App image
         run: |
           LOGIN_SERVER="${{ steps.acr.outputs.login_server }}"
+          IMAGE="$LOGIN_SERVER/armportal-backend:${{ github.sha }}"
 
-          # Get ACR admin creds (admin_enabled = true in Terraform)
-          ACR_USERNAME=$(az acr credential show -n $ACR_NAME --query "username" -o tsv)
-          ACR_PASSWORD=$(az acr credential show -n $ACR_NAME --query "passwords[0].value" -o tsv)
-
-          az containerapp registry set \
-            --name $CONTAINER_APP_NAME \
-            --resource-group $RESOURCE_GROUP \
-            --server $LOGIN_SERVER \
-            --username $ACR_USERNAME \
-            --password $ACR_PASSWORD
-
-      - name: Update Container App secrets
-        run: |
-          az containerapp secret set \
-            --name $CONTAINER_APP_NAME \
-            --resource-group $RESOURCE_GROUP \
-            --secrets \
-              gh-oauth-secret="${{ secrets.GH_OAUTH_CLIENT_SECRET }}" \
-              gh-webhook-secret="${{ secrets.GH_WEBHOOK_SECRET }}" \
-              elasticsearch-api-key="${{ secrets.ELASTICSEARCH_API_KEY }}"
-
-      - name: Update Container App image and environment variables
-        run: |
-          LOGIN_SERVER="${{ steps.acr.outputs.login_server }}"
-          IMAGE="$LOGIN_SERVER/armportal-api-backend:${{ github.sha }}"
+          echo "Updating Container App with new image: $IMAGE"
 
           az containerapp update \
             --name $CONTAINER_APP_NAME \
             --resource-group $RESOURCE_GROUP \
-            --image "$IMAGE" \
-            --set-env-vars \
-              GH_APP_ID="${{ secrets.GH_APP_ID }}" \
-              GH_INSTALLATION_ID="${{ secrets.GH_INSTALLATION_ID }}" \
-              GH_INFRA_OWNER="${{ secrets.GH_INFRA_OWNER }}" \
-              GH_INFRA_REPO="${{ secrets.GH_INFRA_REPO }}" \
-              GH_APP_PRIVATE_KEY_BASE64="${{ secrets.GH_APP_PRIVATE_KEY_BASE64 }}" \
-              GH_OAUTH_CLIENT_ID="${{ secrets.GH_OAUTH_CLIENT_ID }}" \
-              GH_OAUTH_CLIENT_SECRET=secretref:gh-oauth-secret \
-              GITHUB_WEBHOOK_SECRET=secretref:gh-webhook-secret \
-              APP_URL="https://portal-api.chrishouse.io" \
-              FRONTEND_URL="https://portal.chrishouse.io" \
-              LOG_ANALYTICS_WORKSPACE_ID="c200dcd8-f350-4895-99c0-1a0828fe7384" \
-              ELASTICSEARCH_URL="https://es-test-az-elk-managed-dev-5a6e80.es.eastus2.azure.elastic-cloud.com:9243" \
-              ELASTICSEARCH_API_KEY=secretref:elasticsearch-api-key \
-              APP_NAME="arm-service-portal" \
-              NODE_ENV="production"
+            --image "$IMAGE"
+
+          echo "Container App updated successfully"
+
+      - name: Verify deployment
+        run: |
+          echo "Waiting for deployment to complete..."
+          sleep 10
+
+          # Get the FQDN
+          FQDN=$(az containerapp show \
+            --name $CONTAINER_APP_NAME \
+            --resource-group $RESOURCE_GROUP \
+            --query "properties.configuration.ingress.fqdn" -o tsv)
+
+          echo "Container App FQDN: https://$FQDN"
+
+          # Health check
+          echo "Checking health endpoint..."
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://$FQDN/api/health" || echo "000")
+
+          if [ "$HTTP_STATUS" = "200" ]; then
+            echo "Health check passed!"
+          else
+            echo "Health check returned status: $HTTP_STATUS"
+            echo "Note: Container may still be starting up"
+          fi
+
+          echo ""
+          echo "Deployment complete!"
+          echo "API URL: https://$FQDN"
+          echo "Custom Domain: https://portal-api.chrishouse.io"
