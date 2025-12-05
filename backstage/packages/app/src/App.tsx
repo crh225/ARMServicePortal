@@ -29,6 +29,7 @@ import { apis } from './apis';
 import { entityPage } from './components/catalog/EntityPage';
 import { searchPage } from './components/search/SearchPage';
 import { Root } from './components/Root';
+import { armPortalTheme } from './theme';
 
 import {
   AlertDisplay,
@@ -36,6 +37,7 @@ import {
   SignInPage,
 } from '@backstage/core-components';
 import { createApp } from '@backstage/app-defaults';
+import { UnifiedThemeProvider } from '@backstage/theme';
 import { AppRouter, FlatRoutes } from '@backstage/core-app-api';
 import { CatalogGraphPage } from '@backstage/plugin-catalog-graph';
 import { RequirePermission } from '@backstage/plugin-permission-react';
@@ -65,6 +67,16 @@ const app = createApp({
   components: {
     SignInPage: props => <SignInPage {...props} auto providers={['guest']} />,
   },
+  themes: [
+    {
+      id: 'arm-portal',
+      title: 'ARM Portal',
+      variant: 'light',
+      Provider: ({ children }) => (
+        <UnifiedThemeProvider theme={armPortalTheme} children={children} />
+      ),
+    },
+  ],
 });
 
 const routes = (
