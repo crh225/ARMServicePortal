@@ -103,6 +103,7 @@ spec:
         backend_image:
           title: Container Image
           type: string
+          ui:field: ContainerImagePicker
           ui:options:
             hidden: ${{ parameters.backend_enabled !== true }}
         backend_replicas:
@@ -128,6 +129,7 @@ spec:
         frontend_image:
           title: Container Image
           type: string
+          ui:field: ContainerImagePicker
           ui:options:
             hidden: ${{ parameters.frontend_enabled !== true }}
         frontend_replicas:

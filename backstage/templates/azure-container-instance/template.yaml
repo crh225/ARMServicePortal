@@ -32,8 +32,10 @@ spec:
           default: dev
           enum: [dev, qa, staging, prod]
         resource_group_name:
-          title: Resource Group Name
+          title: Resource Group
           type: string
+          description: Select an existing Azure resource group
+          ui:field: AzureResourceGroupPicker
         location:
           title: Azure Region
           type: string
@@ -42,8 +44,8 @@ spec:
         container_image:
           title: Container Image
           type: string
-          default: mcr.microsoft.com/azuredocs/aci-helloworld:latest
-          description: Full container image path (e.g., myregistry.azurecr.io/myapp:v1)
+          description: Select a container image from the registry
+          ui:field: ContainerImagePicker
 
     - title: Resource Allocation
       properties:

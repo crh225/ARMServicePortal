@@ -31,8 +31,10 @@ spec:
           default: dev
           enum: [dev, qa, staging, prod]
         resource_group_name:
-          title: Resource Group Name
+          title: Resource Group
           type: string
+          description: Select an existing Azure resource group
+          ui:field: AzureResourceGroupPicker
         location:
           title: Azure Region
           type: string

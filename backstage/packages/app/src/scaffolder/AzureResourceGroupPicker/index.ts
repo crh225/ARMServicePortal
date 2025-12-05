@@ -1,0 +1,1 @@
+export { AzureResourceGroupPickerComponent } from './AzureResourceGroupPicker';
