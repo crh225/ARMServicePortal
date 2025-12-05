@@ -22,6 +22,15 @@ spec:
         azure.workload.identity/use: "true"
     spec:
       serviceAccountName: backstage-sa
+      # Init container to trigger CSI secret sync before main container starts
+      initContainers:
+      - name: init-secrets
+        image: busybox:1.36
+        command: ['sh', '-c', 'echo "Secrets synced from Key Vault" && ls -la /mnt/secrets-store']
+        volumeMounts:
+        - name: secrets-store
+          mountPath: "/mnt/secrets-store"
+          readOnly: true
       containers:
       - name: backstage
         image: armportalacre4k9.azurecr.io/backstage:438a81e8b829d8fdb8c64a01f0bbd89b5e35c4b1
