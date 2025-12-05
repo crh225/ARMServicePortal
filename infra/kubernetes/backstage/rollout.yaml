@@ -1,4 +1,4 @@
-# Argo Rollout for Backstage (Blue-Green Deployment)
+# Argo Rollout for Backstage (Canary with auto-promotion)
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Rollout
@@ -117,40 +117,18 @@ spec:
           volumeAttributes:
             secretProviderClass: "azure-backstage-secrets"
 
-  # Blue-Green deployment strategy
+  # Canary deployment strategy with immediate promotion
   strategy:
-    blueGreen:
-      activeService: backstage-active
-      previewService: backstage-preview
-      autoPromotionEnabled: false
-      autoPromotionSeconds: 30
-      scaleDownDelaySeconds: 30
+    canary:
+      steps:
+      - setWeight: 100
 
 ---
-# Active Service - Production traffic
+# Backstage Service
 apiVersion: v1
 kind: Service
 metadata:
-  name: backstage-active
-  namespace: backstage
-  labels:
-    app: backstage
-spec:
-  type: ClusterIP
-  ports:
-  - port: 80
-    targetPort: 7007
-    protocol: TCP
-    name: http
-  selector:
-    app: backstage
-
----
-# Preview Service - Testing new versions
-apiVersion: v1
-kind: Service
-metadata:
-  name: backstage-preview
+  name: backstage
   namespace: backstage
   labels:
     app: backstage
