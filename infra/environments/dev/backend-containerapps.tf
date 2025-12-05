@@ -186,21 +186,6 @@ resource "azurerm_container_app" "backend" {
         value = "https://portal.chrishouse.io"
       }
 
-      # Elasticsearch configuration for log shipping
-      env {
-        name  = "ELASTICSEARCH_URL"
-        value = module.azure-elastic-managed_90c6d315.elasticsearch_endpoint
-      }
-
-      env {
-        name        = "ELASTICSEARCH_API_KEY"
-        secret_name = "elasticsearch-api-key"
-      }
-
-      env {
-        name  = "APP_NAME"
-        value = "arm-service-portal"
-      }
     }
   }
 }
