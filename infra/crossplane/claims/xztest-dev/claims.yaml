@@ -1,0 +1,33 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: "xztest-dev"
+  labels:
+    app.kubernetes.io/managed-by: crossplane
+    app.kubernetes.io/name: xztest
+    app.kubernetes.io/instance: "xztest-dev"
+    armportal.chrishouse.io/blueprint: "xp-building-blocks"
+    armportal.chrishouse.io/version: "2.0.0"
+    armportal.chrishouse.io/request-id: 1948e95b
+    armportal.chrishouse.io/created-by: backstage
+    istio-injection: enabled
+---
+apiVersion: platform.chrishouse.io/v1alpha1
+kind: RedisClaim
+metadata:
+  name: "xztest-cache"
+  namespace: "xztest-dev"
+  labels:
+    app.kubernetes.io/managed-by: armportal
+    app.kubernetes.io/name: xztest
+    app.kubernetes.io/instance: "xztest-dev"
+    armportal.chrishouse.io/blueprint: "xp-building-blocks"
+    armportal.chrishouse.io/version: "2.0.0"
+    armportal.chrishouse.io/request-id: 1948e95b
+    armportal.chrishouse.io/created-by: backstage
+    armportal.chrishouse.io/component: redis
+spec:
+  parameters:
+    version: "7.2"
+    memoryLimitMB: 256
