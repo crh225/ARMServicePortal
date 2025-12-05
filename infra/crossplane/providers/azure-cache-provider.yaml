@@ -1,7 +1,0 @@
-# Azure Cache Provider (includes Azure Cache for Redis)
-apiVersion: pkg.crossplane.io/v1
-kind: Provider
-metadata:
-  name: provider-azure-cache
-spec:
-  package: xpkg.upbound.io/upbound/provider-azure-cache:v0.42.0

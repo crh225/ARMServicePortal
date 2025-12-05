@@ -23,9 +23,6 @@ spec:
           labels:
             app.kubernetes.io/name: cache-warmer
             azure.workload.identity/use: "true"
-          annotations:
-            # Enable Istio sidecar - wait for proxy before starting
-            proxy.istio.io/config: '{"holdApplicationUntilProxyStarts": true}'
         spec:
           serviceAccountName: armportal-backend-sa
           restartPolicy: OnFailure
@@ -38,17 +35,11 @@ spec:
                 - -c
                 - |
                   node src/jobs/cache-warmer.js
-                  EXIT_CODE=$?
-                  # Signal Istio sidecar to terminate (use wget since alpine doesn't have curl)
-                  wget -q --post-data '' -O - http://localhost:15020/quitquitquit 2>/dev/null || true
-                  exit $EXIT_CODE
               # Get all config values from ConfigMap (GH_APP_ID, GH_INSTALLATION_ID, GH_INFRA_OWNER, GH_INFRA_REPO)
               envFrom:
                 - configMapRef:
                     name: backend-config
               env:
-                - name: REDIS_URL
-                  value: "redis://xportalinfra-cache.xportalinfra-dev.svc.cluster.local:6379"
                 - name: AZURE_SUBSCRIPTION_ID
                   value: "f989de0f-8697-4a05-8c34-b82c941767c0"
                 # AZURE_CLIENT_ID is injected by workload identity webhook - don't set it manually
