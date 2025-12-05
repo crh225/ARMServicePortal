@@ -7,7 +7,7 @@ app:
   baseUrl: https://backstage.chrishouse.io
 
 organization:
-  name: Chris House Platform
+  name: Chrishouse.io Platform
 
 backend:
   baseUrl: https://backstage.chrishouse.io
@@ -137,7 +137,7 @@ catalog:
     github:
       infrastructureResources:
         organization: 'crh225'
-        catalogPath: '**/catalog-info.yaml'
+        catalogPath: '**/*.catalog-info.yaml'
         filters:
           repository: 'ARMServicePortal'
           branch: 'main'

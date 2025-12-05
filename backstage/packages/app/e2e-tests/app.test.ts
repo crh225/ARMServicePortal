@@ -23,5 +23,5 @@ test('App should render the welcome page', async ({ page }) => {
   await expect(enterButton).toBeVisible();
   await enterButton.click();
 
-  await expect(page.getByText('Chris House IDP Catalog')).toBeVisible();
+  await expect(page.getByText('Chrishouse.io Catalog')).toBeVisible();
 });
