@@ -78,20 +78,28 @@ function generateTitle(moduleName, blueprint) {
 }
 
 /**
- * Get the Azure resource ID pattern for linking to Azure Portal
+ * Get the Azure resource ID for linking to Azure Portal
+ * Uses actual subscription ID and resource group from variables
  *
  * @param {string} blueprintId - Blueprint ID
  * @param {Object} variables - Resource variables
- * @returns {string|null} - Azure resource ID pattern or null
+ * @param {string} environment - Target environment
+ * @returns {string|null} - Azure resource ID or null
  */
-function getAzureResourceIdPattern(blueprintId, variables) {
+function getAzureResourceId(blueprintId, variables, environment) {
+  // Get subscription ID from variables or use default
+  const subscriptionId = variables.subscription_id || process.env.AZURE_SUBSCRIPTION_ID || 'f989de0f-8697-4a05-8c34-b82c941767c0';
+
+  // Get resource group name - for RG blueprint it's constructed, for others it's from variables
+  const rgName = variables.resource_group_name || `${variables.project_name}-${environment}-rg`;
+
   const patterns = {
-    'azure-rg-basic': `/subscriptions/{subscriptionId}/resourceGroups/${variables.project_name}-${variables.environment}-rg`,
-    'azure-storage-basic': `/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Storage/storageAccounts/${variables.storage_account_name || variables.project_name}`,
-    'azure-key-vault-basic': `/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.KeyVault/vaults/${variables.key_vault_name || variables.project_name}`,
-    'azure-postgres-flexible': `/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.DBforPostgreSQL/flexibleServers/${variables.server_name || variables.project_name}`,
-    'azure-function': `/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Web/sites/${variables.function_app_name || variables.project_name}`,
-    'azure-container-instance': `/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.ContainerInstance/containerGroups/${variables.container_group_name || variables.project_name}`
+    'azure-rg-basic': `/subscriptions/${subscriptionId}/resourceGroups/${variables.project_name}-${environment}-rg`,
+    'azure-storage-basic': `/subscriptions/${subscriptionId}/resourceGroups/${rgName}/providers/Microsoft.Storage/storageAccounts/${variables.storage_account_name || variables.project_name}`,
+    'azure-key-vault-basic': `/subscriptions/${subscriptionId}/resourceGroups/${rgName}/providers/Microsoft.KeyVault/vaults/${variables.key_vault_name || variables.project_name}`,
+    'azure-postgres-flexible': `/subscriptions/${subscriptionId}/resourceGroups/${rgName}/providers/Microsoft.DBforPostgreSQL/flexibleServers/${variables.server_name || variables.project_name}`,
+    'azure-function': `/subscriptions/${subscriptionId}/resourceGroups/${rgName}/providers/Microsoft.Web/sites/${variables.function_app_name || variables.project_name}`,
+    'azure-container-instance': `/subscriptions/${subscriptionId}/resourceGroups/${rgName}/providers/Microsoft.ContainerInstance/containerGroups/${variables.container_group_name || variables.project_name}`
   };
 
   return patterns[blueprintId] || null;
@@ -134,7 +142,11 @@ export function renderTerraformCatalogInfo({
         'armportal.chrishouse.io/blueprint': blueprint.id,
         'armportal.chrishouse.io/version': blueprint.version,
         'armportal.chrishouse.io/environment': environment,
-        'armportal.chrishouse.io/provider': 'terraform'
+        'armportal.chrishouse.io/provider': 'terraform',
+        // For resource groups, add the Azure RG name for cross-referencing
+        ...(blueprint.id === 'azure-rg-basic' && {
+          'azure.com/resource-group-name': `${variables.project_name}-${environment}-rg`
+        })
       },
       annotations: {
         'backstage.io/managed-by-location': `url:https://github.com/crh225/ARMServicePortal/blob/main/${infraFilePath}`,
@@ -173,7 +185,7 @@ export function renderTerraformCatalogInfo({
   };
 
   // Add Azure Portal link if we can construct a resource ID
-  const azureResourceId = getAzureResourceIdPattern(blueprint.id, variables);
+  const azureResourceId = getAzureResourceId(blueprint.id, variables, environment);
   if (azureResourceId) {
     entity.metadata.annotations['azure.com/resource-id'] = azureResourceId;
     entity.metadata.links.push({
@@ -183,10 +195,12 @@ export function renderTerraformCatalogInfo({
     });
   }
 
-  // Add dependsOn for resources that depend on resource groups
+  // Add resource group reference as annotation (not dependsOn - entity names don't match Azure RG names)
+  // The dependsOn would create broken references since the RG entity name is module-based, not Azure name-based
   if (blueprint.id !== 'azure-rg-basic' && variables.resource_group_name) {
-    const rgEntityName = toEntityName(variables.resource_group_name);
-    entity.spec.dependsOn = [`resource:${rgEntityName}`];
+    entity.metadata.annotations['azure.com/resource-group-name'] = variables.resource_group_name;
+    // Note: We could add dependsOn if we knew the RG's entity name, but that requires a catalog lookup
+    // For now, the relationship is documented via the annotation
   }
 
   return toYaml(entity);
