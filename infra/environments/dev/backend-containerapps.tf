@@ -84,11 +84,11 @@ resource "azurerm_container_app" "backend" {
     value = var.github_webhook_secret
   }
 
-  # Elasticsearch API key as secret (sensitive)
-  secret {
-    name  = "elasticsearch-api-key"
-    value = var.elasticsearch_api_key
-  }
+  # Elasticsearch API key as secret (sensitive) - DISABLED, ES deleted
+  # secret {
+  #   name  = "elasticsearch-api-key"
+  #   value = var.elasticsearch_api_key
+  # }
 
   # GitHub OAuth client secret
   secret {
@@ -229,16 +229,16 @@ resource "azurerm_container_app" "backend" {
         secret_name = "service-api-key"
       }
 
-      # Elasticsearch
-      env {
-        name        = "ELASTICSEARCH_API_KEY"
-        secret_name = "elasticsearch-api-key"
-      }
+      # Elasticsearch - DISABLED, ES deleted
+      # env {
+      #   name        = "ELASTICSEARCH_API_KEY"
+      #   secret_name = "elasticsearch-api-key"
+      # }
 
-      env {
-        name  = "ELASTICSEARCH_URL"
-        value = "https://es-test-az-elk-managed-dev-5a6e80.es.eastus2.azure.elastic-cloud.com:9243"
-      }
+      # env {
+      #   name  = "ELASTICSEARCH_URL"
+      #   value = "https://es-test-az-elk-managed-dev-5a6e80.es.eastus2.azure.elastic-cloud.com:9243"
+      # }
 
       # Azure subscription for cost management
       env {
