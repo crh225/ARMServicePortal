@@ -12,6 +12,6 @@ module "azure-key-vault-basic-09c79b07" {
   tags = {
     armportal-environment = "dev"
     armportal-blueprint   = "azure-key-vault-basic"
-    armportal-request-id  = "azure-key-vault-basic-09c79b07"
+    armportal-request-id  = "246"
   }
 }
