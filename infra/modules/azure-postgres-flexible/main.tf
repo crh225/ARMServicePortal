@@ -164,6 +164,12 @@ resource "azurerm_postgresql_flexible_server" "this" {
   }
 
   tags = local.all_tags
+
+  # Ignore zone changes - Azure assigns a zone at creation and it cannot be changed
+  # without destroying and recreating the server
+  lifecycle {
+    ignore_changes = [zone]
+  }
 }
 
 # Allow Azure services to access the server

@@ -77,8 +77,9 @@ variable "log_analytics_workspace_id" {
 }
 
 locals {
-  # Key Vault names must be 3–24 chars, alphanumeric, globally unique.
-  kv_name_prefix = lower(replace("${var.project_name}${var.environment}", "/[^a-z0-9]/", ""))
+  # Key Vault names must be 3–24 chars, alphanumeric, globally unique, and start with a letter.
+  # Prefix with "kv" to ensure it always starts with a letter (in case project_name starts with a number)
+  kv_name_prefix = lower(replace("kv${var.project_name}${var.environment}", "/[^a-z0-9]/", ""))
 
   # ARM Portal required tags
   armportal_tags = {
