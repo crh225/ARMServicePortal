@@ -32,14 +32,12 @@ backend:
     connection: ':memory:'
   # workingDirectory: /tmp # Use this to configure a working directory for the scaffolder, defaults to the OS temp-dir
 
-  # Proxy configuration for ARM Portal API
-  proxy:
-    endpoints:
-      '/arm-portal':
-        target: http://localhost:4000
-        changeOrigin: true
-        pathRewrite:
-          '^/api/proxy/arm-portal': ''
+# Proxy configuration for ARM Portal API
+proxy:
+  endpoints:
+    '/arm-portal':
+      target: http://localhost:4000
+      changeOrigin: true
 
 integrations:
   github:

@@ -47,16 +47,14 @@ backend:
   cache:
     store: memory
 
-  # Proxy configuration for ARM Portal API
-  proxy:
-    endpoints:
-      '/arm-portal':
-        target: https://portal-api.chrishouse.io
-        changeOrigin: true
-        pathRewrite:
-          '^/api/proxy/arm-portal': ''
-        headers:
-          x-api-key: ${ARM_PORTAL_API_KEY}
+# Proxy configuration for ARM Portal API (root level for plugin-proxy-backend)
+proxy:
+  endpoints:
+    '/arm-portal':
+      target: https://portal-api.chrishouse.io
+      changeOrigin: true
+      headers:
+        x-api-key: ${ARM_PORTAL_API_KEY}
 
 integrations:
   github:
