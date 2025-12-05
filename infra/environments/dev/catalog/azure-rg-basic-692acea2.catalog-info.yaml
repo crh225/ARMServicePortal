@@ -12,6 +12,7 @@ metadata:
   annotations:
     backstage.io/managed-by-location: "url:https://github.com/crh225/ARMServicePortal/blob/main/infra/environments/dev/azure-rg-basic-692acea2.tf"
     backstage.io/managed-by-origin-location: "url:https://github.com/crh225/ARMServicePortal/blob/main/infra/environments/dev/azure-rg-basic-692acea2.tf"
+    backstage.io/techdocs-ref: "url:https://github.com/crh225/ARMServicePortal/tree/main/docs"
     armportal.chrishouse.io/request-id: "243"
     armportal.chrishouse.io/created-by: backstage
     armportal.chrishouse.io/provisioned-at: "2025-12-05T01:57:58.872Z"
