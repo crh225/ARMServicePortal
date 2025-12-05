@@ -198,10 +198,10 @@ resource "azurerm_container_app" "backend" {
         value = "https://portal.chrishouse.io"
       }
 
-      # App URL
+      # App URL - using Container App FQDN directly (no custom domain)
       env {
         name  = "APP_URL"
-        value = "https://portal-api.chrishouse.io"
+        value = "https://${azurerm_container_app.backend.ingress[0].fqdn}"
       }
 
       # GitHub OAuth

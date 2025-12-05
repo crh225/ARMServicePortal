@@ -118,4 +118,3 @@ jobs:
           echo ""
           echo "Deployment complete!"
           echo "API URL: https://$FQDN"
-          echo "Custom Domain: https://portal-api.chrishouse.io"

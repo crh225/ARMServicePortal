@@ -51,7 +51,7 @@ backend:
 proxy:
   endpoints:
     '/arm-portal':
-      target: https://portal-api.chrishouse.io
+      target: https://armportal-api-dev.kindisland-0c7a7c9a.eastus2.azurecontainerapps.io
       changeOrigin: true
       credentials: require
       headers:
@@ -63,7 +63,7 @@ integrations:
       token: ${GITHUB_TOKEN}
 
 armPortal:
-  baseUrl: https://portal-api.chrishouse.io
+  baseUrl: https://armportal-api-dev.kindisland-0c7a7c9a.eastus2.azurecontainerapps.io
   apiKey: ${ARM_PORTAL_API_KEY}
 
 techdocs:
