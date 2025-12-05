@@ -60,6 +60,8 @@ proxy:
       changeOrigin: true
       pathRewrite:
         '^/api/proxy/arm-portal': ''
+      headers:
+        x-api-key: ${ARM_PORTAL_API_KEY}
 
 armPortal:
   baseUrl: https://portal-api.chrishouse.io

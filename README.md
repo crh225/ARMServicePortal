@@ -1,5 +1,7 @@
 # Azure Self-Service Portal (GitOps + Infrastructure as Code)
 
+> **🚧 Beta Notice:** A new Backstage-powered UI is available at [backstage.chrishouse.io](https://backstage.chrishouse.io). This interface is currently in beta and under active development.
+
 ## Overview
 The Azure Self-Service Portal is a lightweight, extensible platform designed to enable end-users to safely provision approved Azure resources through a GitOps workflow. Instead of granting users direct access to Azure, the portal automates infrastructure delivery through pull requests, GitHub Actions, Terraform, and Crossplane.
 
