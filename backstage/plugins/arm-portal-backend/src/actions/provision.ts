@@ -78,7 +78,7 @@ export function createArmPortalProvisionAction(config: ArmPortalConfig) {
       }
 
       // Extract environment from parameters (ARM Portal expects it at top level)
-      const { environment, ...otherParams } = parameters as { environment?: string; [key: string]: unknown };
+      const { environment } = parameters as { environment?: string; [key: string]: unknown };
 
       try {
         // Call the ARM Portal provision API
