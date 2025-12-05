@@ -1,0 +1,42 @@
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: "azure-key-vault-basic-09c79b07"
+  title: "Azure Key Vault (basic RBAC) - azure-key-vault-basic"
+  description: Creates an Azure Key Vault using RBAC authorization in an existing Resource Group. provisioned via ARM Portal
+  labels:
+    armportal.chrishouse.io/blueprint: "azure-key-vault-basic"
+    armportal.chrishouse.io/version: "1.0.0"
+    armportal.chrishouse.io/environment: dev
+    armportal.chrishouse.io/provider: terraform
+  annotations:
+    backstage.io/managed-by-location: "url:https://github.com/crh225/ARMServicePortal/blob/main/infra/environments/dev/azure-key-vault-basic-09c79b07.tf"
+    backstage.io/managed-by-origin-location: "url:https://github.com/crh225/ARMServicePortal/blob/main/infra/environments/dev/azure-key-vault-basic-09c79b07.tf"
+    backstage.io/techdocs-ref: "url:https://github.com/crh225/ARMServicePortal/tree/main/docs"
+    armportal.chrishouse.io/request-id: "246"
+    armportal.chrishouse.io/created-by: backstage
+    armportal.chrishouse.io/provisioned-at: "2025-12-05T15:24:45.655Z"
+    armportal.chrishouse.io/terraform-module: "azure-key-vault-basic-09c79b07"
+    azure.com/resource-id: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.KeyVault/vaults/backstageakv"
+  tags:
+    - azure
+    - terraform
+    - dev
+    - "key-vault"
+  links:
+    - url: "https://github.com/crh225/ARMServicePortal/blob/main/infra/environments/dev/azure-key-vault-basic-09c79b07.tf"
+      title: Terraform Configuration
+      icon: code
+    - url: "https://github.com/crh225/ARMServicePortal/pull/246"
+      title: Provisioning PR
+      icon: github
+    - url: "https://portal.azure.com/#@/resource/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.KeyVault/vaults/backstageakv"
+      title: Azure Portal
+      icon: cloud
+spec:
+  type: "azure-key-vault"
+  lifecycle: development
+  owner: "user:backstage"
+  system: "backstageakv-dev"
+  dependsOn:
+    - "resource:rg-testpr3-dev-rg"
