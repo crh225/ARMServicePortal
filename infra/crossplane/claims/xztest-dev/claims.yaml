@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/instance: "xztest-dev"
     armportal.chrishouse.io/blueprint: "xp-building-blocks"
     armportal.chrishouse.io/version: "2.0.0"
-    armportal.chrishouse.io/request-id: 1948e95b
+    armportal.chrishouse.io/request-id: "244"
     armportal.chrishouse.io/created-by: backstage
     istio-injection: enabled
 ---
@@ -24,7 +24,7 @@ metadata:
     app.kubernetes.io/instance: "xztest-dev"
     armportal.chrishouse.io/blueprint: "xp-building-blocks"
     armportal.chrishouse.io/version: "2.0.0"
-    armportal.chrishouse.io/request-id: 1948e95b
+    armportal.chrishouse.io/request-id: "244"
     armportal.chrishouse.io/created-by: backstage
     armportal.chrishouse.io/component: redis
 spec:
