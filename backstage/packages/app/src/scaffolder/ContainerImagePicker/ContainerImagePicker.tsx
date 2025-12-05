@@ -16,6 +16,11 @@ interface ImageOption {
   fullImage: string;
 }
 
+interface RepositoryResponse {
+  name: string;
+  fullPath: string;
+}
+
 export const ContainerImagePickerComponent = ({
   onChange,
   rawErrors,
@@ -25,7 +30,7 @@ export const ContainerImagePickerComponent = ({
 }: FieldExtensionComponentProps<string>) => {
   const configApi = useApi(configApiRef);
   const { fetch } = useApi(fetchApiRef);
-  const [repositories, setRepositories] = useState<string[]>([]);
+  const [repositories, setRepositories] = useState<RepositoryResponse[]>([]);
   const [selectedRepo, setSelectedRepo] = useState<string>('');
   const [tags, setTags] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,7 +61,15 @@ export const ContainerImagePickerComponent = ({
         }
 
         const data = await response.json();
-        setRepositories(data.repositories || data || []);
+        const repos = data.repositories || data || [];
+        // Normalize to RepositoryResponse format - handle both string[] and object[] responses
+        const normalizedRepos: RepositoryResponse[] = repos.map((repo: string | RepositoryResponse) => {
+          if (typeof repo === 'string') {
+            return { name: repo, fullPath: repo };
+          }
+          return repo;
+        });
+        setRepositories(normalizedRepos);
         setError(null);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load repositories');
@@ -139,8 +152,8 @@ export const ContainerImagePickerComponent = ({
           }}
         >
           {repositories.map(repo => (
-            <MenuItem key={repo} value={repo}>
-              {repo}
+            <MenuItem key={repo.fullPath} value={repo.fullPath}>
+              {repo.name}
             </MenuItem>
           ))}
         </Select>

@@ -4,11 +4,10 @@ import CardContent from '@material-ui/core/CardContent';
 import CardActions from '@material-ui/core/CardActions';
 import Chip from '@material-ui/core/Chip';
 import Button from '@material-ui/core/Button';
-import Typography from '@material-ui/core/Typography';
 import { TemplateEntityV1beta3 } from '@backstage/plugin-scaffolder-common';
 import { useNavigate } from 'react-router-dom';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles(() => ({
   card: {
     display: 'flex',
     flexDirection: 'column',
