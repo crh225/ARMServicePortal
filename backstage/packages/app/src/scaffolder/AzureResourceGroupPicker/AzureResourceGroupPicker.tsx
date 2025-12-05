@@ -10,9 +10,22 @@ import { FieldExtensionComponentProps } from '@backstage/plugin-scaffolder-react
 
 interface ResourceGroup {
   name: string;
-  location: string;
+  location?: string;
   environment?: string;
 }
+
+// Normalize resource group data - API may return strings or objects
+const normalizeResourceGroups = (data: unknown): ResourceGroup[] => {
+  if (Array.isArray(data)) {
+    return data.map(item => {
+      if (typeof item === 'string') {
+        return { name: item };
+      }
+      return item as ResourceGroup;
+    });
+  }
+  return [];
+};
 
 export const AzureResourceGroupPickerComponent = ({
   onChange,
@@ -52,7 +65,9 @@ export const AzureResourceGroupPickerComponent = ({
         }
 
         const data = await response.json();
-        setResourceGroups(data.resourceGroups || data || []);
+        // Normalize the data - API returns { resourceGroups: string[] }
+        const rawGroups = data.resourceGroups || data || [];
+        setResourceGroups(normalizeResourceGroups(rawGroups));
         setError(null);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load resource groups');
@@ -89,7 +104,7 @@ export const AzureResourceGroupPickerComponent = ({
       >
         {resourceGroups.map(rg => (
           <MenuItem key={rg.name} value={rg.name}>
-            {rg.name} ({rg.location})
+            {rg.name}{rg.location ? ` (${rg.location})` : ''}
           </MenuItem>
         ))}
       </Select>
