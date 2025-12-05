@@ -198,10 +198,12 @@ resource "azurerm_container_app" "backend" {
         value = "https://portal.chrishouse.io"
       }
 
-      # App URL - using Container App FQDN directly (no custom domain)
+      # App URL - Container App FQDN for OAuth callbacks
+      # Note: This is hardcoded because we can't self-reference the FQDN during initial creation
+      # The FQDN format is: <app-name>.<unique-id>.<region>.azurecontainerapps.io
       env {
         name  = "APP_URL"
-        value = "https://${azurerm_container_app.backend.ingress[0].fqdn}"
+        value = "https://armportal-api-dev.kindisland-0c7a7c9a.eastus2.azurecontainerapps.io"
       }
 
       # GitHub OAuth
