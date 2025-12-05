@@ -8,8 +8,6 @@ metadata:
     - azure
     - infrastructure
     - resource-group
-  annotations:
-    backstage.io/techdocs-ref: dir:.
 spec:
   owner: platform-team
   type: infrastructure
