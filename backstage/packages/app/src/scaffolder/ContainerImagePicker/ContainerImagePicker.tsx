@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useApi, configApiRef } from '@backstage/core-plugin-api';
+import { useApi, configApiRef, fetchApiRef } from '@backstage/core-plugin-api';
 import FormControl from '@material-ui/core/FormControl';
 import InputLabel from '@material-ui/core/InputLabel';
 import Select from '@material-ui/core/Select';
@@ -24,6 +24,7 @@ export const ContainerImagePickerComponent = ({
   schema,
 }: FieldExtensionComponentProps<string>) => {
   const configApi = useApi(configApiRef);
+  const { fetch } = useApi(fetchApiRef);
   const [repositories, setRepositories] = useState<string[]>([]);
   const [selectedRepo, setSelectedRepo] = useState<string>('');
   const [tags, setTags] = useState<string[]>([]);
@@ -66,7 +67,7 @@ export const ContainerImagePickerComponent = ({
     };
 
     fetchRepositories();
-  }, [configApi]);
+  }, [configApi, fetch]);
 
   // Fetch tags when repository changes
   useEffect(() => {
@@ -104,7 +105,7 @@ export const ContainerImagePickerComponent = ({
     };
 
     fetchTags();
-  }, [configApi, selectedRepo]);
+  }, [configApi, fetch, selectedRepo]);
 
   // Build image options from selected repo and tags
   const imageOptions: ImageOption[] = tags.map(tag => ({

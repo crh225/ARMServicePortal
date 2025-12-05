@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useApi, configApiRef } from '@backstage/core-plugin-api';
+import { useApi, configApiRef, fetchApiRef } from '@backstage/core-plugin-api';
 import FormControl from '@material-ui/core/FormControl';
 import InputLabel from '@material-ui/core/InputLabel';
 import Select from '@material-ui/core/Select';
@@ -36,6 +36,7 @@ export const AzureResourceGroupPickerComponent = ({
   schema,
 }: FieldExtensionComponentProps<string>) => {
   const configApi = useApi(configApiRef);
+  const { fetch } = useApi(fetchApiRef);
   const [resourceGroups, setResourceGroups] = useState<ResourceGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -78,7 +79,7 @@ export const AzureResourceGroupPickerComponent = ({
     };
 
     fetchResourceGroups();
-  }, [configApi, environment]);
+  }, [configApi, fetch, environment]);
 
   if (loading) {
     return (

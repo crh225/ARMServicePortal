@@ -53,6 +53,7 @@ proxy:
     '/arm-portal':
       target: https://portal-api.chrishouse.io
       changeOrigin: true
+      credentials: require
       headers:
         x-api-key: ${ARM_PORTAL_API_KEY}
 
