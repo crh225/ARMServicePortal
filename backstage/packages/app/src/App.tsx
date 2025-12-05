@@ -15,6 +15,7 @@ import {
   AzureResourceGroupPickerExtension,
   ContainerImagePickerExtension,
 } from './scaffolder';
+import { CustomTemplateCard } from './components/scaffolder';
 import { orgPlugin } from '@backstage/plugin-org';
 import { SearchPage } from '@backstage/plugin-search';
 import {
@@ -30,6 +31,7 @@ import { entityPage } from './components/catalog/EntityPage';
 import { searchPage } from './components/search/SearchPage';
 import { Root } from './components/Root';
 import { armPortalTheme } from './theme';
+import './scaffolder-overrides.css';
 
 import {
   AlertDisplay,
@@ -98,7 +100,7 @@ const routes = (
         <ReportIssue />
       </TechDocsAddons>
     </Route>
-    <Route path="/create" element={<ScaffolderPage />}>
+    <Route path="/create" element={<ScaffolderPage components={{ TemplateCardComponent: CustomTemplateCard }} />}>
       <ScaffolderFieldExtensions>
         <AzureResourceGroupPickerExtension />
         <ContainerImagePickerExtension />

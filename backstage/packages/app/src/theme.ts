@@ -252,5 +252,16 @@ export const armPortalTheme = createUnifiedTheme({
         },
       },
     },
+    // Scaffolder Template Card Overrides - ARM Portal Blueprint style
+    BackstageItemCardHeader: {
+      styleOverrides: {
+        root: {
+          backgroundImage: 'none',
+          backgroundColor: '#ffffff',
+          color: armPortalColors.textMain,
+          padding: '16px 20px 12px',
+        },
+      },
+    },
   },
 });
