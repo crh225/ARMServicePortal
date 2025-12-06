@@ -16,7 +16,7 @@ module "azure-container-app-5a6a37aa" {
   tags = {
     armportal-environment = "dev"
     armportal-blueprint   = "azure-container-app"
-    armportal-request-id  = "azure-container-app-5a6a37aa"
+    armportal-request-id  = "250"
   }
 }
 
