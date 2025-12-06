@@ -1,0 +1,37 @@
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: "azure-container-app-2082d164"
+  title: "Azure Container App - azure-container-app"
+  description: "Deploy containerized apps with auto-scaling, HTTPS ingress, and rolling updates. Scale to zero when idle for cost savings. Perfect for web APIs, microservices, and ML inference endpoints. provisioned via ARM Portal"
+  labels:
+    armportal.chrishouse.io/blueprint: "azure-container-app"
+    armportal.chrishouse.io/version: "1.0.0"
+    armportal.chrishouse.io/environment: dev
+    armportal.chrishouse.io/provider: terraform
+  annotations:
+    backstage.io/managed-by-location: "url:https://github.com/crh225/ARMServicePortal/blob/main/infra/environments/dev/azure-container-app-2082d164.tf"
+    backstage.io/managed-by-origin-location: "url:https://github.com/crh225/ARMServicePortal/blob/main/infra/environments/dev/azure-container-app-2082d164.tf"
+    backstage.io/techdocs-ref: "url:https://github.com/crh225/ARMServicePortal/tree/main/docs"
+    armportal.chrishouse.io/request-id: "251"
+    armportal.chrishouse.io/created-by: crh225
+    armportal.chrishouse.io/provisioned-at: "2025-12-06T02:58:37.317Z"
+    armportal.chrishouse.io/terraform-module: "azure-container-app-2082d164"
+    azure.com/resource-group-name: "test3-dev-rg"
+  tags:
+    - azure
+    - terraform
+    - dev
+    - "container-app"
+  links:
+    - url: "https://github.com/crh225/ARMServicePortal/blob/main/infra/environments/dev/azure-container-app-2082d164.tf"
+      title: Terraform Configuration
+      icon: code
+    - url: "https://github.com/crh225/ARMServicePortal/pull/251"
+      title: Provisioning PR
+      icon: github
+spec:
+  type: "azure-resource"
+  lifecycle: development
+  owner: "user:crh225"
+  system: "mhd-inference-dev"
