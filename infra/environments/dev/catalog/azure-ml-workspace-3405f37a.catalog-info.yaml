@@ -1,0 +1,37 @@
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: "azure-ml-workspace-3405f37a"
+  title: "Azure Machine Learning Workspace - azure-ml-workspace"
+  description: "Complete Azure ML environment with workspace, storage, compute cluster, container registry, and Key Vault. Perfect for MLOps workflows, model training, and deployment. provisioned via ARM Portal"
+  labels:
+    armportal.chrishouse.io/blueprint: "azure-ml-workspace"
+    armportal.chrishouse.io/version: "1.0.0"
+    armportal.chrishouse.io/environment: dev
+    armportal.chrishouse.io/provider: terraform
+  annotations:
+    backstage.io/managed-by-location: "url:https://github.com/crh225/ARMServicePortal/blob/main/infra/environments/dev/azure-ml-workspace-3405f37a.tf"
+    backstage.io/managed-by-origin-location: "url:https://github.com/crh225/ARMServicePortal/blob/main/infra/environments/dev/azure-ml-workspace-3405f37a.tf"
+    backstage.io/techdocs-ref: "url:https://github.com/crh225/ARMServicePortal/tree/main/docs"
+    armportal.chrishouse.io/request-id: "248"
+    armportal.chrishouse.io/created-by: crh225
+    armportal.chrishouse.io/provisioned-at: "2025-12-06T00:48:02.947Z"
+    armportal.chrishouse.io/terraform-module: "azure-ml-workspace-3405f37a"
+    azure.com/resource-group-name: "test3-dev-rg"
+  tags:
+    - azure
+    - terraform
+    - dev
+    - "ml-workspace"
+  links:
+    - url: "https://github.com/crh225/ARMServicePortal/blob/main/infra/environments/dev/azure-ml-workspace-3405f37a.tf"
+      title: Terraform Configuration
+      icon: code
+    - url: "https://github.com/crh225/ARMServicePortal/pull/248"
+      title: Provisioning PR
+      icon: github
+spec:
+  type: "azure-resource"
+  lifecycle: development
+  owner: "user:crh225"
+  system: "mhd-dev"
