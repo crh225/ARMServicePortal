@@ -104,16 +104,15 @@ def generate_memphis_housing_data(n_samples: int = 5000, seed: int = 42) -> pd.D
             baths += 0.5
 
         # Year built - Memphis has lots of older homes
-        year_built = int(np.random.choice(
-            range(1920, 2025),
-            p=np.concatenate([
-                np.full(30, 0.01),   # 1920-1949: 30%
-                np.full(20, 0.015),  # 1950-1969: 30%
-                np.full(20, 0.01),   # 1970-1989: 20%
-                np.full(20, 0.005),  # 1990-2009: 10%
-                np.full(15, 0.004),  # 2010-2024: 6%
-            ])
-        ))
+        # Probabilities: 30% (1920-1949), 30% (1950-1969), 20% (1970-1989), 12% (1990-2009), 8% (2010-2024)
+        year_probs = np.concatenate([
+            np.full(30, 0.30 / 30),   # 1920-1949: 30%
+            np.full(20, 0.30 / 20),   # 1950-1969: 30%
+            np.full(20, 0.20 / 20),   # 1970-1989: 20%
+            np.full(20, 0.12 / 20),   # 1990-2009: 12%
+            np.full(15, 0.08 / 15),   # 2010-2024: 8%
+        ])
+        year_built = int(np.random.choice(range(1920, 2025), p=year_probs))
 
         # Lot size (in acres)
         lot_size = np.random.exponential(0.25)
