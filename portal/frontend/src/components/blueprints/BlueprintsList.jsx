@@ -88,6 +88,22 @@ const serviceIcons = {
     ),
     color: "#0078d4"
   },
+  "azure-ml-workspace": {
+    icon: (
+      <svg width="24" height="24" viewBox="0 0 18 18" fill="currentColor">
+        <defs>
+          <linearGradient id="mlGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#0078d4"/>
+            <stop offset="100%" stopColor="#50e6ff"/>
+          </linearGradient>
+        </defs>
+        <path d="M9 1C4.58 1 1 4.58 1 9s3.58 8 8 8 8-3.58 8-8-3.58-8-8-8zm0 14.5c-3.58 0-6.5-2.92-6.5-6.5S5.42 2.5 9 2.5s6.5 2.92 6.5 6.5-2.92 6.5-6.5 6.5z"/>
+        <path d="M9 4.5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5S9.83 4.5 9 4.5zm-3 4c-.55 0-1 .45-1 1s.45 1 1 1 1-.45 1-1-.45-1-1-1zm6 0c-.55 0-1 .45-1 1s.45 1 1 1 1-.45 1-1-.45-1-1-1zm-3 2.5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5-.67-1.5-1.5-1.5z" opacity=".8"/>
+        <path d="M9 6l-3 3.5M9 6l3 3.5M6 9.5l3 3M12 9.5l-3 3" stroke="currentColor" strokeWidth=".5" fill="none"/>
+      </svg>
+    ),
+    color: "#0078d4"
+  },
   // Crossplane/K8s services
   "xp-application-environment": {
     icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/kubernetes/kubernetes-plain.svg" alt="" width="24" height="24" />,
@@ -119,6 +135,7 @@ const categoryConfig = {
   "Security": { color: "#0078d4" },
   "Configuration": { color: "#0078d4" },
   "Analytics & Monitoring": { color: "#005571" },
+  "AI & Machine Learning": { color: "#0078d4" },
   "default": { color: "#6b7280" }
 };
 
