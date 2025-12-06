@@ -579,6 +579,151 @@ export const BLUEPRINTS = [
     estimatedMonthlyCost: 35
   },
   {
+    id: "azure-container-app",
+    version: "1.0.0",
+    displayName: "Azure Container App",
+    description: "Deploy containerized apps with auto-scaling, HTTPS ingress, and rolling updates. Scale to zero when idle for cost savings. Perfect for web APIs, microservices, and ML inference endpoints.",
+    category: "Compute",
+    icon: "azure-container-app",
+    moduleSource: "../../modules/azure-container-app",
+    variables: [
+      {
+        name: "project_name",
+        label: "Project Name",
+        type: "string",
+        required: true,
+        placeholder: "mhd-inference",
+        helpText: "Short name for the container app"
+      },
+      {
+        name: "environment",
+        label: "Environment",
+        type: "select",
+        required: true,
+        options: ["dev", "qa", "staging", "prod"],
+        default: "dev"
+      },
+      {
+        name: "subscription_id",
+        label: "Azure Subscription",
+        type: "string",
+        required: true
+      },
+      {
+        name: "resource_group_name",
+        label: "Resource Group Name",
+        type: "string",
+        required: true
+      },
+      {
+        name: "location",
+        label: "Location",
+        type: "select",
+        required: true,
+        options: ["eastus", "eastus2", "westus", "westus2", "westus3", "centralus", "northcentralus", "southcentralus", "westcentralus"],
+        default: "eastus2"
+      },
+      {
+        name: "container_image",
+        label: "Container Image",
+        type: "string",
+        required: true,
+        default: "mlacrmhd364x9k.azurecr.io/mhd-inference:latest",
+        placeholder: "myacr.azurecr.io/myapp:latest",
+        helpText: "Full container image path including registry and tag"
+      },
+      {
+        name: "container_registry_server",
+        label: "Registry Server (optional)",
+        type: "string",
+        required: false,
+        placeholder: "myacr.azurecr.io",
+        helpText: "Required for private registries. Leave empty for public images."
+      },
+      {
+        name: "cpu_cores",
+        label: "CPU Cores",
+        type: "select",
+        required: true,
+        options: ["0.25", "0.5", "0.75", "1", "1.25", "1.5", "1.75", "2"],
+        default: "0.5"
+      },
+      {
+        name: "memory_gb",
+        label: "Memory (GB)",
+        type: "select",
+        required: true,
+        options: ["0.5", "1", "1.5", "2", "3", "4"],
+        default: "1"
+      },
+      {
+        name: "target_port",
+        label: "Container Port",
+        type: "string",
+        required: true,
+        default: "8000",
+        helpText: "Port your container listens on"
+      },
+      {
+        name: "min_replicas",
+        label: "Min Replicas",
+        type: "select",
+        required: false,
+        options: ["0", "1", "2", "3"],
+        default: "0",
+        helpText: "0 = scale to zero when idle (saves costs)"
+      },
+      {
+        name: "max_replicas",
+        label: "Max Replicas",
+        type: "select",
+        required: false,
+        options: ["1", "2", "3", "5", "10"],
+        default: "3"
+      },
+      {
+        name: "ingress_external",
+        label: "External Access",
+        type: "select",
+        required: false,
+        options: ["true", "false"],
+        default: "true",
+        helpText: "Allow public internet access"
+      }
+    ],
+    outputs: [
+      {
+        name: "container_app_name",
+        description: "Container App name"
+      },
+      {
+        name: "container_app_environment_name",
+        description: "Container App Environment name"
+      },
+      {
+        name: "fqdn",
+        description: "Fully qualified domain name"
+      },
+      {
+        name: "url",
+        description: "URL to access the container app"
+      },
+      {
+        name: "resource_group_name",
+        description: "Resource group name"
+      }
+    ],
+    estimatedMonthlyCost: 0,
+    costDetails: {
+      description: "Pay-per-use with scale-to-zero capability",
+      vCPU: "~$0.000024/vCPU-second (~$14.60/month for 0.5 vCPU always-on)",
+      memory: "~$0.000003/GiB-second (~$1.80/month for 1GB always-on)",
+      requests: "First 2M requests/month free, then $0.40 per million",
+      scaleToZero: "With min_replicas=0, costs nothing when idle",
+      comparison: "55% cheaper than ACI ($35/mo) for always-on. Free when idle."
+    }
+  },
+  {
     id: "azure-postgres-flexible",
     version: "0.0.1",
     displayName: "PostgreSQL Flexible Server",

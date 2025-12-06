@@ -88,6 +88,21 @@ const serviceIcons = {
     ),
     color: "#0078d4"
   },
+  "azure-container-app": {
+    // Azure Container Apps icon - modern serverless containers
+    icon: (
+      <svg width="24" height="24" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M2 4a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V4z" fill="#0078D4"/>
+        <path d="M5 5h3v3H5V5z" fill="#50E6FF"/>
+        <path d="M10 5h3v3h-3V5z" fill="#50E6FF"/>
+        <path d="M5 10h3v3H5v-3z" fill="#50E6FF"/>
+        <path d="M10 10h3v3h-3v-3z" fill="#50E6FF"/>
+        <circle cx="13" cy="13" r="4" fill="#fff"/>
+        <path d="M11 13h4M13 11v4" stroke="#0078D4" strokeWidth="1.5" strokeLinecap="round"/>
+      </svg>
+    ),
+    color: "#0078d4"
+  },
   "azure-postgres-flexible": {
     // Official Azure Database for PostgreSQL icon
     icon: (
