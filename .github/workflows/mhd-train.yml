@@ -102,6 +102,7 @@ jobs:
           path: |
             MHD/models/
             MHD/reports/
+            MHD/data/processed/feature_info.json
           retention-days: 90
 
       - name: Register model in Azure ML
