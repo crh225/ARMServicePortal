@@ -119,6 +119,10 @@ catalog:
       rules:
         - allow: [Template]
     - type: file
+      target: ./templates/azure-container-app/template.yaml
+      rules:
+        - allow: [Template]
+    - type: file
       target: ./templates/xp-building-blocks/template.yaml
       rules:
         - allow: [Template]

@@ -129,6 +129,11 @@ const useStyles = makeStyles(() => ({
 
 // Azure service icons mapping
 const serviceIcons: Record<string, { icon: string; color: string; bgColor: string }> = {
+  'azure-container-app': {
+    icon: 'https://raw.githubusercontent.com/Azure/azure-icons/main/icons/Container%20Apps.svg',
+    color: '#0078d4',
+    bgColor: 'rgba(0, 120, 212, 0.1)',
+  },
   'azure-container-instance': {
     icon: 'https://raw.githubusercontent.com/Azure/azure-icons/main/icons/Container%20Instances.svg',
     color: '#0078d4',
