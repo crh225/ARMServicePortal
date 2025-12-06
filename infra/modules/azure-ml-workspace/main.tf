@@ -96,6 +96,12 @@ variable "compute_cluster_priority" {
   default     = "LowPriority"
 }
 
+variable "create_compute_cluster" {
+  type        = bool
+  description = "Whether to create the compute cluster (requires vCPU quota - check your subscription limits)"
+  default     = false
+}
+
 locals {
   # ARM Portal required tags
   armportal_tags = {
@@ -206,8 +212,9 @@ resource "azurerm_machine_learning_workspace" "ml_workspace" {
   tags = local.all_tags
 }
 
-# Compute Cluster for training jobs
+# Compute Cluster for training jobs (optional - requires vCPU quota)
 resource "azurerm_machine_learning_compute_cluster" "training_cluster" {
+  count                         = var.create_compute_cluster ? 1 : 0
   name                          = "training-cluster"
   location                      = var.location
   machine_learning_workspace_id = azurerm_machine_learning_workspace.ml_workspace.id
@@ -227,19 +234,25 @@ resource "azurerm_machine_learning_compute_cluster" "training_cluster" {
   tags = local.all_tags
 }
 
-# Role assignment for ML workspace to access storage
-resource "azurerm_role_assignment" "ml_storage_contributor" {
-  scope                = azurerm_storage_account.ml_storage.id
-  role_definition_name = "Storage Blob Data Contributor"
-  principal_id         = azurerm_machine_learning_workspace.ml_workspace.identity[0].principal_id
-}
+# Note: Azure ML Workspace automatically gets necessary permissions via its managed identity.
+# These explicit role assignments are commented out to avoid "already exists" conflicts.
+# Uncomment if you need to explicitly manage RBAC permissions.
 
-# Role assignment for ML workspace to access Key Vault
-resource "azurerm_role_assignment" "ml_keyvault_secrets" {
-  scope                = azurerm_key_vault.ml_keyvault.id
-  role_definition_name = "Key Vault Secrets Officer"
-  principal_id         = azurerm_machine_learning_workspace.ml_workspace.identity[0].principal_id
-}
+# # Role assignment for ML workspace to access storage
+# resource "azurerm_role_assignment" "ml_storage_contributor" {
+#   scope                = azurerm_storage_account.ml_storage.id
+#   role_definition_name = "Storage Blob Data Contributor"
+#   principal_id         = azurerm_machine_learning_workspace.ml_workspace.identity[0].principal_id
+#   skip_service_principal_aad_check = true
+# }
+
+# # Role assignment for ML workspace to access Key Vault
+# resource "azurerm_role_assignment" "ml_keyvault_secrets" {
+#   scope                = azurerm_key_vault.ml_keyvault.id
+#   role_definition_name = "Key Vault Secrets Officer"
+#   principal_id         = azurerm_machine_learning_workspace.ml_workspace.identity[0].principal_id
+#   skip_service_principal_aad_check = true
+# }
 
 # Outputs
 output "workspace_name" {
@@ -291,8 +304,8 @@ output "application_insights_connection_string" {
 }
 
 output "compute_cluster_name" {
-  description = "Training compute cluster name"
-  value       = azurerm_machine_learning_compute_cluster.training_cluster.name
+  description = "Training compute cluster name (empty if not created)"
+  value       = var.create_compute_cluster ? azurerm_machine_learning_compute_cluster.training_cluster[0].name : ""
 }
 
 output "key_vault_name" {

@@ -1123,6 +1123,15 @@ export const BLUEPRINTS = [
         helpText: "Low Priority = 60-80% cheaper, but can be preempted. Use Dedicated for production."
       },
       {
+        name: "create_compute_cluster",
+        label: "Create Compute Cluster",
+        type: "select",
+        required: false,
+        options: ["false", "true"],
+        default: "false",
+        helpText: "Requires vCPU quota in your subscription. Check Azure ML quotas first. Leave false to create cluster later via Azure Portal."
+      },
+      {
         name: "storage_account_tier",
         label: "Storage Tier",
         type: "select",
