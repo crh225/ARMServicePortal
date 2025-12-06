@@ -99,13 +99,13 @@ jobs:
             MHD/reports/
           retention-days: 90
 
-      - name: Upload to Azure ML (if configured)
-        if: ${{ secrets.AZURE_CREDENTIALS != '' }}
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      # Optional: Register model in Azure ML
+      # Optional: Upload to Azure ML (requires AZURE_CREDENTIALS secret)
+      # Uncomment below to enable Azure ML integration
+      # - name: Azure Login
+      #   uses: azure/login@v1
+      #   with:
+      #     creds: ${{ secrets.AZURE_CREDENTIALS }}
+      #
       # - name: Register model in Azure ML
       #   run: |
       #     az extension add -n ml
