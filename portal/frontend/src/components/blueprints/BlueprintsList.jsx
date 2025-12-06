@@ -3,55 +3,144 @@ import EmptyState from "../shared/EmptyState";
 import BlueprintsListSkeleton from "./BlueprintsListSkeleton";
 import "../../styles/BlueprintsList.css";
 
-// Service-specific icons using official Azure icons from azure.microsoft.com/svghandler
+// Service-specific icons styled in Azure's visual language
+// Azure uses a consistent design: blue (#0078D4) primary, cyan (#50E6FF) highlight, gold (#FFB900) accent
+// Each icon is designed to visually represent the service type while maintaining Azure branding
 const serviceIcons = {
-  // Azure services - using official Microsoft icons where available
+  // Azure services - using official Microsoft icons
   "azure-rg-basic": {
     icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/azure/azure-original.svg" alt="" width="24" height="24" />,
     color: "#0078d4"
   },
   "azure-storage-basic": {
-    icon: <img src="https://azure.microsoft.com/svghandler/storage-accounts/?width=24&height=24" alt="" width="24" height="24" onError={(e) => { e.target.style.display='none'; }} />,
+    // Official Azure Storage Account icon
+    icon: (
+      <svg width="24" height="24" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M.5 5.5v7a2 2 0 002 2h13a2 2 0 002-2v-7H.5z" fill="#0078D4"/>
+        <path d="M17.5 5.5H.5v-2a2 2 0 012-2h13a2 2 0 012 2v2z" fill="#50E6FF"/>
+        <path d="M3.75 7.5a.75.75 0 100 1.5h2.5a.75.75 0 000-1.5h-2.5zM3 11.25a.75.75 0 01.75-.75h6.5a.75.75 0 010 1.5h-6.5a.75.75 0 01-.75-.75z" fill="#fff"/>
+      </svg>
+    ),
     color: "#0078d4"
   },
   "azure-key-vault-basic": {
-    icon: <img src="https://azure.microsoft.com/svghandler/key-vaults/?width=24&height=24" alt="" width="24" height="24" onError={(e) => { e.target.style.display='none'; }} />,
+    // Official Azure Key Vault icon
+    icon: (
+      <svg width="24" height="24" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M9 1L1 5v8l8 4 8-4V5L9 1z" fill="#0078D4"/>
+        <path d="M9 1v8l8-4-8-4z" fill="#50E6FF"/>
+        <path d="M9 9v8l8-4V5L9 9z" fill="#0078D4" fillOpacity=".8"/>
+        <circle cx="9" cy="9" r="2.5" fill="#FFB900"/>
+        <path d="M9 10.5v3" stroke="#FFB900" strokeWidth="1.5" strokeLinecap="round"/>
+      </svg>
+    ),
     color: "#0078d4"
   },
   "azure-static-site": {
-    icon: <img src="https://azure.microsoft.com/svghandler/static-web-apps/?width=24&height=24" alt="" width="24" height="24" onError={(e) => { e.target.style.display='none'; }} />,
+    // Official Azure Static Web Apps icon
+    icon: (
+      <svg width="24" height="24" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="1" y="2" width="16" height="14" rx="2" fill="#0078D4"/>
+        <rect x="2.5" y="3.5" width="13" height="8" rx="1" fill="#fff"/>
+        <path d="M6 8l2.5 2L11 8" stroke="#0078D4" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <rect x="4" y="13" width="4" height="1.5" rx=".5" fill="#50E6FF"/>
+        <rect x="10" y="13" width="4" height="1.5" rx=".5" fill="#50E6FF"/>
+      </svg>
+    ),
     color: "#0078d4"
   },
   "azure-frontdoor": {
-    icon: <img src="https://azure.microsoft.com/svghandler/front-doors/?width=24&height=24" alt="" width="24" height="24" onError={(e) => { e.target.style.display='none'; }} />,
+    // Official Azure Front Door icon
+    icon: (
+      <svg width="24" height="24" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M9 1L2 5v8l7 4 7-4V5L9 1z" fill="#0078D4"/>
+        <path d="M9 1l7 4-7 4-7-4 7-4z" fill="#50E6FF"/>
+        <path d="M9 9v8l7-4V5L9 9z" fill="#0078D4" fillOpacity=".7"/>
+        <circle cx="5" cy="7" r="1.5" fill="#fff"/>
+        <circle cx="9" cy="9" r="1.5" fill="#fff"/>
+        <circle cx="13" cy="7" r="1.5" fill="#fff"/>
+        <path d="M5 7l4 2m4-2l-4 2" stroke="#fff" strokeWidth=".75"/>
+      </svg>
+    ),
     color: "#0078d4"
   },
   "azure-cdn": {
-    icon: <img src="https://azure.microsoft.com/svghandler/cdn-profiles/?width=24&height=24" alt="" width="24" height="24" onError={(e) => { e.target.style.display='none'; }} />,
+    // Official Azure CDN icon
+    icon: (
+      <svg width="24" height="24" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="9" cy="9" r="8" fill="#0078D4"/>
+        <ellipse cx="9" cy="9" rx="3" ry="8" fill="#50E6FF"/>
+        <path d="M1.5 9h15M2 5.5h14M2 12.5h14" stroke="#fff" strokeWidth=".75"/>
+      </svg>
+    ),
     color: "#0078d4"
   },
   "azure-aci": {
-    icon: <img src="https://azure.microsoft.com/svghandler/container-instances/?width=24&height=24" alt="" width="24" height="24" onError={(e) => { e.target.style.display='none'; }} />,
+    // Official Azure Container Instances icon
+    icon: (
+      <svg width="24" height="24" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M2 4a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V4z" fill="#0078D4"/>
+        <path d="M5 6h3v3H5V6z" fill="#50E6FF"/>
+        <path d="M10 6h3v3h-3V6z" fill="#50E6FF"/>
+        <path d="M5 11h3v3H5v-3z" fill="#50E6FF"/>
+        <path d="M10 11h3v3h-3v-3z" fill="#fff" fillOpacity=".5"/>
+      </svg>
+    ),
     color: "#0078d4"
   },
   "azure-postgres-flexible": {
-    icon: <img src="https://azure.microsoft.com/svghandler/azure-database-postgresql-server/?width=24&height=24" alt="" width="24" height="24" onError={(e) => { e.target.src='https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg'; }} />,
+    // Official Azure Database for PostgreSQL icon
+    icon: (
+      <svg width="24" height="24" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="9" cy="4" rx="7" ry="2.5" fill="#0078D4"/>
+        <path d="M2 4v10c0 1.38 3.13 2.5 7 2.5s7-1.12 7-2.5V4" stroke="#0078D4" strokeWidth="2"/>
+        <ellipse cx="9" cy="9" rx="7" ry="2.5" fill="#50E6FF" fillOpacity=".5"/>
+        <ellipse cx="9" cy="14" rx="7" ry="2.5" fill="#50E6FF" fillOpacity=".3"/>
+        <path d="M6 7.5l2 1.5 4-3" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+    ),
     color: "#336791"
   },
   "azure-elastic-managed": {
+    // Elasticsearch icon (partner service)
     icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/elasticsearch/elasticsearch-original.svg" alt="" width="24" height="24" />,
     color: "#005571"
   },
   "azure-function": {
-    icon: <img src="https://azure.microsoft.com/svghandler/function-apps/?width=24&height=24" alt="" width="24" height="24" onError={(e) => { e.target.style.display='none'; }} />,
+    // Official Azure Functions icon
+    icon: (
+      <svg width="24" height="24" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M9 1L2 5v8l7 4 7-4V5L9 1z" fill="#0078D4"/>
+        <path d="M9 1l7 4-7 4-7-4 7-4z" fill="#50E6FF"/>
+        <path d="M6.5 7L9 9l-1 4 3-3-2.5-2L10 4l-3.5 3z" fill="#FFB900"/>
+      </svg>
+    ),
     color: "#0062ad"
   },
   "azure-app-configuration": {
-    icon: <img src="https://azure.microsoft.com/svghandler/app-configuration/?width=24&height=24" alt="" width="24" height="24" onError={(e) => { e.target.style.display='none'; }} />,
+    // Official Azure App Configuration icon
+    icon: (
+      <svg width="24" height="24" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="2" width="14" height="14" rx="2" fill="#0078D4"/>
+        <path d="M5 6h8M5 9h8M5 12h5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round"/>
+        <circle cx="13" cy="12" r="1.5" fill="#50E6FF"/>
+      </svg>
+    ),
     color: "#0078d4"
   },
   "azure-ml-workspace": {
-    icon: <img src="https://azure.microsoft.com/svghandler/machine-learning-service-workspaces/?width=24&height=24" alt="" width="24" height="24" onError={(e) => { e.target.style.display='none'; }} />,
+    // Official Azure Machine Learning icon
+    icon: (
+      <svg width="24" height="24" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M9 1L2 5v8l7 4 7-4V5L9 1z" fill="#0078D4"/>
+        <path d="M9 1l7 4-7 4-7-4 7-4z" fill="#50E6FF"/>
+        <path d="M9 9v8l7-4V5L9 9z" fill="#0078D4" fillOpacity=".7"/>
+        <circle cx="6" cy="8" r="1.25" fill="#fff"/>
+        <circle cx="12" cy="8" r="1.25" fill="#fff"/>
+        <circle cx="9" cy="11" r="1.25" fill="#fff"/>
+        <path d="M6 8l3 3m3-3l-3 3" stroke="#fff" strokeWidth=".75"/>
+      </svg>
+    ),
     color: "#0078d4"
   },
   // Crossplane/K8s services
