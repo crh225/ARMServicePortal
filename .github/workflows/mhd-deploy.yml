@@ -38,7 +38,7 @@ jobs:
       - name: Download latest model (if available)
         uses: dawidd6/action-download-artifact@v3
         with:
-          workflow: train.yml
+          workflow: mhd-train.yml
           name: trained-model
           path: MHD/
           if_no_artifact_found: warn
@@ -101,7 +101,7 @@ jobs:
       - name: Download latest model (if available)
         uses: dawidd6/action-download-artifact@v3
         with:
-          workflow: train.yml
+          workflow: mhd-train.yml
           name: trained-model
           path: MHD/
           if_no_artifact_found: warn
