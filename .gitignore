@@ -152,3 +152,4 @@ nul
 # Temporary Crossplane test manifests
 infra/crossplane/examples/*-test.yaml
 infra/crossplane/examples/*-temp.yaml
+PROJECT.MD

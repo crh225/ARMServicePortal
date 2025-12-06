@@ -1034,6 +1034,150 @@ export const BLUEPRINTS = [
       standard: "Standard tier: $1.20/day (~$36/month) + $0.06 per 10,000 requests over 200K"
     }
   },
+  {
+    id: "azure-ml-workspace",
+    version: "1.0.0",
+    displayName: "Azure Machine Learning Workspace",
+    description: "Complete Azure ML environment with workspace, storage, compute cluster, container registry, and Key Vault. Perfect for MLOps workflows, model training, and deployment.",
+    category: "AI & Machine Learning",
+    moduleSource: "../../modules/azure-ml-workspace",
+    variables: [
+      {
+        name: "project_name",
+        label: "Project Name",
+        type: "string",
+        required: true,
+        placeholder: "mhd",
+        helpText: "Short name for the ML project (lowercase, no spaces)"
+      },
+      {
+        name: "environment",
+        label: "Environment",
+        type: "select",
+        required: true,
+        options: ["dev", "qa", "staging", "prod"],
+        default: "dev"
+      },
+      {
+        name: "subscription_id",
+        label: "Azure Subscription",
+        type: "string",
+        required: true
+      },
+      {
+        name: "resource_group_name",
+        label: "Resource Group Name",
+        type: "string",
+        required: true
+      },
+      {
+        name: "location",
+        label: "Location",
+        type: "select",
+        required: true,
+        options: ["eastus", "eastus2", "westus", "westus2", "westus3", "centralus", "northcentralus", "southcentralus", "westcentralus"],
+        default: "eastus2"
+      },
+      {
+        name: "sku_name",
+        label: "Workspace SKU",
+        type: "select",
+        required: false,
+        options: ["Basic", "Enterprise"],
+        default: "Basic",
+        helpText: "Basic is sufficient for most workloads. Enterprise adds advanced features."
+      },
+      {
+        name: "compute_cluster_vm_size",
+        label: "Compute VM Size",
+        type: "select",
+        required: false,
+        options: ["Standard_DS2_v2", "Standard_DS3_v2", "Standard_DS4_v2", "Standard_NC6", "Standard_NC12"],
+        default: "Standard_DS2_v2",
+        helpText: "DS series for general compute, NC series for GPU workloads"
+      },
+      {
+        name: "compute_cluster_min_nodes",
+        label: "Min Compute Nodes",
+        type: "select",
+        required: false,
+        options: ["0", "1", "2"],
+        default: "0",
+        helpText: "Set to 0 to scale down when not in use (saves costs)"
+      },
+      {
+        name: "compute_cluster_max_nodes",
+        label: "Max Compute Nodes",
+        type: "select",
+        required: false,
+        options: ["1", "2", "4", "8"],
+        default: "2"
+      },
+      {
+        name: "compute_cluster_priority",
+        label: "Compute Priority",
+        type: "select",
+        required: false,
+        options: ["LowPriority", "Dedicated"],
+        default: "LowPriority",
+        helpText: "Low Priority = 60-80% cheaper, but can be preempted. Use Dedicated for production."
+      },
+      {
+        name: "storage_account_tier",
+        label: "Storage Tier",
+        type: "select",
+        required: false,
+        options: ["Standard", "Premium"],
+        default: "Standard"
+      },
+      {
+        name: "storage_account_replication",
+        label: "Storage Replication",
+        type: "select",
+        required: false,
+        options: ["LRS", "GRS", "RAGRS", "ZRS"],
+        default: "LRS",
+        helpText: "LRS is cheapest. Use GRS/ZRS for production data redundancy."
+      }
+    ],
+    outputs: [
+      {
+        name: "workspace_name",
+        description: "Azure ML Workspace name"
+      },
+      {
+        name: "workspace_url",
+        description: "Azure ML Studio URL"
+      },
+      {
+        name: "storage_account_name",
+        description: "Storage account for ML data"
+      },
+      {
+        name: "container_registry_login_server",
+        description: "Container registry for ML models"
+      },
+      {
+        name: "compute_cluster_name",
+        description: "Training compute cluster name"
+      },
+      {
+        name: "key_vault_name",
+        description: "Key Vault for secrets"
+      }
+    ],
+    estimatedMonthlyCost: 15,
+    costDetails: {
+      description: "Cost depends on compute usage. Workspace itself is free.",
+      workspace: "Free (no monthly charge for workspace)",
+      storage: "~$2/month for 10GB Standard LRS",
+      compute: "DS2_v2: ~$0.17/hr. With min=0, only pay when running jobs.",
+      lowPriority: "Low Priority VMs are 60-80% cheaper than Dedicated",
+      keyVault: "~$0.03/month",
+      containerRegistry: "Basic SKU: ~$5/month",
+      appInsights: "Free tier up to 5GB/month"
+    }
+  },
   // ============================================================
   // CROSSPLANE BUILDING BLOCKS
   // ============================================================
