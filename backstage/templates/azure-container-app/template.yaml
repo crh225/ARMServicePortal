@@ -1,0 +1,155 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: azure-container-app
+  title: Azure Container App
+  description: Deploy a containerized application using Azure Container Apps. Features auto-scaling, HTTPS ingress, rolling updates, and integration with Azure Container Registry.
+  annotations:
+    backstage.io/techdocs-entity: url:https://learn.microsoft.com/en-us/azure/container-apps/
+  links:
+    - url: https://azure.microsoft.com/en-us/products/container-apps/
+      title: Azure Container Apps
+      icon: dashboard
+  tags:
+    - azure
+    - infrastructure
+    - container
+    - compute
+    - kubernetes
+spec:
+  owner: platform-team
+  type: infrastructure
+
+  parameters:
+    - title: Container Configuration
+      required:
+        - project_name
+        - environment
+        - resource_group_name
+        - location
+        - container_image
+      properties:
+        project_name:
+          title: Project Name
+          type: string
+          description: Short name for the container app (e.g., mhd-inference)
+          ui:autofocus: true
+        environment:
+          title: Environment
+          type: string
+          default: dev
+          enum: [dev, qa, staging, prod]
+        resource_group_name:
+          title: Resource Group
+          type: string
+          description: Select an existing Azure resource group
+          ui:field: AzureResourceGroupPicker
+        location:
+          title: Azure Region
+          type: string
+          default: eastus2
+          enum: [eastus, eastus2, westus, westus2, westus3, centralus, northcentralus, southcentralus, westcentralus]
+        container_image:
+          title: Container Image
+          type: string
+          description: Full container image path (e.g., myacr.azurecr.io/myapp:latest)
+          ui:field: ContainerImagePicker
+
+    - title: Container Registry (Optional)
+      description: Configure private registry credentials if your image is in a private ACR
+      properties:
+        container_registry_server:
+          title: Registry Server
+          type: string
+          description: Container registry server URL (e.g., myacr.azurecr.io)
+        container_registry_username:
+          title: Registry Username
+          type: string
+          description: Username for private registry authentication
+          ui:widget: password
+        container_registry_password:
+          title: Registry Password
+          type: string
+          description: Password for private registry authentication
+          ui:widget: password
+
+    - title: Resource Allocation
+      properties:
+        cpu_cores:
+          title: CPU Cores
+          type: string
+          default: "0.5"
+          enum: ["0.25", "0.5", "0.75", "1", "1.25", "1.5", "1.75", "2"]
+          enumNames:
+            - 0.25 vCPU
+            - 0.5 vCPU
+            - 0.75 vCPU
+            - 1 vCPU
+            - 1.25 vCPU
+            - 1.5 vCPU
+            - 1.75 vCPU
+            - 2 vCPU
+        memory_gb:
+          title: Memory (GB)
+          type: string
+          default: "1"
+          enum: ["0.5", "1", "1.5", "2", "3", "4"]
+          enumNames:
+            - 0.5 GB
+            - 1 GB
+            - 1.5 GB
+            - 2 GB
+            - 3 GB
+            - 4 GB
+        target_port:
+          title: Container Port
+          type: number
+          default: 8000
+          description: Port your container listens on
+
+    - title: Scaling & Networking
+      properties:
+        min_replicas:
+          title: Minimum Replicas
+          type: number
+          default: 0
+          description: Minimum number of container instances (0 = scale to zero)
+        max_replicas:
+          title: Maximum Replicas
+          type: number
+          default: 3
+          description: Maximum number of container instances for auto-scaling
+        ingress_external:
+          title: External Ingress
+          type: boolean
+          default: true
+          description: Allow public access to the container app
+
+  steps:
+    - id: provision
+      name: Provision Container App
+      action: arm-portal:provision
+      input:
+        blueprintId: azure-container-app
+        parameters:
+          project_name: ${{ parameters.project_name }}
+          environment: ${{ parameters.environment }}
+          resource_group_name: ${{ parameters.resource_group_name }}
+          location: ${{ parameters.location }}
+          container_image: ${{ parameters.container_image }}
+          container_registry_server: ${{ parameters.container_registry_server }}
+          container_registry_username: ${{ parameters.container_registry_username }}
+          container_registry_password: ${{ parameters.container_registry_password }}
+          cpu_cores: ${{ parameters.cpu_cores }}
+          memory_gb: ${{ parameters.memory_gb }}
+          target_port: ${{ parameters.target_port }}
+          min_replicas: ${{ parameters.min_replicas }}
+          max_replicas: ${{ parameters.max_replicas }}
+          ingress_external: ${{ parameters.ingress_external }}
+
+  output:
+    links:
+      - title: View Provisioning Job
+        url: ${{ steps.provision.output.jobUrl }}
+      - title: View Pull Request
+        url: ${{ steps.provision.output.prUrl }}
