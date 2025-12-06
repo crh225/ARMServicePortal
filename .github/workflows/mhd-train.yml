@@ -66,6 +66,11 @@ jobs:
           name: raw-data
           path: MHD/data/raw
 
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -99,20 +104,13 @@ jobs:
             MHD/reports/
           retention-days: 90
 
-      # Optional: Upload to Azure ML (requires AZURE_CREDENTIALS secret)
-      # Uncomment below to enable Azure ML integration
-      # - name: Azure Login
-      #   uses: azure/login@v1
-      #   with:
-      #     creds: ${{ secrets.AZURE_CREDENTIALS }}
-      #
-      # - name: Register model in Azure ML
-      #   run: |
-      #     az extension add -n ml
-      #     az ml model create --name memphis-housing-model \
-      #       --path MHD/models/ \
-      #       --workspace-name ${{ env.AZURE_ML_WORKSPACE }} \
-      #       --resource-group ${{ env.AZURE_RESOURCE_GROUP }}
+      - name: Register model in Azure ML
+        run: |
+          az extension add -n ml
+          az ml model create --name memphis-housing-model \
+            --path MHD/models/ \
+            --workspace-name ${{ env.AZURE_ML_WORKSPACE }} \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }}
 
   report:
     name: Generate Training Report
