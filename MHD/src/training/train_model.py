@@ -14,10 +14,16 @@ import xgboost as xgb
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
 # MLflow for experiment tracking
+import os
 try:
     import mlflow
     import mlflow.xgboost
     MLFLOW_AVAILABLE = True
+    # Disable Azure ML tracking in CI (no interactive auth)
+    tracking_uri = os.environ.get('MLFLOW_TRACKING_URI', '')
+    if tracking_uri.startswith('azureml://') and not os.environ.get('AZURE_CREDENTIALS'):
+        print("Azure ML tracking URI detected but no credentials - using local MLflow")
+        mlflow.set_tracking_uri('')  # Use local tracking
 except ImportError:
     MLFLOW_AVAILABLE = False
     print("MLflow not available - training will proceed without experiment tracking")
