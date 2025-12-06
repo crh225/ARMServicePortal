@@ -110,6 +110,17 @@ export async function estimateBlueprintCost(blueprintId, variables, blueprint = 
       estimates.push(aciCost);
       break;
 
+    case "azure-container-app":
+      const acaCost = await estimateContainerAppCost(
+        location,
+        parseFloat(variables.cpu_cores || "0.5"),
+        parseFloat(variables.memory_gb || "1"),
+        parseInt(variables.min_replicas || "0"),
+        parseInt(variables.max_replicas || "3")
+      );
+      estimates.push(...acaCost);
+      break;
+
     case "azure-postgres-flexible":
       const postgresCost = await estimatePostgresCost(
         location,
@@ -1027,6 +1038,78 @@ async function estimateFunctionCost(location, skuName, osType, runtimeStack) {
       appInsightsCost: appInsightsCost
     }
   };
+}
+
+/**
+ * Estimate Azure Container App costs
+ * Container Apps use consumption-based pricing with:
+ * - vCPU: ~$0.000024 per vCPU-second
+ * - Memory: ~$0.000003 per GiB-second
+ * - Requests: First 2M free, then $0.40 per million
+ * - Scale-to-zero: No cost when not running
+ */
+async function estimateContainerAppCost(location, cpuCores, memoryGb, minReplicas, maxReplicas) {
+  const estimates = [];
+
+  // Container Apps Environment has no base cost (consumption plan)
+  estimates.push({
+    resourceType: "Container App Environment",
+    skuName: "Consumption",
+    monthlyEstimate: 0,
+    currency: "USD",
+    note: "No base cost for consumption workload profile"
+  });
+
+  // If min_replicas = 0, show scale-to-zero info
+  if (minReplicas === 0) {
+    estimates.push({
+      resourceType: "Container App (Scale-to-Zero)",
+      skuName: `${cpuCores} vCPU, ${memoryGb}GB RAM`,
+      monthlyEstimate: 0,
+      currency: "USD",
+      note: "With min_replicas=0, no cost when idle. Charges only when handling requests."
+    });
+
+    // Estimate for occasional usage (assume 10% of month = ~72 hours)
+    const secondsActive = 72 * 60 * 60; // 72 hours
+    const cpuCost = cpuCores * 0.000024 * secondsActive;
+    const memoryCost = memoryGb * 0.000003 * secondsActive;
+    const intermittentCost = cpuCost + memoryCost;
+
+    estimates.push({
+      resourceType: "Estimated Usage (10% active)",
+      skuName: "~72 hours/month active",
+      monthlyEstimate: parseFloat(intermittentCost.toFixed(2)),
+      currency: "USD",
+      note: "If container runs ~10% of the month. Actual cost depends on traffic."
+    });
+  } else {
+    // Always-on pricing (min_replicas > 0)
+    const secondsPerMonth = 30 * 24 * 60 * 60; // ~2,592,000 seconds
+    const cpuCostPerReplica = cpuCores * 0.000024 * secondsPerMonth;
+    const memoryCostPerReplica = memoryGb * 0.000003 * secondsPerMonth;
+    const monthlyPerReplica = cpuCostPerReplica + memoryCostPerReplica;
+    const totalAlwaysOnCost = monthlyPerReplica * minReplicas;
+
+    estimates.push({
+      resourceType: "Container App (Always-On)",
+      skuName: `${cpuCores} vCPU, ${memoryGb}GB RAM x ${minReplicas} replica(s)`,
+      monthlyEstimate: parseFloat(totalAlwaysOnCost.toFixed(2)),
+      currency: "USD",
+      note: `${minReplicas} minimum replica(s) running 24/7. Additional replicas auto-scale up to ${maxReplicas}.`
+    });
+  }
+
+  // Request costs (estimate 1M requests/month, first 2M free)
+  estimates.push({
+    resourceType: "HTTP Requests",
+    skuName: "First 2M/month free",
+    monthlyEstimate: 0,
+    currency: "USD",
+    note: "First 2 million requests/month included. $0.40 per million after."
+  });
+
+  return estimates;
 }
 
 /**
