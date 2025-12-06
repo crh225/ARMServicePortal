@@ -16,7 +16,7 @@ module "azure-ml-workspace-3405f37a" {
   tags = {
     armportal-environment = "dev"
     armportal-blueprint   = "azure-ml-workspace"
-    armportal-request-id  = "azure-ml-workspace-3405f37a"
+    armportal-request-id  = "248"
   }
 }
 
