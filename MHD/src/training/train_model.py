@@ -17,7 +17,6 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 import os
 try:
     import mlflow
-    import mlflow.xgboost
     MLFLOW_AVAILABLE = True
     # Disable Azure ML tracking in CI (no interactive auth)
     tracking_uri = os.environ.get('MLFLOW_TRACKING_URI', '')
@@ -185,15 +184,11 @@ def train_with_mlflow(X_train, X_test, y_train, y_test, feature_cols: list,
             # Log metrics
             mlflow.log_metrics(metrics)
 
-            # Log model
-            mlflow.xgboost.log_model(model, "model")
-
-            # Save locally too
+            # Save model locally first
             model_path = save_model(model, output_dir, feature_cols, metrics)
 
-            # Log artifacts
-            mlflow.log_artifact(str(Path(output_dir) / 'feature_importance.csv'))
-            mlflow.log_artifact(str(Path(output_dir) / 'model_metadata.json'))
+            # Log model artifacts (using log_artifacts instead of log_model for Azure ML compatibility)
+            mlflow.log_artifacts(str(Path(output_dir)), artifact_path="model")
 
             print(f"\nMLflow run ID: {mlflow.active_run().info.run_id}")
 
