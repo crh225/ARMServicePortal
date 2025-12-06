@@ -112,7 +112,8 @@ resource "azurerm_automation_schedule" "start_aks" {
   frequency               = "Week"
   interval                = 1
   timezone                = "America/New_York"
-  start_time              = timeadd(timestamp(), "24h")
+  # Set to 9am EST tomorrow - the schedule will repeat weekly at this time
+  start_time              = "${formatdate("YYYY-MM-DD", timeadd(timestamp(), "24h"))}T09:00:00-05:00"
   description             = "Start AKS cluster at 9am EST on weekdays"
 
   week_days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
@@ -130,7 +131,8 @@ resource "azurerm_automation_schedule" "stop_aks" {
   frequency               = "Week"
   interval                = 1
   timezone                = "America/New_York"
-  start_time              = timeadd(timestamp(), "24h")
+  # Set to 9pm EST tomorrow - the schedule will repeat weekly at this time
+  start_time              = "${formatdate("YYYY-MM-DD", timeadd(timestamp(), "24h"))}T21:00:00-05:00"
   description             = "Stop AKS cluster at 9pm EST on weekdays"
 
   week_days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
