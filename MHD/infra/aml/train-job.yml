@@ -1,0 +1,56 @@
+# Azure ML Training Job Configuration
+# Run with: az ml job create --file train-job.yml --workspace-name mlws-mhd-dev --resource-group test3-dev-rg
+#
+# Azure Resources (provisioned via ARM Portal):
+#   Workspace: mlws-mhd-dev
+#   Resource Group: test3-dev-rg
+#   Storage: mlstormhd364x9k
+#   ACR: mlacrmhd364x9k.azurecr.io
+#   Key Vault: mlkvmhd364x9k
+
+$schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+
+experiment_name: memphis-housing-training
+display_name: Memphis Housing Price Model Training
+description: Train XGBoost model for Memphis housing price prediction
+
+compute: azureml:training-cluster
+
+environment:
+  image: mcr.microsoft.com/azureml/openmpi4.1.0-ubuntu20.04
+  conda_file: conda.yml
+
+code: ../../src/training
+
+command: >-
+  python generate_data.py &&
+  python prep_data.py --input ../../data/raw/memphis_housing.csv --output ../../data/processed &&
+  python train_model.py --data-dir ../../data/processed --output-dir ${{outputs.model}} &&
+  python evaluate.py --model-dir ${{outputs.model}} --data-dir ../../data/processed --output-dir ${{outputs.reports}}
+
+inputs:
+  n_samples:
+    type: integer
+    default: 5000
+
+outputs:
+  model:
+    type: uri_folder
+    mode: rw_mount
+  reports:
+    type: uri_folder
+    mode: rw_mount
+
+# Resource limits
+resources:
+  instance_count: 1
+
+# Timeout settings
+limits:
+  timeout: 7200  # 2 hours max
+
+# Tags for tracking
+tags:
+  project: memphis-housing-data
+  type: training
+  framework: xgboost

@@ -1,0 +1,167 @@
+# Memphis Housing Data - Deploy Inference Service
+# Builds and deploys the FastAPI prediction service
+
+name: MHD Deploy Service
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'MHD/src/serving/**'
+      - 'MHD/Dockerfile'
+  workflow_dispatch:
+
+env:
+  # GitHub Container Registry (for public images)
+  GHCR_REGISTRY: ghcr.io
+  GHCR_IMAGE_NAME: ${{ github.repository }}/mhd-inference
+  # Azure Container Registry (from ARM Portal provisioned ML Workspace)
+  AZURE_ACR_LOGIN_SERVER: mlacrmhd364x9k.azurecr.io
+  AZURE_ACR_NAME: mlacrmhd364x9k
+  AZURE_RESOURCE_GROUP: test3-dev-rg
+  AZURE_ML_WORKSPACE: mlws-mhd-dev
+
+jobs:
+  build:
+    name: Build Container Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download latest model (if available)
+        uses: dawidd6/action-download-artifact@v3
+        with:
+          workflow: train.yml
+          name: trained-model
+          path: MHD/
+          if_no_artifact_found: warn
+
+      - name: Create dummy model if not found
+        run: |
+          if [ ! -f "MHD/models/model.joblib" ]; then
+            echo "No trained model found - service will run in demo mode"
+            mkdir -p MHD/models
+            echo "{}" > MHD/models/model_metadata.json
+            mkdir -p MHD/data/processed
+            echo '{"feature_columns": [], "target_column": "sale_price"}' > MHD/data/processed/feature_info.json
+          fi
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.GHCR_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=
+            type=ref,event=branch
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push to GHCR
+        uses: docker/build-push-action@v5
+        with:
+          context: MHD
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  push-to-acr:
+    name: Push to Azure Container Registry
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+        continue-on-error: true
+
+      - name: Log in to Azure Container Registry
+        if: success()
+        run: |
+          az acr login --name ${{ env.AZURE_ACR_NAME }}
+
+      - name: Download latest model (if available)
+        uses: dawidd6/action-download-artifact@v3
+        with:
+          workflow: train.yml
+          name: trained-model
+          path: MHD/
+          if_no_artifact_found: warn
+
+      - name: Create dummy model if not found
+        run: |
+          if [ ! -f "MHD/models/model.joblib" ]; then
+            mkdir -p MHD/models
+            echo "{}" > MHD/models/model_metadata.json
+            mkdir -p MHD/data/processed
+            echo '{"feature_columns": [], "target_column": "sale_price"}' > MHD/data/processed/feature_info.json
+          fi
+
+      - name: Build and push to ACR
+        if: success()
+        run: |
+          docker build -t ${{ env.AZURE_ACR_LOGIN_SERVER }}/mhd-inference:latest MHD/
+          docker push ${{ env.AZURE_ACR_LOGIN_SERVER }}/mhd-inference:latest
+
+  deploy-dev:
+    name: Deploy to Dev
+    runs-on: ubuntu-latest
+    needs: [build, push-to-acr]
+    environment: development
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+        continue-on-error: true
+
+      - name: Deploy to Azure Container Apps
+        if: success()
+        run: |
+          az extension add -n containerapp --upgrade
+
+          az containerapp update \
+            --name mhd-inference-dev \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --image ${{ env.AZURE_ACR_LOGIN_SERVER }}/mhd-inference:latest \
+            || echo "Container App not found - create it first via ARM Portal"
+
+      - name: Deployment Summary
+        run: |
+          echo "## Deployment Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Images Built" >> $GITHUB_STEP_SUMMARY
+          echo "- **GHCR:** \`${{ env.GHCR_REGISTRY }}/${{ env.GHCR_IMAGE_NAME }}:latest\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **ACR:** \`${{ env.AZURE_ACR_LOGIN_SERVER }}/mhd-inference:latest\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Azure Resources" >> $GITHUB_STEP_SUMMARY
+          echo "- **ML Workspace:** ${{ env.AZURE_ML_WORKSPACE }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Resource Group:** ${{ env.AZURE_RESOURCE_GROUP }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### API Endpoints" >> $GITHUB_STEP_SUMMARY
+          echo "- Health: \`GET /health\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Predict: \`POST /predict\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Batch: \`POST /predict/batch\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Docs: \`GET /docs\`" >> $GITHUB_STEP_SUMMARY

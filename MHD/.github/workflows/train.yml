@@ -1,0 +1,149 @@
+# Memphis Housing Data - Training Pipeline
+# Runs training on Azure ML when changes are pushed to MHD/src/training
+
+name: MHD Training Pipeline
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'MHD/src/training/**'
+      - 'MHD/data/raw/**'
+  workflow_dispatch:
+    inputs:
+      n_samples:
+        description: 'Number of training samples to generate'
+        required: false
+        default: '5000'
+
+env:
+  AZURE_ML_WORKSPACE: mlws-mhd-dev
+  AZURE_RESOURCE_GROUP: test3-dev-rg
+  AZURE_STORAGE_ACCOUNT: mlstormhd364x9k
+  AZURE_ACR_NAME: mlacrmhd364x9k
+  MLFLOW_TRACKING_URI: azureml://eastus2.api.azureml.ms/mlflow/v1.0/subscriptions/f989de0f-8697-4a05-8c34-b82c941767c0/resourceGroups/test3-dev-rg/providers/Microsoft.MachineLearningServices/workspaces/mlws-mhd-dev
+
+jobs:
+  generate-data:
+    name: Generate Training Data
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install pandas numpy
+
+      - name: Generate Memphis housing data
+        run: |
+          cd MHD/src/training
+          python generate_data.py
+
+      - name: Upload data artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: raw-data
+          path: MHD/data/raw/memphis_housing.csv
+          retention-days: 30
+
+  train:
+    name: Train Model
+    runs-on: ubuntu-latest
+    needs: generate-data
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download data artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: raw-data
+          path: MHD/data/raw
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -r MHD/requirements.txt
+
+      - name: Prepare data
+        run: |
+          cd MHD/src/training
+          python prep_data.py --input ../../data/raw/memphis_housing.csv --output ../../data/processed
+
+      - name: Train model
+        run: |
+          cd MHD/src/training
+          python train_model.py --data-dir ../../data/processed --output-dir ../../models
+
+      - name: Evaluate model
+        run: |
+          cd MHD/src/training
+          python evaluate.py --model-dir ../../models --data-dir ../../data/processed --output-dir ../../reports
+
+      - name: Upload model artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: trained-model
+          path: |
+            MHD/models/
+            MHD/reports/
+          retention-days: 90
+
+      - name: Upload to Azure ML (if configured)
+        if: ${{ secrets.AZURE_CREDENTIALS != '' }}
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # Optional: Register model in Azure ML
+      # - name: Register model in Azure ML
+      #   run: |
+      #     az extension add -n ml
+      #     az ml model create --name memphis-housing-model \
+      #       --path MHD/models/ \
+      #       --workspace-name ${{ env.AZURE_ML_WORKSPACE }} \
+      #       --resource-group ${{ env.AZURE_RESOURCE_GROUP }}
+
+  report:
+    name: Generate Training Report
+    runs-on: ubuntu-latest
+    needs: train
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: trained-model
+          path: MHD/
+
+      - name: Create summary
+        run: |
+          echo "## Memphis Housing Model Training Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f "MHD/reports/evaluation_report.json" ]; then
+            echo "### Model Performance" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`json" >> $GITHUB_STEP_SUMMARY
+            cat MHD/reports/evaluation_report.json | head -30 >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ -f "MHD/models/model_metadata.json" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Model Metadata" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`json" >> $GITHUB_STEP_SUMMARY
+            cat MHD/models/model_metadata.json >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          fi
