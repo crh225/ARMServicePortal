@@ -1,80 +1,5 @@
-terraform {
-  required_providers {
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = "~> 4.0"
-    }
-    random = {
-      source  = "hashicorp/random"
-      version = "~> 3.0"
-    }
-  }
-}
-
 # Use the current ARM identity / service principal for tenant info
 data "azurerm_client_config" "current" {}
-
-variable "project_name" {
-  type        = string
-  description = "Short name of the project"
-}
-
-variable "environment" {
-  type        = string
-  description = "Environment (e.g. dev, prod)"
-}
-
-variable "resource_group_name" {
-  type        = string
-  description = "Existing resource group where the Key Vault will be created"
-}
-
-variable "location" {
-  type        = string
-  description = "Azure region for the Key Vault"
-}
-
-variable "sku_name" {
-  type        = string
-  description = "Key Vault SKU"
-  default     = "standard"
-}
-
-variable "soft_delete_retention_days" {
-  type        = number
-  description = "Soft delete retention in days"
-  default     = 7
-}
-
-variable "purge_protection_enabled" {
-  type        = bool
-  description = "Enable purge protection"
-  default     = true
-}
-
-variable "tags" {
-  type        = map(string)
-  description = "Additional tags to apply to resources"
-  default     = {}
-}
-
-variable "request_id" {
-  type        = string
-  description = "ARM Portal request ID (PR number)"
-  default     = null
-}
-
-variable "owner" {
-  type        = string
-  description = "ARM Portal owner"
-  default     = "crh225"
-}
-
-variable "log_analytics_workspace_id" {
-  type        = string
-  description = "Log Analytics workspace ID for diagnostic settings"
-  default     = null
-}
 
 locals {
   # Key Vault names must be 3–24 chars, alphanumeric, globally unique, and start with a letter.
@@ -140,16 +65,4 @@ resource "azurerm_monitor_diagnostic_setting" "keyvault_logs" {
   metric {
     category = "AllMetrics"
   }
-}
-
-output "key_vault_name" {
-  value = azurerm_key_vault.this.name
-}
-
-output "key_vault_uri" {
-  value = azurerm_key_vault.this.vault_uri
-}
-
-output "key_vault_id" {
-  value = azurerm_key_vault.this.id
 }

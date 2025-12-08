@@ -11,22 +11,36 @@ const __dirname = path.dirname(__filename);
 
 /**
  * Load blueprint template from module directory
+ * Reads all .tf files in the module directory and concatenates them
  * Checks: MODULES_PATH env var, /app/modules (Docker), or infra/modules (local dev)
  * @param {string} blueprintId - Blueprint ID
  * @returns {string|null} Template content or null if not found
  */
 export function loadBlueprintTemplate(blueprintId) {
-  const searchPaths = [
-    process.env.MODULES_PATH && path.join(process.env.MODULES_PATH, blueprintId, "main.tf"),
-    "/app/modules/" + blueprintId + "/main.tf",
-    path.join(__dirname, "..", "..", "..", "..", "..", "..", "infra", "modules", blueprintId, "main.tf"),
+  const searchDirs = [
+    process.env.MODULES_PATH && path.join(process.env.MODULES_PATH, blueprintId),
+    "/app/modules/" + blueprintId,
+    path.join(__dirname, "..", "..", "..", "..", "..", "..", "infra", "modules", blueprintId),
   ].filter(Boolean);
 
-  for (const modulePath of searchPaths) {
+  for (const moduleDir of searchDirs) {
     try {
-      if (fs.existsSync(modulePath)) {
-        console.log(`[BlueprintTemplateLoader] Loaded template from: ${modulePath}`);
-        return fs.readFileSync(modulePath, "utf8");
+      if (fs.existsSync(moduleDir) && fs.statSync(moduleDir).isDirectory()) {
+        // Read all .tf files in the directory
+        const tfFiles = fs.readdirSync(moduleDir)
+          .filter(file => file.endsWith('.tf'))
+          .sort(); // Sort for consistent ordering
+
+        if (tfFiles.length === 0) continue;
+
+        // Concatenate all .tf file contents
+        const contents = tfFiles.map(file => {
+          const filePath = path.join(moduleDir, file);
+          return fs.readFileSync(filePath, "utf8");
+        }).join("\n\n");
+
+        console.log(`[BlueprintTemplateLoader] Loaded ${tfFiles.length} .tf files from: ${moduleDir}`);
+        return contents;
       }
     } catch (error) {
       // Continue to next path

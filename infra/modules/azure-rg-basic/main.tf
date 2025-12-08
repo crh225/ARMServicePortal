@@ -1,46 +1,3 @@
-terraform {
-  required_providers {
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = "~> 4.0"
-    }
-  }
-}
-
-variable "project_name" {
-  type        = string
-  description = "Short name of the project"
-}
-
-variable "environment" {
-  type        = string
-  description = "Environment (dev, prod)"
-}
-
-variable "location" {
-  type        = string
-  description = "Azure region"
-  default     = "eastus2"
-}
-
-variable "tags" {
-  type        = map(string)
-  description = "Additional tags to apply to resources"
-  default     = {}
-}
-
-variable "request_id" {
-  type        = string
-  description = "ARM Portal request ID (PR number)"
-  default     = null
-}
-
-variable "owner" {
-  type        = string
-  description = "ARM Portal owner"
-  default     = "crh225"
-}
-
 locals {
   rg_name = "${var.project_name}-${var.environment}-rg"
 
@@ -65,8 +22,4 @@ resource "azurerm_resource_group" "this" {
   name     = local.rg_name
   location = var.location
   tags     = local.all_tags
-}
-
-output "resource_group_name" {
-  value = azurerm_resource_group.this.name
 }

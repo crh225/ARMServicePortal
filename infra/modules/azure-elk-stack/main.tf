@@ -4,19 +4,6 @@
  * Optimized for Node.js application logging via Winston or Pino
  */
 
-terraform {
-  required_providers {
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = "~> 4.0"
-    }
-    random = {
-      source  = "hashicorp/random"
-      version = "~> 3.0"
-    }
-  }
-}
-
 # Auto-generate secure password for Elasticsearch
 resource "random_password" "elasticsearch_password" {
   length  = 32
