@@ -1,0 +1,82 @@
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: "test8xplane-dev"
+  title: test8xplane (dev)
+  description: "Full-stack application deployed via ARM Portal Building Blocks"
+  labels:
+    armportal.chrishouse.io/blueprint: "xp-building-blocks"
+    armportal.chrishouse.io/environment: dev
+    armportal.chrishouse.io/provider: crossplane
+  annotations:
+    backstage.io/managed-by-location: "url:https://github.com/crh225/ARMServicePortal/blob/main/infra/crossplane/claims/test8xplane-dev/claims.yaml"
+    backstage.io/managed-by-origin-location: "url:https://github.com/crh225/ARMServicePortal/blob/main/infra/crossplane/claims/test8xplane-dev/claims.yaml"
+    armportal.chrishouse.io/request-id: "252"
+    armportal.chrishouse.io/created-by: crh225
+    armportal.chrishouse.io/provisioned-at: "2025-12-08T19:37:58.991Z"
+  tags:
+    - kubernetes
+    - crossplane
+    - dev
+    - "building-blocks"
+  links:
+    - url: "https://github.com/crh225/ARMServicePortal/blob/main/infra/crossplane/claims/test8xplane-dev/claims.yaml"
+      title: Crossplane Claims
+      icon: code
+    - url: "https://github.com/crh225/ARMServicePortal/pull/252"
+      title: Provisioning PR
+      icon: github
+spec:
+  owner: "user:crh225"
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: "test8xplane-cache-dev"
+  title: test8xplane Redis (dev)
+  description: Redis component for test8xplane
+  labels:
+    armportal.chrishouse.io/blueprint: "xp-building-blocks"
+    armportal.chrishouse.io/component: redis
+    armportal.chrishouse.io/environment: dev
+  annotations:
+    backstage.io/managed-by-location: "url:https://github.com/crh225/ARMServicePortal/blob/main/infra/crossplane/claims/test8xplane-dev/claims.yaml"
+    backstage.io/managed-by-origin-location: "url:https://github.com/crh225/ARMServicePortal/blob/main/infra/crossplane/claims/test8xplane-dev/claims.yaml"
+    backstage.io/kubernetes-id: "test8xplane-cache"
+    backstage.io/kubernetes-namespace: "test8xplane-dev"
+  tags:
+    - kubernetes
+    - crossplane
+    - dev
+    - redis
+spec:
+  type: cache
+  lifecycle: development
+  owner: "user:crh225"
+  system: "test8xplane-dev"
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: "test8xplane-mq-dev"
+  title: test8xplane RabbitMQ (dev)
+  description: RabbitMQ component for test8xplane
+  labels:
+    armportal.chrishouse.io/blueprint: "xp-building-blocks"
+    armportal.chrishouse.io/component: rabbitmq
+    armportal.chrishouse.io/environment: dev
+  annotations:
+    backstage.io/managed-by-location: "url:https://github.com/crh225/ARMServicePortal/blob/main/infra/crossplane/claims/test8xplane-dev/claims.yaml"
+    backstage.io/managed-by-origin-location: "url:https://github.com/crh225/ARMServicePortal/blob/main/infra/crossplane/claims/test8xplane-dev/claims.yaml"
+    backstage.io/kubernetes-id: "test8xplane-mq"
+    backstage.io/kubernetes-namespace: "test8xplane-dev"
+  tags:
+    - kubernetes
+    - crossplane
+    - dev
+    - rabbitmq
+spec:
+  type: "message-queue"
+  lifecycle: development
+  owner: "user:crh225"
+  system: "test8xplane-dev"

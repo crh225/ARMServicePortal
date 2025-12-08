@@ -40,6 +40,9 @@ spec:
         repoURL: https://github.com/crh225/ARMServicePortal.git
         targetRevision: main
         path: '{{ .path.path }}'
+        directory:
+          # Only include claims.yaml, exclude catalog-info.yaml (Backstage entities)
+          include: 'claims.yaml'
 
       destination:
         server: https://kubernetes.default.svc
