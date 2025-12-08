@@ -11,7 +11,6 @@ metadata:
     armportal.chrishouse.io/version: "2.0.0"
     armportal.chrishouse.io/request-id: "252"
     armportal.chrishouse.io/created-by: crh225
-    istio-injection: enabled
 ---
 apiVersion: platform.chrishouse.io/v1alpha1
 kind: RedisClaim

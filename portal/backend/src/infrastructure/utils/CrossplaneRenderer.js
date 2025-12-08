@@ -416,8 +416,7 @@ export function renderBuildingBlocksClaims({ blueprint, variables, prNumber, cre
       name: namespace,
       labels: {
         ...commonLabels,
-        "app.kubernetes.io/managed-by": "crossplane",
-        "istio-injection": "enabled"
+        "app.kubernetes.io/managed-by": "crossplane"
       }
     }
   };
