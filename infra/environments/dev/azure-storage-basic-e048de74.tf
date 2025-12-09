@@ -11,7 +11,7 @@ module "azure-storage-basic-e048de74" {
   tags = {
     armportal-environment = "dev"
     armportal-blueprint   = "azure-storage-basic"
-    armportal-request-id  = "azure-storage-basic-e048de74"
+    armportal-request-id  = "257"
   }
 }
 
