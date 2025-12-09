@@ -36,7 +36,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Download latest model (if available)
-        uses: dawidd6/action-download-artifact@v3
+        uses: dawidd6/action-download-artifact@v6
         with:
           workflow: mhd-train.yml
           name: trained-model
@@ -99,7 +99,7 @@ jobs:
           az acr login --name ${{ env.AZURE_ACR_NAME }}
 
       - name: Download latest model (if available)
-        uses: dawidd6/action-download-artifact@v3
+        uses: dawidd6/action-download-artifact@v6
         with:
           workflow: mhd-train.yml
           name: trained-model
