@@ -306,13 +306,19 @@ async function createCrossplaneRequest({
 
   const catalogInfoPath = getCatalogInfoPath(filePath);
 
+  // Get existing catalog file SHA if updating
+  const catalogFileSha = isUpdate
+    ? await getExistingFileSha(octokit, infraOwner, infraRepo, catalogInfoPath, baseBranch)
+    : null;
+
   await octokit.repos.createOrUpdateFileContents({
     owner: infraOwner,
     repo: infraRepo,
     path: catalogInfoPath,
     message: `chore: add Backstage catalog entry for ${claimName}`,
     content: Buffer.from(catalogInfoContent, "utf8").toString("base64"),
-    branch: branchName
+    branch: branchName,
+    ...(catalogFileSha && { sha: catalogFileSha })
   });
 
   return {
@@ -458,13 +464,19 @@ async function createBuildingBlocksRequest({
 
   const catalogInfoPath = getCatalogInfoPath(filePath);
 
+  // Get existing catalog file SHA if updating
+  const catalogFileSha = isUpdate
+    ? await getExistingFileSha(octokit, infraOwner, infraRepo, catalogInfoPath, baseBranch)
+    : null;
+
   await octokit.repos.createOrUpdateFileContents({
     owner: infraOwner,
     repo: infraRepo,
     path: catalogInfoPath,
     message: `chore: add Backstage catalog entries for ${appName} building blocks`,
     content: Buffer.from(catalogInfoContent, "utf8").toString("base64"),
-    branch: branchName
+    branch: branchName,
+    ...(catalogFileSha && { sha: catalogFileSha })
   });
 
   return {
@@ -598,13 +610,19 @@ async function createTerraformRequest({
 
   const catalogInfoPath = getCatalogInfoPath(filePath);
 
+  // Get existing catalog file SHA if updating
+  const catalogFileSha = isUpdate
+    ? await getExistingFileSha(octokit, infraOwner, infraRepo, catalogInfoPath, baseBranch)
+    : null;
+
   await octokit.repos.createOrUpdateFileContents({
     owner: infraOwner,
     repo: infraRepo,
     path: catalogInfoPath,
     message: `chore: add Backstage catalog entry for ${moduleName}`,
     content: Buffer.from(catalogInfoContent, "utf8").toString("base64"),
-    branch: branchName
+    branch: branchName,
+    ...(catalogFileSha && { sha: catalogFileSha })
   });
 
   return {
