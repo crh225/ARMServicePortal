@@ -5,10 +5,15 @@
 export function renderTerraformModule({ moduleName, blueprint, variables, prNumber, owner }) {
   const lines = [
     `module "${moduleName}" {`,
-    `  source       = "${blueprint.moduleSource}"`
   ];
 
   const allowedVarNames = (blueprint.variables || []).map((v) => v.name);
+
+  // Collect all variable entries for alignment
+  const varEntries = [];
+
+  // Add source first
+  varEntries.push({ key: 'source', value: `"${blueprint.moduleSource}"`, isReference: false });
 
   // Add regular variables
   for (const [k, v] of Object.entries(variables)) {
@@ -20,12 +25,21 @@ export function renderTerraformModule({ moduleName, blueprint, variables, prNumb
     const isTerraformReference = strValue.match(/^(module\.|var\.|local\.|data\.)/);
 
     if (isTerraformReference) {
-      lines.push(`  ${k} = ${strValue}`);
+      varEntries.push({ key: k, value: strValue, isReference: true });
     } else {
       const value = strValue.replace(/"/g, '\\"');
-      lines.push(`  ${k} = "${value}"`);
+      varEntries.push({ key: k, value: `"${value}"`, isReference: false });
     }
   }
+
+  // Calculate max key length for alignment
+  const maxKeyLength = Math.max(...varEntries.map(e => e.key.length));
+
+  // Add aligned variable lines
+  varEntries.forEach(({ key, value }) => {
+    const padding = ' '.repeat(maxKeyLength - key.length);
+    lines.push(`  ${key}${padding} = ${value}`);
+  });
 
   // Add ARM Portal tags for resource tracking
   lines.push("");
