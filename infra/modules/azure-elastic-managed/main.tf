@@ -1,9 +1,3 @@
-locals {
-  common_tags = merge(var.tags, {
-    "component" = "elastic-managed"
-  })
-}
-
 # Register Microsoft.Elastic resource provider
 resource "azurerm_resource_provider_registration" "elastic" {
   name = "Microsoft.Elastic"
