@@ -1,0 +1,213 @@
+name: "Terraform: Reusable"
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      terraform_version:
+        type: string
+        default: "1.9.5"
+      working_directory:
+        type: string
+        default: ""
+      enable_apply:
+        type: boolean
+        default: true
+      manual_action:
+        type: string
+        default: "plan"
+    secrets:
+      AZURE_CLIENT_ID:
+        required: true
+      AZURE_CLIENT_SECRET:
+        required: true
+      AZURE_TENANT_ID:
+        required: true
+      AZURE_SUBSCRIPTION_ID:
+        required: true
+      GH_INFRA_OWNER:
+        required: false
+      GH_INFRA_REPO:
+        required: false
+      GH_APP_ID:
+        required: false
+      GH_INSTALLATION_ID:
+        required: false
+      GH_APP_PRIVATE_KEY_BASE64:
+        required: false
+      GH_WEBHOOK_SECRET:
+        required: false
+      ELASTICSEARCH_API_KEY:
+        required: false
+      GH_OAUTH_CLIENT_ID:
+        required: false
+      GH_OAUTH_CLIENT_SECRET:
+        required: false
+      AZURE_APP_CONFIG_ENDPOINT:
+        required: false
+      SERVICE_API_KEY:
+        required: false
+
+env:
+  TF_DIR: ${{ inputs.working_directory || format('infra/environments/{0}', inputs.environment) }}
+  ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+  ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+jobs:
+  lint:
+    name: Lint & Validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ inputs.terraform_version }}
+
+      - name: Format Check
+        id: fmt
+        run: terraform fmt -check -recursive -diff
+        working-directory: infra
+        continue-on-error: true
+
+      - name: Init (validate only)
+        run: terraform init -input=false -backend=false
+        working-directory: ${{ env.TF_DIR }}
+
+      - name: Validate
+        id: validate
+        run: terraform validate -no-color
+        working-directory: ${{ env.TF_DIR }}
+
+      - name: Post Results
+        if: github.event_name == 'pull_request' && (steps.fmt.outcome != 'success' || steps.validate.outcome != 'success')
+        uses: actions/github-script@v7
+        env:
+          FMT_OUTCOME: ${{ steps.fmt.outcome }}
+          VALIDATE_OUTCOME: ${{ steps.validate.outcome }}
+          ENVIRONMENT: ${{ inputs.environment }}
+        with:
+          script: |
+            const script = require('./.github/scripts/terraform-pr-lint-comment.js');
+            await script({ github, context, core });
+
+      - name: Fail on Error
+        if: steps.fmt.outcome != 'success' || steps.validate.outcome != 'success'
+        run: exit 1
+
+  plan:
+    name: Plan
+    needs: lint
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.manual_action == 'plan')
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ inputs.terraform_version }}
+
+      - run: terraform init -input=false
+        working-directory: ${{ env.TF_DIR }}
+
+      - name: Plan
+        id: plan
+        continue-on-error: true
+        run: terraform plan -input=false -no-color -out=tfplan
+        working-directory: ${{ env.TF_DIR }}
+        env:
+          TF_VAR_github_infra_owner: ${{ secrets.GH_INFRA_OWNER }}
+          TF_VAR_github_infra_repo: ${{ secrets.GH_INFRA_REPO }}
+          TF_VAR_github_app_id: ${{ secrets.GH_APP_ID }}
+          TF_VAR_github_installation_id: ${{ secrets.GH_INSTALLATION_ID }}
+          TF_VAR_github_app_private_key_base64: ${{ secrets.GH_APP_PRIVATE_KEY_BASE64 }}
+          TF_VAR_github_webhook_secret: ${{ secrets.GH_WEBHOOK_SECRET }}
+          TF_VAR_elasticsearch_api_key: ${{ secrets.ELASTICSEARCH_API_KEY }}
+          TF_VAR_github_oauth_client_id: ${{ secrets.GH_OAUTH_CLIENT_ID }}
+          TF_VAR_github_oauth_client_secret: ${{ secrets.GH_OAUTH_CLIENT_SECRET }}
+          TF_VAR_azure_app_config_endpoint: ${{ secrets.AZURE_APP_CONFIG_ENDPOINT }}
+          TF_VAR_service_api_key: ${{ secrets.SERVICE_API_KEY }}
+
+      - uses: actions/upload-artifact@v4
+        if: steps.plan.outcome == 'success'
+        with:
+          name: tfplan-${{ inputs.environment }}
+          path: ${{ env.TF_DIR }}/tfplan
+          retention-days: 5
+
+      - name: Label PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        env:
+          PLAN_OUTCOME: ${{ steps.plan.outcome }}
+          ENVIRONMENT: ${{ inputs.environment }}
+        with:
+          script: |
+            const script = require('./.github/scripts/terraform-pr-label.js');
+            await script({ github, context, core });
+
+  apply:
+    name: Apply
+    needs: lint
+    runs-on: ubuntu-latest
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main' && inputs.enable_apply) || (github.event_name == 'workflow_dispatch' && inputs.manual_action == 'apply')
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ inputs.terraform_version }}
+
+      - run: terraform init -input=false
+        working-directory: ${{ env.TF_DIR }}
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          auth-type: SERVICE_PRINCIPAL
+
+      - name: Backup State
+        id: backup
+        working-directory: ${{ env.TF_DIR }}
+        run: |
+          chmod +x ../../scripts/backup-tfstate.sh
+          ../../scripts/backup-tfstate.sh ${{ inputs.environment }}
+
+      - name: Apply
+        id: apply
+        continue-on-error: true
+        run: terraform apply -input=false -auto-approve
+        working-directory: ${{ env.TF_DIR }}
+        env:
+          TF_VAR_github_infra_owner: ${{ secrets.GH_INFRA_OWNER }}
+          TF_VAR_github_infra_repo: ${{ secrets.GH_INFRA_REPO }}
+          TF_VAR_github_app_id: ${{ secrets.GH_APP_ID }}
+          TF_VAR_github_installation_id: ${{ secrets.GH_INSTALLATION_ID }}
+          TF_VAR_github_app_private_key_base64: ${{ secrets.GH_APP_PRIVATE_KEY_BASE64 }}
+          TF_VAR_github_webhook_secret: ${{ secrets.GH_WEBHOOK_SECRET }}
+          TF_VAR_elasticsearch_api_key: ${{ secrets.ELASTICSEARCH_API_KEY }}
+          TF_VAR_github_oauth_client_id: ${{ secrets.GH_OAUTH_CLIENT_ID }}
+          TF_VAR_github_oauth_client_secret: ${{ secrets.GH_OAUTH_CLIENT_SECRET }}
+          TF_VAR_azure_app_config_endpoint: ${{ secrets.AZURE_APP_CONFIG_ENDPOINT }}
+          TF_VAR_service_api_key: ${{ secrets.SERVICE_API_KEY }}
+
+      - run: terraform output -json > tf-outputs.json
+        working-directory: ${{ env.TF_DIR }}
+
+      - name: Comment Results
+        uses: actions/github-script@v7
+        env:
+          APPLY_OUTCOME: ${{ steps.apply.conclusion }}
+          ENVIRONMENT: ${{ inputs.environment }}
+          OUTPUTS_PATH: ${{ github.workspace }}/${{ env.TF_DIR }}/tf-outputs.json
+          BACKUP_BLOB: ${{ steps.backup.outputs.backup_blob }}
+          BACKUP_TIMESTAMP: ${{ steps.backup.outputs.backup_timestamp }}
+          BACKUP_GIT_SHA: ${{ steps.backup.outputs.backup_git_sha }}
+        with:
+          script: |
+            const script = require('./.github/scripts/terraform-apply-comment.js');
+            await script({ github, context, core });
