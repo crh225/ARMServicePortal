@@ -1,12 +1,12 @@
 module "azure-static-site_430bf405" {
-  source       = "../../modules/azure-static-site"
-  project_name = "test-11235-1"
-  environment = "dev"
+  source              = "../../modules/azure-static-site"
+  project_name        = "test-11235-1"
+  environment         = "dev"
   resource_group_name = "test3-dev-rg"
-  location = "eastus2"
-  index_document = "index.html"
-  error_document = "404.html"
-  enable_cdn = "false"
+  location            = "eastus2"
+  index_document      = "index.html"
+  error_document      = "404.html"
+  enable_cdn          = "false"
 
   # ARM Portal tracking tags
   tags = {

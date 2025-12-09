@@ -24,23 +24,23 @@ locals {
   # Runtime-specific settings
   runtime_settings = {
     node = {
-      linux_fx_version  = "Node|${var.runtime_version}"
+      linux_fx_version   = "Node|${var.runtime_version}"
       windows_fx_version = "node|${var.runtime_version}"
     }
     dotnet = {
-      linux_fx_version  = "DOTNET|${var.runtime_version}"
+      linux_fx_version   = "DOTNET|${var.runtime_version}"
       windows_fx_version = "dotnet|${var.runtime_version}"
     }
     python = {
-      linux_fx_version  = "Python|${var.runtime_version}"
+      linux_fx_version   = "Python|${var.runtime_version}"
       windows_fx_version = null # Python not supported on Windows consumption
     }
     java = {
-      linux_fx_version  = "Java|${var.runtime_version}"
+      linux_fx_version   = "Java|${var.runtime_version}"
       windows_fx_version = "java|${var.runtime_version}"
     }
     powershell = {
-      linux_fx_version  = "PowerShell|${var.runtime_version}"
+      linux_fx_version   = "PowerShell|${var.runtime_version}"
       windows_fx_version = "powershell|${var.runtime_version}"
     }
   }

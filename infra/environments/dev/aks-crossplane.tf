@@ -10,7 +10,7 @@ resource "azurerm_resource_group" "aks_crossplane" {
     armportal-blueprint   = "tfstate-infrastructure"
     armportal-request-id  = "PERMANENT"
     armportal-owner       = "platform-team"
-    purpose           = "crossplane-demo"
+    purpose               = "crossplane-demo"
   }
 }
 resource "azurerm_kubernetes_cluster" "crossplane" {
@@ -22,11 +22,11 @@ resource "azurerm_kubernetes_cluster" "crossplane" {
   # Cost-optimized for demo purposes
   # B2s = 2 vCPU, 4GB RAM - sufficient for Crossplane
   default_node_pool {
-    name                = "default"
-    vm_size             = "Standard_B2s"
+    name                 = "default"
+    vm_size              = "Standard_B2s"
     auto_scaling_enabled = true
-    min_count           = 2
-    max_count           = 3
+    min_count            = 2
+    max_count            = 3
 
     tags = {
       environment = "dev"
@@ -57,10 +57,10 @@ resource "azurerm_kubernetes_cluster" "crossplane" {
   }
 
   tags = {
-    armportal-environment        = "dev"
-    purpose            = "crossplane-demo"
-    managed_by         = "terraform"
-    arm_portal_managed = "true"
+    armportal-environment = "dev"
+    purpose               = "crossplane-demo"
+    managed_by            = "terraform"
+    arm_portal_managed    = "true"
     armportal-owner       = "platform-team"
     armportal-request-id  = "PERMANENT"
     armportal-blueprint   = "tfstate-infrastructure"

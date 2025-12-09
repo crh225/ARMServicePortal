@@ -1,6 +1,6 @@
 locals {
   # Make a safe prefix from project + environment
-  sa_name_prefix = lower(replace("${var.project_name}${var.environment}", "/[^a-z0-9]/", ""))
+  sa_name_prefix  = lower(replace("${var.project_name}${var.environment}", "/[^a-z0-9]/", ""))
   enable_cdn_bool = var.enable_cdn == "true"
 
   # ARM Portal required tags

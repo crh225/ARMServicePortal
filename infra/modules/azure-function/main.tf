@@ -78,10 +78,10 @@ resource "azurerm_linux_function_app" "function_app" {
     always_on = local.is_consumption ? false : var.always_on
 
     application_stack {
-      node_version       = var.runtime_stack == "node" ? var.runtime_version : null
-      dotnet_version     = var.runtime_stack == "dotnet" ? var.runtime_version : null
-      python_version     = var.runtime_stack == "python" ? var.runtime_version : null
-      java_version       = var.runtime_stack == "java" ? var.runtime_version : null
+      node_version            = var.runtime_stack == "node" ? var.runtime_version : null
+      dotnet_version          = var.runtime_stack == "dotnet" ? var.runtime_version : null
+      python_version          = var.runtime_stack == "python" ? var.runtime_version : null
+      java_version            = var.runtime_stack == "java" ? var.runtime_version : null
       powershell_core_version = var.runtime_stack == "powershell" ? var.runtime_version : null
     }
 
@@ -91,8 +91,8 @@ resource "azurerm_linux_function_app" "function_app" {
   }
 
   app_settings = merge({
-    "FUNCTIONS_WORKER_RUNTIME"       = var.runtime_stack
-    "APPINSIGHTS_INSTRUMENTATIONKEY" = azurerm_application_insights.function_insights.instrumentation_key
+    "FUNCTIONS_WORKER_RUNTIME"              = var.runtime_stack
+    "APPINSIGHTS_INSTRUMENTATIONKEY"        = azurerm_application_insights.function_insights.instrumentation_key
     "APPLICATIONINSIGHTS_CONNECTION_STRING" = azurerm_application_insights.function_insights.connection_string
   }, var.app_settings)
 
@@ -126,9 +126,9 @@ resource "azurerm_windows_function_app" "function_app" {
     always_on = local.is_consumption ? false : var.always_on
 
     application_stack {
-      node_version       = var.runtime_stack == "node" ? "~${var.runtime_version}" : null
-      dotnet_version     = var.runtime_stack == "dotnet" ? "v${var.runtime_version}" : null
-      java_version       = var.runtime_stack == "java" ? var.runtime_version : null
+      node_version            = var.runtime_stack == "node" ? "~${var.runtime_version}" : null
+      dotnet_version          = var.runtime_stack == "dotnet" ? "v${var.runtime_version}" : null
+      java_version            = var.runtime_stack == "java" ? var.runtime_version : null
       powershell_core_version = var.runtime_stack == "powershell" ? var.runtime_version : null
     }
 
@@ -138,8 +138,8 @@ resource "azurerm_windows_function_app" "function_app" {
   }
 
   app_settings = merge({
-    "FUNCTIONS_WORKER_RUNTIME"       = var.runtime_stack
-    "APPINSIGHTS_INSTRUMENTATIONKEY" = azurerm_application_insights.function_insights.instrumentation_key
+    "FUNCTIONS_WORKER_RUNTIME"              = var.runtime_stack
+    "APPINSIGHTS_INSTRUMENTATIONKEY"        = azurerm_application_insights.function_insights.instrumentation_key
     "APPLICATIONINSIGHTS_CONNECTION_STRING" = azurerm_application_insights.function_insights.connection_string
   }, var.app_settings)
 
@@ -159,8 +159,8 @@ resource "azurerm_windows_function_app" "function_app" {
 resource "azurerm_monitor_diagnostic_setting" "function_diagnostics" {
   count = var.log_analytics_workspace_id != null ? 1 : 0
 
-  name               = "function-diagnostics"
-  target_resource_id = var.os_type == "Linux" ? azurerm_linux_function_app.function_app[0].id : azurerm_windows_function_app.function_app[0].id
+  name                       = "function-diagnostics"
+  target_resource_id         = var.os_type == "Linux" ? azurerm_linux_function_app.function_app[0].id : azurerm_windows_function_app.function_app[0].id
   log_analytics_workspace_id = var.log_analytics_workspace_id
 
   enabled_log {

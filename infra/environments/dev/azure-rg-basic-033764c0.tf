@@ -1,8 +1,8 @@
 module "azure-rg-basic-033764c0" {
   source       = "../../modules/azure-rg-basic"
   project_name = "teast"
-  environment = "dev"
-  location = "eastus2"
+  environment  = "dev"
+  location     = "eastus2"
 
   # ARM Portal tracking tags
   tags = {

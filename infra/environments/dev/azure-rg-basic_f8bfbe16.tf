@@ -1,8 +1,8 @@
 module "azure-rg-basic_f8bfbe16" {
   source       = "../../modules/azure-rg-basic"
   project_name = "test-elk-logging"
-  environment = "dev"
-  location = "westus"
+  environment  = "dev"
+  location     = "westus"
 
   # ARM Portal tracking tags
   tags = {

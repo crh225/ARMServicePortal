@@ -5,7 +5,7 @@ resource "azurerm_resource_provider_registration" "elastic" {
 
 # Azure Elastic Cloud deployment
 resource "azurerm_elastic_cloud_elasticsearch" "main" {
-  depends_on = [azurerm_resource_provider_registration.elastic]
+  depends_on          = [azurerm_resource_provider_registration.elastic]
   name                = "es-${var.project_name}-${var.environment}"
   resource_group_name = var.resource_group_name
   location            = var.location

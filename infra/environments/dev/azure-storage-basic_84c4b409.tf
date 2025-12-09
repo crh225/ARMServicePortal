@@ -1,11 +1,11 @@
 module "azure-storage-basic_84c4b409" {
-  source       = "../../modules/azure-storage-basic"
-  project_name = "test-st-1120252-1"
-  environment = "dev"
+  source              = "../../modules/azure-storage-basic"
+  project_name        = "test-st-1120252-1"
+  environment         = "dev"
   resource_group_name = "rg-testpr2-dev-rg"
-  location = "eastus2"
-  account_tier = "Standard"
-  replication_type = "LRS"
+  location            = "eastus2"
+  account_tier        = "Standard"
+  replication_type    = "LRS"
 
   # ARM Portal tracking tags
   tags = {

@@ -39,8 +39,8 @@ resource "azurerm_container_group" "elk" {
     ]
 
     environment_variables = {
-      "ES_JAVA_OPTS"       = "-Xms${var.elasticsearch_heap_size} -Xmx${var.elasticsearch_heap_size}"
-      "ELASTIC_USERNAME"   = "elastic"
+      "ES_JAVA_OPTS"     = "-Xms${var.elasticsearch_heap_size} -Xmx${var.elasticsearch_heap_size}"
+      "ELASTIC_USERNAME" = "elastic"
     }
 
     secure_environment_variables = {
@@ -49,10 +49,10 @@ resource "azurerm_container_group" "elk" {
 
     volume {
       name                 = "elasticsearch-data"
-      mount_path          = "/usr/share/elasticsearch/data"
+      mount_path           = "/usr/share/elasticsearch/data"
       storage_account_name = azurerm_storage_account.elk.name
       storage_account_key  = azurerm_storage_account.elk.primary_access_key
-      share_name          = azurerm_storage_share.elasticsearch.name
+      share_name           = azurerm_storage_share.elasticsearch.name
     }
   }
 
@@ -70,8 +70,8 @@ resource "azurerm_container_group" "elk" {
 
     environment_variables = {
       "LS_JAVA_OPTS"           = "-Xms${var.logstash_heap_size} -Xmx${var.logstash_heap_size}"
-      "ELASTICSEARCH_HOSTS"     = "http://localhost:${local.elasticsearch_port}"
-      "ELASTICSEARCH_USERNAME"  = "elastic"
+      "ELASTICSEARCH_HOSTS"    = "http://localhost:${local.elasticsearch_port}"
+      "ELASTICSEARCH_USERNAME" = "elastic"
     }
 
     secure_environment_variables = {
@@ -106,8 +106,8 @@ resource "azurerm_container_group" "elk" {
     environment_variables = {
       "ELASTICSEARCH_HOSTS"    = "http://localhost:${local.elasticsearch_port}"
       "ELASTICSEARCH_USERNAME" = "elastic"
-      "SERVER_NAME"           = "kibana-${var.environment}"
-      "SERVER_HOST"           = "0.0.0.0"
+      "SERVER_NAME"            = "kibana-${var.environment}"
+      "SERVER_HOST"            = "0.0.0.0"
     }
 
     secure_environment_variables = {

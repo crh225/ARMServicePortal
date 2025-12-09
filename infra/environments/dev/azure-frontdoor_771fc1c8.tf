@@ -1,11 +1,11 @@
 module "azure-frontdoor_771fc1c8" {
-  source       = "../../modules/azure-frontdoor"
-  project_name = "portal"
-  environment = "dev"
+  source              = "../../modules/azure-frontdoor"
+  project_name        = "portal"
+  environment         = "dev"
   resource_group_name = "test3-dev-rg"
-  origin_hostname = "armportalfec4ji.z20.web.core.windows.net"
-  custom_domain = "portal.chrishouse.io"
-  sku_name = "Standard_AzureFrontDoor"
+  origin_hostname     = "armportalfec4ji.z20.web.core.windows.net"
+  custom_domain       = "portal.chrishouse.io"
+  sku_name            = "Standard_AzureFrontDoor"
 
   # ARM Portal tracking tags
   tags = {
