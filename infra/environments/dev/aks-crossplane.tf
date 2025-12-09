@@ -28,6 +28,10 @@ resource "azurerm_kubernetes_cluster" "crossplane" {
     min_count            = 2
     max_count            = 3
 
+    upgrade_settings {
+      max_surge = "10%"
+    }
+
     tags = {
       environment = "dev"
       purpose     = "crossplane"
