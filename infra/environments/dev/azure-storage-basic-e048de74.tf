@@ -4,14 +4,14 @@ module "azure-storage-basic-e048de74" {
   environment         = "dev"
   resource_group_name = "120420252-dev-rg"
   location            = "eastus2"
-  account_tier        = "Standard"
+  account_tier        = "Premium"
   replication_type    = "LRS"
 
   # ARM Portal tracking tags
   tags = {
     armportal-environment = "dev"
     armportal-blueprint   = "azure-storage-basic"
-    armportal-request-id  = "256"
+    armportal-request-id  = "azure-storage-basic-e048de74"
   }
 }
 
