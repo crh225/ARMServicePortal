@@ -72,41 +72,37 @@ az storage account show --name "$STORAGE_ACCOUNT" --resource-group "$RESOURCE_GR
   exit 0
 }
 
-# Capture both stdout and stderr
-echo "Running: az storage blob exists --account-name $STORAGE_ACCOUNT --container-name $CONTAINER_NAME --name $STATE_BLOB --auth-mode login"
+# Get storage account key (same method Terraform uses)
+echo "Retrieving storage account key..."
+STORAGE_KEY=$(az storage account keys list \
+  --account-name "$STORAGE_ACCOUNT" \
+  --resource-group "$RESOURCE_GROUP" \
+  --query '[0].value' \
+  --output tsv 2>&1)
+
+KEY_EXIT_CODE=$?
+
+if [ $KEY_EXIT_CODE -ne 0 ]; then
+  echo "Error: Failed to retrieve storage account key"
+  echo "Output: $STORAGE_KEY"
+  echo "Skipping backup."
+  exit 0
+fi
+
+# Check if state blob exists using account key
+echo "Checking if state blob exists..."
 EXISTS_CHECK=$(az storage blob exists \
   --account-name "$STORAGE_ACCOUNT" \
   --container-name "$CONTAINER_NAME" \
   --name "$STATE_BLOB" \
-  --auth-mode login \
+  --account-key "$STORAGE_KEY" \
   --output tsv 2>&1)
 
 EXISTS_EXIT_CODE=$?
-echo "Exit code: $EXISTS_EXIT_CODE"
-echo "Output: $EXISTS_CHECK"
 
-# If the command failed, check if it's a permission error
 if [ $EXISTS_EXIT_CODE -ne 0 ]; then
-  # Check if it's a permission/auth error
-  if echo "$EXISTS_CHECK" | grep -qi "authorization\|permission\|forbidden\|unauthorized"; then
-    echo ""
-    echo "=========================================="
-    echo "ERROR: Permission denied"
-    echo "=========================================="
-    echo "The service principal does not have permission to access the storage account."
-    echo ""
-    echo "To fix this, grant 'Storage Blob Data Contributor' role:"
-    echo "  az role assignment create \\"
-    echo "    --assignee <SERVICE_PRINCIPAL_OBJECT_ID> \\"
-    echo "    --role 'Storage Blob Data Contributor' \\"
-    echo "    --scope '/subscriptions/<SUB_ID>/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.Storage/storageAccounts/$STORAGE_ACCOUNT'"
-    echo ""
-    echo "Note: RBAC permissions may take 5-10 minutes to propagate."
-    echo "=========================================="
-    exit 1
-  fi
-
-  # For other errors, skip backup but don't fail the workflow
+  echo "Error checking blob existence (exit code: $EXISTS_EXIT_CODE)"
+  echo "Output: $EXISTS_CHECK"
   echo "Warning: Unable to check if state file exists. Skipping backup."
   exit 0
 fi
@@ -126,7 +122,7 @@ az storage blob copy start \
   --destination-blob "$BACKUP_BLOB" \
   --source-container "$CONTAINER_NAME" \
   --source-blob "$STATE_BLOB" \
-  --auth-mode login \
+  --account-key "$STORAGE_KEY" \
   --output none
 
 # Wait for copy to complete
@@ -141,7 +137,7 @@ while [ "$STATUS" = "pending" ] && [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
     --account-name "$STORAGE_ACCOUNT" \
     --container-name "$CONTAINER_NAME" \
     --name "$BACKUP_BLOB" \
-    --auth-mode login \
+    --account-key "$STORAGE_KEY" \
     --query "properties.copy.status" \
     --output tsv 2>/dev/null || echo "pending")
 
