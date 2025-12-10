@@ -1,5 +1,8 @@
 #!/bin/bash
-set -e
+# Note: We handle errors manually, so don't use 'set -e'
+# This allows us to provide better error messages
+set -u  # Exit on undefined variables
+set -o pipefail  # Catch errors in pipes
 
 # Terraform State Backup Script
 # Creates a timestamped backup of the current Terraform state before applying changes
