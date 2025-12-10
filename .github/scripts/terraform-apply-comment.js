@@ -93,7 +93,18 @@ module.exports = async ({ github, context, core }) => {
       body += 'No backup created (first apply or state does not exist yet)\n\n';
     }
 
-    // Add TF outputs (filter out sensitive values)
+    // Extract module name from PR body for output filtering
+    let moduleName = null;
+    if (pr.body) {
+      // Look for "- Terraform Module: `module-name`" or "- Claim Name: `claim-name`"
+      const moduleMatch = pr.body.match(/- (?:Terraform Module|Claim Name):\s*`([^`]+)`/);
+      if (moduleMatch && moduleMatch[1]) {
+        moduleName = moduleMatch[1];
+        core.info(`Found module name in PR body: ${moduleName}`);
+      }
+    }
+
+    // Add TF outputs (filter out sensitive values and optionally filter by module)
     if (outputs) {
       const sanitizedOutputs = {};
       for (const [key, value] of Object.entries(outputs)) {
@@ -103,8 +114,29 @@ module.exports = async ({ github, context, core }) => {
         sanitizedOutputs[key] = value;
       }
 
-      if (Object.keys(sanitizedOutputs).length > 0) {
-        const pretty = JSON.stringify(sanitizedOutputs, null, 2);
+      // Filter outputs to only show those for this specific module
+      let outputsToDisplay = sanitizedOutputs;
+      if (moduleName && Object.keys(sanitizedOutputs).length > 0) {
+        const prefix = `${moduleName}_`;
+        const filteredOutputs = {};
+
+        for (const [key, value] of Object.entries(sanitizedOutputs)) {
+          if (key.startsWith(prefix)) {
+            filteredOutputs[key] = value;
+          }
+        }
+
+        // Use filtered outputs if any were found, otherwise show all
+        if (Object.keys(filteredOutputs).length > 0) {
+          outputsToDisplay = filteredOutputs;
+          core.info(`Filtered to ${Object.keys(filteredOutputs).length} outputs for module ${moduleName}`);
+        } else {
+          core.warning(`No outputs found with prefix "${prefix}", showing all outputs`);
+        }
+      }
+
+      if (Object.keys(outputsToDisplay).length > 0) {
+        const pretty = JSON.stringify(outputsToDisplay, null, 2);
         body += '### Terraform Outputs\n\n';
         body += '```json\n';
         body += pretty + '\n';
