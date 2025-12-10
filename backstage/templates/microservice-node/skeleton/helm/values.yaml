@@ -1,0 +1,55 @@
+replicaCount: ${{ values.min_replicas }}
+
+image:
+  repository: ghcr.io/${{ values.service_name }}
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+service:
+  type: ClusterIP
+  port: ${{ values.port }}
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: ${{ values.service_name }}.local
+      paths:
+        - path: /
+          pathType: Prefix
+
+resources:
+  requests:
+    cpu: ${{ values.cpu_request }}
+    memory: ${{ values.memory_request }}
+  limits:
+    cpu: "500m"
+    memory: "512Mi"
+
+autoscaling:
+  enabled: true
+  minReplicas: ${{ values.min_replicas }}
+  maxReplicas: ${{ values.max_replicas }}
+  targetCPUUtilizationPercentage: 80
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 10
+  periodSeconds: 10
+
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 5
+
+env: []
+  # - name: DATABASE_URL
+  #   valueFrom:
+  #     secretKeyRef:
+  #       name: ${{ values.service_name }}-secrets
+  #       key: database-url

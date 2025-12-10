@@ -1,0 +1,177 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: microservice-node
+  title: Node.js Microservice
+  description: Create a new Node.js microservice with Docker, CI/CD pipeline, and Helm chart ready for deployment. Includes lifecycle management through ARM Portal.
+  annotations:
+    backstage.io/techdocs-entity: url:https://nodejs.org/docs/latest/api/
+  links:
+    - url: https://nodejs.org/
+      title: Node.js Documentation
+      icon: dashboard
+  tags:
+    - node
+    - microservice
+    - docker
+    - kubernetes
+    - recommended
+spec:
+  owner: platform-team
+  type: service
+
+  parameters:
+    - title: Service Information
+      required:
+        - service_name
+        - description
+        - owner
+      properties:
+        service_name:
+          title: Service Name
+          type: string
+          description: Name of the microservice (lowercase, no spaces, e.g., user-api)
+          pattern: '^[a-z][a-z0-9-]*$'
+          ui:autofocus: true
+        description:
+          title: Description
+          type: string
+          description: Brief description of what this service does
+        owner:
+          title: Owner
+          type: string
+          description: Team or person responsible for this service
+          ui:field: OwnerPicker
+          ui:options:
+            catalogFilter:
+              kind: Group
+
+    - title: Technical Configuration
+      required:
+        - node_version
+        - port
+      properties:
+        node_version:
+          title: Node.js Version
+          type: string
+          default: "20"
+          enum: ["18", "20", "22"]
+          enumNames:
+            - Node.js 18 LTS
+            - Node.js 20 LTS
+            - Node.js 22 (Current)
+        port:
+          title: Service Port
+          type: number
+          default: 3000
+          description: Port the service listens on
+        include_database:
+          title: Include Database Connection
+          type: boolean
+          default: false
+          description: Add PostgreSQL connection boilerplate
+        include_redis:
+          title: Include Redis Connection
+          type: boolean
+          default: false
+          description: Add Redis connection boilerplate
+
+    - title: Repository Configuration
+      required:
+        - repo_org
+      properties:
+        repo_org:
+          title: GitHub Organization
+          type: string
+          default: crh225
+          description: GitHub organization or username for the repository
+        repo_visibility:
+          title: Repository Visibility
+          type: string
+          default: private
+          enum: [public, private]
+
+    - title: Deployment Configuration
+      properties:
+        initial_environment:
+          title: Initial Environment
+          type: string
+          default: dev
+          enum: [dev, qa, staging, prod]
+          description: First environment to deploy to
+        min_replicas:
+          title: Minimum Replicas
+          type: number
+          default: 1
+          description: Minimum number of pods
+        max_replicas:
+          title: Maximum Replicas
+          type: number
+          default: 3
+          description: Maximum number of pods for auto-scaling
+        cpu_request:
+          title: CPU Request
+          type: string
+          default: "100m"
+          description: CPU resource request
+        memory_request:
+          title: Memory Request
+          type: string
+          default: "128Mi"
+          description: Memory resource request
+
+  steps:
+    # Step 1: Fetch and render the skeleton template
+    - id: fetch
+      name: Fetch Skeleton
+      action: fetch:template
+      input:
+        url: ./skeleton
+        values:
+          service_name: ${{ parameters.service_name }}
+          description: ${{ parameters.description }}
+          owner: ${{ parameters.owner }}
+          node_version: ${{ parameters.node_version }}
+          port: ${{ parameters.port }}
+          include_database: ${{ parameters.include_database }}
+          include_redis: ${{ parameters.include_redis }}
+          min_replicas: ${{ parameters.min_replicas }}
+          max_replicas: ${{ parameters.max_replicas }}
+          cpu_request: ${{ parameters.cpu_request }}
+          memory_request: ${{ parameters.memory_request }}
+
+    # Step 2: Create GitHub repository
+    - id: publish
+      name: Create Repository
+      action: publish:github
+      input:
+        repoUrl: github.com?owner=${{ parameters.repo_org }}&repo=${{ parameters.service_name }}
+        description: ${{ parameters.description }}
+        repoVisibility: ${{ parameters.repo_visibility }}
+        defaultBranch: main
+
+    # Step 3: Register with Backstage catalog
+    - id: register
+      name: Register in Catalog
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps.publish.output.repoContentsUrl }}
+        catalogInfoPath: /catalog-info.yaml
+
+  output:
+    links:
+      - title: View Repository
+        url: ${{ steps.publish.output.remoteUrl }}
+        icon: github
+      - title: Open in Catalog
+        entityRef: ${{ steps.register.output.entityRef }}
+        icon: catalog
+    text:
+      - title: Next Steps
+        content: |
+          Your microservice **${{ parameters.service_name }}** has been created!
+
+          1. Clone the repo: `git clone ${{ steps.publish.output.remoteUrl }}`
+          2. Install dependencies: `npm install`
+          3. Start developing: `npm run dev`
+          4. Push changes to trigger CI/CD
