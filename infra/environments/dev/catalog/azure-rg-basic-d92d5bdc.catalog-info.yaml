@@ -1,0 +1,41 @@
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: "azure-rg-basic-d92d5bdc"
+  title: "Azure Resource Group (basic) - azure-rg-basic"
+  description: Creates a single Resource Group using a standardized naming convention. provisioned via ARM Portal
+  labels:
+    armportal.chrishouse.io/blueprint: "azure-rg-basic"
+    armportal.chrishouse.io/version: "1.0.0"
+    armportal.chrishouse.io/environment: dev
+    armportal.chrishouse.io/provider: terraform
+    azure.com/resource-group-name: "test129253-dev-rg"
+  annotations:
+    backstage.io/managed-by-location: "url:https://github.com/crh225/ARMServicePortal/blob/main/infra/environments/dev/azure-rg-basic-d92d5bdc.tf"
+    backstage.io/managed-by-origin-location: "url:https://github.com/crh225/ARMServicePortal/blob/main/infra/environments/dev/azure-rg-basic-d92d5bdc.tf"
+    backstage.io/techdocs-ref: "url:https://github.com/crh225/ARMServicePortal/tree/main/docs"
+    armportal.chrishouse.io/request-id: "262"
+    armportal.chrishouse.io/created-by: backstage
+    armportal.chrishouse.io/provisioned-at: "2025-12-10T01:23:00.684Z"
+    armportal.chrishouse.io/terraform-module: "azure-rg-basic-d92d5bdc"
+    azure.com/resource-id: "/subscriptions/f989de0f-8697-4a05-8c34-b82c941767c0/resourceGroups/test129253-dev-rg"
+  tags:
+    - azure
+    - terraform
+    - dev
+    - rg
+  links:
+    - url: "https://github.com/crh225/ARMServicePortal/blob/main/infra/environments/dev/azure-rg-basic-d92d5bdc.tf"
+      title: Terraform Configuration
+      icon: code
+    - url: "https://github.com/crh225/ARMServicePortal/pull/262"
+      title: Provisioning PR
+      icon: github
+    - url: "https://portal.azure.com/#@/resource/subscriptions/f989de0f-8697-4a05-8c34-b82c941767c0/resourceGroups/test129253-dev-rg"
+      title: Azure Portal
+      icon: cloud
+spec:
+  type: "azure-resource-group"
+  lifecycle: development
+  owner: "user:backstage"
+  system: "test129253-dev"
