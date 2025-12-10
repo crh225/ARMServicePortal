@@ -92,9 +92,14 @@ resource "azurerm_automation_runbook" "stop_aks" {
         $result = Invoke-AzAksRunCommand `
             -ResourceGroupName $resourceGroupName `
             -Name $clusterName `
-            -Command "kubectl delete validatingwebhookconfiguration crossplane-no-usages --ignore-not-found=true"
+            -Command "kubectl delete validatingwebhookconfiguration crossplane-no-usages --ignore-not-found=true" `
+            -Force
 
-        Write-Output "Webhook removal result: $($result.ExitCode)"
+        if ($result.ExitCode -eq 0) {
+            Write-Output "Webhook removed successfully"
+        } else {
+            Write-Output "Webhook removal completed with exit code: $($result.ExitCode)"
+        }
 
         Write-Output "Stopping AKS cluster: $clusterName in resource group: $resourceGroupName"
         Stop-AzAksCluster -ResourceGroupName $resourceGroupName -Name $clusterName
