@@ -61,12 +61,48 @@ echo "=========================================="
 
 # Check if state blob exists
 echo "Checking if state file exists..."
-if ! az storage blob exists \
+
+# Capture both stdout and stderr
+EXISTS_CHECK=$(az storage blob exists \
   --account-name "$STORAGE_ACCOUNT" \
   --container-name "$CONTAINER_NAME" \
   --name "$STATE_BLOB" \
   --auth-mode login \
-  --output tsv 2>/dev/null | grep -q "True"; then
+  --output tsv 2>&1)
+
+EXISTS_EXIT_CODE=$?
+
+# If the command failed, check if it's a permission error
+if [ $EXISTS_EXIT_CODE -ne 0 ]; then
+  echo "Error checking blob existence (exit code: $EXISTS_EXIT_CODE)"
+  echo "Output: $EXISTS_CHECK"
+
+  # Check if it's a permission/auth error
+  if echo "$EXISTS_CHECK" | grep -qi "authorization\|permission\|forbidden\|unauthorized"; then
+    echo ""
+    echo "=========================================="
+    echo "ERROR: Permission denied"
+    echo "=========================================="
+    echo "The service principal does not have permission to access the storage account."
+    echo ""
+    echo "To fix this, grant 'Storage Blob Data Contributor' role:"
+    echo "  az role assignment create \\"
+    echo "    --assignee <SERVICE_PRINCIPAL_OBJECT_ID> \\"
+    echo "    --role 'Storage Blob Data Contributor' \\"
+    echo "    --scope '/subscriptions/<SUB_ID>/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.Storage/storageAccounts/$STORAGE_ACCOUNT'"
+    echo ""
+    echo "Note: RBAC permissions may take 5-10 minutes to propagate."
+    echo "=========================================="
+    exit 1
+  fi
+
+  # For other errors, skip backup but don't fail the workflow
+  echo "Warning: Unable to check if state file exists. Skipping backup."
+  exit 0
+fi
+
+# Check if blob exists
+if ! echo "$EXISTS_CHECK" | grep -q "True"; then
   echo "Warning: State file does not exist yet. This may be the first apply."
   echo "Skipping backup."
   exit 0
