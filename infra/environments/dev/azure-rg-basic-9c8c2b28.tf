@@ -2,13 +2,13 @@ module "azure-rg-basic-9c8c2b28" {
   source       = "../../modules/azure-rg-basic"
   project_name = "test12925"
   environment  = "dev"
-  location     = "westus"
+  location     = "eastus2"
 
   # ARM Portal tracking tags
   tags = {
     armportal-environment = "dev"
     armportal-blueprint   = "azure-rg-basic"
-    armportal-request-id  = "260"
+    armportal-request-id  = "261"
   }
 }
 
