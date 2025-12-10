@@ -126,6 +126,10 @@ catalog:
       target: ./templates/xp-building-blocks/template.yaml
       rules:
         - allow: [Template]
+    - type: file
+      target: ./templates/microservice-node/template.yaml
+      rules:
+        - allow: [Template]
 
     # ARM Portal Documentation
     - type: url
