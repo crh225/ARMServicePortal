@@ -62,7 +62,15 @@ echo "=========================================="
 # Check if state blob exists
 echo "Checking if state file exists..."
 
+# First verify we can access the storage account
+echo "Testing Azure login and storage account access..."
+az storage account show --name "$STORAGE_ACCOUNT" --resource-group "$RESOURCE_GROUP" --query name -o tsv || {
+  echo "Error: Cannot access storage account. This may be a permission or login issue."
+  exit 0
+}
+
 # Capture both stdout and stderr
+echo "Running: az storage blob exists --account-name $STORAGE_ACCOUNT --container-name $CONTAINER_NAME --name $STATE_BLOB --auth-mode login"
 EXISTS_CHECK=$(az storage blob exists \
   --account-name "$STORAGE_ACCOUNT" \
   --container-name "$CONTAINER_NAME" \
@@ -71,12 +79,11 @@ EXISTS_CHECK=$(az storage blob exists \
   --output tsv 2>&1)
 
 EXISTS_EXIT_CODE=$?
+echo "Exit code: $EXISTS_EXIT_CODE"
+echo "Output: $EXISTS_CHECK"
 
 # If the command failed, check if it's a permission error
 if [ $EXISTS_EXIT_CODE -ne 0 ]; then
-  echo "Error checking blob existence (exit code: $EXISTS_EXIT_CODE)"
-  echo "Output: $EXISTS_CHECK"
-
   # Check if it's a permission/auth error
   if echo "$EXISTS_CHECK" | grep -qi "authorization\|permission\|forbidden\|unauthorized"; then
     echo ""
