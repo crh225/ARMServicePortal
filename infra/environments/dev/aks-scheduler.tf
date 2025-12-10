@@ -78,6 +78,7 @@ resource "azurerm_automation_runbook" "stop_aks" {
   content = <<-POWERSHELL
     # Stop AKS Cluster Runbook
     # Uses managed identity for authentication
+    # Removes Crossplane webhook that prevents stop operation
 
     try {
         # Connect using managed identity
@@ -85,6 +86,13 @@ resource "azurerm_automation_runbook" "stop_aks" {
 
         $resourceGroupName = "rg-armportal-aks-crossplane-dev"
         $clusterName = "aks-armportal-crossplane-dev"
+
+        # Delete the Crossplane webhook that prevents stop/start using az aks command invoke
+        Write-Output "Removing Crossplane webhook configuration..."
+        az aks command invoke `
+            --resource-group $resourceGroupName `
+            --name $clusterName `
+            --command "kubectl delete validatingwebhookconfiguration crossplane-no-usages --ignore-not-found=true"
 
         Write-Output "Stopping AKS cluster: $clusterName in resource group: $resourceGroupName"
         Stop-AzAksCluster -ResourceGroupName $resourceGroupName -Name $clusterName
