@@ -68,7 +68,7 @@ proxy:
       changeOrigin: true
       headers:
         Authorization: Bearer ${ARGOCD_AUTH_TOKEN}
-    '/github/api':
+    '/github':
       target: https://api.github.com
       changeOrigin: true
       headers:
