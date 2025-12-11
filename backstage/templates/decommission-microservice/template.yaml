@@ -56,7 +56,28 @@ spec:
           description: Type the exact service name to confirm deletion
 
   steps:
-    # Step 1: Delete ArgoCD Application via Kubernetes API
+    # Step 1: Get the ArgoCD manifest file SHA (needed for deletion)
+    - id: get-argocd-manifest-sha
+      name: Get ArgoCD Manifest SHA
+      if: ${{ parameters.delete_argocd_app and parameters.confirm_deletion == parameters.service_name }}
+      action: http:backstage:request
+      input:
+        method: GET
+        path: /api/proxy/github/api/repos/crh225/ARMServicePortal/contents/infra/argocd/microservices/${{ parameters.service_name }}.yaml
+
+    # Step 2: Delete the ArgoCD manifest from GitOps repo
+    - id: delete-argocd-manifest
+      name: Delete ArgoCD Manifest from GitOps Repo
+      if: ${{ parameters.delete_argocd_app and parameters.confirm_deletion == parameters.service_name }}
+      action: http:backstage:request
+      input:
+        method: DELETE
+        path: /api/proxy/github/api/repos/crh225/ARMServicePortal/contents/infra/argocd/microservices/${{ parameters.service_name }}.yaml
+        body:
+          message: "chore: remove ArgoCD manifest for ${{ parameters.service_name }}"
+          sha: ${{ steps['get-argocd-manifest-sha'].output.body.sha }}
+
+    # Step 3: Delete ArgoCD Application via Kubernetes API
     - id: delete-argocd-app
       name: Delete ArgoCD Application
       if: ${{ parameters.delete_argocd_app and parameters.confirm_deletion == parameters.service_name }}
@@ -65,7 +86,7 @@ spec:
         appName: ${{ parameters.service_name }}
         cascade: true
 
-    # Step 2: Archive GitHub repo using GitHub API
+    # Step 4: Archive GitHub repo using GitHub API
     - id: archive-repo
       name: Archive GitHub Repository
       if: ${{ parameters.archive_github_repo and parameters.confirm_deletion == parameters.service_name }}
@@ -76,7 +97,7 @@ spec:
         body:
           archived: true
 
-    # Step 3: Delete GitHub repo using GitHub API
+    # Step 5: Delete GitHub repo using GitHub API
     - id: delete-repo
       name: Delete GitHub Repository
       if: ${{ parameters.delete_github_repo and parameters.confirm_deletion == parameters.service_name }}
@@ -85,7 +106,7 @@ spec:
         method: DELETE
         path: /api/proxy/github/api/repos/crh225/${{ parameters.service_name }}
 
-    # Step 4: Log completion
+    # Step 6: Log completion
     - id: log-complete
       name: Log Decommission Complete
       action: debug:log
@@ -104,6 +125,7 @@ spec:
           ## Service ${{ parameters.service_name }} has been decommissioned
 
           **Actions performed:**
+          - ArgoCD Manifest Removed from GitOps Repo: ${{ parameters.delete_argocd_app }}
           - ArgoCD App Deleted: ${{ parameters.delete_argocd_app }}
           - K8s Resources Deleted: ${{ parameters.delete_kubernetes_resources }} (via ArgoCD cascade)
           - GitHub Repo Archived: ${{ parameters.archive_github_repo }}
