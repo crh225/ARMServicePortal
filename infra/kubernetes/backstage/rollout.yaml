@@ -65,6 +65,16 @@ spec:
             secretKeyRef:
               name: backstage-secrets
               key: POSTGRES_PASSWORD
+        - name: ARGOCD_AUTH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: backstage-secrets
+              key: ARGOCD_AUTH_TOKEN
+        - name: K8S_SERVICE_ACCOUNT_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: backstage-secrets
+              key: K8S_SERVICE_ACCOUNT_TOKEN
         # POSTGRES_DB comes from configmap via envFrom
 
         resources:
