@@ -63,8 +63,8 @@ proxy:
       credentials: require
       headers:
         x-api-key: ${ARM_PORTAL_API_KEY}
-    '/argocd/api':
-      target: https://argocd.chrishouse.io/api
+    '/argocd':
+      target: https://argocd.chrishouse.io
       changeOrigin: true
       headers:
         Authorization: Bearer ${ARGOCD_AUTH_TOKEN}
