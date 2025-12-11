@@ -1,7 +1,17 @@
 # ${{ values.service_name }}
 
 ${{ values.description }}
+{% if values.ingress_enabled %}
+## Live URL
 
+🌐 **https://${{ values.service_name }}.chrishouse.io**
+
+| Endpoint | URL |
+|----------|-----|
+| Health | https://${{ values.service_name }}.chrishouse.io/health |
+| Ready | https://${{ values.service_name }}.chrishouse.io/ready |
+| API | https://${{ values.service_name }}.chrishouse.io/api/hello |
+{% endif %}
 ## Getting Started
 
 ### Prerequisites
