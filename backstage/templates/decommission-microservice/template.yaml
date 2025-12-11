@@ -72,7 +72,7 @@ spec:
       action: http:backstage:request
       input:
         method: PATCH
-        path: /api/proxy/github/repos/crh225/${{ parameters.service_name }}
+        path: /api/proxy/github/api/repos/crh225/${{ parameters.service_name }}
         body:
           archived: true
 
@@ -83,7 +83,7 @@ spec:
       action: http:backstage:request
       input:
         method: DELETE
-        path: /api/proxy/github/repos/crh225/${{ parameters.service_name }}
+        path: /api/proxy/github/api/repos/crh225/${{ parameters.service_name }}
 
     # Step 4: Log completion
     - id: log-complete
