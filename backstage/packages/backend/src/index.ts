@@ -19,6 +19,7 @@ backend.add(import('@backstage/plugin-scaffolder-backend-module-github'));
 backend.add(
   import('@backstage/plugin-scaffolder-backend-module-notifications'),
 );
+backend.add(import('@roadiehq/scaffolder-backend-module-http-request'));
 
 // ARM Portal scaffolder module - custom actions for infrastructure provisioning
 backend.add(import('@internal/backstage-plugin-arm-portal-backend'));
