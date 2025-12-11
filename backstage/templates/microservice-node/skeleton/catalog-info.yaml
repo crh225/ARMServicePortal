@@ -8,6 +8,8 @@ metadata:
     backstage.io/techdocs-ref: dir:.
     argocd/app-name: ${{ values.service_name }}
     backstage.io/kubernetes-id: ${{ values.service_name }}
+    backstage.io/kubernetes-label-selector: app.kubernetes.io/name=${{ values.service_name }}
+    backstage.io/kubernetes-namespace: dev
 {% if values.ingress_enabled %}  links:
     - url: https://${{ values.service_name }}.chrishouse.io
       title: Live URL
