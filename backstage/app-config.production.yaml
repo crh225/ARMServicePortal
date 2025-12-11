@@ -161,18 +161,18 @@ catalog:
           frequency: { minutes: 5 }
           timeout: { minutes: 3 }
 
-# Kubernetes plugin - disabled until service account token is configured
-# kubernetes:
-#   serviceLocatorMethod:
-#     type: 'multiTenant'
-#   clusterLocatorMethods:
-#     - type: 'config'
-#       clusters:
-#         - url: ${K8S_CLUSTER_URL}
-#           name: aks-armportal-crossplane-dev
-#           authProvider: 'serviceAccount'
-#           serviceAccountToken: ${K8S_SERVICE_ACCOUNT_TOKEN}
-#           skipTLSVerify: true
+# Kubernetes plugin configuration
+kubernetes:
+  serviceLocatorMethod:
+    type: 'multiTenant'
+  clusterLocatorMethods:
+    - type: 'config'
+      clusters:
+        - url: https://crossplane-dev-aqzg43ae.hcp.eastus.azmk8s.io:443
+          name: aks-armportal-crossplane-dev
+          authProvider: 'serviceAccount'
+          serviceAccountToken: ${K8S_SERVICE_ACCOUNT_TOKEN}
+          skipTLSVerify: true
 
 # ArgoCD plugin configuration
 argocd:
