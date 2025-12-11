@@ -29,7 +29,8 @@ export const armPortalScaffolderModule = createBackendModule({
         };
 
         // Get GitHub token for secrets action (use gitops token or fall back to integration token)
-        const githubToken = config.getOptionalString('integrations.github.0.token') || '';
+        const githubIntegrations = config.getOptionalConfigArray('integrations.github') ?? [];
+        const githubToken = githubIntegrations[0]?.getOptionalString('token') ?? '';
         const gitopsToken = config.getOptionalString('armPortal.gitopsToken') || githubToken;
 
         // Register the ARM Portal provision action
