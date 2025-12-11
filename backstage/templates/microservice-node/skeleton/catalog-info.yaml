@@ -4,11 +4,21 @@ metadata:
   name: ${{ values.service_name }}
   description: ${{ values.description }}
   annotations:
-    github.com/project-slug: ${{ values.service_name }}
+    github.com/project-slug: crh225/${{ values.service_name }}
     backstage.io/techdocs-ref: dir:.
+    argocd/app-name: ${{ values.service_name }}
+    backstage.io/kubernetes-id: ${{ values.service_name }}
+{% if values.ingress_enabled %}  links:
+    - url: https://${{ values.service_name }}.chrishouse.io
+      title: Live URL
+      icon: dashboard
+    - url: https://${{ values.service_name }}.chrishouse.io/health
+      title: Health Check
+      icon: heart{% endif %}
   tags:
     - node
     - microservice
+    - gitops
 spec:
   type: service
   lifecycle: experimental

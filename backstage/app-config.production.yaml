@@ -174,5 +174,15 @@ catalog:
 #           serviceAccountToken: ${K8S_SERVICE_ACCOUNT_TOKEN}
 #           skipTLSVerify: true
 
+# ArgoCD plugin configuration
+argocd:
+  baseUrl: https://argocd.chrishouse.io
+  appLocatorMethods:
+    - type: 'config'
+      instances:
+        - name: main
+          url: https://argocd.chrishouse.io
+          token: ${ARGOCD_AUTH_TOKEN}
+
 permission:
   enabled: true
