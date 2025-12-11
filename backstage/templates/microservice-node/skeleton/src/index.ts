@@ -60,9 +60,11 @@ app.get('/api/hello', (req, res) => {
   res.json({ message: 'Hello from ${{ values.service_name }}!' });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`${{ values.service_name }} listening on port ${PORT}`);
-});
+// Start server only if this file is run directly (not imported for testing)
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`${{ values.service_name }} listening on port ${PORT}`);
+  });
+}
 
 export default app;
