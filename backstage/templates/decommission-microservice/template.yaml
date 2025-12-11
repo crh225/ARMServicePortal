@@ -1,0 +1,115 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: decommission-microservice
+  title: Decommission Microservice
+  description: Remove a microservice - deletes ArgoCD app, Kubernetes resources, and optionally archives the GitHub repo
+  tags:
+    - decommission
+    - cleanup
+    - microservice
+spec:
+  owner: platform-team
+  type: service
+
+  parameters:
+    - title: Service to Decommission
+      required:
+        - service_name
+      properties:
+        service_name:
+          title: Service Name
+          type: string
+          description: The name of the microservice to decommission (e.g., backstage-gen-7)
+          ui:autofocus: true
+
+    - title: Cleanup Options
+      properties:
+        delete_argocd_app:
+          title: Delete ArgoCD Application
+          type: boolean
+          default: true
+          description: Remove the ArgoCD application (stops GitOps sync)
+        delete_kubernetes_resources:
+          title: Delete Kubernetes Resources
+          type: boolean
+          default: true
+          description: Delete the Helm release and all K8s resources in dev namespace
+        archive_github_repo:
+          title: Archive GitHub Repository
+          type: boolean
+          default: false
+          description: Archive the GitHub repository (makes it read-only, keeps history)
+        delete_github_repo:
+          title: Delete GitHub Repository
+          type: boolean
+          default: false
+          description: Permanently delete the GitHub repository (cannot be undone!)
+
+    - title: Confirmation
+      required:
+        - confirm_deletion
+      properties:
+        confirm_deletion:
+          title: Type the service name to confirm
+          type: string
+          description: Type the exact service name to confirm deletion
+
+  steps:
+    # Step 1: Delete ArgoCD Application (this also deletes K8s resources if cascade is enabled)
+    - id: delete-argocd
+      name: Delete ArgoCD Application
+      if: ${{ parameters.delete_argocd_app and parameters.confirm_deletion == parameters.service_name }}
+      action: http:backstage:request
+      input:
+        method: DELETE
+        path: /api/proxy/argocd/api/v1/applications/${{ parameters.service_name }}?cascade=true
+
+    # Step 2: Archive GitHub repo using GitHub API
+    - id: archive-repo
+      name: Archive GitHub Repository
+      if: ${{ parameters.archive_github_repo and parameters.confirm_deletion == parameters.service_name }}
+      action: http:backstage:request
+      input:
+        method: PATCH
+        path: /api/proxy/github/repos/crh225/${{ parameters.service_name }}
+        body:
+          archived: true
+
+    # Step 3: Delete GitHub repo using GitHub API
+    - id: delete-repo
+      name: Delete GitHub Repository
+      if: ${{ parameters.delete_github_repo and parameters.confirm_deletion == parameters.service_name }}
+      action: http:backstage:request
+      input:
+        method: DELETE
+        path: /api/proxy/github/repos/crh225/${{ parameters.service_name }}
+
+    # Step 4: Log completion
+    - id: log-complete
+      name: Log Decommission Complete
+      action: debug:log
+      input:
+        message: |
+          Decommissioned service: ${{ parameters.service_name }}
+          ArgoCD deleted: ${{ parameters.delete_argocd_app }}
+          K8s deleted: ${{ parameters.delete_kubernetes_resources }}
+          Repo archived: ${{ parameters.archive_github_repo }}
+          Repo deleted: ${{ parameters.delete_github_repo }}
+
+  output:
+    text:
+      - title: Decommission Complete
+        content: |
+          ## Service ${{ parameters.service_name }} has been decommissioned
+
+          **Actions performed:**
+          - ArgoCD App Deleted: ${{ parameters.delete_argocd_app }}
+          - K8s Resources Deleted: ${{ parameters.delete_kubernetes_resources }} (via ArgoCD cascade)
+          - GitHub Repo Archived: ${{ parameters.archive_github_repo }}
+          - GitHub Repo Deleted: ${{ parameters.delete_github_repo }}
+
+          **Manual steps remaining:**
+          - Unregister entity from Backstage catalog (go to entity page → 3-dot menu → Unregister)
+          - Delete any DNS records if needed
+          - Remove any external integrations

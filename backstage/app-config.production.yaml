@@ -63,6 +63,17 @@ proxy:
       credentials: require
       headers:
         x-api-key: ${ARM_PORTAL_API_KEY}
+    '/argocd/api':
+      target: https://argocd.chrishouse.io/api
+      changeOrigin: true
+      headers:
+        Authorization: Bearer ${ARGOCD_AUTH_TOKEN}
+    '/github/repos':
+      target: https://api.github.com/repos
+      changeOrigin: true
+      headers:
+        Authorization: Bearer ${GITHUB_TOKEN}
+        Accept: application/vnd.github.v3+json
 
 integrations:
   github:
@@ -136,6 +147,10 @@ catalog:
         - allow: [Template]
     - type: file
       target: ./templates/microservice-node/template.yaml
+      rules:
+        - allow: [Template]
+    - type: file
+      target: ./templates/decommission-microservice/template.yaml
       rules:
         - allow: [Template]
 
