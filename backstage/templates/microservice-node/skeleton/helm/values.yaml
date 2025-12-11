@@ -48,8 +48,17 @@ readinessProbe:
   periodSeconds: 5
 
 env: []
-  # - name: DATABASE_URL
-  #   valueFrom:
-  #     secretKeyRef:
-  #       name: ${{ values.service_name }}-secrets
-  #       key: database-url
+
+# Azure Key Vault secrets integration via CSI driver
+# Set enabled: true and configure your Key Vault details
+secrets:
+  enabled: false
+  keyVaultName: "akvnotintf1"  # Your Key Vault name
+  tenantId: "354b7ce2-bca3-4af5-b19a-e05a09b68a7b"  # Azure tenant ID
+  managedIdentityId: "3e50729e-4a1f-42ab-aebb-9f80758b8c8d"  # AKS kubelet identity
+  # Map Key Vault secrets to environment variables
+  items: []
+    # - keyVaultName: DATABASE-URL        # Secret name in Key Vault (use hyphens)
+    #   envVar: DATABASE_URL              # Environment variable name (use underscores)
+    # - keyVaultName: REDIS-URL
+    #   envVar: REDIS_URL

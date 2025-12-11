@@ -16,6 +16,15 @@ spec:
       labels:
         {{- include "${{ values.service_name }}.selectorLabels" . | nindent 8 }}
     spec:
+      {{- if .Values.secrets.enabled }}
+      volumes:
+        - name: secrets-store
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: {{ include "${{ values.service_name }}.fullname" . }}-secrets
+      {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
@@ -24,6 +33,15 @@ spec:
             - name: http
               containerPort: {{ .Values.service.port }}
               protocol: TCP
+          {{- if .Values.secrets.enabled }}
+          volumeMounts:
+            - name: secrets-store
+              mountPath: /mnt/secrets-store
+              readOnly: true
+          envFrom:
+            - secretRef:
+                name: {{ include "${{ values.service_name }}.fullname" . }}-secrets
+          {{- end }}
           livenessProbe:
             {{- toYaml .Values.livenessProbe | nindent 12 }}
           readinessProbe:
