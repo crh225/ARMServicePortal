@@ -28,14 +28,18 @@ export const armPortalScaffolderModule = createBackendModule({
           apiKey: config.getOptionalString('armPortal.apiKey') || '',
         };
 
-        // Get GitHub token for secrets action
+        // Get GitHub token for secrets action (use gitops token or fall back to integration token)
         const githubToken = config.getOptionalString('integrations.github.0.token') || '';
+        const gitopsToken = config.getOptionalString('armPortal.gitopsToken') || githubToken;
 
         // Register the ARM Portal provision action
         scaffolder.addActions(createArmPortalProvisionAction(armPortalConfig));
 
         // Register the GitHub secrets action
-        scaffolder.addActions(createGitHubSecretsAction({ token: githubToken }));
+        scaffolder.addActions(createGitHubSecretsAction({
+          token: githubToken,
+          gitopsToken: gitopsToken,
+        }));
       },
     });
   },

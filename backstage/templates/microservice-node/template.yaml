@@ -151,7 +151,8 @@ spec:
         repoVisibility: ${{ parameters.repo_visibility }}
         defaultBranch: main
 
-    # Step 3: Configure Azure OIDC secrets for deployment
+    # Step 3: Configure secrets for deployment and GitOps
+    # GITOPS_TOKEN is auto-injected from Backstage config (armPortal.gitopsToken)
     - id: secrets
       name: Configure Deployment Secrets
       action: github:repo:secrets
@@ -188,8 +189,11 @@ spec:
           2. Install dependencies: `npm install`
           3. Start developing: `npm run dev`
 
-          ## Deployment
-          Azure OIDC secrets have been automatically configured. Pushing to `main` will:
+          ## Deployment (GitOps)
+          All secrets have been automatically configured. Pushing to `main` will:
           1. Run CI (lint, test, build)
           2. Build and push Docker image to GHCR
-          3. Deploy to AKS namespace: `${{ parameters.initial_environment }}`
+          3. Update ArgoCD manifest in GitOps repo
+          4. ArgoCD auto-syncs to AKS namespace: `${{ parameters.initial_environment }}`
+
+          View in ArgoCD: https://argocd.chrishouse.io

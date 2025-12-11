@@ -7,6 +7,7 @@ import sodium from 'libsodium-wrappers';
  */
 export interface GitHubSecretsConfig {
   token: string;
+  gitopsToken?: string; // Token for pushing to GitOps repo
 }
 
 /**
@@ -81,6 +82,12 @@ export function createGitHubSecretsAction(config: GitHubSecretsConfig) {
 
       const secretsToSet = secrets || {};
       const secretsSetList: string[] = [];
+
+      // Auto-inject GITOPS_TOKEN if configured and not already in secrets
+      if (config.gitopsToken && !secretsToSet['GITOPS_TOKEN']) {
+        secretsToSet['GITOPS_TOKEN'] = config.gitopsToken;
+        ctx.logger.info('Auto-injecting GITOPS_TOKEN from Backstage config');
+      }
 
       for (const [secretName, secretValue] of Object.entries(secretsToSet)) {
         ctx.logger.info(`Setting secret: ${secretName}`);
