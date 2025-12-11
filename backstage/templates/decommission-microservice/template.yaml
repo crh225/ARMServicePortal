@@ -56,14 +56,14 @@ spec:
           description: Type the exact service name to confirm deletion
 
   steps:
-    # Step 1: Delete ArgoCD Application (this also deletes K8s resources if cascade is enabled)
-    - id: delete-argocd
+    # Step 1: Delete ArgoCD Application via Kubernetes API
+    - id: delete-argocd-app
       name: Delete ArgoCD Application
       if: ${{ parameters.delete_argocd_app and parameters.confirm_deletion == parameters.service_name }}
-      action: http:backstage:request
+      action: argocd:delete-app
       input:
-        method: DELETE
-        path: /api/proxy/argocd/api/v1/applications/${{ parameters.service_name }}?cascade=true
+        appName: ${{ parameters.service_name }}
+        cascade: true
 
     # Step 2: Archive GitHub repo using GitHub API
     - id: archive-repo

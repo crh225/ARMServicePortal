@@ -1,0 +1,71 @@
+# Backstage Kubernetes Reader ClusterRole
+# Provides read access to Kubernetes resources for the Backstage K8s plugin
+# and write access to ArgoCD Application resources for decommissioning
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: backstage-kubernetes-reader
+rules:
+  # Core resources
+  - apiGroups: [""]
+    resources:
+      - pods
+      - services
+      - configmaps
+      - secrets
+      - namespaces
+      - events
+      - limitranges
+      - resourcequotas
+    verbs: ["get", "list", "watch"]
+  # Apps resources
+  - apiGroups: ["apps"]
+    resources:
+      - deployments
+      - replicasets
+      - statefulsets
+      - daemonsets
+    verbs: ["get", "list", "watch"]
+  # Batch resources
+  - apiGroups: ["batch"]
+    resources:
+      - jobs
+      - cronjobs
+    verbs: ["get", "list", "watch"]
+  # Networking resources
+  - apiGroups: ["networking.k8s.io"]
+    resources:
+      - ingresses
+    verbs: ["get", "list", "watch"]
+  # Autoscaling resources
+  - apiGroups: ["autoscaling"]
+    resources:
+      - horizontalpodautoscalers
+    verbs: ["get", "list", "watch"]
+  # Metrics API
+  - apiGroups: ["metrics.k8s.io"]
+    resources:
+      - pods
+      - nodes
+    verbs: ["get", "list"]
+  # ArgoCD resources - includes delete for decommissioning workflows
+  - apiGroups: ["argoproj.io"]
+    resources:
+      - applications
+      - applicationsets
+      - appprojects
+    verbs: ["get", "list", "watch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: backstage-kubernetes-reader
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: backstage-kubernetes-reader
+subjects:
+  - kind: ServiceAccount
+    name: backstage-sa
+    namespace: backstage
