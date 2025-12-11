@@ -10,11 +10,11 @@ service:
   port: ${{ values.port }}
 
 ingress:
-  enabled: false
-  className: ""
+  enabled: ${{ values.ingress_enabled }}
+  className: "nginx"
   annotations: {}
   hosts:
-    - host: ${{ values.service_name }}.local
+    - host: ${{ values.service_name }}.chrishouse.io
       paths:
         - path: /
           pathType: Prefix

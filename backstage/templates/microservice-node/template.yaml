@@ -93,6 +93,11 @@ spec:
 
     - title: Deployment Configuration
       properties:
+        ingress_enabled:
+          title: Enable Public Ingress
+          type: boolean
+          default: true
+          description: Expose service at {service-name}.chrishouse.io with TLS
         initial_environment:
           title: Initial Environment
           type: string
@@ -135,6 +140,7 @@ spec:
           port: ${{ parameters.port }}
           include_database: ${{ parameters.include_database }}
           include_redis: ${{ parameters.include_redis }}
+          ingress_enabled: ${{ parameters.ingress_enabled }}
           initial_environment: ${{ parameters.initial_environment }}
           min_replicas: ${{ parameters.min_replicas }}
           max_replicas: ${{ parameters.max_replicas }}
