@@ -135,6 +135,7 @@ spec:
           port: ${{ parameters.port }}
           include_database: ${{ parameters.include_database }}
           include_redis: ${{ parameters.include_redis }}
+          initial_environment: ${{ parameters.initial_environment }}
           min_replicas: ${{ parameters.min_replicas }}
           max_replicas: ${{ parameters.max_replicas }}
           cpu_request: ${{ parameters.cpu_request }}
@@ -150,7 +151,18 @@ spec:
         repoVisibility: ${{ parameters.repo_visibility }}
         defaultBranch: main
 
-    # Step 3: Register with Backstage catalog
+    # Step 3: Configure Azure OIDC secrets for deployment
+    - id: secrets
+      name: Configure Deployment Secrets
+      action: github:repo:secrets
+      input:
+        repoUrl: github.com?owner=${{ parameters.repo_org }}&repo=${{ parameters.service_name }}
+        secrets:
+          AZURE_CLIENT_ID: "dbdeee3e-818f-4cd3-aafb-c2f0219ed443"
+          AZURE_TENANT_ID: "354b7ce2-bca3-4af5-b19a-e05a09b68a7b"
+          AZURE_SUBSCRIPTION_ID: "f989de0f-8697-4a05-8c34-b82c941767c0"
+
+    # Step 4: Register with Backstage catalog
     - id: register
       name: Register in Catalog
       action: catalog:register
@@ -171,7 +183,13 @@ spec:
         content: |
           Your microservice **${{ parameters.service_name }}** has been created!
 
+          ## Development
           1. Clone the repo: `git clone ${{ steps.publish.output.remoteUrl }}`
           2. Install dependencies: `npm install`
           3. Start developing: `npm run dev`
-          4. Push changes to trigger CI/CD
+
+          ## Deployment
+          Azure OIDC secrets have been automatically configured. Pushing to `main` will:
+          1. Run CI (lint, test, build)
+          2. Build and push Docker image to GHCR
+          3. Deploy to AKS namespace: `${{ parameters.initial_environment }}`

@@ -7,6 +7,7 @@
 import { createBackendModule, coreServices } from '@backstage/backend-plugin-api';
 import { scaffolderActionsExtensionPoint } from '@backstage/plugin-scaffolder-node/alpha';
 import { createArmPortalProvisionAction } from './actions/provision';
+import { createGitHubSecretsAction } from './actions/github-secrets';
 
 /**
  * Backend module that adds ARM Portal scaffolder actions
@@ -27,8 +28,14 @@ export const armPortalScaffolderModule = createBackendModule({
           apiKey: config.getOptionalString('armPortal.apiKey') || '',
         };
 
+        // Get GitHub token for secrets action
+        const githubToken = config.getOptionalString('integrations.github.0.token') || '';
+
         // Register the ARM Portal provision action
         scaffolder.addActions(createArmPortalProvisionAction(armPortalConfig));
+
+        // Register the GitHub secrets action
+        scaffolder.addActions(createGitHubSecretsAction({ token: githubToken }));
       },
     });
   },

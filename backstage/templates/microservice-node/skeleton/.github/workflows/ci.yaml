@@ -1,10 +1,16 @@
-name: CI
+name: CI/CD
 
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
+
+env:
+  SERVICE_NAME: ${{ values.service_name }}
+  AKS_RESOURCE_GROUP: rg-armportal-aks-crossplane-dev
+  AKS_CLUSTER_NAME: aks-armportal-crossplane-dev
+  NAMESPACE: ${{ values.initial_environment }}
 
 jobs:
   test:
@@ -34,6 +40,8 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    outputs:
+      image_tag: "{% raw %}${{ steps.meta.outputs.version }}{% endraw %}"
 
     permissions:
       contents: read
@@ -49,14 +57,14 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          username: {% raw %}${{ github.actor }}{% endraw %}
-          password: {% raw %}${{ secrets.GITHUB_TOKEN }}{% endraw %}
+          username: "{% raw %}${{ github.actor }}{% endraw %}"
+          password: "{% raw %}${{ secrets.GITHUB_TOKEN }}{% endraw %}"
 
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/{% raw %}${{ github.repository }}{% endraw %}
+          images: "ghcr.io/{% raw %}${{ github.repository }}{% endraw %}"
           tags: |
             type=sha
             type=raw,value=latest
@@ -66,7 +74,82 @@ jobs:
         with:
           context: .
           push: true
-          tags: {% raw %}${{ steps.meta.outputs.tags }}{% endraw %}
-          labels: {% raw %}${{ steps.meta.outputs.labels }}{% endraw %}
+          tags: "{% raw %}${{ steps.meta.outputs.tags }}{% endraw %}"
+          labels: "{% raw %}${{ steps.meta.outputs.labels }}{% endraw %}"
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  deploy:
+    needs: build-image
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    permissions:
+      id-token: write
+      contents: read
+      packages: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: "{% raw %}${{ secrets.AZURE_CLIENT_ID }}{% endraw %}"
+          tenant-id: "{% raw %}${{ secrets.AZURE_TENANT_ID }}{% endraw %}"
+          subscription-id: "{% raw %}${{ secrets.AZURE_SUBSCRIPTION_ID }}{% endraw %}"
+
+      - name: Get AKS credentials
+        run: |
+          az aks get-credentials \
+            --resource-group $AKS_RESOURCE_GROUP \
+            --name $AKS_CLUSTER_NAME \
+            --overwrite-existing
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: 'v3.13.0'
+
+      - name: Create namespace if not exists
+        run: |
+          kubectl create namespace $NAMESPACE --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Deploy with Helm
+        run: |
+          helm upgrade --install $SERVICE_NAME ./helm \
+            --namespace $NAMESPACE \
+            --set image.repository=ghcr.io/{% raw %}${{ github.repository }}{% endraw %} \
+            --set image.tag=sha-{% raw %}${{ github.sha }}{% endraw %} \
+            --wait \
+            --timeout 5m
+
+      - name: Verify deployment
+        run: |
+          echo "Waiting for deployment to be ready..."
+          kubectl rollout status deployment/$SERVICE_NAME \
+            -n $NAMESPACE \
+            --timeout=300s
+
+          echo ""
+          echo "✅ Deployment successful!"
+          echo ""
+          echo "Service: $SERVICE_NAME"
+          echo "Namespace: $NAMESPACE"
+          echo "Image: ghcr.io/{% raw %}${{ github.repository }}{% endraw %}:sha-{% raw %}${{ github.sha }}{% endraw %}"
+          echo ""
+          kubectl get pods -n $NAMESPACE -l app.kubernetes.io/name=$SERVICE_NAME
+
+      - name: Deployment failed - show debug info
+        if: failure()
+        run: |
+          echo "❌ Deployment failed!"
+          echo ""
+          echo "Pod status:"
+          kubectl get pods -n $NAMESPACE -l app.kubernetes.io/name=$SERVICE_NAME
+          echo ""
+          echo "Pod logs:"
+          kubectl logs -n $NAMESPACE -l app.kubernetes.io/name=$SERVICE_NAME --tail=50 || true
+          echo ""
+          echo "Recent events:"
+          kubectl get events -n $NAMESPACE --sort-by='.lastTimestamp' | tail -20
