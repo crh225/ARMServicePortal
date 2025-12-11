@@ -42,6 +42,13 @@ backend:
       ssl:
         require: true
         rejectUnauthorized: false
+    # Connection pool settings to avoid exhausting connections
+    knexConfig:
+      pool:
+        min: 0
+        max: 7
+        acquireTimeoutMillis: 30000
+        idleTimeoutMillis: 30000
 
   # Cache configuration for production
   cache:
