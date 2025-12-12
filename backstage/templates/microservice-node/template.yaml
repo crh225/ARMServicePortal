@@ -124,6 +124,10 @@ spec:
           type: string
           default: "128Mi"
           description: Memory resource request
+        port_run_id:
+          title: Port Run ID
+          type: string
+          description: Port action run ID (auto-populated when triggered from Port)
 
   steps:
     # Step 1: Fetch and render the skeleton template
@@ -176,6 +180,17 @@ spec:
       input:
         repoContentsUrl: ${{ steps.publish.output.repoContentsUrl }}
         catalogInfoPath: /catalog-info.yaml
+
+    # Step 5: Notify Port.io of completion (if triggered from Port)
+    - id: notify-port
+      name: Notify Port
+      if: ${{ parameters.port_run_id }}
+      action: port:notify
+      input:
+        runId: ${{ parameters.port_run_id }}
+        status: SUCCESS
+        message: "Microservice ${{ parameters.service_name }} created successfully"
+        link: ${{ steps.publish.output.remoteUrl }}
 
   output:
     links:

@@ -94,7 +94,11 @@ integrations:
 armPortal:
   baseUrl: https://armportal-api-dev.kindisland-0c7a7c9a.eastus2.azurecontainerapps.io
   apiKey: ${ARM_PORTAL_API_KEY}
-  gitopsToken: ${GITHUB_TOKEN} 
+  gitopsToken: ${GITHUB_TOKEN}
+
+port:
+  clientId: ${PORT_CLIENT_ID}
+  clientSecret: ${PORT_CLIENT_SECRET} 
 
 techdocs:
   builder: 'local'

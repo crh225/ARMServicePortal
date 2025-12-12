@@ -10,6 +10,7 @@ import { createArmPortalProvisionAction } from './actions/provision';
 import { createGitHubSecretsAction } from './actions/github-secrets';
 import { createArgoCdDeleteAction } from './actions/argocd-delete';
 import { createCatalogUnregisterAction } from './actions/catalog-unregister';
+import { createPortNotifyAction } from './actions/port-notify';
 
 /**
  * Backend module that adds ARM Portal scaffolder actions
@@ -64,6 +65,14 @@ export const armPortalScaffolderModule = createBackendModule({
         const backstageBaseUrl = config.getOptionalString('backend.baseUrl') || 'http://localhost:7007';
         scaffolder.addActions(createCatalogUnregisterAction({
           baseUrl: backstageBaseUrl,
+        }));
+
+        // Register the Port notify action
+        const portClientId = config.getOptionalString('port.clientId') || process.env.PORT_CLIENT_ID || '';
+        const portClientSecret = config.getOptionalString('port.clientSecret') || process.env.PORT_CLIENT_SECRET || '';
+        scaffolder.addActions(createPortNotifyAction({
+          clientId: portClientId,
+          clientSecret: portClientSecret,
         }));
       },
     });
