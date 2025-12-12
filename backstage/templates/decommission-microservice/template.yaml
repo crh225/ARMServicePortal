@@ -63,7 +63,7 @@ spec:
       action: http:backstage:request
       input:
         method: GET
-        path: /api/proxy/github/repos/crh225/ARMServicePortal/contents/infra/argocd/microservices/${{ parameters.service_name }}.yaml
+        path: /proxy/github/repos/crh225/ARMServicePortal/contents/infra/argocd/microservices/${{ parameters.service_name }}.yaml
 
     # Step 2: Delete the ArgoCD manifest from GitOps repo
     - id: delete-argocd-manifest
@@ -72,7 +72,7 @@ spec:
       action: http:backstage:request
       input:
         method: DELETE
-        path: /api/proxy/github/repos/crh225/ARMServicePortal/contents/infra/argocd/microservices/${{ parameters.service_name }}.yaml
+        path: /proxy/github/repos/crh225/ARMServicePortal/contents/infra/argocd/microservices/${{ parameters.service_name }}.yaml
         body:
           message: "chore: remove ArgoCD manifest for ${{ parameters.service_name }}"
           sha: ${{ steps['get-argocd-manifest-sha'].output.body.sha }}
@@ -93,7 +93,7 @@ spec:
       action: http:backstage:request
       input:
         method: PATCH
-        path: /api/proxy/github/repos/crh225/${{ parameters.service_name }}
+        path: /proxy/github/repos/crh225/${{ parameters.service_name }}
         body:
           archived: true
 
@@ -104,7 +104,7 @@ spec:
       action: http:backstage:request
       input:
         method: DELETE
-        path: /api/proxy/github/repos/crh225/${{ parameters.service_name }}
+        path: /proxy/github/repos/crh225/${{ parameters.service_name }}
 
     # Step 6: Log completion
     - id: log-complete
