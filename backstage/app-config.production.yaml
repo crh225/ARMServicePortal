@@ -19,6 +19,12 @@ backend:
   auth:
     keys:
       - secret: ${BACKEND_SECRET}
+    # External access for Port.io integration
+    externalAccess:
+      - type: static
+        options:
+          token: ${PORT_BACKSTAGE_TOKEN}
+          subject: port-integration
 
   csp:
     connect-src: ["'self'", 'https:', 'wss:']
