@@ -1,0 +1,146 @@
+name: "Port: Restart Deployment"
+
+on:
+  workflow_dispatch:
+    inputs:
+      deployment_name:
+        description: "Name of the deployment to restart"
+        required: true
+        type: string
+      namespace:
+        description: "Kubernetes namespace"
+        required: true
+        type: string
+      port_run_id:
+        description: "Port action run ID for status updates"
+        required: false
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  restart-deployment:
+    runs-on: ubuntu-latest
+
+    env:
+      AKS_CLUSTER_NAME: aks-armportal-crossplane-dev
+      AKS_RESOURCE_GROUP: rg-armportal-aks-crossplane-dev
+
+    steps:
+      - name: Log inputs
+        run: |
+          echo "Deployment: ${{ inputs.deployment_name }}"
+          echo "Namespace: ${{ inputs.namespace }}"
+          echo "Port Run ID: ${{ inputs.port_run_id }}"
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          auth-type: SERVICE_PRINCIPAL
+          allow-no-subscriptions: false
+          environment: azurecloud
+          audience: api://AzureADTokenExchange
+
+      - name: Set up kubectl for AKS
+        run: |
+          az aks get-credentials \
+            --resource-group $AKS_RESOURCE_GROUP \
+            --name $AKS_CLUSTER_NAME \
+            --overwrite-existing
+
+      - name: Notify Port - In Progress
+        if: ${{ inputs.port_run_id != '' }}
+        run: |
+          # Get Port access token
+          ACCESS_TOKEN=$(curl -s -X POST "https://api.port.io/v1/auth/access_token" \
+            -H "Content-Type: application/json" \
+            -d "{\"clientId\": \"${{ secrets.PORT_CLIENT_ID }}\", \"clientSecret\": \"${{ secrets.PORT_CLIENT_SECRET }}\"}" \
+            | jq -r '.accessToken')
+
+          # Log progress message
+          curl -s -X POST "https://api.port.io/v1/actions/runs/${{ inputs.port_run_id }}/logs" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $ACCESS_TOKEN" \
+            -d "{\"message\": \"Starting restart of deployment ${{ inputs.deployment_name }} in namespace ${{ inputs.namespace }}\"}"
+
+      - name: Restart deployment
+        id: restart
+        run: |
+          echo "Restarting deployment ${{ inputs.deployment_name }} in namespace ${{ inputs.namespace }}..."
+
+          # Check if deployment exists
+          if ! kubectl get deployment "${{ inputs.deployment_name }}" -n "${{ inputs.namespace }}" > /dev/null 2>&1; then
+            echo "ERROR: Deployment '${{ inputs.deployment_name }}' not found in namespace '${{ inputs.namespace }}'"
+            echo "status=failed" >> $GITHUB_OUTPUT
+            echo "message=Deployment not found" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+          # Perform rolling restart
+          kubectl rollout restart deployment/"${{ inputs.deployment_name }}" -n "${{ inputs.namespace }}"
+
+          # Wait for rollout to complete
+          echo "Waiting for rollout to complete..."
+          if kubectl rollout status deployment/"${{ inputs.deployment_name }}" -n "${{ inputs.namespace }}" --timeout=300s; then
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "message=Deployment restarted successfully" >> $GITHUB_OUTPUT
+          else
+            echo "status=failed" >> $GITHUB_OUTPUT
+            echo "message=Rollout did not complete within timeout" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+      - name: Get deployment status
+        if: always()
+        run: |
+          echo "Current deployment status:"
+          kubectl get deployment "${{ inputs.deployment_name }}" -n "${{ inputs.namespace }}" -o wide || true
+          echo ""
+          echo "Pods:"
+          kubectl get pods -n "${{ inputs.namespace }}" -l app="${{ inputs.deployment_name }}" || \
+            kubectl get pods -n "${{ inputs.namespace }}" | grep "${{ inputs.deployment_name }}" || true
+
+      - name: Notify Port - Success
+        if: ${{ success() && inputs.port_run_id != '' }}
+        run: |
+          ACCESS_TOKEN=$(curl -s -X POST "https://api.port.io/v1/auth/access_token" \
+            -H "Content-Type: application/json" \
+            -d "{\"clientId\": \"${{ secrets.PORT_CLIENT_ID }}\", \"clientSecret\": \"${{ secrets.PORT_CLIENT_SECRET }}\"}" \
+            | jq -r '.accessToken')
+
+          # Log success
+          curl -s -X POST "https://api.port.io/v1/actions/runs/${{ inputs.port_run_id }}/logs" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $ACCESS_TOKEN" \
+            -d "{\"message\": \"Deployment ${{ inputs.deployment_name }} restarted successfully\"}"
+
+          # Update run status
+          curl -s -X PATCH "https://api.port.io/v1/actions/runs/${{ inputs.port_run_id }}" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $ACCESS_TOKEN" \
+            -d "{\"status\": \"SUCCESS\", \"link\": [\"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"]}"
+
+      - name: Notify Port - Failure
+        if: ${{ failure() && inputs.port_run_id != '' }}
+        run: |
+          ACCESS_TOKEN=$(curl -s -X POST "https://api.port.io/v1/auth/access_token" \
+            -H "Content-Type: application/json" \
+            -d "{\"clientId\": \"${{ secrets.PORT_CLIENT_ID }}\", \"clientSecret\": \"${{ secrets.PORT_CLIENT_SECRET }}\"}" \
+            | jq -r '.accessToken')
+
+          # Log failure
+          curl -s -X POST "https://api.port.io/v1/actions/runs/${{ inputs.port_run_id }}/logs" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $ACCESS_TOKEN" \
+            -d "{\"message\": \"Failed to restart deployment ${{ inputs.deployment_name }}\"}"
+
+          # Update run status
+          curl -s -X PATCH "https://api.port.io/v1/actions/runs/${{ inputs.port_run_id }}" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $ACCESS_TOKEN" \
+            -d "{\"status\": \"FAILURE\", \"link\": [\"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"]}"
