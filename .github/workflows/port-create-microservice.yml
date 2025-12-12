@@ -32,9 +32,8 @@ jobs:
           clientId: ${{ secrets.PORT_CLIENT_ID }}
           clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
           baseUrl: https://api.port.io
-          operation: PATCH_RUN
+          operation: LOG_MESSAGE
           runId: ${{ inputs.port_run_id }}
-          status: "RUNNING"
           logMessage: "Starting microservice creation for ${{ inputs.service_name }}"
 
       - name: Checkout
