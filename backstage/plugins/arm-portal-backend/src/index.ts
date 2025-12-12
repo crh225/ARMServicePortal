@@ -9,6 +9,7 @@ import { scaffolderActionsExtensionPoint } from '@backstage/plugin-scaffolder-no
 import { createArmPortalProvisionAction } from './actions/provision';
 import { createGitHubSecretsAction } from './actions/github-secrets';
 import { createArgoCdDeleteAction } from './actions/argocd-delete';
+import { createCatalogUnregisterAction } from './actions/catalog-unregister';
 
 /**
  * Backend module that adds ARM Portal scaffolder actions
@@ -57,6 +58,12 @@ export const armPortalScaffolderModule = createBackendModule({
           k8sApiUrl: k8sApiUrl,
           k8sToken: k8sToken,
           argoCdNamespace: 'argocd',
+        }));
+
+        // Register the catalog unregister action
+        const backstageBaseUrl = config.getOptionalString('backend.baseUrl') || 'http://localhost:7007';
+        scaffolder.addActions(createCatalogUnregisterAction({
+          baseUrl: backstageBaseUrl,
         }));
       },
     });

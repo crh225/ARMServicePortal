@@ -110,7 +110,15 @@ spec:
         method: DELETE
         path: /proxy/github/repos/crh225/${{ parameters.service_name }}
 
-    # Step 6: Log completion
+    # Step 6: Unregister from Backstage catalog
+    - id: unregister-catalog
+      name: Unregister from Catalog
+      if: ${{ parameters.confirm_deletion == parameters.service_name }}
+      action: catalog:unregister
+      input:
+        entityRef: component:default/${{ parameters.service_name }}
+
+    # Step 7: Log completion
     - id: log-complete
       name: Log Decommission Complete
       action: debug:log
@@ -134,8 +142,8 @@ spec:
           - K8s Resources Deleted: ${{ parameters.delete_kubernetes_resources }} (via ArgoCD cascade)
           - GitHub Repo Archived: ${{ parameters.archive_github_repo }}
           - GitHub Repo Deleted: ${{ parameters.delete_github_repo }}
+          - Unregistered from Backstage Catalog: true
 
-          **Manual steps remaining:**
-          - Unregister entity from Backstage catalog (go to entity page → 3-dot menu → Unregister)
+          **Manual steps remaining (if applicable):**
           - Delete any DNS records if needed
           - Remove any external integrations
