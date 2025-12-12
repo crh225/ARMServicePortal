@@ -63,8 +63,13 @@ export const armPortalScaffolderModule = createBackendModule({
 
         // Register the catalog unregister action
         const backstageBaseUrl = config.getOptionalString('backend.baseUrl') || 'http://localhost:7007';
+        // Get service token for internal API calls (use the external access token for Port)
+        const serviceToken = config.getOptionalString('backend.auth.externalAccess[0].options.token')
+          || process.env.PORT_BACKSTAGE_TOKEN
+          || '';
         scaffolder.addActions(createCatalogUnregisterAction({
           baseUrl: backstageBaseUrl,
+          token: serviceToken,
         }));
 
         // Register the Port notify action

@@ -9,6 +9,7 @@ import fetch from 'node-fetch';
 
 export interface CatalogUnregisterConfig {
   baseUrl: string;
+  token?: string;
 }
 
 export function createCatalogUnregisterAction(config: CatalogUnregisterConfig) {
@@ -47,9 +48,17 @@ export function createCatalogUnregisterAction(config: CatalogUnregisterConfig) {
     },
     async handler(ctx) {
       const { entityRef } = ctx.input;
-      const { baseUrl } = config;
+      const { baseUrl, token } = config;
 
       ctx.logger.info(`Unregistering entity: ${entityRef}`);
+
+      // Build headers with optional authorization
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
 
       try {
         // First, get the entity to find its location
@@ -58,9 +67,7 @@ export function createCatalogUnregisterAction(config: CatalogUnregisterConfig) {
 
         const entityResponse = await fetch(entityUrl, {
           method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers,
         });
 
         if (entityResponse.status === 404) {
@@ -97,9 +104,7 @@ export function createCatalogUnregisterAction(config: CatalogUnregisterConfig) {
             const deleteByUidUrl = `${baseUrl}/api/catalog/entities/by-uid/${entityUid}`;
             const deleteResponse = await fetch(deleteByUidUrl, {
               method: 'DELETE',
-              headers: {
-                'Content-Type': 'application/json',
-              },
+              headers,
             });
 
             if (deleteResponse.ok || deleteResponse.status === 204) {
@@ -119,9 +124,7 @@ export function createCatalogUnregisterAction(config: CatalogUnregisterConfig) {
         const locationsUrl = `${baseUrl}/api/catalog/locations`;
         const locationsResponse = await fetch(locationsUrl, {
           method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers,
         });
 
         if (!locationsResponse.ok) {
@@ -149,9 +152,7 @@ export function createCatalogUnregisterAction(config: CatalogUnregisterConfig) {
 
           const deleteResponse = await fetch(deleteLocationUrl, {
             method: 'DELETE',
-            headers: {
-              'Content-Type': 'application/json',
-            },
+            headers,
           });
 
           if (deleteResponse.ok || deleteResponse.status === 204) {
@@ -172,9 +173,7 @@ export function createCatalogUnregisterAction(config: CatalogUnregisterConfig) {
             const deleteByUidUrl = `${baseUrl}/api/catalog/entities/by-uid/${entityUid}`;
             const deleteResponse = await fetch(deleteByUidUrl, {
               method: 'DELETE',
-              headers: {
-                'Content-Type': 'application/json',
-              },
+              headers,
             });
 
             if (deleteResponse.ok || deleteResponse.status === 204) {
