@@ -73,9 +73,13 @@ spec:
       input:
         method: DELETE
         path: /proxy/github/repos/crh225/ARMServicePortal/contents/infra/argocd/microservices/${{ parameters.service_name }}.yaml
-        body:
-          message: "chore: remove ArgoCD manifest for ${{ parameters.service_name }}"
-          sha: ${{ steps['get-argocd-manifest-sha'].output.body.sha }}
+        headers:
+          Content-Type: application/json
+        body: |
+          {
+            "message": "chore: remove ArgoCD manifest for ${{ parameters.service_name }}",
+            "sha": "${{ steps['get-argocd-manifest-sha'].output.body.sha }}"
+          }
 
     # Step 3: Delete ArgoCD Application via Kubernetes API
     - id: delete-argocd-app
