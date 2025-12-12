@@ -71,6 +71,11 @@ proxy:
     '/github':
       target: https://api.github.com
       changeOrigin: true
+      credentials: require
+      allowedMethods:
+        - GET
+        - DELETE
+        - PATCH
       headers:
         Authorization: Bearer ${GITHUB_TOKEN}
         Accept: application/vnd.github.v3+json
