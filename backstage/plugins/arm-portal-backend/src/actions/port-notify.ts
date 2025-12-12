@@ -86,13 +86,13 @@ export function createPortNotifyAction(config: PortNotifyConfig) {
           status,
         };
 
-        if (message) {
-          body.message = message;
-        }
-
+        // Port expects link as an array of strings
         if (link) {
           body.link = [link];
         }
+
+        // First, update the run status
+        ctx.logger.info(`Updating Port run ${runId} with status ${status}`);
 
         const patchResponse = await fetch(`https://api.port.io/v1/actions/runs/${runId}`, {
           method: 'PATCH',
@@ -106,6 +106,24 @@ export function createPortNotifyAction(config: PortNotifyConfig) {
         if (!patchResponse.ok) {
           const errorText = await patchResponse.text();
           throw new Error(`Failed to update Port run: ${patchResponse.status} - ${errorText}`);
+        }
+
+        // If there's a message, add it as a log entry separately
+        if (message) {
+          const logResponse = await fetch(`https://api.port.io/v1/actions/runs/${runId}/logs`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify({
+              message: message,
+            }),
+          });
+
+          if (!logResponse.ok) {
+            ctx.logger.warn(`Failed to add log message to Port run: ${logResponse.status}`);
+          }
         }
 
         ctx.logger.info(`Successfully notified Port of ${status}`);
