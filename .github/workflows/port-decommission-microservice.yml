@@ -1,0 +1,108 @@
+name: Port - Decommission Microservice
+
+on:
+  workflow_dispatch:
+    inputs:
+      service_name:
+        description: 'Name of the microservice to decommission'
+        required: true
+        type: string
+      delete_repo:
+        description: 'Delete GitHub repository'
+        required: false
+        default: 'false'
+        type: string
+      port_run_id:
+        description: 'Port action run ID for status updates'
+        required: true
+        type: string
+
+jobs:
+  decommission-microservice:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Inform Port - Starting
+        uses: port-labs/port-github-action@v1
+        with:
+          clientId: ${{ secrets.PORT_CLIENT_ID }}
+          clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
+          baseUrl: https://api.port.io
+          operation: PATCH_RUN
+          runId: ${{ inputs.port_run_id }}
+          status: "RUNNING"
+          logMessage: "Starting decommission for ${{ inputs.service_name }}"
+
+      - name: Checkout GitOps Repo
+        uses: actions/checkout@v4
+
+      - name: Delete ArgoCD Manifest from GitOps Repo
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          MANIFEST_PATH="infra/argocd/microservices/${{ inputs.service_name }}.yaml"
+
+          if [ -f "$MANIFEST_PATH" ]; then
+            git config user.name "GitHub Actions"
+            git config user.email "actions@github.com"
+            git rm "$MANIFEST_PATH"
+            git commit -m "chore: remove ArgoCD manifest for ${{ inputs.service_name }}"
+            git push
+            echo "ArgoCD manifest deleted"
+          else
+            echo "ArgoCD manifest not found at $MANIFEST_PATH"
+          fi
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+
+      - name: Setup kubeconfig
+        env:
+          KUBECONFIG_DATA: ${{ secrets.KUBECONFIG }}
+        run: |
+          mkdir -p ~/.kube
+          echo "$KUBECONFIG_DATA" | base64 -d > ~/.kube/config
+
+      - name: Delete ArgoCD Application
+        continue-on-error: true
+        run: |
+          # Delete the ArgoCD application with cascade (deletes K8s resources too)
+          kubectl delete application ${{ inputs.service_name }} -n argocd --cascade=foreground || true
+          echo "ArgoCD application deleted (or already gone)"
+
+      - name: Wait for resources to be cleaned up
+        run: sleep 15
+
+      - name: Delete GitHub Repository
+        if: inputs.delete_repo == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          gh repo delete crh225/${{ inputs.service_name }} --yes || echo "Repo not found or already deleted"
+
+      - name: Inform Port - Success
+        if: success()
+        uses: port-labs/port-github-action@v1
+        with:
+          clientId: ${{ secrets.PORT_CLIENT_ID }}
+          clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
+          baseUrl: https://api.port.io
+          operation: PATCH_RUN
+          runId: ${{ inputs.port_run_id }}
+          status: "SUCCESS"
+          logMessage: |
+            Microservice ${{ inputs.service_name }} decommissioned successfully!
+            - ArgoCD Application: Deleted
+            - Kubernetes Resources: Deleted (cascade)
+            - GitHub Repo: ${{ inputs.delete_repo == 'true' && 'Deleted' || 'Kept' }}
+
+      - name: Inform Port - Failure
+        if: failure()
+        uses: port-labs/port-github-action@v1
+        with:
+          clientId: ${{ secrets.PORT_CLIENT_ID }}
+          clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
+          baseUrl: https://api.port.io
+          operation: PATCH_RUN
+          runId: ${{ inputs.port_run_id }}
+          status: "FAILURE"
+          logMessage: "Failed to decommission microservice ${{ inputs.service_name }}"
