@@ -75,6 +75,11 @@ spec:
             secretKeyRef:
               name: backstage-secrets
               key: K8S_SERVICE_ACCOUNT_TOKEN
+        - name: PORT_BACKSTAGE_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: backstage-secrets
+              key: PORT_BACKSTAGE_TOKEN
         # POSTGRES_DB comes from configmap via envFrom
 
         resources:
