@@ -54,6 +54,10 @@ spec:
           title: Type the service name to confirm
           type: string
           description: Type the exact service name to confirm deletion
+        port_run_id:
+          title: Port Run ID
+          type: string
+          description: Port action run ID (auto-populated when triggered from Port)
 
   steps:
     # Step 1: Get the ArgoCD manifest file SHA (needed for deletion)
@@ -129,6 +133,16 @@ spec:
           K8s deleted: ${{ parameters.delete_kubernetes_resources }}
           Repo archived: ${{ parameters.archive_github_repo }}
           Repo deleted: ${{ parameters.delete_github_repo }}
+
+    # Step 8: Notify Port.io of completion (if triggered from Port)
+    - id: notify-port
+      name: Notify Port
+      if: ${{ parameters.port_run_id }}
+      action: port:notify
+      input:
+        runId: ${{ parameters.port_run_id }}
+        status: SUCCESS
+        message: "Microservice ${{ parameters.service_name }} decommissioned successfully"
 
   output:
     text:
