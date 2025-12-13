@@ -33,7 +33,7 @@ spec:
           readOnly: true
       containers:
       - name: backstage
-        image: armportalacre4k9.azurecr.io/backstage:b6b814c87c403d59c5b9e8d3987f50159fb9160e
+        image: armportalacre4k9.azurecr.io/backstage:820fc6895dac1f8626a5955169716245d3b52a74
         imagePullPolicy: Always
         ports:
         - containerPort: 7007
