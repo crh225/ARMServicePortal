@@ -63,6 +63,10 @@ spec:
             - North Central US
             - South Central US
             - West Central US
+        port_run_id:
+          title: Port Run ID
+          type: string
+          description: Port action run ID (auto-populated when triggered from Port)
 
   steps:
     - id: provision
@@ -74,6 +78,17 @@ spec:
           project_name: ${{ parameters.project_name }}
           environment: ${{ parameters.environment }}
           location: ${{ parameters.location }}
+
+    # Notify Port.io of completion (if triggered from Port)
+    - id: notify-port
+      name: Notify Port
+      if: ${{ parameters.port_run_id }}
+      action: port:notify
+      input:
+        runId: ${{ parameters.port_run_id }}
+        status: SUCCESS
+        message: "Resource Group for ${{ parameters.project_name }}-${{ parameters.environment }} created successfully"
+        link: ${{ steps.provision.output.prUrl }}
 
   output:
     links:
