@@ -1,0 +1,53 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: "fullstackapp-dev"
+  labels:
+    app.kubernetes.io/managed-by: crossplane
+    app.kubernetes.io/name: fullstackapp
+    app.kubernetes.io/instance: "fullstackapp-dev"
+    armportal.chrishouse.io/blueprint: "xp-building-blocks"
+    armportal.chrishouse.io/version: "2.0.0"
+    armportal.chrishouse.io/request-id: 0ed927cc
+    armportal.chrishouse.io/created-by: crh225
+---
+apiVersion: platform.chrishouse.io/v1alpha1
+kind: RedisClaim
+metadata:
+  name: "fullstackapp-cache"
+  namespace: "fullstackapp-dev"
+  labels:
+    app.kubernetes.io/managed-by: armportal
+    app.kubernetes.io/name: fullstackapp
+    app.kubernetes.io/instance: "fullstackapp-dev"
+    armportal.chrishouse.io/blueprint: "xp-building-blocks"
+    armportal.chrishouse.io/version: "2.0.0"
+    armportal.chrishouse.io/request-id: 0ed927cc
+    armportal.chrishouse.io/created-by: crh225
+    armportal.chrishouse.io/component: redis
+spec:
+  parameters:
+    version: "7.2"
+    memoryLimitMB: 256
+---
+apiVersion: platform.chrishouse.io/v1alpha1
+kind: RabbitMQClaim
+metadata:
+  name: "fullstackapp-mq"
+  namespace: "fullstackapp-dev"
+  labels:
+    app.kubernetes.io/managed-by: armportal
+    app.kubernetes.io/name: fullstackapp
+    app.kubernetes.io/instance: "fullstackapp-dev"
+    armportal.chrishouse.io/blueprint: "xp-building-blocks"
+    armportal.chrishouse.io/version: "2.0.0"
+    armportal.chrishouse.io/request-id: 0ed927cc
+    armportal.chrishouse.io/created-by: crh225
+    armportal.chrishouse.io/component: rabbitmq
+spec:
+  parameters:
+    version: "3.13"
+    memoryLimitMB: 512
+    exposeManagement: true
+    managementHost: fullstack.pr.chrishouse.io
