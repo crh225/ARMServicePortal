@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/instance: "fullstackapp-dev"
     armportal.chrishouse.io/blueprint: "xp-building-blocks"
     armportal.chrishouse.io/version: "2.0.0"
-    armportal.chrishouse.io/request-id: 0ed927cc
+    armportal.chrishouse.io/request-id: "269"
     armportal.chrishouse.io/created-by: crh225
 ---
 apiVersion: platform.chrishouse.io/v1alpha1
@@ -23,7 +23,7 @@ metadata:
     app.kubernetes.io/instance: "fullstackapp-dev"
     armportal.chrishouse.io/blueprint: "xp-building-blocks"
     armportal.chrishouse.io/version: "2.0.0"
-    armportal.chrishouse.io/request-id: 0ed927cc
+    armportal.chrishouse.io/request-id: "269"
     armportal.chrishouse.io/created-by: crh225
     armportal.chrishouse.io/component: redis
 spec:
@@ -42,7 +42,7 @@ metadata:
     app.kubernetes.io/instance: "fullstackapp-dev"
     armportal.chrishouse.io/blueprint: "xp-building-blocks"
     armportal.chrishouse.io/version: "2.0.0"
-    armportal.chrishouse.io/request-id: 0ed927cc
+    armportal.chrishouse.io/request-id: "269"
     armportal.chrishouse.io/created-by: crh225
     armportal.chrishouse.io/component: rabbitmq
 spec:
