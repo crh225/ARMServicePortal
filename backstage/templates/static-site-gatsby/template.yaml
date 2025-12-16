@@ -1,0 +1,196 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: static-site-gatsby
+  title: Gatsby Static Site
+  description: Deploy a Gatsby static site to AKS with nginx, CI/CD pipeline, and public ingress
+  tags:
+    - gatsby
+    - static-site
+    - frontend
+    - nginx
+    - recommended
+spec:
+  owner: platform-team
+  type: website
+
+  parameters:
+    - title: Site Information
+      required:
+        - site_name
+        - description
+        - owner
+      properties:
+        site_name:
+          title: Site Name
+          type: string
+          description: Name of the site (lowercase, no spaces, e.g., my-blog, portfolio)
+          pattern: '^[a-z][a-z0-9-]*$'
+          ui:autofocus: true
+        description:
+          title: Description
+          type: string
+          description: Brief description of this site
+        owner:
+          title: Owner
+          type: string
+          description: Team or person responsible for this site
+          ui:field: OwnerPicker
+          ui:options:
+            catalogFilter:
+              kind: Group
+
+    - title: Repository Configuration
+      required:
+        - repo_org
+      properties:
+        repo_org:
+          title: GitHub Organization
+          type: string
+          default: crh225
+          description: GitHub organization or username for the repository
+        repo_visibility:
+          title: Repository Visibility
+          type: string
+          default: private
+          enum: [public, private]
+
+    - title: Deployment Configuration
+      properties:
+        domain:
+          title: Domain
+          type: string
+          description: Domain for the site (e.g., blog.chrishouse.io, portfolio.chrishouse.io)
+          pattern: '^[a-z0-9.-]+\.chrishouse\.io$'
+        initial_environment:
+          title: Initial Environment
+          type: string
+          default: dev
+          enum: [dev, qa, staging, prod]
+          description: First environment to deploy to
+        node_version:
+          title: Node.js Version
+          type: string
+          default: "20"
+          enum: ["18", "20", "22"]
+          enumNames:
+            - Node.js 18 LTS
+            - Node.js 20 LTS
+            - Node.js 22 (Current)
+        min_replicas:
+          title: Minimum Replicas
+          type: number
+          default: 1
+          description: Minimum number of pods
+        max_replicas:
+          title: Maximum Replicas
+          type: number
+          default: 2
+          description: Maximum number of pods for auto-scaling
+        cpu_request:
+          title: CPU Request
+          type: string
+          default: "50m"
+          description: CPU resource request (static sites need less)
+        memory_request:
+          title: Memory Request
+          type: string
+          default: "64Mi"
+          description: Memory resource request (static sites need less)
+        port_run_id:
+          title: Port Run ID
+          type: string
+          description: Port action run ID (auto-populated when triggered from Port)
+
+  steps:
+    # Step 1: Fetch and render the skeleton template
+    - id: fetch
+      name: Fetch Skeleton
+      action: fetch:template
+      input:
+        url: ./skeleton
+        values:
+          site_name: ${{ parameters.site_name }}
+          description: ${{ parameters.description }}
+          owner: ${{ parameters.owner }}
+          domain: ${{ parameters.domain }}
+          node_version: ${{ parameters.node_version }}
+          initial_environment: ${{ parameters.initial_environment }}
+          min_replicas: ${{ parameters.min_replicas }}
+          max_replicas: ${{ parameters.max_replicas }}
+          cpu_request: ${{ parameters.cpu_request }}
+          memory_request: ${{ parameters.memory_request }}
+
+    # Step 2: Create GitHub repository
+    - id: publish
+      name: Create Repository
+      action: publish:github
+      input:
+        repoUrl: github.com?owner=${{ parameters.repo_org }}&repo=${{ parameters.site_name }}
+        description: ${{ parameters.description }}
+        repoVisibility: ${{ parameters.repo_visibility }}
+        defaultBranch: main
+
+    # Step 3: Configure secrets for deployment and GitOps
+    - id: secrets
+      name: Configure Deployment Secrets
+      action: github:repo:secrets
+      input:
+        repoUrl: github.com?owner=${{ parameters.repo_org }}&repo=${{ parameters.site_name }}
+        secrets:
+          AZURE_CLIENT_ID: "dbdeee3e-818f-4cd3-aafb-c2f0219ed443"
+          AZURE_TENANT_ID: "354b7ce2-bca3-4af5-b19a-e05a09b68a7b"
+          AZURE_SUBSCRIPTION_ID: "f989de0f-8697-4a05-8c34-b82c941767c0"
+
+    # Step 4: Register with Backstage catalog
+    - id: register
+      name: Register in Catalog
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps.publish.output.repoContentsUrl }}
+        catalogInfoPath: /catalog-info.yaml
+
+    # Step 5: Notify Port.io of completion (if triggered from Port)
+    - id: notify-port
+      name: Notify Port
+      if: ${{ parameters.port_run_id }}
+      action: port:notify
+      input:
+        runId: ${{ parameters.port_run_id }}
+        status: SUCCESS
+        message: "Static site ${{ parameters.site_name }} created successfully"
+        link: ${{ steps.publish.output.remoteUrl }}
+
+  output:
+    links:
+      - title: View Repository
+        url: ${{ steps.publish.output.remoteUrl }}
+        icon: github
+      - title: Open in Catalog
+        entityRef: ${{ steps.register.output.entityRef }}
+        icon: catalog
+    text:
+      - title: Next Steps
+        content: |
+          Your static site **${{ parameters.site_name }}** has been created!
+
+          ## Import Your Existing Gatsby Blog
+          1. Clone the new repo: `git clone ${{ steps.publish.output.remoteUrl }}`
+          2. Copy your blog files from `C:\Users\Chris\Development\blog` into the cloned repo
+          3. Commit and push: `git add . && git commit -m "Import blog" && git push`
+
+          ## Development
+          1. Install dependencies: `npm install`
+          2. Start Gatsby dev server: `npm run dev`
+          3. Build for production: `npm run build`
+
+          ## Deployment (GitOps)
+          Pushing to `main` will:
+          1. Run CI (build Gatsby site)
+          2. Build Docker image with nginx serving the static files
+          3. Push to GHCR
+          4. Update ArgoCD manifest in GitOps repo
+          5. ArgoCD auto-syncs to AKS namespace: `${{ parameters.initial_environment }}`
+          6. Available at: https://${{ parameters.domain }}
+
+          View in ArgoCD: https://argocd.chrishouse.io

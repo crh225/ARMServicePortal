@@ -1,0 +1,54 @@
+replicaCount: ${{ values.min_replicas }}
+
+image:
+  repository: ghcr.io/crh225/${{ values.site_name }}
+  pullPolicy: Always
+  tag: "latest"
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  hosts:
+    - host: ${{ values.domain }}
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: ${{ values.site_name }}-tls
+      hosts:
+        - ${{ values.domain }}
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: ${{ values.cpu_request }}
+    memory: ${{ values.memory_request }}
+
+autoscaling:
+  enabled: true
+  minReplicas: ${{ values.min_replicas }}
+  maxReplicas: ${{ values.max_replicas }}
+  targetCPUUtilizationPercentage: 80
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 80
+  initialDelaySeconds: 10
+  periodSeconds: 10
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 80
+  initialDelaySeconds: 5
+  periodSeconds: 5

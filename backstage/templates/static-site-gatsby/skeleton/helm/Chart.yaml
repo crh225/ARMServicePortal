@@ -1,0 +1,6 @@
+apiVersion: v2
+name: ${{ values.site_name }}
+description: ${{ values.description }}
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
