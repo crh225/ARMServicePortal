@@ -32,7 +32,7 @@ module.exports = {
         background_color: `#000000`,
         theme_color: `#00ff7f`,
         display: `standalone`,
-        icon: `src/images/icon.png`,
+        // icon: `src/images/icon.png`, // TODO: Add your icon.png (512x512+) to src/images/
       },
     },
     {
