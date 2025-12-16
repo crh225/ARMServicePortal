@@ -2,7 +2,7 @@ module.exports = {
   siteMetadata: {
     title: '${{ values.site_name }}',
     description: '${{ values.description }}',
-    siteUrl: 'https://${{ values.domain }}',
+    siteUrl: process.env.GATSBY_SITE_URL || 'https://example.com',
     author: '${{ values.owner }}',
   },
   plugins: [

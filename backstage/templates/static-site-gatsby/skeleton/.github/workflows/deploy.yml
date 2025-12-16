@@ -15,6 +15,7 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
   ENVIRONMENT: ${{ values.initial_environment }}
+  SITE_URL: https://${{ values.domain }}
 
 jobs:
   build-and-deploy:
@@ -34,6 +35,8 @@ jobs:
 
       - name: Build Gatsby site
         run: npm run build
+        env:
+          GATSBY_SITE_URL: ${{ env.SITE_URL }}
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
