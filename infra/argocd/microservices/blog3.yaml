@@ -1,0 +1,29 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: blog3
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/crh225/blog3
+    targetRevision: main
+    path: helm
+    helm:
+      releaseName: blog3
+      values: |
+        image:
+          repository: ghcr.io/crh225/blog3
+          tag: c4bbcf2ecfe40efe2f9264fbe91c99151b6a5cb1
+        ingress:
+          enabled: true
+          host: blog3.chrishouse.io
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: dev
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
