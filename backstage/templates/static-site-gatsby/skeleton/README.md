@@ -44,34 +44,10 @@ This site is automatically deployed via GitOps:
 
 ```
 .
-├── src/              # Gatsby source files (add your blog here)
-├── static/           # Static assets
+├── src/              # Gatsby source files
+├── content/          # Blog posts (markdown)
 ├── helm/             # Kubernetes Helm chart
 ├── .github/          # CI/CD workflows
 ├── Dockerfile        # Multi-stage build
 └── nginx.conf        # Nginx configuration
 ```
-
-## Importing Your Existing Blog
-
-If you have an existing Gatsby blog at `C:\Users\Chris\Development\blog`:
-
-```bash
-# Copy all src files
-cp -r C:\Users\Chris\Development\blog/src/* ./src/
-cp -r C:\Users\Chris\Development\blog/static/* ./static/
-
-# Copy gatsby config if it exists
-cp C:\Users\Chris\Development\blog/gatsby-*.js ./
-
-# Merge package.json dependencies
-# (manually merge the dependencies from your blog's package.json)
-
-# Install and test
-npm install
-npm run dev
-```
-
-## Mario Game
-
-If your blog includes a Mario game, make sure all assets are in the `static/mario/` directory. The nginx.conf is already configured to serve them correctly.
