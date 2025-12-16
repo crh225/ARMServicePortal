@@ -13,7 +13,7 @@ permissions:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/${{ values.site_name }}
+  IMAGE_NAME: "{% raw %}${{ github.repository }}{% endraw %}"
   ENVIRONMENT: ${{ values.initial_environment }}
   SITE_URL: https://${{ values.domain }}
 
@@ -36,20 +36,20 @@ jobs:
       - name: Build Gatsby site
         run: npm run build
         env:
-          GATSBY_SITE_URL: ${{ env.SITE_URL }}
+          GATSBY_SITE_URL: "{% raw %}${{ env.SITE_URL }}{% endraw %}"
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: "{% raw %}${{ env.REGISTRY }}{% endraw %}"
+          username: "{% raw %}${{ github.actor }}{% endraw %}"
+          password: "{% raw %}${{ secrets.GITHUB_TOKEN }}{% endraw %}"
 
       - name: Extract metadata for Docker
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: "{% raw %}${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}{% endraw %}"
           tags: |
             type=sha,prefix=,format=short
             type=raw,value=latest
@@ -59,15 +59,15 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: "{% raw %}${{ steps.meta.outputs.tags }}{% endraw %}"
+          labels: "{% raw %}${{ steps.meta.outputs.labels }}{% endraw %}"
 
       - name: Azure login (OIDC)
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          client-id: "{% raw %}${{ secrets.AZURE_CLIENT_ID }}{% endraw %}"
+          tenant-id: "{% raw %}${{ secrets.AZURE_TENANT_ID }}{% endraw %}"
+          subscription-id: "{% raw %}${{ secrets.AZURE_SUBSCRIPTION_ID }}{% endraw %}"
           auth-type: SERVICE_PRINCIPAL
           allow-no-subscriptions: false
           environment: azurecloud
@@ -75,7 +75,7 @@ jobs:
 
       - name: Clone GitOps repo
         run: |
-          git clone https://oauth2:${{ secrets.GITHUB_TOKEN }}@github.com/crh225/ARMServicePortal.git gitops
+          git clone https://oauth2:{% raw %}${{ secrets.GITHUB_TOKEN }}{% endraw %}@github.com/crh225/ARMServicePortal.git gitops
           cd gitops
 
       - name: Update ArgoCD manifest
@@ -95,21 +95,21 @@ jobs:
           spec:
             project: default
             source:
-              repoURL: https://github.com/${{ github.repository }}
+              repoURL: https://github.com/{% raw %}${{ github.repository }}{% endraw %}
               targetRevision: main
               path: helm
               helm:
                 releaseName: ${{ values.site_name }}
                 values: |
                   image:
-                    repository: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-                    tag: ${{ github.sha }}
+                    repository: {% raw %}${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}{% endraw %}
+                    tag: {% raw %}${{ github.sha }}{% endraw %}
                   ingress:
                     enabled: true
                     host: ${{ values.domain }}
             destination:
               server: https://kubernetes.default.svc
-              namespace: ${{ env.ENVIRONMENT }}
+              namespace: {% raw %}${{ env.ENVIRONMENT }}{% endraw %}
             syncPolicy:
               automated:
                 prune: true
@@ -121,7 +121,7 @@ jobs:
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
           git add .
-          git commit -m "Update ${{ values.site_name }} to ${{ github.sha }}"
+          git commit -m "Update ${{ values.site_name }} to {% raw %}${{ github.sha }}{% endraw %}"
           git push
 
       - name: Deployment complete
