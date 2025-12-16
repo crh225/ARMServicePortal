@@ -13,7 +13,7 @@ permissions:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: ${{ github.repository_owner }}/${{ values.site_name }}
   ENVIRONMENT: ${{ values.initial_environment }}
   SITE_URL: https://${{ values.domain }}
 
