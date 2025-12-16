@@ -23,27 +23,29 @@ module.exports = {
     },
     `gatsby-transformer-sharp`,
     `gatsby-plugin-sharp`,
-    {
-      resolve: `gatsby-plugin-manifest`,
-      options: {
-        name: '${{ values.site_name }}',
-        short_name: '${{ values.site_name }}',
-        start_url: `/`,
-        background_color: `#000000`,
-        theme_color: `#00ff7f`,
-        display: `standalone`,
-        // icon: `src/images/icon.png`, // TODO: Add your icon.png (512x512+) to src/images/
-      },
-    },
-    {
-      resolve: `gatsby-plugin-offline`,
-      options: {
-        workboxConfig: {
-          skipWaiting: true,
-          clientsClaim: true,
-        },
-      },
-    },
+    // Uncomment gatsby-plugin-manifest after adding icon.png to src/images/
+    // {
+    //   resolve: `gatsby-plugin-manifest`,
+    //   options: {
+    //     name: '${{ values.site_name }}',
+    //     short_name: '${{ values.site_name }}',
+    //     start_url: `/`,
+    //     background_color: `#000000`,
+    //     theme_color: `#00ff7f`,
+    //     display: `standalone`,
+    //     icon: `src/images/icon.png`,
+    //   },
+    // },
+    // Uncomment gatsby-plugin-offline after enabling manifest
+    // {
+    //   resolve: `gatsby-plugin-offline`,
+    //   options: {
+    //     workboxConfig: {
+    //       skipWaiting: true,
+    //       clientsClaim: true,
+    //     },
+    //   },
+    // },
     {
       resolve: `gatsby-transformer-remark`,
       options: {
