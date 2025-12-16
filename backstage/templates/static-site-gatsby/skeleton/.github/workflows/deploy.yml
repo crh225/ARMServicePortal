@@ -62,21 +62,12 @@ jobs:
           tags: "{% raw %}${{ steps.meta.outputs.tags }}{% endraw %}"
           labels: "{% raw %}${{ steps.meta.outputs.labels }}{% endraw %}"
 
-      - name: Azure login (OIDC)
-        uses: azure/login@v2
+      - name: Checkout GitOps repo
+        uses: actions/checkout@v4
         with:
-          client-id: "{% raw %}${{ secrets.AZURE_CLIENT_ID }}{% endraw %}"
-          tenant-id: "{% raw %}${{ secrets.AZURE_TENANT_ID }}{% endraw %}"
-          subscription-id: "{% raw %}${{ secrets.AZURE_SUBSCRIPTION_ID }}{% endraw %}"
-          auth-type: SERVICE_PRINCIPAL
-          allow-no-subscriptions: false
-          environment: azurecloud
-          audience: api://AzureADTokenExchange
-
-      - name: Clone GitOps repo
-        run: |
-          git clone https://oauth2:{% raw %}${{ secrets.GITHUB_TOKEN }}{% endraw %}@github.com/crh225/ARMServicePortal.git gitops
-          cd gitops
+          repository: crh225/ARMServicePortal
+          token: "{% raw %}${{ secrets.GITOPS_TOKEN }}{% endraw %}"
+          path: gitops
 
       - name: Update ArgoCD manifest
         run: |
