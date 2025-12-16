@@ -3,15 +3,15 @@ import * as React from 'react'
 const IndexPage = () => {
   return (
     <main style={{ padding: '2rem', fontFamily: 'system-ui, sans-serif' }}>
-      <h1>Welcome to ${{ values.site_name }}</h1>
-      <p>${{ values.description }}</p>
+      <h1>Welcome to Your Gatsby Site</h1>
+      <p>Your site is successfully deployed!</p>
 
       <div style={{ marginTop: '2rem', padding: '1rem', background: '#f0f0f0', borderRadius: '8px' }}>
         <h2>Next Steps</h2>
         <ol>
           <li>Replace this with your actual Gatsby blog content</li>
-          <li>Copy your existing blog files from <code>C:\Users\Chris\Development\blog</code></li>
-          <li>If you have a Mario game, place it in <code>static/mario/</code></li>
+          <li>Copy your existing blog files (src, content, static folders)</li>
+          <li>Update gatsby-config.js with your plugins and settings</li>
           <li>Push to main branch to deploy</li>
         </ol>
       </div>
@@ -30,4 +30,4 @@ const IndexPage = () => {
 
 export default IndexPage
 
-export const Head = () => <title>${{ values.site_name }}</title>
+export const Head = () => <title>Gatsby Site</title>

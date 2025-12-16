@@ -75,18 +75,18 @@ jobs:
 
       - name: Clone GitOps repo
         run: |
-          git clone https://oauth2:${{ secrets.GITHUB_TOKEN }}@github.com/crh225/aks-gitops.git
-          cd aks-gitops
+          git clone https://oauth2:${{ secrets.GITHUB_TOKEN }}@github.com/crh225/ARMServicePortal.git gitops
+          cd gitops
 
       - name: Update ArgoCD manifest
         run: |
-          cd aks-gitops
+          cd gitops
 
           # Create directory if it doesn't exist
-          mkdir -p apps/${{ env.ENVIRONMENT }}/${{ values.site_name }}
+          mkdir -p infra/argocd/microservices
 
           # Generate ArgoCD application manifest
-          cat > apps/${{ env.ENVIRONMENT }}/${{ values.site_name }}/application.yaml <<EOF
+          cat > infra/argocd/microservices/${{ values.site_name }}.yaml <<EOF
           apiVersion: argoproj.io/v1alpha1
           kind: Application
           metadata:
