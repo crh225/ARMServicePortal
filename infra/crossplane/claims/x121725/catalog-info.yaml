@@ -1,0 +1,18 @@
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: x121725
+  description: Azure Storage Account provisioned via Crossplane
+  annotations:
+    backstage.io/managed-by-location: url:https://github.com/crh225/ARMServicePortal/blob/main/infra/crossplane/claims/x121725/claim.yaml
+  labels:
+    crossplane.io/claim-name: x121725
+  tags:
+    - crossplane
+    - azure
+    - storage
+spec:
+  type: storage
+  lifecycle: production
+  owner: group:default/crh225
+  system: azure-infrastructure
