@@ -17,11 +17,11 @@ spec:
     chart: opencost
     targetRevision: 1.42.0
     helm:
-      valueFiles: []
       values: |
         opencost:
           exporter:
             defaultClusterId: "armportal-aks"
+            # Azure cloud provider detected automatically via node ProviderID
           ui:
             enabled: true
           prometheus:
@@ -31,10 +31,6 @@ spec:
               namespaceName: opencost
         service:
           type: ClusterIP
-          port: 9003
-        # Deploy Prometheus alongside OpenCost
-        prometheus:
-          enabled: true
 
   destination:
     server: https://kubernetes.default.svc
