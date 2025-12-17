@@ -3,7 +3,7 @@ apiVersion: armportal.io/v1alpha1
 kind: StorageAccount
 metadata:
   name: ${{ values.storageAccountName }}
-  namespace: crossplane-system
+  namespace: default
   labels:
     app.kubernetes.io/managed-by: crossplane
     app.kubernetes.io/name: ${{ values.storageAccountName }}
