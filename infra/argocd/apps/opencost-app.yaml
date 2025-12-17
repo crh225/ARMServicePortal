@@ -1,0 +1,55 @@
+# Argo CD Application for OpenCost
+# Kubernetes cost monitoring and allocation
+# https://www.opencost.io/
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: opencost
+  namespace: argocd
+  annotations:
+    link.argocd.argoproj.io/external-link: https://www.opencost.io/docs
+spec:
+  project: default
+
+  source:
+    repoURL: https://opencost.github.io/opencost-helm-chart
+    chart: opencost
+    targetRevision: 1.42.0
+    helm:
+      valueFiles: []
+      values: |
+        opencost:
+          exporter:
+            defaultClusterId: "armportal-aks"
+          ui:
+            enabled: true
+          prometheus:
+            internal:
+              enabled: true
+              serviceName: prometheus-server
+              namespaceName: opencost
+        service:
+          type: ClusterIP
+          port: 9003
+        # Deploy Prometheus alongside OpenCost
+        prometheus:
+          enabled: true
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: opencost
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
