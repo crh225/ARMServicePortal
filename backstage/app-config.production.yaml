@@ -180,6 +180,10 @@ catalog:
       target: ./templates/xp-storage-account/template.yaml
       rules:
         - allow: [Template]
+    - type: file
+      target: ./templates/xp-resource-group/template.yaml
+      rules:
+        - allow: [Template]
 
     # ARM Portal Documentation
     - type: url

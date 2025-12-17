@@ -1,0 +1,124 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: xp-resource-group
+  title: Azure Resource Group (Crossplane)
+  description: Provision an Azure Resource Group using Crossplane. Creates a PR to the GitOps repo with the claim.
+  tags:
+    - crossplane
+    - azure
+    - resource-group
+    - infrastructure
+  links:
+    - url: https://docs.crossplane.io/
+      title: Crossplane Documentation
+      icon: dashboard
+spec:
+  owner: platform-team
+  type: infrastructure
+
+  parameters:
+    - title: Resource Group Configuration
+      required:
+        - resourceGroupName
+        - location
+      properties:
+        resourceGroupName:
+          title: Resource Group Name
+          type: string
+          description: Name for the resource group (e.g., rg-myapp-dev)
+          pattern: '^[a-zA-Z0-9-_]{1,90}$'
+          ui:autofocus: true
+        location:
+          title: Azure Region
+          type: string
+          default: eastus
+          enum:
+            - eastus
+            - eastus2
+            - westus
+            - westus2
+            - centralus
+            - northeurope
+            - westeurope
+          enumNames:
+            - East US
+            - East US 2
+            - West US
+            - West US 2
+            - Central US
+            - North Europe
+            - West Europe
+
+    - title: Metadata
+      properties:
+        environment:
+          title: Environment
+          type: string
+          default: dev
+          enum: [dev, staging, prod]
+        owner:
+          title: Owner
+          type: string
+          description: Team or person responsible
+          ui:field: OwnerPicker
+          ui:options:
+            catalogFilter:
+              kind: Group
+
+  steps:
+    - id: fetch
+      name: Generate Crossplane Claim
+      action: fetch:template
+      input:
+        url: ./skeleton
+        targetPath: infra/crossplane/claims/${{ parameters.resourceGroupName }}
+        values:
+          resourceGroupName: ${{ parameters.resourceGroupName }}
+          location: ${{ parameters.location }}
+          environment: ${{ parameters.environment }}
+          owner: ${{ parameters.owner }}
+
+    - id: publish
+      name: Create Pull Request
+      action: publish:github:pull-request
+      input:
+        repoUrl: github.com?owner=crh225&repo=ARMServicePortal
+        branchName: crossplane/rg-${{ parameters.resourceGroupName }}
+        title: "feat(crossplane): Add resource group ${{ parameters.resourceGroupName }}"
+        description: |
+          ## Crossplane Resource Group
+
+          This PR creates a new Azure Resource Group via Crossplane.
+
+          | Setting | Value |
+          |---------|-------|
+          | **Name** | ${{ parameters.resourceGroupName }} |
+          | **Location** | ${{ parameters.location }} |
+          | **Environment** | ${{ parameters.environment }} |
+
+          ### What happens when merged?
+          1. ArgoCD syncs the claim to the cluster
+          2. Crossplane provisions the resource group in Azure
+
+          ---
+          Created via Backstage Software Template
+        sourcePath: infra/crossplane/claims/${{ parameters.resourceGroupName }}
+        targetPath: infra/crossplane/claims/${{ parameters.resourceGroupName }}
+
+  output:
+    links:
+      - title: View Pull Request
+        url: ${{ steps.publish.output.remoteUrl }}
+        icon: github
+    text:
+      - title: Next Steps
+        content: |
+          ## Resource Group: ${{ parameters.resourceGroupName }}
+
+          A pull request has been created.
+
+          ### After PR is merged:
+          1. ArgoCD syncs the Crossplane claim
+          2. Crossplane creates the resource group in Azure (~1-2 min)
+          3. Check status: `kubectl get resourcegroups.azure.upbound.io`

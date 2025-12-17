@@ -1,0 +1,12 @@
+---
+apiVersion: azure.upbound.io/v1beta1
+kind: ResourceGroup
+metadata:
+  name: ${{ values.resourceGroupName }}
+  labels:
+    app.kubernetes.io/managed-by: crossplane
+    armportal.chrishouse.io/environment: ${{ values.environment }}
+    armportal.chrishouse.io/created-by: backstage
+spec:
+  forProvider:
+    location: ${{ values.location }}

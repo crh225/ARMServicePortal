@@ -1,0 +1,18 @@
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: ${{ values.resourceGroupName }}
+  description: Azure Resource Group provisioned via Crossplane
+  annotations:
+    backstage.io/managed-by-location: url:https://github.com/crh225/ARMServicePortal/blob/main/infra/crossplane/claims/${{ values.resourceGroupName }}/claims.yaml
+  labels:
+    crossplane.io/claim-name: ${{ values.resourceGroupName }}
+  tags:
+    - crossplane
+    - azure
+    - resource-group
+spec:
+  type: resource-group
+  lifecycle: production
+  owner: ${{ values.owner | default('platform-team', true) }}
+  system: azure-infrastructure
