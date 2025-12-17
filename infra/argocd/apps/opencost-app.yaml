@@ -21,7 +21,6 @@ spec:
         opencost:
           exporter:
             defaultClusterId: "armportal-aks"
-            # Azure cloud provider detected automatically via node ProviderID
             extraVolumeMounts:
               - name: azure-service-key
                 mountPath: /var/secrets
@@ -33,10 +32,10 @@ spec:
               enabled: true
               serviceName: prometheus-server
               namespaceName: opencost
-          extraVolumes:
-            - name: azure-service-key
-              secret:
-                secretName: azure-service-key
+        extraVolumes:
+          - name: azure-service-key
+            secret:
+              secretName: azure-service-key
         service:
           type: ClusterIP
 
