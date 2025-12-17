@@ -1,0 +1,12 @@
+---
+apiVersion: azure.upbound.io/v1beta1
+kind: ResourceGroup
+metadata:
+  name: rg-crossplane-dev
+  labels:
+    app.kubernetes.io/managed-by: crossplane
+    armportal.chrishouse.io/environment: dev
+    armportal.chrishouse.io/created-by: backstage
+spec:
+  forProvider:
+    location: eastus
