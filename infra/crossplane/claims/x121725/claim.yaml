@@ -1,0 +1,20 @@
+---
+apiVersion: armportal.io/v1alpha1
+kind: StorageAccount
+metadata:
+  name: x121725
+  namespace: crossplane-system
+  labels:
+    app.kubernetes.io/managed-by: crossplane
+    app.kubernetes.io/name: x121725
+    armportal.chrishouse.io/environment: dev
+    armportal.chrishouse.io/created-by: backstage
+spec:
+  parameters:
+    storageAccountName: x121725
+    resourceGroupName: rg-crossplane-dev
+    tier: Standard
+    replicationType: LRS
+    location: East US
+  writeConnectionSecretToRef:
+    name: x121725-conn
