@@ -93,8 +93,8 @@ spec:
         install_command:
           title: Install Command
           type: string
-          default: npm ci
-          description: Command to install dependencies
+          default: npm install
+          description: Command to install dependencies (use 'npm ci' if you have a lock file)
 
     - title: Repository Configuration
       required:
@@ -190,6 +190,7 @@ spec:
         defaultBranch: main
 
     # Step 3: Configure secrets for deployment and GitOps
+    # GITOPS_TOKEN is auto-injected from Backstage config (armPortal.gitopsToken)
     - id: secrets
       name: Configure Deployment Secrets
       action: github:repo:secrets

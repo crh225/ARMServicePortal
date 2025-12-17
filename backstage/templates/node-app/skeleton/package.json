@@ -20,5 +20,12 @@
   "license": "ISC",
   "engines": {
     "node": ">=${{ values.node_version }}"
+  },
+{%- if values.app_type == 'static' %}
+  "devDependencies": {
+    "vite": "^5.4.0"
   }
+{%- else %}
+  "dependencies": {}
+{%- endif %}
 }

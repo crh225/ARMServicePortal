@@ -59,7 +59,7 @@ WORKDIR /app
 
 # Copy package files and install production deps only
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm install --only=production
 
 # Copy built app from builder
 COPY --from=builder /app/${{ values.build_output_dir }} ./${{ values.build_output_dir }}
