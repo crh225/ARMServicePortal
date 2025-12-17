@@ -4,6 +4,8 @@ kind: StorageAccount
 metadata:
   name: ${{ values.storageAccountName }}
   namespace: default
+  annotations:
+    link.argocd.argoproj.io/external-link: https://portal.azure.com/#@/resource/subscriptions/f989de0f-8697-4a05-8c34-b82c941767c0/resourceGroups/${{ values.resourceGroupName }}/providers/Microsoft.Storage/storageAccounts/${{ values.storageAccountName }}
   labels:
     app.kubernetes.io/managed-by: crossplane
     app.kubernetes.io/name: ${{ values.storageAccountName }}
