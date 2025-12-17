@@ -169,6 +169,31 @@ const serviceIcons: Record<string, { icon: string; color: string; bgColor: strin
     color: '#326ce5',
     bgColor: 'rgba(50, 108, 229, 0.1)',
   },
+  'microservice-node': {
+    icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg',
+    color: '#339933',
+    bgColor: 'rgba(51, 153, 51, 0.1)',
+  },
+  'static-site-gatsby': {
+    icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/gatsby/gatsby-original.svg',
+    color: '#663399',
+    bgColor: 'rgba(102, 51, 153, 0.1)',
+  },
+  'decommission-microservice': {
+    icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg',
+    color: '#339933',
+    bgColor: 'rgba(51, 153, 51, 0.1)',
+  },
+  'node-app': {
+    icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg',
+    color: '#339933',
+    bgColor: 'rgba(51, 153, 51, 0.1)',
+  },
+  'promote-microservice': {
+    icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg',
+    color: '#339933',
+    bgColor: 'rgba(51, 153, 51, 0.1)',
+  },
 };
 
 // Default icon for unknown templates
