@@ -1,0 +1,24 @@
+{
+  "name": "${{ values.app_name }}",
+  "version": "1.0.0",
+  "description": "${{ values.description }}",
+  "main": "src/index.js",
+  "scripts": {
+{%- if values.app_type == 'static' %}
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+{%- else %}
+    "dev": "node --watch src/index.js",
+    "start": "node src/index.js",
+    "build": "echo 'No build step required'",
+{%- endif %}
+    "test": "echo \"No tests yet\" && exit 0"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "engines": {
+    "node": ">=${{ values.node_version }}"
+  }
+}

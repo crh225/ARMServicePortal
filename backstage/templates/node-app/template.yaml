@@ -1,0 +1,249 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: node-app
+  title: Node.js App
+  description: Deploy any Node.js application (static site, Express server, API, etc.) to AKS with optional ingress. Simpler than the full microservice template.
+  tags:
+    - node
+    - webapp
+    - static
+    - express
+    - recommended
+  links:
+    - url: https://nodejs.org/
+      title: Node.js Documentation
+      icon: dashboard
+spec:
+  owner: platform-team
+  type: website
+
+  parameters:
+    - title: App Information
+      required:
+        - app_name
+        - description
+        - owner
+      properties:
+        app_name:
+          title: App Name
+          type: string
+          description: Name of your app (lowercase, no spaces, e.g., my-dashboard, status-page)
+          pattern: '^[a-z][a-z0-9-]*$'
+          ui:autofocus: true
+        description:
+          title: Description
+          type: string
+          description: Brief description of what this app does
+        owner:
+          title: Owner
+          type: string
+          description: Team or person responsible for this app
+          ui:field: OwnerPicker
+          ui:options:
+            catalogFilter:
+              kind: Group
+
+    - title: App Type
+      required:
+        - app_type
+      properties:
+        app_type:
+          title: Application Type
+          type: string
+          default: static
+          enum: [static, server]
+          enumNames:
+            - Static Site (built with npm run build, served via nginx)
+            - Node Server (Express, Fastify, etc. - runs npm start)
+          description: How your app runs
+        build_output_dir:
+          title: Build Output Directory
+          type: string
+          default: dist
+          description: Directory containing built static files (for static sites)
+          ui:options:
+            hidden:
+              $if: "${{ parameters.app_type === 'server' }}"
+        port:
+          title: Server Port
+          type: number
+          default: 3000
+          description: Port your Node server listens on
+          ui:options:
+            hidden:
+              $if: "${{ parameters.app_type === 'static' }}"
+
+    - title: Technical Configuration
+      properties:
+        node_version:
+          title: Node.js Version
+          type: string
+          default: "20"
+          enum: ["18", "20", "22"]
+          enumNames:
+            - Node.js 18 LTS
+            - Node.js 20 LTS
+            - Node.js 22 (Current)
+        build_command:
+          title: Build Command
+          type: string
+          default: npm run build
+          description: Command to build your app (leave default for most projects)
+        install_command:
+          title: Install Command
+          type: string
+          default: npm ci
+          description: Command to install dependencies
+
+    - title: Repository Configuration
+      required:
+        - repo_org
+      properties:
+        repo_org:
+          title: GitHub Organization
+          type: string
+          default: crh225
+          description: GitHub organization or username for the repository
+        repo_visibility:
+          title: Repository Visibility
+          type: string
+          default: private
+          enum: [public, private]
+
+    - title: Deployment Configuration
+      properties:
+        ingress_enabled:
+          title: Enable Public Ingress
+          type: boolean
+          default: true
+          description: Expose app at {app-name}.chrishouse.io with TLS
+        domain:
+          title: Custom Domain
+          type: string
+          description: Custom domain (optional, defaults to {app-name}.chrishouse.io)
+          pattern: '^[a-z0-9.-]+$'
+        initial_environment:
+          title: Initial Environment
+          type: string
+          default: dev
+          enum: [dev, qa, staging, prod]
+          description: First environment to deploy to
+        min_replicas:
+          title: Minimum Replicas
+          type: number
+          default: 1
+          description: Minimum number of pods
+        max_replicas:
+          title: Maximum Replicas
+          type: number
+          default: 2
+          description: Maximum number of pods for auto-scaling
+        cpu_request:
+          title: CPU Request
+          type: string
+          default: "50m"
+          description: CPU resource request
+        memory_request:
+          title: Memory Request
+          type: string
+          default: "64Mi"
+          description: Memory resource request
+        port_run_id:
+          title: Port Run ID
+          type: string
+          description: Port action run ID (auto-populated when triggered from Port)
+
+  steps:
+    # Step 1: Fetch and render the skeleton template
+    - id: fetch
+      name: Fetch Skeleton
+      action: fetch:template
+      input:
+        url: ./skeleton
+        values:
+          app_name: ${{ parameters.app_name }}
+          description: ${{ parameters.description }}
+          owner: ${{ parameters.owner }}
+          app_type: ${{ parameters.app_type }}
+          build_output_dir: ${{ parameters.build_output_dir | default('dist', true) }}
+          port: ${{ parameters.port | default(3000, true) }}
+          node_version: ${{ parameters.node_version }}
+          build_command: ${{ parameters.build_command }}
+          install_command: ${{ parameters.install_command }}
+          ingress_enabled: ${{ parameters.ingress_enabled }}
+          domain: ${{ parameters.domain | default(parameters.app_name + '.chrishouse.io', true) }}
+          initial_environment: ${{ parameters.initial_environment }}
+          min_replicas: ${{ parameters.min_replicas }}
+          max_replicas: ${{ parameters.max_replicas }}
+          cpu_request: ${{ parameters.cpu_request }}
+          memory_request: ${{ parameters.memory_request }}
+
+    # Step 2: Create GitHub repository
+    - id: publish
+      name: Create Repository
+      action: publish:github
+      input:
+        repoUrl: github.com?owner=${{ parameters.repo_org }}&repo=${{ parameters.app_name }}
+        description: ${{ parameters.description }}
+        repoVisibility: ${{ parameters.repo_visibility }}
+        defaultBranch: main
+
+    # Step 3: Configure secrets for deployment and GitOps
+    - id: secrets
+      name: Configure Deployment Secrets
+      action: github:repo:secrets
+      input:
+        repoUrl: github.com?owner=${{ parameters.repo_org }}&repo=${{ parameters.app_name }}
+        secrets:
+          AZURE_CLIENT_ID: "dbdeee3e-818f-4cd3-aafb-c2f0219ed443"
+          AZURE_TENANT_ID: "354b7ce2-bca3-4af5-b19a-e05a09b68a7b"
+          AZURE_SUBSCRIPTION_ID: "f989de0f-8697-4a05-8c34-b82c941767c0"
+
+    # Step 4: Register with Backstage catalog
+    - id: register
+      name: Register in Catalog
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps.publish.output.repoContentsUrl }}
+        catalogInfoPath: /catalog-info.yaml
+
+    # Step 5: Notify Port.io of completion (if triggered from Port)
+    - id: notify-port
+      name: Notify Port
+      if: ${{ parameters.port_run_id }}
+      action: port:notify
+      input:
+        runId: ${{ parameters.port_run_id }}
+        status: SUCCESS
+        message: "Node app ${{ parameters.app_name }} created successfully"
+        link: ${{ steps.publish.output.remoteUrl }}
+
+  output:
+    links:
+      - title: View Repository
+        url: ${{ steps.publish.output.remoteUrl }}
+        icon: github
+      - title: Open in Catalog
+        entityRef: ${{ steps.register.output.entityRef }}
+        icon: catalog
+    text:
+      - title: Next Steps
+        content: |
+          Your app **${{ parameters.app_name }}** has been created!
+
+          ## Getting Started
+          1. Clone the repo: `git clone ${{ steps.publish.output.remoteUrl }}`
+          2. Add your code to the `src/` directory
+          3. Install dependencies: `npm install`
+          4. Start developing: `npm run dev`
+
+          ## Deployment (GitOps)
+          Pushing to `main` will:
+          1. Run CI (build your app)
+          2. Build and push Docker image to GHCR
+          3. Update ArgoCD manifest in GitOps repo
+          4. ArgoCD auto-syncs to AKS namespace: `${{ parameters.initial_environment }}`
+          5. Available at: https://${{ parameters.domain | default(parameters.app_name + '.chrishouse.io', true) }}
+
+          View in ArgoCD: https://argocd.chrishouse.io

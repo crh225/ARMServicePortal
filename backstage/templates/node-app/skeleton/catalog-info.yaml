@@ -1,0 +1,28 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: ${{ values.app_name }}
+  title: ${{ values.app_name }}
+  description: ${{ values.description }}
+  annotations:
+    github.com/project-slug: crh225/${{ values.app_name }}
+    backstage.io/techdocs-ref: dir:.
+    argocd/app-name: ${{ values.app_name }}
+  tags:
+    - node
+{%- if values.app_type == 'static' %}
+    - static-site
+{%- else %}
+    - server
+{%- endif %}
+  links:
+    - url: https://${{ values.domain }}
+      title: Live Site
+      icon: dashboard
+    - url: https://argocd.chrishouse.io/applications/${{ values.app_name }}
+      title: ArgoCD
+      icon: cloud
+spec:
+  type: website
+  lifecycle: experimental
+  owner: ${{ values.owner }}
