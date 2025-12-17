@@ -24,7 +24,7 @@ spec:
         - name: image.repository
           value: ghcr.io/crh225/theblog
         - name: image.tag
-          value: "sha-438a267"
+          value: "sha-845556b"
   destination:
     server: https://kubernetes.default.svc
     namespace: dev
