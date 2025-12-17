@@ -138,6 +138,10 @@ catalog:
       target: ../../templates/node-app/template.yaml
       rules:
         - allow: [Template]
+    - type: file
+      target: ../../templates/xp-storage-account/template.yaml
+      rules:
+        - allow: [Template]
 
     # GitHub Entity Provider - Auto-discover provisioned infrastructure resources
     # This discovers catalog-info.yaml files in the infra directories

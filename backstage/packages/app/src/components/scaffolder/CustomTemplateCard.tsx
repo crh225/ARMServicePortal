@@ -165,9 +165,9 @@ const serviceIcons: Record<string, { icon: string; color: string; bgColor: strin
     bgColor: 'rgba(51, 103, 145, 0.1)',
   },
   'xp-building-blocks': {
-    icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/kubernetes/kubernetes-plain.svg',
-    color: '#326ce5',
-    bgColor: 'rgba(50, 108, 229, 0.1)',
+    icon: 'https://raw.githubusercontent.com/crossplane/crossplane/master/docs/media/logo.svg',
+    color: '#6C4DC4',
+    bgColor: 'rgba(108, 77, 196, 0.1)',
   },
   'microservice-node': {
     icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg',
@@ -193,6 +193,12 @@ const serviceIcons: Record<string, { icon: string; color: string; bgColor: strin
     icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg',
     color: '#339933',
     bgColor: 'rgba(51, 153, 51, 0.1)',
+  },
+  // Crossplane templates - use Crossplane logo
+  'xp-storage-account': {
+    icon: 'https://raw.githubusercontent.com/crossplane/crossplane/master/docs/media/logo.svg',
+    color: '#6C4DC4',
+    bgColor: 'rgba(108, 77, 196, 0.1)',
   },
 };
 

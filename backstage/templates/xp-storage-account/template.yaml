@@ -1,0 +1,149 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: xp-storage-account
+  title: Azure Storage Account (Crossplane)
+  description: Provision an Azure Storage Account using Crossplane. Creates a PR to the GitOps repo with the claim.
+  tags:
+    - crossplane
+    - azure
+    - storage
+    - infrastructure
+  links:
+    - url: https://docs.crossplane.io/
+      title: Crossplane Documentation
+      icon: dashboard
+spec:
+  owner: platform-team
+  type: infrastructure
+
+  parameters:
+    - title: Storage Account Configuration
+      required:
+        - storageAccountName
+        - resourceGroupName
+      properties:
+        storageAccountName:
+          title: Storage Account Name
+          type: string
+          description: 3-24 lowercase alphanumeric characters only
+          pattern: '^[a-z0-9]{3,24}$'
+          ui:autofocus: true
+        resourceGroupName:
+          title: Resource Group
+          type: string
+          description: Azure resource group (must exist)
+          default: rg-crossplane-dev
+        tier:
+          title: Account Tier
+          type: string
+          default: Standard
+          enum: [Standard, Premium]
+          enumNames:
+            - Standard (HDD-backed, cost-effective)
+            - Premium (SSD-backed, high performance)
+        replicationType:
+          title: Replication Type
+          type: string
+          default: LRS
+          enum: [LRS, GRS, RAGRS, ZRS]
+          enumNames:
+            - LRS (Locally Redundant - single datacenter)
+            - GRS (Geo Redundant - secondary region)
+            - RAGRS (Read-Access Geo Redundant)
+            - ZRS (Zone Redundant - multiple zones)
+        location:
+          title: Azure Region
+          type: string
+          default: East US
+          enum:
+            - East US
+            - East US 2
+            - West US
+            - West US 2
+            - Central US
+            - North Europe
+            - West Europe
+
+    - title: Deployment Options
+      properties:
+        environment:
+          title: Environment
+          type: string
+          default: dev
+          enum: [dev, staging, prod]
+        owner:
+          title: Owner
+          type: string
+          description: Team or person responsible
+          ui:field: OwnerPicker
+          ui:options:
+            catalogFilter:
+              kind: Group
+
+  steps:
+    # Step 1: Fetch and render the Crossplane claim template
+    - id: fetch
+      name: Generate Crossplane Claim
+      action: fetch:template
+      input:
+        url: ./skeleton
+        targetPath: infra/crossplane/claims/${{ parameters.storageAccountName }}
+        values:
+          storageAccountName: ${{ parameters.storageAccountName }}
+          resourceGroupName: ${{ parameters.resourceGroupName }}
+          tier: ${{ parameters.tier }}
+          replicationType: ${{ parameters.replicationType }}
+          location: ${{ parameters.location }}
+          environment: ${{ parameters.environment }}
+          owner: ${{ parameters.owner }}
+
+    # Step 2: Create PR to GitOps repo
+    - id: publish
+      name: Create Pull Request
+      action: publish:github:pull-request
+      input:
+        repoUrl: github.com?owner=crh225&repo=ARMServicePortal
+        branchName: crossplane/storage-${{ parameters.storageAccountName }}
+        title: "feat(crossplane): Add storage account ${{ parameters.storageAccountName }}"
+        description: |
+          ## Crossplane Storage Account Claim
+
+          This PR adds a new Azure Storage Account provisioned via Crossplane.
+
+          | Setting | Value |
+          |---------|-------|
+          | **Name** | ${{ parameters.storageAccountName }} |
+          | **Resource Group** | ${{ parameters.resourceGroupName }} |
+          | **Tier** | ${{ parameters.tier }} |
+          | **Replication** | ${{ parameters.replicationType }} |
+          | **Location** | ${{ parameters.location }} |
+          | **Environment** | ${{ parameters.environment }} |
+
+          ### What happens when merged?
+          1. ArgoCD syncs the claim to the cluster
+          2. Crossplane provisions the storage account in Azure
+          3. Connection details are stored in a Kubernetes Secret
+
+          ---
+          Created via Backstage Software Template
+        sourcePath: infra/crossplane/claims/${{ parameters.storageAccountName }}
+        targetPath: infra/crossplane/claims/${{ parameters.storageAccountName }}
+
+  output:
+    links:
+      - title: View Pull Request
+        url: ${{ steps.publish.output.remoteUrl }}
+        icon: github
+    text:
+      - title: Next Steps
+        content: |
+          ## Storage Account: ${{ parameters.storageAccountName }}
+
+          A pull request has been created to provision your storage account.
+
+          ### After PR is merged:
+          1. ArgoCD will sync the Crossplane claim
+          2. Crossplane will create the storage account in Azure (~2-5 min)
+          3. Check status: `kubectl get storageaccount ${{ parameters.storageAccountName }}`
+          4. Connection secret: `${{ parameters.storageAccountName }}-conn`
