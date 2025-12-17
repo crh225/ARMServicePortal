@@ -165,7 +165,7 @@ const serviceIcons: Record<string, { icon: string; color: string; bgColor: strin
     bgColor: 'rgba(51, 103, 145, 0.1)',
   },
   'xp-building-blocks': {
-    icon: 'https://raw.githubusercontent.com/crossplane/crossplane/master/docs/media/logo.svg',
+    icon: 'https://raw.githubusercontent.com/cncf/artwork/main/projects/crossplane/icon/color/crossplane-icon-color.svg',
     color: '#6C4DC4',
     bgColor: 'rgba(108, 77, 196, 0.1)',
   },
@@ -196,7 +196,7 @@ const serviceIcons: Record<string, { icon: string; color: string; bgColor: strin
   },
   // Crossplane templates - use Crossplane logo
   'xp-storage-account': {
-    icon: 'https://raw.githubusercontent.com/crossplane/crossplane/master/docs/media/logo.svg',
+    icon: 'https://raw.githubusercontent.com/cncf/artwork/main/projects/crossplane/icon/color/crossplane-icon-color.svg',
     color: '#6C4DC4',
     bgColor: 'rgba(108, 77, 196, 0.1)',
   },
