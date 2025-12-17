@@ -42,7 +42,9 @@ Decision-making authority resides with humans at these points:
 - Pull request approval (whether a change proceeds)
 - Production promotion approval (two-reviewer gate)
 
-Automation owns execution within those boundaries but cannot bypass approval gates or modify policy configurations.
+Automation owns execution within those boundaries but cannot bypass approval gates, modify policy configurations, or introduce new execution paths.
+
+The portal may surface information derived from Git, Terraform state, and Azure, but does not own or mutate authoritative data directly.
 
 ## Scope
 
@@ -63,7 +65,7 @@ The platform explicitly does not:
 - Manage Azure subscriptions, billing, or identity
 - Handle application deployment or container orchestration (delegated to ArgoCD)
 - Provide secrets management UI (delegated to Azure Key Vault)
-- Monitor application health or performance (delegated to observability stack)
+- Monitor application health or performance (delegated to the observability stack)
 
 ## Ecosystem Position
 

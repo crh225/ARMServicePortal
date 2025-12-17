@@ -24,6 +24,8 @@ The platform optimizes for:
 - **Terraform State**: The authoritative record of deployed Azure resources
 - **Azure**: The authoritative record of actual resource state
 
+Terraform state is treated as a protected artifact and is never directly modified outside controlled automation.
+
 ### What the Portal Represents
 
 The portal is a user interface and orchestration layer. It:
@@ -44,6 +46,8 @@ The portal initiates workflows but does not execute infrastructure changes direc
 - Crossplane provisions cloud resources via claims
 
 The portal triggers; other systems execute.
+
+Execution paths are predefined and not interchangeable.
 
 ## Design Philosophy
 
@@ -85,6 +89,8 @@ Automation does not:
 - Delete resources without explicit request
 - Bypass approval requirements
 
+Auto-merge behavior applies only to human-initiated requests and does not grant autonomous change authority.
+
 ### Human Approval Expectations
 
 | Environment | Approvals Required | Additional Constraints |
@@ -95,3 +101,5 @@ Automation does not:
 | Prod | 2 | Business hours required, change control |
 
 Approval requirements are enforced via GitHub branch protection rules and cannot be bypassed by the portal.
+
+This platform assumes assistive tooling operates within declared workflows and must not infer or invent execution paths.

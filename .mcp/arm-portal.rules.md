@@ -20,6 +20,8 @@
 - Changing policy configurations
 - Rotating credentials or secrets
 
+Explicit human intent means an approved and merged pull request that satisfies all environment-specific review requirements.
+
 ## GitOps and Change Control Rules
 
 ### What Must Flow Through Git
@@ -60,6 +62,8 @@
 - Terraform state files (managed exclusively by Terraform)
 - GitHub App credentials and secrets
 
+Terraform state restoration is a controlled, manual operation and must not be initiated by automation or AI agents.
+
 ### What Must Be Manually Curated
 
 - Blueprint catalog entries
@@ -76,7 +80,7 @@
 - Terraform state is stored in Azure Blob Storage at predictable paths
 - GitHub Actions workflows trigger on merge to main
 - Webhook events are delivered to the configured Azure Function endpoint
-- Redis and RabbitMQ are available for notification pipeline
+- Redis and RabbitMQ are available for the notification pipeline
 
 ### Assumptions Downstream Systems Depend On
 
@@ -112,6 +116,8 @@
 - Terraform module improvements
 - Workflow optimizations
 
+Suggestions must not include executable changes unless implemented through an approved and merged pull request.
+
 ### Prohibited Actions
 
 - Bypassing approval gates
@@ -120,3 +126,4 @@
 - Modifying credentials or secrets
 - Disabling policy enforcement
 - Granting direct Azure access
+- Initiating recovery or state restoration procedures without explicit human request

@@ -29,7 +29,8 @@ Validation failures reject the request with specific error messages. No partial 
 
 ### How Intent Is Executed
 
-Validated requests proceed through:
+Validated requests proceed through the following fixed sequence.  
+Steps may not be reordered, skipped, or conditionally bypassed.
 
 1. Branch creation in GitHub (feature branch)
 2. Terraform configuration rendering from blueprint template
@@ -58,7 +59,7 @@ If validation passes, request proceeds to execution phase.
 
 ### Execution Phase
 
-Backend authenticates to GitHub via GitHub App (JWT + installation token).
+Backend authenticates to GitHub via GitHub App.
 
 Backend creates feature branch: `requests/{env}/{blueprint}-{request-id}`
 
@@ -80,7 +81,7 @@ Plan output is posted as PR comment for human review.
 
 Reviewers evaluate the plan and approve or request changes.
 
-For dev environment, auto-merge may proceed without explicit approval.
+For dev environment, auto-merge may proceed for human-initiated requests only.
 
 For other environments, required approvals must be obtained.
 
@@ -88,7 +89,7 @@ For other environments, required approvals must be obtained.
 
 On merge to main, GitHub Actions triggers apply workflow.
 
-Terraform apply executes with the approved plan.
+Terraform apply executes with the approved configuration.
 
 Apply output is posted as PR comment.
 
@@ -122,7 +123,7 @@ Updates require the same approval gates as initial provisioning.
 
 Terraform apply modifies resources in place where possible.
 
-Destructive changes are highlighted in the plan for explicit review.
+Destructive changes are highlighted in the plan for explicit human review.
 
 ### Drift Handling
 
@@ -130,7 +131,9 @@ Scheduled workflows run terraform plan against each environment.
 
 If drift is detected (actual state differs from Git), an alert is raised.
 
-Drift is not auto-corrected. Human review determines whether to:
+Drift is not auto-corrected.
+
+Human review determines whether to:
 
 - Update Git to match actual state (accept drift)
 - Apply Terraform to restore desired state (correct drift)
@@ -196,8 +199,8 @@ The portal does not provide:
 
 Execution halts and requires human intervention when:
 
-- Terraform plan fails (syntax error, provider issue)
-- Terraform apply fails (Azure API error, quota exceeded)
+- Terraform plan fails
+- Terraform apply fails
 - Required approvals are not obtained
 - Policy validation fails
 
@@ -205,14 +208,21 @@ Partial state changes from failed applies are captured in Terraform state and vi
 
 ### Recovery Procedures
 
-**Plan failure**: Fix configuration in Git, push new commit, re-run workflow.
+Assistive analysis of failures is permitted in a read-only capacity.
 
-**Apply failure**: Investigate error, fix configuration or Azure quota, re-run workflow. Terraform resumes from partial state.
+**Plan failure**  
+Fix configuration in Git, push new commit, re-run workflow.
 
-**State corruption**: Restore from backup in blob storage. Re-import resources if necessary.
+**Apply failure**  
+Investigate error, fix configuration or Azure quota, re-run workflow. Terraform resumes from partial state.
 
-**Stuck PR**: Close PR, create new provisioning request. Orphaned branches can be cleaned up.
+**State corruption**  
+Restore from backup in blob storage using a controlled, manual procedure. Re-import resources if necessary.
 
-**Notification pipeline failure**: Jobs complete successfully; status updates are eventually consistent once pipeline recovers.
+**Stuck PR**  
+Close PR and create a new provisioning request. Orphaned branches may be cleaned up.
+
+**Notification pipeline failure**  
+Jobs complete successfully; status updates are eventually consistent once the pipeline recovers.
 
 All recovery actions flow through Git. No out-of-band fixes are permitted.
