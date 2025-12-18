@@ -205,6 +205,11 @@ const serviceIcons: Record<string, { icon: string; color: string; bgColor: strin
     color: '#6C4DC4',
     bgColor: 'rgba(108, 77, 196, 0.1)',
   },
+  'team-app-stack': {
+    icon: 'https://raw.githubusercontent.com/cncf/artwork/main/projects/crossplane/icon/color/crossplane-icon-color.svg',
+    color: '#6C4DC4',
+    bgColor: 'rgba(108, 77, 196, 0.1)',
+  },
 };
 
 // Default icon for unknown templates

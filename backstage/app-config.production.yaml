@@ -184,6 +184,10 @@ catalog:
       target: ./templates/xp-resource-group/template.yaml
       rules:
         - allow: [Template]
+    - type: file
+      target: ./templates/team-app-stack/template.yaml
+      rules:
+        - allow: [Template]
 
     # ARM Portal Documentation
     - type: url

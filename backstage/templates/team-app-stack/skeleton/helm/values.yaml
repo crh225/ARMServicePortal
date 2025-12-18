@@ -1,0 +1,69 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/crh225/team-${{ values.teamName }}-${{ values.appName }}
+  pullPolicy: Always
+  tag: "latest"
+
+imagePullSecrets:
+  - name: ghcr-pull-secret
+
+service:
+  type: ClusterIP
+{%- if values.app_type == 'static' %}
+  port: 80
+{%- else %}
+  port: ${{ values.port }}
+{%- endif %}
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-dns01
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  hosts:
+    - host: ${{ values.domain }}
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: team-${{ values.teamName }}-${{ values.appName }}-tls
+      hosts:
+        - ${{ values.domain }}
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80
+
+livenessProbe:
+  httpGet:
+    path: /health
+{%- if values.app_type == 'static' %}
+    port: 80
+{%- else %}
+    port: ${{ values.port }}
+{%- endif %}
+  initialDelaySeconds: 10
+  periodSeconds: 10
+
+readinessProbe:
+  httpGet:
+    path: /health
+{%- if values.app_type == 'static' %}
+    port: 80
+{%- else %}
+    port: ${{ values.port }}
+{%- endif %}
+  initialDelaySeconds: 5
+  periodSeconds: 5

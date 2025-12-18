@@ -146,6 +146,10 @@ catalog:
       target: ../../templates/xp-resource-group/template.yaml
       rules:
         - allow: [Template]
+    - type: file
+      target: ../../templates/team-app-stack/template.yaml
+      rules:
+        - allow: [Template]
 
     # GitHub Entity Provider - Auto-discover provisioned infrastructure resources
     # This discovers catalog-info.yaml files in the infra directories

@@ -1,0 +1,38 @@
+# ArgoCD Application for Team Microservice
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: team-${{ values.teamName }}-${{ values.appName }}
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: team-${{ values.teamName }}
+    armportal.chrishouse.io/team: ${{ values.teamName }}
+    armportal.chrishouse.io/environment: ${{ values.environment }}
+    armportal.chrishouse.io/component: application
+  annotations:
+    link.argocd.argoproj.io/external-link: https://${{ values.domain }}
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/crh225/team-${{ values.teamName }}-${{ values.appName }}.git
+    targetRevision: main
+    path: helm
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ${{ values.namespace }}
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

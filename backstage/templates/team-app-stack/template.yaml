@@ -1,0 +1,258 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: team-app-stack
+  title: Team App Stack
+  description: Complete team landing zone with Azure infrastructure (Resource Group, Storage, Key Vault, App Configuration) and a Node.js microservice. Uses Crossplane for Azure resources and ArgoCD App-of-Apps pattern.
+  tags:
+    - team
+    - crossplane
+    - azure
+    - landing-zone
+    - recommended
+  links:
+    - url: https://crossplane.io/
+      title: Crossplane Documentation
+      icon: dashboard
+spec:
+  owner: platform-team
+  type: infrastructure
+
+  parameters:
+    - title: Team Information
+      required:
+        - teamName
+        - environment
+        - appName
+      properties:
+        teamName:
+          title: Team Name
+          type: string
+          description: Team identifier (lowercase, no spaces). Used for naming all resources.
+          pattern: '^[a-z][a-z0-9]*$'
+          ui:autofocus: true
+          maxLength: 10
+        environment:
+          title: Environment
+          type: string
+          default: dev
+          enum: [dev, staging, prod]
+          description: Target environment for deployment
+        appName:
+          title: Application Name
+          type: string
+          description: Name of the initial microservice (lowercase, no spaces)
+          pattern: '^[a-z][a-z0-9-]*$'
+          default: api
+        description:
+          title: Description
+          type: string
+          description: Brief description of the team's application stack
+        owner:
+          title: Owner
+          type: string
+          description: Team or person responsible for this stack
+          ui:field: OwnerPicker
+          ui:options:
+            catalogFilter:
+              kind: Group
+
+    - title: Azure Infrastructure (Optional)
+      properties:
+        location:
+          title: Azure Region
+          type: string
+          default: eastus
+          enum: [eastus, eastus2, westus2, centralus]
+          enumNames:
+            - East US
+            - East US 2
+            - West US 2
+            - Central US
+        includeStorage:
+          title: Include Storage Account
+          type: boolean
+          default: false
+          description: Create an Azure Storage Account for the team
+        includeKeyVault:
+          title: Include Key Vault
+          type: boolean
+          default: false
+          description: Create an Azure Key Vault for secrets management
+        includeAppConfig:
+          title: Include App Configuration
+          type: boolean
+          default: false
+          description: Create an Azure App Configuration for feature flags and config
+
+    - title: Application Configuration
+      properties:
+        app_type:
+          title: Application Type
+          type: string
+          default: server
+          enum: [static, server]
+          enumNames:
+            - Static Site (built with npm run build, served via nginx)
+            - Node Server (Express, Fastify, etc. - runs npm start)
+        node_version:
+          title: Node.js Version
+          type: string
+          default: "20"
+          enum: ["18", "20", "22"]
+          enumNames:
+            - Node.js 18 LTS
+            - Node.js 20 LTS
+            - Node.js 22 (Current)
+        port:
+          title: Server Port
+          type: number
+          default: 3000
+          description: Port your Node server listens on
+
+    - title: Repository Configuration
+      required:
+        - repo_org
+      properties:
+        repo_org:
+          title: GitHub Organization
+          type: string
+          default: crh225
+          description: GitHub organization or username for the repository
+        repo_visibility:
+          title: Repository Visibility
+          type: string
+          default: private
+          enum: [public, private]
+
+  steps:
+    # Step 1: Fetch and render the skeleton template
+    - id: fetch
+      name: Fetch Skeleton
+      action: fetch:template
+      input:
+        url: ./skeleton
+        values:
+          teamName: ${{ parameters.teamName }}
+          environment: ${{ parameters.environment }}
+          appName: ${{ parameters.appName }}
+          description: ${{ parameters.description }}
+          owner: ${{ parameters.owner }}
+          location: ${{ parameters.location }}
+          includeStorage: ${{ parameters.includeStorage }}
+          includeKeyVault: ${{ parameters.includeKeyVault }}
+          includeAppConfig: ${{ parameters.includeAppConfig }}
+          app_type: ${{ parameters.app_type }}
+          node_version: ${{ parameters.node_version }}
+          port: ${{ parameters.port | default(3000, true) }}
+          # Computed values
+          namespace: team-${{ parameters.teamName }}
+          resourceGroupName: rg-${{ parameters.teamName }}-${{ parameters.environment }}
+          storageAccountName: st${{ parameters.teamName }}${{ parameters.environment }}
+          keyVaultName: kv-${{ parameters.teamName }}-${{ parameters.environment }}
+          appConfigName: appcs-${{ parameters.teamName }}-${{ parameters.environment }}
+          domain: ${{ parameters.appName }}.${{ parameters.teamName }}.${{ parameters.environment }}.chrishouse.io
+
+    # Step 2: Create GitHub repository
+    - id: publish
+      name: Create Repository
+      action: publish:github
+      input:
+        repoUrl: github.com?owner=${{ parameters.repo_org }}&repo=team-${{ parameters.teamName }}-${{ parameters.appName }}
+        description: ${{ parameters.description | default('Team ' + parameters.teamName + ' app stack', true) }}
+        repoVisibility: ${{ parameters.repo_visibility }}
+        defaultBranch: main
+
+    # Step 3: Configure secrets for deployment
+    - id: secrets
+      name: Configure Deployment Secrets
+      action: github:repo:secrets
+      input:
+        repoUrl: github.com?owner=${{ parameters.repo_org }}&repo=team-${{ parameters.teamName }}-${{ parameters.appName }}
+        secrets:
+          AZURE_CLIENT_ID: "dbdeee3e-818f-4cd3-aafb-c2f0219ed443"
+          AZURE_TENANT_ID: "354b7ce2-bca3-4af5-b19a-e05a09b68a7b"
+          AZURE_SUBSCRIPTION_ID: "f989de0f-8697-4a05-8c34-b82c941767c0"
+
+    # Step 4: Create PR to GitOps repo for Crossplane claims and ArgoCD apps
+    - id: gitops-pr
+      name: Create GitOps PR
+      action: publish:github:pull-request
+      input:
+        repoUrl: github.com?owner=${{ parameters.repo_org }}&repo=ARMServicePortal
+        branchName: team-app-stack/${{ parameters.teamName }}-${{ parameters.environment }}
+        title: "feat: Create team app stack for ${{ parameters.teamName }} (${{ parameters.environment }})"
+        description: |
+          ## Team App Stack: ${{ parameters.teamName }}
+
+          This PR creates the following resources:
+
+          ### ArgoCD Apps (App-of-Apps)
+          - Parent app: `team-${{ parameters.teamName }}`
+          - Infrastructure app: `team-${{ parameters.teamName }}-infra`
+          - Application app: `team-${{ parameters.teamName }}-${{ parameters.appName }}`
+
+          ### Azure Infrastructure (via Crossplane)
+          - Resource Group: `rg-${{ parameters.teamName }}-${{ parameters.environment }}`
+          ${{ parameters.includeStorage && '- Storage Account: st' + parameters.teamName + parameters.environment | default('') }}
+          ${{ parameters.includeKeyVault && '- Key Vault: kv-' + parameters.teamName + '-' + parameters.environment | default('') }}
+          ${{ parameters.includeAppConfig && '- App Configuration: appcs-' + parameters.teamName + '-' + parameters.environment | default('') }}
+
+          ### Kubernetes Resources
+          - Namespace: `team-${{ parameters.teamName }}`
+          - Ingress: `${{ parameters.appName }}.${{ parameters.teamName }}.${{ parameters.environment }}.chrishouse.io`
+
+          Generated with [Backstage](https://backstage.chrishouse.io)
+        sourcePath: gitops/
+        targetPath: infra/team-stacks/${{ parameters.teamName }}-${{ parameters.environment }}/
+
+    # Step 5: Register with Backstage catalog
+    - id: register
+      name: Register in Catalog
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps.publish.output.repoContentsUrl }}
+        catalogInfoPath: /catalog-info.yaml
+
+  output:
+    links:
+      - title: View App Repository
+        url: ${{ steps.publish.output.remoteUrl }}
+        icon: github
+      - title: GitOps Pull Request
+        url: ${{ steps['gitops-pr'].output.remoteUrl }}
+        icon: github
+      - title: Open in Catalog
+        entityRef: ${{ steps.register.output.entityRef }}
+        icon: catalog
+    text:
+      - title: Next Steps
+        content: |
+          Your team app stack **${{ parameters.teamName }}** has been created!
+
+          ## What's Been Created
+
+          ### 1. Application Repository
+          - Repository: `team-${{ parameters.teamName }}-${{ parameters.appName }}`
+          - Clone: `git clone ${{ steps.publish.output.remoteUrl }}`
+
+          ### 2. GitOps PR (requires merge)
+          - Review and merge the PR to provision infrastructure
+          - PR: ${{ steps['gitops-pr'].output.remoteUrl }}
+
+          ## After Merging the GitOps PR
+
+          ArgoCD will automatically:
+          1. Create namespace `team-${{ parameters.teamName }}`
+          2. Provision Azure resources via Crossplane
+          3. Deploy your microservice
+
+          ### Access Your App
+          - URL: https://${{ parameters.appName }}.${{ parameters.teamName }}.${{ parameters.environment }}.chrishouse.io
+          - ArgoCD: https://argocd.chrishouse.io/applications/team-${{ parameters.teamName }}
+
+          ### Azure Resources
+          - Resource Group: `rg-${{ parameters.teamName }}-${{ parameters.environment }}`
+          ${{ parameters.includeStorage && '- Storage: st' + parameters.teamName + parameters.environment | default('') }}
+          ${{ parameters.includeKeyVault && '- Key Vault: kv-' + parameters.teamName + '-' + parameters.environment | default('') }}
+          ${{ parameters.includeAppConfig && '- App Config: appcs-' + parameters.teamName + '-' + parameters.environment | default('') }}
