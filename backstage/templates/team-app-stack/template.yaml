@@ -148,9 +148,11 @@ spec:
           # Computed values
           namespace: team-${{ parameters.teamName }}
           resourceGroupName: rg-${{ parameters.teamName }}-${{ parameters.environment }}
-          storageAccountName: st${{ parameters.teamName }}${{ parameters.environment }}
-          keyVaultName: kv-${{ parameters.teamName }}-${{ parameters.environment }}
-          appConfigName: appcs-${{ parameters.teamName }}-${{ parameters.environment }}
+          # Add random suffix for globally-unique Azure resources
+          uniqueSuffix: ${{ '' | random(4) }}
+          storageAccountName: st${{ parameters.teamName }}${{ parameters.environment }}${{ '' | random(4) }}
+          keyVaultName: kv-${{ parameters.teamName }}-${{ parameters.environment }}-${{ '' | random(4) }}
+          appConfigName: appcs-${{ parameters.teamName }}-${{ parameters.environment }}-${{ '' | random(4) }}
           domain: ${{ parameters.appName }}.${{ parameters.teamName }}.${{ parameters.environment }}.chrishouse.io
 
     # Step 2: Create GitHub repository
@@ -194,9 +196,9 @@ spec:
 
           ### Azure Infrastructure (via Crossplane)
           - Resource Group: `rg-${{ parameters.teamName }}-${{ parameters.environment }}`
-          {% if parameters.includeStorage %}- Storage Account: `st${{ parameters.teamName }}${{ parameters.environment }}`{% endif %}
-          {% if parameters.includeKeyVault %}- Key Vault: `kv-${{ parameters.teamName }}-${{ parameters.environment }}`{% endif %}
-          {% if parameters.includeAppConfig %}- App Configuration: `appcs-${{ parameters.teamName }}-${{ parameters.environment }}`{% endif %}
+          {% if parameters.includeStorage %}- Storage Account (with unique suffix){% endif %}
+          {% if parameters.includeKeyVault %}- Key Vault (with unique suffix){% endif %}
+          {% if parameters.includeAppConfig %}- App Configuration (with unique suffix){% endif %}
 
           ### Kubernetes Resources
           - Namespace: `team-${{ parameters.teamName }}`
@@ -253,6 +255,6 @@ spec:
 
           ### Azure Resources
           - Resource Group: `rg-${{ parameters.teamName }}-${{ parameters.environment }}`
-          {% if parameters.includeStorage %}- Storage: `st${{ parameters.teamName }}${{ parameters.environment }}`{% endif %}
-          {% if parameters.includeKeyVault %}- Key Vault: `kv-${{ parameters.teamName }}-${{ parameters.environment }}`{% endif %}
-          {% if parameters.includeAppConfig %}- App Config: `appcs-${{ parameters.teamName }}-${{ parameters.environment }}`{% endif %}
+          {% if parameters.includeStorage %}- Storage Account (check Crossplane claims for exact name){% endif %}
+          {% if parameters.includeKeyVault %}- Key Vault (check Crossplane claims for exact name){% endif %}
+          {% if parameters.includeAppConfig %}- App Config (check Crossplane claims for exact name){% endif %}
