@@ -1,0 +1,38 @@
+# ArgoCD Application for Team Microservice
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: team-pep-qnt-api
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: team-pep
+    armportal.chrishouse.io/team: pep
+    armportal.chrishouse.io/environment: dev
+    armportal.chrishouse.io/component: application
+  annotations:
+    link.argocd.argoproj.io/external-link: https://qnt-api.pep.dev.chrishouse.io
+spec:
+  project: team-pep
+
+  source:
+    repoURL: https://github.com/crh225/team-pep-qnt-api.git
+    targetRevision: main
+    path: helm
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: team-pep
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
