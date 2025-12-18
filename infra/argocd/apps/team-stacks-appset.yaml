@@ -1,0 +1,36 @@
+# ApplicationSet to auto-discover team app stacks
+# Watches infra/team-stacks/*/argocd/app-of-apps.yaml and creates ArgoCD Applications
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: team-stacks
+  namespace: argocd
+spec:
+  generators:
+    - git:
+        repoURL: https://github.com/crh225/ARMServicePortal.git
+        revision: main
+        directories:
+          - path: infra/team-stacks/*
+  template:
+    metadata:
+      name: '{{path.basename}}-stack'
+      namespace: argocd
+      labels:
+        app.kubernetes.io/part-of: team-stacks
+        armportal.chrishouse.io/stack: '{{path.basename}}'
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/crh225/ARMServicePortal.git
+        targetRevision: main
+        path: '{{path}}/argocd'
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: argocd
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
