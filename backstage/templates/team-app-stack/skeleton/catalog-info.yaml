@@ -55,6 +55,10 @@ spec:
   lifecycle: experimental
   owner: user:default/guest
   system: team-${{ values.teamName }}
+{%- if values.app_type != 'static' %}
+  providesApis:
+    - ${{ values.appName }}-api
+{%- endif %}
   dependsOn:
     - resource:default/rg-${{ values.teamName }}-${{ values.environment }}
 {%- if values.includeStorage %}
@@ -175,4 +179,66 @@ spec:
   system: team-${{ values.teamName }}
   dependsOn:
     - resource:default/rg-${{ values.teamName }}-${{ values.environment }}
+{%- endif %}
+{%- if values.app_type != 'static' %}
+
+---
+# API Definition
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: ${{ values.appName }}-api
+  title: ${{ values.appName | capitalize }} API
+  description: REST API provided by ${{ values.appName }}
+  tags:
+    - rest
+    - ${{ values.environment }}
+    - team-${{ values.teamName }}
+  links:
+    - url: https://${{ values.domain }}/api
+      title: API Base URL
+      icon: code
+spec:
+  type: openapi
+  lifecycle: experimental
+  owner: user:default/guest
+  system: team-${{ values.teamName }}
+  definition: |
+    openapi: "3.0.0"
+    info:
+      title: ${{ values.appName }} API
+      version: "1.0.0"
+      description: REST API for ${{ values.appName }}
+    servers:
+      - url: https://${{ values.domain }}
+    paths:
+      /health:
+        get:
+          summary: Health check endpoint
+          responses:
+            "200":
+              description: Service is healthy
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      status:
+                        type: string
+                        example: "ok"
+      /api:
+        get:
+          summary: API root endpoint
+          responses:
+            "200":
+              description: API information
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      version:
+                        type: string
 {%- endif %}
