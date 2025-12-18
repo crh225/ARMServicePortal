@@ -1,0 +1,12 @@
+site_name: ${{ values.teamName }} - ${{ values.appName }}
+site_description: Documentation for team ${{ values.teamName }} application stack
+
+nav:
+  - Home: index.md
+  - Architecture: architecture.md
+  - Infrastructure: infrastructure.md
+  - Development: development.md
+  - Deployment: deployment.md
+
+plugins:
+  - techdocs-core
