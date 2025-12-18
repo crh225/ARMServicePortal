@@ -194,9 +194,9 @@ spec:
 
           ### Azure Infrastructure (via Crossplane)
           - Resource Group: `rg-${{ parameters.teamName }}-${{ parameters.environment }}`
-          ${{ parameters.includeStorage && '- Storage Account: st' + parameters.teamName + parameters.environment | default('') }}
-          ${{ parameters.includeKeyVault && '- Key Vault: kv-' + parameters.teamName + '-' + parameters.environment | default('') }}
-          ${{ parameters.includeAppConfig && '- App Configuration: appcs-' + parameters.teamName + '-' + parameters.environment | default('') }}
+          {% if parameters.includeStorage %}- Storage Account: `st${{ parameters.teamName }}${{ parameters.environment }}`{% endif %}
+          {% if parameters.includeKeyVault %}- Key Vault: `kv-${{ parameters.teamName }}-${{ parameters.environment }}`{% endif %}
+          {% if parameters.includeAppConfig %}- App Configuration: `appcs-${{ parameters.teamName }}-${{ parameters.environment }}`{% endif %}
 
           ### Kubernetes Resources
           - Namespace: `team-${{ parameters.teamName }}`
@@ -253,6 +253,6 @@ spec:
 
           ### Azure Resources
           - Resource Group: `rg-${{ parameters.teamName }}-${{ parameters.environment }}`
-          ${{ parameters.includeStorage && '- Storage: st' + parameters.teamName + parameters.environment | default('') }}
-          ${{ parameters.includeKeyVault && '- Key Vault: kv-' + parameters.teamName + '-' + parameters.environment | default('') }}
-          ${{ parameters.includeAppConfig && '- App Config: appcs-' + parameters.teamName + '-' + parameters.environment | default('') }}
+          {% if parameters.includeStorage %}- Storage: `st${{ parameters.teamName }}${{ parameters.environment }}`{% endif %}
+          {% if parameters.includeKeyVault %}- Key Vault: `kv-${{ parameters.teamName }}-${{ parameters.environment }}`{% endif %}
+          {% if parameters.includeAppConfig %}- App Config: `appcs-${{ parameters.teamName }}-${{ parameters.environment }}`{% endif %}
