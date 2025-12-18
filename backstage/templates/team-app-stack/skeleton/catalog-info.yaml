@@ -1,9 +1,33 @@
+# Team System - groups all components and resources for this team
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: team-${{ values.teamName }}
+  title: Team ${{ values.teamName | capitalize }}
+  description: Platform resources and applications for team ${{ values.teamName }}
+  annotations:
+    github.com/project-slug: crh225/ARMServicePortal
+  tags:
+    - team
+    - ${{ values.environment }}
+  links:
+    - url: https://argocd.chrishouse.io/applications/team-${{ values.teamName }}
+      title: ArgoCD Apps
+      icon: cloud
+    - url: https://portal.azure.com/#@/resource/subscriptions/f989de0f-8697-4a05-8c34-b82c941767c0/resourceGroups/${{ values.resourceGroupName }}
+      title: Azure Resource Group
+      icon: cloud
+spec:
+  owner: user:default/guest
+
+---
+# Main application component
 apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
   name: team-${{ values.teamName }}-${{ values.appName }}
   title: ${{ values.teamName }} - ${{ values.appName }}
-  description: ${{ values.description }}
+  description: ${{ values.description | default('Application for team ' + values.teamName) }}
   annotations:
     github.com/project-slug: crh225/team-${{ values.teamName }}-${{ values.appName }}
     backstage.io/techdocs-ref: dir:.
@@ -20,14 +44,135 @@ metadata:
     - url: https://${{ values.domain }}
       title: Live Site
       icon: dashboard
-    - url: https://argocd.chrishouse.io/applications/team-${{ values.teamName }}
-      title: Team ArgoCD Apps
+    - url: https://argocd.chrishouse.io/applications/team-${{ values.teamName }}-${{ values.appName }}
+      title: ArgoCD App
       icon: cloud
+    - url: https://github.com/crh225/team-${{ values.teamName }}-${{ values.appName }}/actions
+      title: CI/CD Pipelines
+      icon: github
+spec:
+  type: service
+  lifecycle: experimental
+  owner: user:default/guest
+  system: team-${{ values.teamName }}
+  dependsOn:
+    - resource:default/rg-${{ values.teamName }}-${{ values.environment }}
+{%- if values.includeStorage %}
+    - resource:default/${{ values.storageAccountName }}
+{%- endif %}
+{%- if values.includeKeyVault %}
+    - resource:default/${{ values.keyVaultName }}
+{%- endif %}
+{%- if values.includeAppConfig %}
+    - resource:default/${{ values.appConfigName }}
+{%- endif %}
+
+---
+# Azure Resource Group
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: rg-${{ values.teamName }}-${{ values.environment }}
+  title: Resource Group (${{ values.environment }})
+  description: Azure Resource Group for team ${{ values.teamName }} in ${{ values.environment }}
+  annotations:
+    argocd/app-name: team-${{ values.teamName }}-infra
+  tags:
+    - azure
+    - resource-group
+    - crossplane
+    - ${{ values.environment }}
+  links:
     - url: https://portal.azure.com/#@/resource/subscriptions/f989de0f-8697-4a05-8c34-b82c941767c0/resourceGroups/${{ values.resourceGroupName }}
-      title: Azure Resource Group
+      title: Azure Portal
       icon: cloud
 spec:
-  type: website
-  lifecycle: experimental
-  owner: ${{ values.owner }}
+  type: azure-resource-group
+  owner: user:default/guest
   system: team-${{ values.teamName }}
+{%- if values.includeStorage %}
+
+---
+# Azure Storage Account
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: ${{ values.storageAccountName }}
+  title: Storage Account (${{ values.environment }})
+  description: Azure Storage Account for team ${{ values.teamName }}
+  annotations:
+    argocd/app-name: team-${{ values.teamName }}-infra
+  tags:
+    - azure
+    - storage
+    - crossplane
+    - ${{ values.environment }}
+  links:
+    - url: https://portal.azure.com/#@/resource/subscriptions/f989de0f-8697-4a05-8c34-b82c941767c0/resourceGroups/${{ values.resourceGroupName }}/providers/Microsoft.Storage/storageAccounts/${{ values.storageAccountName }}
+      title: Azure Portal
+      icon: cloud
+spec:
+  type: azure-storage-account
+  owner: user:default/guest
+  system: team-${{ values.teamName }}
+  dependsOn:
+    - resource:default/rg-${{ values.teamName }}-${{ values.environment }}
+{%- endif %}
+{%- if values.includeKeyVault %}
+
+---
+# Azure Key Vault
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: ${{ values.keyVaultName }}
+  title: Key Vault (${{ values.environment }})
+  description: Azure Key Vault for team ${{ values.teamName }} secrets management
+  annotations:
+    argocd/app-name: team-${{ values.teamName }}-infra
+  tags:
+    - azure
+    - keyvault
+    - secrets
+    - crossplane
+    - ${{ values.environment }}
+  links:
+    - url: https://portal.azure.com/#@/resource/subscriptions/f989de0f-8697-4a05-8c34-b82c941767c0/resourceGroups/${{ values.resourceGroupName }}/providers/Microsoft.KeyVault/vaults/${{ values.keyVaultName }}
+      title: Azure Portal
+      icon: cloud
+spec:
+  type: azure-keyvault
+  owner: user:default/guest
+  system: team-${{ values.teamName }}
+  dependsOn:
+    - resource:default/rg-${{ values.teamName }}-${{ values.environment }}
+{%- endif %}
+{%- if values.includeAppConfig %}
+
+---
+# Azure App Configuration
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: ${{ values.appConfigName }}
+  title: App Configuration (${{ values.environment }})
+  description: Azure App Configuration for team ${{ values.teamName }} feature flags and config
+  annotations:
+    argocd/app-name: team-${{ values.teamName }}-infra
+  tags:
+    - azure
+    - app-configuration
+    - feature-flags
+    - crossplane
+    - ${{ values.environment }}
+  links:
+    - url: https://portal.azure.com/#@/resource/subscriptions/f989de0f-8697-4a05-8c34-b82c941767c0/resourceGroups/${{ values.resourceGroupName }}/providers/Microsoft.AppConfiguration/configurationStores/${{ values.appConfigName }}
+      title: Azure Portal
+      icon: cloud
+spec:
+  type: azure-app-configuration
+  owner: user:default/guest
+  system: team-${{ values.teamName }}
+  dependsOn:
+    - resource:default/rg-${{ values.teamName }}-${{ values.environment }}
+{%- endif %}
