@@ -21,7 +21,7 @@ spec:
   forProvider:
     location: eastus
   providerConfigRef:
-    name: azure-provider
+    name: default
 
 ---
 # Storage Account
@@ -53,7 +53,7 @@ spec:
       environment: dev
       managed-by: crossplane
   providerConfigRef:
-    name: azure-provider
+    name: default
   writeConnectionSecretToRef:
     name: strisdev-conn
     namespace: team-ris
@@ -91,7 +91,7 @@ spec:
       environment: dev
       managed-by: crossplane
   providerConfigRef:
-    name: azure-provider
+    name: default
 
 ---
 # App Configuration
@@ -120,4 +120,4 @@ spec:
       environment: dev
       managed-by: crossplane
   providerConfigRef:
-    name: azure-provider
+    name: default

@@ -21,7 +21,7 @@ spec:
   forProvider:
     location: ${{ values.location }}
   providerConfigRef:
-    name: azure-provider
+    name: default
 {%- if values.includeStorage %}
 
 ---
@@ -54,7 +54,7 @@ spec:
       environment: ${{ values.environment }}
       managed-by: crossplane
   providerConfigRef:
-    name: azure-provider
+    name: default
   writeConnectionSecretToRef:
     name: ${{ values.storageAccountName }}-conn
     namespace: ${{ values.namespace }}
@@ -94,7 +94,7 @@ spec:
       environment: ${{ values.environment }}
       managed-by: crossplane
   providerConfigRef:
-    name: azure-provider
+    name: default
 {%- endif %}
 {%- if values.includeAppConfig %}
 
@@ -125,5 +125,5 @@ spec:
       environment: ${{ values.environment }}
       managed-by: crossplane
   providerConfigRef:
-    name: azure-provider
+    name: default
 {%- endif %}
