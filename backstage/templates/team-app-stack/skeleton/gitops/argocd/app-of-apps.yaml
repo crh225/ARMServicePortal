@@ -10,8 +10,6 @@ metadata:
     app.kubernetes.io/part-of: team-${{ values.teamName }}
     armportal.chrishouse.io/team: ${{ values.teamName }}
     armportal.chrishouse.io/environment: ${{ values.environment }}
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
 spec:
   project: team-${{ values.teamName }}
 
