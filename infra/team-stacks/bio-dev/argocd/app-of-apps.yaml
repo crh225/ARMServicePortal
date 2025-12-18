@@ -1,0 +1,39 @@
+# ArgoCD App-of-Apps for Team: bio
+# This parent application manages all child applications for the team
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: team-bio
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: team-bio
+    armportal.chrishouse.io/team: bio
+    armportal.chrishouse.io/environment: dev
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/crh225/ARMServicePortal.git
+    targetRevision: main
+    path: infra/team-stacks/bio-dev/argocd
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=false
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
