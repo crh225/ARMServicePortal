@@ -1,0 +1,10 @@
+# Team Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team-asd
+  labels:
+    app.kubernetes.io/managed-by: argocd
+    app.kubernetes.io/part-of: team-asd
+    armportal.chrishouse.io/team: asd
+    armportal.chrishouse.io/environment: dev
