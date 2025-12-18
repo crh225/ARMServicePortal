@@ -145,14 +145,11 @@ spec:
           app_type: ${{ parameters.app_type }}
           node_version: ${{ parameters.node_version }}
           port: ${{ parameters.port | default(3000, true) }}
-          # Computed values
           namespace: team-${{ parameters.teamName }}
           resourceGroupName: rg-${{ parameters.teamName }}-${{ parameters.environment }}
-          # Add random suffix for globally-unique Azure resources
-          uniqueSuffix: ${{ '' | random(4) }}
-          storageAccountName: st${{ parameters.teamName }}${{ parameters.environment }}${{ '' | random(4) }}
-          keyVaultName: kv-${{ parameters.teamName }}-${{ parameters.environment }}-${{ '' | random(4) }}
-          appConfigName: appcs-${{ parameters.teamName }}-${{ parameters.environment }}-${{ '' | random(4) }}
+          storageAccountName: st${{ parameters.teamName }}${{ parameters.environment }}
+          keyVaultName: kv-${{ parameters.teamName }}-${{ parameters.environment }}
+          appConfigName: appcs-${{ parameters.teamName }}-${{ parameters.environment }}
           domain: ${{ parameters.appName }}.${{ parameters.teamName }}.${{ parameters.environment }}.chrishouse.io
 
     # Step 2: Create GitHub repository
