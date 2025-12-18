@@ -12,7 +12,7 @@ metadata:
   annotations:
     link.argocd.argoproj.io/external-link: https://${{ values.domain }}
 spec:
-  project: default
+  project: team-${{ values.teamName }}
 
   source:
     repoURL: https://github.com/crh225/team-${{ values.teamName }}-${{ values.appName }}.git

@@ -12,7 +12,7 @@ metadata:
   annotations:
     link.argocd.argoproj.io/external-link: https://portal.azure.com/#@/resource/subscriptions/f989de0f-8697-4a05-8c34-b82c941767c0/resourceGroups/${{ values.resourceGroupName }}
 spec:
-  project: default
+  project: team-${{ values.teamName }}
 
   source:
     repoURL: https://github.com/crh225/ARMServicePortal.git

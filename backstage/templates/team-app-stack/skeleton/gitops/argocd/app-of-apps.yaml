@@ -13,7 +13,7 @@ metadata:
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
-  project: default
+  project: team-${{ values.teamName }}
 
   source:
     repoURL: https://github.com/crh225/ARMServicePortal.git
