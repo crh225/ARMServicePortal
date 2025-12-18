@@ -119,7 +119,7 @@ spec:
     resourceGroupNameRef:
       name: ${{ values.resourceGroupName }}
     location: ${{ values.location }}
-    sku: free
+    sku: standard
     tags:
       team: ${{ values.teamName }}
       environment: ${{ values.environment }}
