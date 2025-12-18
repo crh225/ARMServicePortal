@@ -64,9 +64,8 @@ RUN npm install --only=production
 # Copy built app from builder
 COPY --from=builder /app/src ./src
 
-# Copy any additional files needed at runtime
-COPY --from=builder /app/*.js ./ 2>/dev/null || true
-COPY --from=builder /app/*.json ./
+# Copy package.json (already copied above, but ensures consistency)
+COPY --from=builder /app/package.json ./
 
 EXPOSE ${{ values.port }}
 
