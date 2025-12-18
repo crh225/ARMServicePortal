@@ -1,0 +1,10 @@
+# Team Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team-ris
+  labels:
+    app.kubernetes.io/managed-by: argocd
+    app.kubernetes.io/part-of: team-ris
+    armportal.chrishouse.io/team: ris
+    armportal.chrishouse.io/environment: dev

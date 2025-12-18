@@ -1,0 +1,38 @@
+# ArgoCD Application for Team Microservice
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: team-ris-resgo-api
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: team-ris
+    armportal.chrishouse.io/team: ris
+    armportal.chrishouse.io/environment: dev
+    armportal.chrishouse.io/component: application
+  annotations:
+    link.argocd.argoproj.io/external-link: https://resgo-api.ris.dev.chrishouse.io
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/crh225/team-ris-resgo-api.git
+    targetRevision: main
+    path: helm
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: team-ris
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
