@@ -62,9 +62,9 @@ jobs:
 
     env:
       ACR_NAME: armportalacre4k9
-      RESOURCE_GROUP: rg-armportal-aks-crossplane-dev
-      AKS_CLUSTER: aks-armportal-crossplane-dev
-      VITE_API_URL: https://armportal-api-dev.kindisland-0c7a7c9a.eastus2.azurecontainerapps.io
+      RESOURCE_GROUP: rg-landing-zone-dev
+      AKS_CLUSTER: aks-app-spoke-vpnks-0e71fa43101a
+      VITE_API_URL: https://portal-api.chrishouse.io
 
     steps:
       - name: Checkout

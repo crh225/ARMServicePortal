@@ -35,11 +35,11 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Set up kubectl for AKS
+      - name: Set up kubectl for AKS (app-spoke cluster)
         run: |
           az aks get-credentials \
-            --resource-group rg-armportal-aks-crossplane-dev \
-            --name aks-armportal-crossplane-dev \
+            --resource-group rg-landing-zone-dev \
+            --name aks-app-spoke-vpnks-0e71fa43101a \
             --overwrite-existing
 
       - name: Find and cleanup stale PR namespaces

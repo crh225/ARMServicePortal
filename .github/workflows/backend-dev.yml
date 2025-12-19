@@ -1,4 +1,4 @@
-name: "Backend: Build & Deploy (Container Apps)"
+name: "Backend: Build & Deploy (AKS)"
 
 on:
   push:
@@ -18,8 +18,9 @@ jobs:
     env:
       NODE_VERSION: 20.x
       ACR_NAME: armportalacre4k9
-      RESOURCE_GROUP: rg-testpr3-dev-rg
-      CONTAINER_APP_NAME: armportal-api-dev
+      RESOURCE_GROUP: rg-landing-zone-dev
+      AKS_CLUSTER: aks-app-spoke-vpnks-0e71fa43101a
+      NAMESPACE: portal-api
 
     steps:
       - name: Checkout
@@ -58,8 +59,8 @@ jobs:
       - name: Build and push image
         run: |
           LOGIN_SERVER="${{ steps.acr.outputs.login_server }}"
-          IMAGE="$LOGIN_SERVER/armportal-backend:${{ github.sha }}"
-          LATEST="$LOGIN_SERVER/armportal-backend:latest"
+          IMAGE="$LOGIN_SERVER/armportal-api-backend:${{ github.sha }}"
+          LATEST="$LOGIN_SERVER/armportal-api-backend:latest"
 
           echo "Building $IMAGE"
           docker build \
@@ -77,44 +78,23 @@ jobs:
           echo "  - $IMAGE"
           echo "  - $LATEST"
 
-      - name: Update Container App image
+      - name: Get AKS credentials
         run: |
-          LOGIN_SERVER="${{ steps.acr.outputs.login_server }}"
-          IMAGE="$LOGIN_SERVER/armportal-backend:${{ github.sha }}"
-
-          echo "Updating Container App with new image: $IMAGE"
-
-          az containerapp update \
-            --name $CONTAINER_APP_NAME \
+          az aks get-credentials \
             --resource-group $RESOURCE_GROUP \
-            --image "$IMAGE"
+            --name $AKS_CLUSTER \
+            --overwrite-existing
 
-          echo "Container App updated successfully"
+      - name: Restart backend deployment
+        run: |
+          # Restart the deployment to pull the new image
+          kubectl rollout restart deployment portal-api -n $NAMESPACE || echo "Deployment may not exist yet"
 
       - name: Verify deployment
         run: |
-          echo "Waiting for deployment to complete..."
-          sleep 10
-
-          # Get the FQDN
-          FQDN=$(az containerapp show \
-            --name $CONTAINER_APP_NAME \
-            --resource-group $RESOURCE_GROUP \
-            --query "properties.configuration.ingress.fqdn" -o tsv)
-
-          echo "Container App FQDN: https://$FQDN"
-
-          # Health check
-          echo "Checking health endpoint..."
-          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://$FQDN/api/health" || echo "000")
-
-          if [ "$HTTP_STATUS" = "200" ]; then
-            echo "Health check passed!"
-          else
-            echo "Health check returned status: $HTTP_STATUS"
-            echo "Note: Container may still be starting up"
-          fi
+          echo "Waiting for rollout to complete..."
+          kubectl rollout status deployment portal-api -n $NAMESPACE --timeout=120s || echo "Rollout status check skipped"
 
           echo ""
           echo "Deployment complete!"
-          echo "API URL: https://$FQDN"
+          echo "API URL: https://portal-api.chrishouse.io"

@@ -52,11 +52,11 @@ jobs:
           cache-from: type=registry,ref=armportalacre4k9.azurecr.io/armportal-backend:buildcache
           cache-to: type=registry,ref=armportalacre4k9.azurecr.io/armportal-backend:buildcache,mode=max
 
-      - name: Set up kubectl for AKS
+      - name: Set up kubectl for AKS (app-spoke cluster)
         run: |
           az aks get-credentials \
-            --resource-group rg-armportal-aks-crossplane-dev \
-            --name aks-armportal-crossplane-dev \
+            --resource-group rg-landing-zone-dev \
+            --name aks-app-spoke-vpnks-0e71fa43101a \
             --overwrite-existing
 
       - name: Create PR namespace and copy secrets
@@ -66,10 +66,10 @@ jobs:
           # Create namespace if it doesn't exist
           kubectl create namespace "$PR_NAMESPACE" --dry-run=client -o yaml | kubectl apply -f -
 
-          # Copy backend secrets from main namespace to PR namespace
+          # Copy backend secrets from portal-api namespace to PR namespace
           # Delete existing secret first to avoid conflicts, then create fresh copy
           kubectl delete secret backend-secrets -n "$PR_NAMESPACE" --ignore-not-found=true
-          kubectl get secret backend-secrets -n armportal-backend -o json | \
+          kubectl get secret backend-secrets -n portal-api -o json | \
             jq 'del(.metadata.resourceVersion, .metadata.uid, .metadata.creationTimestamp, .metadata.selfLink)' | \
             jq ".metadata.namespace = \"$PR_NAMESPACE\"" | \
             kubectl apply -f -

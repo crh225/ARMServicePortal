@@ -37,16 +37,25 @@ const allowedOrigins = [
   process.env.FRONTEND_URL
 ].filter(Boolean); // Remove any undefined values
 
+// Regex pattern for PR preview environments (e.g., https://portal-pr-123.pr.chrishouse.io)
+const prEnvironmentPattern = /^https:\/\/portal-pr-\d+\.pr\.chrishouse\.io$/;
+
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
 
+    // Check static list of allowed origins
     if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
+      return callback(null, true);
     }
+
+    // Check if it's a PR preview environment
+    if (prEnvironmentPattern.test(origin)) {
+      return callback(null, true);
+    }
+
+    callback(new Error('Not allowed by CORS'));
   },
   credentials: true
 }));

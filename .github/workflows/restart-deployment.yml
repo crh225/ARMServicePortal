@@ -11,6 +11,14 @@ on:
         description: "Kubernetes namespace"
         required: true
         type: string
+      cluster:
+        description: "Target cluster (app-spoke or mgmt-hub)"
+        required: false
+        type: choice
+        options:
+          - app-spoke
+          - mgmt-hub
+        default: app-spoke
       port_run_id:
         description: "Port action run ID for status updates"
         required: false
@@ -25,14 +33,15 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      AKS_CLUSTER_NAME: aks-armportal-crossplane-dev
-      AKS_RESOURCE_GROUP: rg-armportal-aks-crossplane-dev
+      # Set cluster based on input selection
+      AKS_RESOURCE_GROUP: rg-landing-zone-dev
 
     steps:
       - name: Log inputs
         run: |
           echo "Deployment: ${{ inputs.deployment_name }}"
           echo "Namespace: ${{ inputs.namespace }}"
+          echo "Cluster: ${{ inputs.cluster }}"
           echo "Port Run ID: ${{ inputs.port_run_id }}"
 
       - name: Azure login (OIDC)
@@ -48,9 +57,18 @@ jobs:
 
       - name: Set up kubectl for AKS
         run: |
+          if [ "${{ inputs.cluster }}" = "mgmt-hub" ]; then
+            CLUSTER_NAME="aks-mgmt-hub"
+            RESOURCE_GROUP="rg-landing-zone-hub"
+          else
+            CLUSTER_NAME="aks-app-spoke-vpnks-0e71fa43101a"
+            RESOURCE_GROUP="rg-landing-zone-dev"
+          fi
+
+          echo "Connecting to cluster: $CLUSTER_NAME in $RESOURCE_GROUP"
           az aks get-credentials \
-            --resource-group $AKS_RESOURCE_GROUP \
-            --name $AKS_CLUSTER_NAME \
+            --resource-group "$RESOURCE_GROUP" \
+            --name "$CLUSTER_NAME" \
             --overwrite-existing
 
       - name: Notify Port - In Progress
