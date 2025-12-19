@@ -4,7 +4,7 @@ metadata:
   name: default
 spec:
   credentials:
-    source: UserAssignedManagedIdentity
-  clientID: c4ec1349-a0b3-4ef5-bb58-c4fa5b66320c
+    source: OIDCTokenFile
+  clientID: 08664cfe-8897-4a1b-9ee7-e7f69ff93bb2
   tenantID: 354b7ce2-bca3-4af5-b19a-e05a09b68a7b
   subscriptionID: f989de0f-8697-4a05-8c34-b82c941767c0
