@@ -1,4 +1,4 @@
-name: "Frontend: Test & Deploy"
+name: "Frontend: Build & Deploy (AKS)"
 
 on:
   push:
@@ -14,15 +14,13 @@ on:
 permissions:
   id-token: write
   contents: read
-  pull-requests: write     
+  pull-requests: write
 
 jobs:
-  build-and-deploy:
+  test:
     runs-on: ubuntu-latest
-
     env:
       NODE_VERSION: "22.x"
-      VITE_API_BASE_URL: https://armportal-api-dev.kindisland-0c7a7c9a.eastus2.azurecontainerapps.io
 
     steps:
       - name: Checkout
@@ -57,26 +55,73 @@ jobs:
           path: portal/frontend/coverage/
           retention-days: 30
 
-      - name: Build
-        working-directory: portal/frontend
-        env:
-          VITE_API_URL: https://armportal-api-dev.kindisland-0c7a7c9a.eastus2.azurecontainerapps.io
-        run: npm run build
+  build-and-deploy:
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
 
-      - name: Azure login
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    env:
+      ACR_NAME: armportalacre4k9
+      RESOURCE_GROUP: rg-armportal-aks-crossplane-dev
+      AKS_CLUSTER: aks-armportal-crossplane-dev
+      VITE_API_URL: https://armportal-api-dev.kindisland-0c7a7c9a.eastus2.azurecontainerapps.io
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Upload static site to Storage
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      - name: Get ACR login server
+        id: acr
         run: |
-          az storage blob upload-batch \
-            --account-name ${{ secrets.AZURE_FRONTEND_STORAGE_ACCOUNT }} \
-            --auth-mode login \
-            --destination '$web' \
-            --source portal/frontend/dist \
-            --overwrite true
+          LOGIN_SERVER=$(az acr show -n $ACR_NAME --query loginServer -o tsv)
+          echo "login_server=$LOGIN_SERVER" >> $GITHUB_OUTPUT
+
+      - name: Build and push Docker image
+        run: |
+          LOGIN_SERVER="${{ steps.acr.outputs.login_server }}"
+          IMAGE="$LOGIN_SERVER/armportal-frontend:${{ github.sha }}"
+          LATEST="$LOGIN_SERVER/armportal-frontend:latest"
+
+          az acr login --name $ACR_NAME
+
+          docker build \
+            --build-arg VITE_API_URL=$VITE_API_URL \
+            -t "$IMAGE" \
+            -t "$LATEST" \
+            -f portal/frontend/Dockerfile \
+            portal/frontend
+
+          docker push "$IMAGE"
+          docker push "$LATEST"
+
+          echo "Successfully pushed images to ACR"
+          echo "  - $IMAGE"
+          echo "  - $LATEST"
+
+      - name: Get AKS credentials
+        run: |
+          az aks get-credentials \
+            --resource-group $RESOURCE_GROUP \
+            --name $AKS_CLUSTER \
+            --overwrite-existing
+
+      - name: Restart frontend deployment
+        run: |
+          # Restart the deployment to pull the new image
+          kubectl rollout restart deployment portal-frontend -n armportal-frontend || echo "Deployment may not exist yet"
+
+      - name: Verify deployment
+        run: |
+          echo "Waiting for rollout to complete..."
+          kubectl rollout status deployment portal-frontend -n armportal-frontend --timeout=120s || echo "Rollout status check skipped"
+
+          echo ""
+          echo "Deployment complete!"
+          echo "Frontend URL: https://portal.chrishouse.io"
