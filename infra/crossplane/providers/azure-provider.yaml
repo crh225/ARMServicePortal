@@ -3,7 +3,7 @@ kind: Provider
 metadata:
   name: provider-azure-storage
 spec:
-  package: xpkg.upbound.io/upbound/provider-azure-storage:v0.42.0
+  package: xpkg.upbound.io/upbound/provider-azure-storage:v1.13.0
   runtimeConfigRef:
     name: azure-workload-identity
 ---
@@ -12,7 +12,7 @@ kind: Provider
 metadata:
   name: provider-azure-keyvault
 spec:
-  package: xpkg.upbound.io/upbound/provider-azure-keyvault:v0.42.0
+  package: xpkg.upbound.io/upbound/provider-azure-keyvault:v1.13.0
   runtimeConfigRef:
     name: azure-workload-identity
 ---
@@ -21,7 +21,7 @@ kind: Provider
 metadata:
   name: provider-azure-appconfiguration
 spec:
-  package: xpkg.upbound.io/upbound/provider-azure-appconfiguration:v0.42.0
+  package: xpkg.upbound.io/upbound/provider-azure-appconfiguration:v1.13.0
   runtimeConfigRef:
     name: azure-workload-identity
 ---
@@ -30,7 +30,7 @@ kind: Provider
 metadata:
   name: provider-azure-containerservice
 spec:
-  package: xpkg.upbound.io/upbound/provider-azure-containerservice:v0.42.0
+  package: xpkg.upbound.io/upbound/provider-azure-containerservice:v1.13.0
   runtimeConfigRef:
     name: azure-workload-identity
 ---
@@ -39,6 +39,6 @@ kind: Provider
 metadata:
   name: provider-azure-network
 spec:
-  package: xpkg.upbound.io/upbound/provider-azure-network:v0.42.0
+  package: xpkg.upbound.io/upbound/provider-azure-network:v1.13.0
   runtimeConfigRef:
     name: azure-workload-identity
