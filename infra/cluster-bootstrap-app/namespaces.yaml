@@ -1,0 +1,34 @@
+# Application Namespaces - App Cluster
+# Namespace isolation for different workloads
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: portal
+  labels:
+    app.kubernetes.io/part-of: arm-portal
+    purpose: application
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: blog
+  labels:
+    app.kubernetes.io/part-of: arm-portal
+    purpose: application
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mhd
+  labels:
+    app.kubernetes.io/part-of: arm-portal
+    purpose: ml-inference
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: webhook-relay
+  labels:
+    app.kubernetes.io/part-of: arm-portal
+    purpose: integration

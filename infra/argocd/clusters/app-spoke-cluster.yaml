@@ -1,0 +1,23 @@
+# ArgoCD Cluster Secret for App Spoke Cluster
+# This allows ArgoCD (on mgmt cluster) to deploy to the app cluster
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: app-spoke-dev
+  namespace: argocd
+  labels:
+    argocd.argoproj.io/secret-type: cluster
+type: Opaque
+stringData:
+  name: app-spoke-dev
+  server: "https://aks-app-spoke.hcp.eastus.azmk8s.io:443"
+  # Config contains authentication details
+  # This is a placeholder - populate with actual cluster credentials after creation
+  config: |
+    {
+      "tlsClientConfig": {
+        "insecure": false
+      }
+    }

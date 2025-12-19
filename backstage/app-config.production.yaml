@@ -218,17 +218,24 @@ catalog:
           frequency: { minutes: 5 }
           timeout: { minutes: 3 }
 
-# Kubernetes plugin configuration
+# Kubernetes plugin configuration - Multi-cluster setup
 kubernetes:
   serviceLocatorMethod:
     type: 'multiTenant'
   clusterLocatorMethods:
     - type: 'config'
       clusters:
-        - url: https://crossplane-dev-aqzg43ae.hcp.eastus.azmk8s.io:443
-          name: aks-armportal-crossplane-dev
+        # Management cluster - hosts Crossplane, ArgoCD, Backstage
+        - url: ${K8S_MGMT_CLUSTER_URL}
+          name: aks-mgmt-hub
           authProvider: 'serviceAccount'
-          serviceAccountToken: ${K8S_SERVICE_ACCOUNT_TOKEN}
+          serviceAccountToken: ${K8S_MGMT_SERVICE_ACCOUNT_TOKEN}
+          skipTLSVerify: true
+        # App cluster - hosts application workloads (Portal, Blog, etc.)
+        - url: ${K8S_APP_CLUSTER_URL}
+          name: aks-app-spoke
+          authProvider: 'serviceAccount'
+          serviceAccountToken: ${K8S_APP_SERVICE_ACCOUNT_TOKEN}
           skipTLSVerify: true
 
 # ArgoCD plugin configuration
