@@ -31,6 +31,24 @@ spec:
             apiVersion: kubernetes.crossplane.io/v1alpha2
             kind: Object
             metadata:
+              name: {{ $xr.metadata.name }}-ns
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: namespace
+            spec:
+              providerConfigRef:
+                name: {{ default "default" $p.targetCluster }}
+              forProvider:
+                manifest:
+                  apiVersion: v1
+                  kind: Namespace
+                  metadata:
+                    name: {{ $ns }}
+                    labels:
+                      app.kubernetes.io/managed-by: crossplane
+            ---
+            apiVersion: kubernetes.crossplane.io/v1alpha2
+            kind: Object
+            metadata:
               name: {{ $xr.metadata.name }}-ingress
               annotations:
                 gotemplating.fn.crossplane.io/composition-resource-name: ingress
