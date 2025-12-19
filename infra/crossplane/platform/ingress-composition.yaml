@@ -46,6 +46,7 @@ spec:
                       app.kubernetes.io/managed-by: crossplane
                     annotations:
                       cert-manager.io/cluster-issuer: {{ default "letsencrypt-prod" $p.clusterIssuer }}
+                      acme.cert-manager.io/http01-edit-in-place: "true"
                   spec:
                     ingressClassName: nginx
                     tls:
