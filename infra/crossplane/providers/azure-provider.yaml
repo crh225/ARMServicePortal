@@ -4,6 +4,8 @@ metadata:
   name: provider-azure-storage
 spec:
   package: xpkg.upbound.io/upbound/provider-azure-storage:v0.42.0
+  controllerConfigRef:
+    name: azure-workload-identity
 ---
 apiVersion: pkg.crossplane.io/v1
 kind: Provider
@@ -11,6 +13,8 @@ metadata:
   name: provider-azure-keyvault
 spec:
   package: xpkg.upbound.io/upbound/provider-azure-keyvault:v0.42.0
+  controllerConfigRef:
+    name: azure-workload-identity
 ---
 apiVersion: pkg.crossplane.io/v1
 kind: Provider
@@ -18,6 +22,8 @@ metadata:
   name: provider-azure-appconfiguration
 spec:
   package: xpkg.upbound.io/upbound/provider-azure-appconfiguration:v0.42.0
+  controllerConfigRef:
+    name: azure-workload-identity
 ---
 apiVersion: pkg.crossplane.io/v1
 kind: Provider
@@ -25,6 +31,8 @@ metadata:
   name: provider-azure-containerservice
 spec:
   package: xpkg.upbound.io/upbound/provider-azure-containerservice:v0.42.0
+  controllerConfigRef:
+    name: azure-workload-identity
 ---
 apiVersion: pkg.crossplane.io/v1
 kind: Provider
@@ -32,3 +40,5 @@ metadata:
   name: provider-azure-network
 spec:
   package: xpkg.upbound.io/upbound/provider-azure-network:v0.42.0
+  controllerConfigRef:
+    name: azure-workload-identity

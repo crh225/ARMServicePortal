@@ -135,8 +135,8 @@ jobs:
         if: ${{ github.event.inputs.trigger_rollout == 'true' || github.event_name == 'push' }}
         run: |
           az aks get-credentials \
-            --resource-group rg-armportal-aks-crossplane-dev \
-            --name aks-armportal-crossplane-dev \
+            --resource-group rg-landing-zone-hub \
+            --name aks-mgmt-hub \
             --overwrite-existing
 
       - name: Trigger Argo CD refresh

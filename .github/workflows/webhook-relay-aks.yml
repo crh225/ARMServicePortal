@@ -20,8 +20,8 @@ jobs:
       NODE_VERSION: 20.x
       ACR_NAME: armportalacre4k9
       IMAGE_NAME: webhook-relay
-      AKS_CLUSTER_NAME: aks-armportal-crossplane-dev
-      AKS_RESOURCE_GROUP: rg-armportal-aks-crossplane-dev
+      AKS_CLUSTER_NAME: aks-app-spoke
+      AKS_RESOURCE_GROUP: rg-landing-zone-dev
       KEYVAULT_NAME: akvnotintf1
 
     steps:

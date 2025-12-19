@@ -1,0 +1,18 @@
+apiVersion: pkg.crossplane.io/v1alpha1
+kind: ControllerConfig
+metadata:
+  name: azure-workload-identity
+  annotations:
+    azure.workload.identity/client-id: "08664cfe-8897-4a1b-9ee7-e7f69ff93bb2"
+  labels:
+    azure.workload.identity/use: "true"
+spec:
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 2000
+    runAsGroup: 2000
+  metadata:
+    annotations:
+      azure.workload.identity/client-id: "08664cfe-8897-4a1b-9ee7-e7f69ff93bb2"
+    labels:
+      azure.workload.identity/use: "true"
