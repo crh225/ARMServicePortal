@@ -1,5 +1,5 @@
 # ArgoCD Ingress - Management Cluster
-# Exposes ArgoCD UI at argocd.chrishouse.io
+# Exposes ArgoCD UI at argohub.chrishouse.io
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -14,10 +14,10 @@ spec:
   ingressClassName: nginx
   tls:
   - hosts:
-    - argocd.chrishouse.io
+    - argohub.chrishouse.io
     secretName: argocd-server-tls
   rules:
-  - host: argocd.chrishouse.io
+  - host: argohub.chrishouse.io
     http:
       paths:
       - path: /
