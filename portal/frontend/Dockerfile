@@ -14,6 +14,7 @@ COPY . .
 # Build argument for API URL (baked into static files at build time)
 ARG VITE_API_URL
 ENV VITE_API_URL=$VITE_API_URL
+ENV VITE_API_BASE_URL=$VITE_API_URL
 
 # Build the React app
 RUN npm run build
