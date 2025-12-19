@@ -11,8 +11,9 @@ module "aks_mgmt_hub" {
   dns_prefix          = "aks-mgmt-hub"
 
   # Network configuration - use hub VNet subnets
-  vnet_subnet_id = module.hub_vnet.aks_mgmt_nodes_subnet_id
-  pod_subnet_id  = module.hub_vnet.aks_mgmt_pods_subnet_id
+  vnet_subnet_id         = module.hub_vnet.aks_mgmt_nodes_subnet_id
+  pod_subnet_id          = module.hub_vnet.aks_mgmt_pods_subnet_id
+  enable_pod_subnet_role = true
 
   # Service CIDR (must not overlap with VNet)
   service_cidr   = "10.100.0.0/16"

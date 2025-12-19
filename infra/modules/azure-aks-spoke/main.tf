@@ -95,7 +95,7 @@ resource "azurerm_role_assignment" "aks_network_contributor" {
 
 # If pod subnet is provided, grant Network Contributor there too
 resource "azurerm_role_assignment" "aks_pod_subnet_contributor" {
-  count                = var.pod_subnet_id != null ? 1 : 0
+  count                = var.enable_pod_subnet_role ? 1 : 0
   scope                = var.pod_subnet_id
   role_definition_name = "Network Contributor"
   principal_id         = azurerm_kubernetes_cluster.aks.identity[0].principal_id

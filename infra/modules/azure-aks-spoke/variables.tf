@@ -35,6 +35,12 @@ variable "pod_subnet_id" {
   default     = null
 }
 
+variable "enable_pod_subnet_role" {
+  description = "Whether to create role assignment for pod subnet (set to true when pod_subnet_id is provided)"
+  type        = bool
+  default     = false
+}
+
 variable "service_cidr" {
   description = "CIDR for Kubernetes services"
   type        = string

@@ -11,8 +11,9 @@ module "aks_app_spoke" {
   dns_prefix          = "aks-app-spoke"
 
   # Network configuration - use spoke VNet subnets
-  vnet_subnet_id = module.dev_spoke_vnet.aks_nodes_subnet_id
-  pod_subnet_id  = module.dev_spoke_vnet.aks_pods_subnet_id
+  vnet_subnet_id         = module.dev_spoke_vnet.aks_nodes_subnet_id
+  pod_subnet_id          = module.dev_spoke_vnet.aks_pods_subnet_id
+  enable_pod_subnet_role = true
 
   # Service CIDR (different from mgmt cluster to avoid collision)
   service_cidr   = "10.101.0.0/16"
