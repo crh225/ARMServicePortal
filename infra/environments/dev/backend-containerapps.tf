@@ -4,6 +4,16 @@ data "azurerm_resource_group" "backend_infra" {
   name = "rg-testpr3-dev-rg"
 }
 
+# Tell Terraform we intentionally removed the RG module but don't want to destroy the resource
+# This was previously managed by module.azure-rg-basic_b0802fb2 but is now referenced via data source
+removed {
+  from = module.azure-rg-basic_b0802fb2
+
+  lifecycle {
+    destroy = false
+  }
+}
+
 resource "random_string" "acr_suffix" {
   length  = 4
   upper   = false

@@ -23,7 +23,7 @@ module "aks_app_spoke" {
   default_node_pool_vm_size   = "Standard_B2s"
   default_node_pool_min_count = 1
   default_node_pool_max_count = 5
-  availability_zones          = ["1", "2", "3"]
+  availability_zones          = ["3"]
 
   # Kubernetes version
   kubernetes_version = "1.32"
