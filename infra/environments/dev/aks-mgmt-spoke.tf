@@ -1,5 +1,5 @@
-# New AKS Cluster in Dev Spoke VNet
-# This is the new spoke-connected AKS cluster for future workloads
+# Management AKS Cluster in Dev Spoke VNet
+# This is the management control plane for future workloads
 
 module "aks_dev_spoke" {
   source = "../../modules/azure-aks-spoke"
@@ -18,10 +18,11 @@ module "aks_dev_spoke" {
   service_cidr   = "10.100.0.0/16"
   dns_service_ip = "10.100.0.10"
 
-  # Node pool configuration (minimal for dev)
+  # Node pool configuration 
   default_node_pool_vm_size   = "Standard_B2s"
-  default_node_pool_min_count = 2
+  default_node_pool_min_count = 1
   default_node_pool_max_count = 3
+  availability_zones          = ["1", "2", "3"]
 
   # Kubernetes version
   kubernetes_version = "1.32"

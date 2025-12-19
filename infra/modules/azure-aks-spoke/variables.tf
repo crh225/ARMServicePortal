@@ -66,6 +66,12 @@ variable "default_node_pool_max_count" {
   default     = 4
 }
 
+variable "availability_zones" {
+  description = "List of availability zones for the node pool (e.g., [\"1\", \"2\", \"3\"])"
+  type        = list(string)
+  default     = null
+}
+
 variable "kubernetes_version" {
   description = "Kubernetes version (null for latest)"
   type        = string

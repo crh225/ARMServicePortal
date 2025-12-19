@@ -25,6 +25,9 @@ resource "azurerm_kubernetes_cluster" "aks" {
     # Pod subnet for Azure CNI with dynamic IP allocation
     pod_subnet_id = var.pod_subnet_id
 
+    # Availability zones for high availability
+    zones = var.availability_zones
+
     upgrade_settings {
       max_surge = "10%"
     }
