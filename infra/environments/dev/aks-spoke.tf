@@ -24,7 +24,7 @@ module "aks_dev_spoke" {
   default_node_pool_max_count = 3
 
   # Kubernetes version
-  kubernetes_version = "1.29"
+  kubernetes_version = "1.30"
 
   # Optional: Make private cluster (set to true for production)
   private_cluster_enabled = false
