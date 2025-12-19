@@ -42,3 +42,23 @@ output "location" {
   description = "Location of the hub VNet"
   value       = var.location
 }
+
+output "aks_mgmt_nodes_subnet_id" {
+  description = "ID of the AKS management cluster nodes subnet"
+  value       = azurerm_subnet.aks_mgmt_nodes.id
+}
+
+output "aks_mgmt_nodes_subnet_name" {
+  description = "Name of the AKS management cluster nodes subnet"
+  value       = azurerm_subnet.aks_mgmt_nodes.name
+}
+
+output "aks_mgmt_pods_subnet_id" {
+  description = "ID of the AKS management cluster pods subnet"
+  value       = azurerm_subnet.aks_mgmt_pods.id
+}
+
+output "aks_mgmt_pods_subnet_name" {
+  description = "Name of the AKS management cluster pods subnet"
+  value       = azurerm_subnet.aks_mgmt_pods.name
+}

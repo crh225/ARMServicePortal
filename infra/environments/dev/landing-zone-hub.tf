@@ -23,6 +23,10 @@ module "hub_vnet" {
   shared_services_subnet_prefix = "10.0.1.0/24"
   gateway_subnet_prefix         = "10.0.255.0/27"
 
+  # AKS Management Cluster subnets
+  aks_mgmt_nodes_subnet_prefix = "10.0.2.0/23"
+  aks_mgmt_pods_subnet_prefix  = "10.0.4.0/22"
+
   tags = {
     "landing-zone"          = "hub"
     "armportal-environment" = "shared"
@@ -49,4 +53,14 @@ output "hub_resource_group_name" {
 output "hub_shared_services_subnet_id" {
   description = "ID of the hub shared services subnet"
   value       = module.hub_vnet.shared_services_subnet_id
+}
+
+output "hub_aks_mgmt_nodes_subnet_id" {
+  description = "ID of the AKS management cluster nodes subnet in hub"
+  value       = module.hub_vnet.aks_mgmt_nodes_subnet_id
+}
+
+output "hub_aks_mgmt_pods_subnet_id" {
+  description = "ID of the AKS management cluster pods subnet in hub"
+  value       = module.hub_vnet.aks_mgmt_pods_subnet_id
 }

@@ -37,6 +37,18 @@ variable "dns_servers" {
   default     = []
 }
 
+variable "aks_mgmt_nodes_subnet_prefix" {
+  description = "Address prefix for AKS management cluster nodes subnet"
+  type        = string
+  default     = "10.0.2.0/23"
+}
+
+variable "aks_mgmt_pods_subnet_prefix" {
+  description = "Address prefix for AKS management cluster pods subnet (Azure CNI)"
+  type        = string
+  default     = "10.0.4.0/22"
+}
+
 variable "tags" {
   description = "Tags to apply to all resources"
   type        = map(string)
