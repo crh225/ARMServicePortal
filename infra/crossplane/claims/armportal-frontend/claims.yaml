@@ -1,0 +1,49 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: armportal-frontend
+  labels:
+    app.kubernetes.io/managed-by: crossplane
+    app.kubernetes.io/name: armportal-frontend
+    armportal.chrishouse.io/component: frontend
+---
+apiVersion: platform.chrishouse.io/v1alpha1
+kind: FrontendClaim
+metadata:
+  name: portal-frontend
+  namespace: armportal-frontend
+  labels:
+    app.kubernetes.io/managed-by: crossplane
+    app.kubernetes.io/name: armportal-frontend
+    armportal.chrishouse.io/component: frontend
+spec:
+  parameters:
+    image: armportalacre4k9.azurecr.io/armportal-frontend:latest
+    replicas: 1
+    port: 80
+    backendUrl: https://armportal-api-dev.kindisland-0c7a7c9a.eastus2.azurecontainerapps.io
+    resources:
+      cpuRequest: "50m"
+      cpuLimit: "100m"
+      memoryRequest: "64Mi"
+      memoryLimit: "128Mi"
+---
+apiVersion: platform.chrishouse.io/v1alpha1
+kind: IngressClaim
+metadata:
+  name: portal-ingress
+  namespace: armportal-frontend
+  labels:
+    app.kubernetes.io/managed-by: crossplane
+    app.kubernetes.io/name: armportal-frontend
+    armportal.chrishouse.io/component: frontend
+spec:
+  parameters:
+    host: portal.chrishouse.io
+    clusterIssuer: letsencrypt-prod
+    paths:
+      - path: /
+        pathType: Prefix
+        serviceName: portal-frontend
+        servicePort: 80
