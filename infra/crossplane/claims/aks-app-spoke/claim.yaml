@@ -9,6 +9,6 @@ spec:
   nodeCount: 1
   vmSize: Standard_B2s
   kubernetesVersion: "1.32"
-  subnetId: /subscriptions/f989de0f-8697-4a05-8c34-b82c941767c0/resourceGroups/rg-landing-zone-dev/providers/Microsoft.Network/virtualNetworks/vnet-dev-spoke-eastus/subnets/AksNodesSubnet
+  subnetId: /subscriptions/f989de0f-8697-4a05-8c34-b82c941767c0/resourceGroups/rg-landing-zone-dev/providers/Microsoft.Network/virtualNetworks/vnet-spoke-dev/subnets/AksNodesSubnet
   serviceCidr: "10.101.0.0/16"
   dnsServiceIp: "10.101.0.10"
