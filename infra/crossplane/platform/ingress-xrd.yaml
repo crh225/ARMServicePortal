@@ -33,6 +33,10 @@ spec:
                   required:
                     - host
                   properties:
+                    targetCluster:
+                      type: string
+                      description: "Target cluster ProviderConfig name (default=mgmt, app-spoke=spoke cluster)"
+                      default: "default"
                     host:
                       type: string
                       description: "Ingress hostname (e.g., myapp.example.com)"

@@ -19,10 +19,11 @@ metadata:
     armportal.chrishouse.io/component: frontend
 spec:
   parameters:
+    targetCluster: app-spoke
     image: armportalacre4k9.azurecr.io/armportal-frontend:latest
     replicas: 1
     port: 80
-    backendUrl: https://armportal-api-dev.kindisland-0c7a7c9a.eastus2.azurecontainerapps.io
+    backendUrl: https://portal-api.chrishouse.io
     resources:
       cpuRequest: "50m"
       cpuLimit: "100m"
@@ -40,6 +41,7 @@ metadata:
     armportal.chrishouse.io/component: frontend
 spec:
   parameters:
+    targetCluster: app-spoke
     host: portal.chrishouse.io
     clusterIssuer: letsencrypt-prod
     paths:

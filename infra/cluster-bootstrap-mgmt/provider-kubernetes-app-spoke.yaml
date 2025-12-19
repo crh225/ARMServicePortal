@@ -1,0 +1,14 @@
+# ProviderConfig for App Spoke Cluster
+# Allows Crossplane to deploy Kubernetes resources to the app-spoke cluster
+---
+apiVersion: kubernetes.crossplane.io/v1alpha1
+kind: ProviderConfig
+metadata:
+  name: app-spoke
+spec:
+  credentials:
+    source: Secret
+    secretRef:
+      namespace: crossplane-system
+      name: aks-app-spoke-vpnks-kubeconfig
+      key: kubeconfig

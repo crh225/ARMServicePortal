@@ -35,6 +35,8 @@ spec:
               annotations:
                 gotemplating.fn.crossplane.io/composition-resource-name: ingress
             spec:
+              providerConfigRef:
+                name: {{ default "default" $p.targetCluster }}
               forProvider:
                 manifest:
                   apiVersion: networking.k8s.io/v1

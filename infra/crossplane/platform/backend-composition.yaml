@@ -27,6 +27,8 @@ spec:
               apiVersion: kubernetes.crossplane.io/v1alpha2
               kind: Object
               spec:
+                providerConfigRef:
+                  name: default
                 forProvider:
                   manifest:
                     apiVersion: apps/v1
@@ -55,6 +57,9 @@ spec:
                                 requests: { cpu: "200m", memory: "256Mi" }
                                 limits: { cpu: "500m", memory: "512Mi" }
             patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.targetCluster
+                toFieldPath: spec.providerConfigRef.name
               - type: FromCompositeFieldPath
                 fromFieldPath: metadata.labels["crossplane.io/claim-namespace"]
                 toFieldPath: spec.forProvider.manifest.metadata.namespace
@@ -98,6 +103,8 @@ spec:
               apiVersion: kubernetes.crossplane.io/v1alpha2
               kind: Object
               spec:
+                providerConfigRef:
+                  name: default
                 forProvider:
                   manifest:
                     apiVersion: v1
@@ -112,6 +119,9 @@ spec:
                       selector:
                         app.kubernetes.io/component: backend
             patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.targetCluster
+                toFieldPath: spec.providerConfigRef.name
               - type: FromCompositeFieldPath
                 fromFieldPath: metadata.labels["crossplane.io/claim-namespace"]
                 toFieldPath: spec.forProvider.manifest.metadata.namespace
@@ -157,6 +167,8 @@ spec:
               annotations:
                 gotemplating.fn.crossplane.io/composition-resource-name: deployment
             spec:
+              providerConfigRef:
+                name: {{ default "default" $xr.spec.parameters.targetCluster }}
               forProvider:
                 manifest:
                   apiVersion: apps/v1
