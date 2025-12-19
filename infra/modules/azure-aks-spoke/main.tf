@@ -52,12 +52,12 @@ resource "azurerm_kubernetes_cluster" "aks" {
 
   # Network profile with explicit configuration
   network_profile {
-    network_plugin      = "azure"
-    network_policy      = "azure"
-    service_cidr        = var.service_cidr
-    dns_service_ip      = var.dns_service_ip
-    load_balancer_sku   = "standard"
-    outbound_type       = "loadBalancer"
+    network_plugin    = "azure"
+    network_policy    = "azure"
+    service_cidr      = var.service_cidr
+    dns_service_ip    = var.dns_service_ip
+    load_balancer_sku = "standard"
+    outbound_type     = "loadBalancer"
   }
 
   # Optional: Azure Monitor integration
