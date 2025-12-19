@@ -13,11 +13,12 @@ resource "azurerm_kubernetes_cluster" "aks" {
 
   # Default node pool with explicit subnet
   default_node_pool {
-    name                 = "default"
-    vm_size              = var.default_node_pool_vm_size
-    auto_scaling_enabled = true
-    min_count            = var.default_node_pool_min_count
-    max_count            = var.default_node_pool_max_count
+    name                         = "default"
+    vm_size                      = var.default_node_pool_vm_size
+    temporary_name_for_rotation  = "temppool"
+    auto_scaling_enabled         = true
+    min_count                    = var.default_node_pool_min_count
+    max_count                    = var.default_node_pool_max_count
 
     # Use the spoke VNet subnet
     vnet_subnet_id = var.vnet_subnet_id
