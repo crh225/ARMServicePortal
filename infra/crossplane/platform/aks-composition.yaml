@@ -1,0 +1,78 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xaksclusters.platform.chrishouse.io
+spec:
+  compositeTypeRef:
+    apiVersion: platform.chrishouse.io/v1alpha1
+    kind: XAKSCluster
+  mode: Pipeline
+  pipeline:
+    - step: patch-and-transform
+      functionRef:
+        name: function-patch-and-transform
+      input:
+        apiVersion: pt.fn.crossplane.io/v1beta1
+        kind: Resources
+        resources:
+          - name: kubernetes-cluster
+            base:
+              apiVersion: containerservice.azure.upbound.io/v1beta1
+              kind: KubernetesCluster
+              spec:
+                forProvider:
+                  dnsPrefix: ""
+                  defaultNodePool:
+                    - name: default
+                      nodeCount: 1
+                      vmSize: Standard_B2s
+                      vnetSubnetId: ""
+                  identity:
+                    - type: SystemAssigned
+                  networkProfile:
+                    - networkPlugin: azure
+                      serviceCidr: ""
+                      dnsServiceIp: ""
+                providerConfigRef:
+                  name: default
+                writeConnectionSecretToRef:
+                  namespace: crossplane-system
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.name
+                toFieldPath: spec.forProvider.dnsPrefix
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.location
+                toFieldPath: spec.forProvider.location
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.resourceGroupName
+                toFieldPath: spec.forProvider.resourceGroupName
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.nodeCount
+                toFieldPath: spec.forProvider.defaultNodePool[0].nodeCount
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.vmSize
+                toFieldPath: spec.forProvider.defaultNodePool[0].vmSize
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.kubernetesVersion
+                toFieldPath: spec.forProvider.kubernetesVersion
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.subnetId
+                toFieldPath: spec.forProvider.defaultNodePool[0].vnetSubnetId
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.serviceCidr
+                toFieldPath: spec.forProvider.networkProfile[0].serviceCidr
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.dnsServiceIp
+                toFieldPath: spec.forProvider.networkProfile[0].dnsServiceIp
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.name
+                toFieldPath: spec.writeConnectionSecretToRef.name
+                transforms:
+                  - type: string
+                    string:
+                      type: Format
+                      fmt: "%s-kubeconfig"
+              - type: ToCompositeFieldPath
+                fromFieldPath: status.atProvider.fqdn
+                toFieldPath: status.clusterFqdn
