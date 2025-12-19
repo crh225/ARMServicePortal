@@ -1,14 +1,7 @@
-# Resource group for backend infrastructure (Container Apps, ACR, Log Analytics)
-resource "azurerm_resource_group" "backend_infra" {
-  name     = "rg-armportal-backend-dev"
-  location = "eastus2"
-
-  tags = {
-    armportal-environment = "dev"
-    armportal-blueprint   = "backend-infrastructure"
-    armportal-request-id  = "permanent"
-    armportal-owner       = "platform-team"
-  }
+# Backend infrastructure uses existing resource group to avoid destroying current ACR/Container Apps
+# The resources already exist in rg-testpr3-dev-rg - we reference it via data source
+data "azurerm_resource_group" "backend_infra" {
+  name = "rg-testpr3-dev-rg"
 }
 
 resource "random_string" "acr_suffix" {
@@ -20,8 +13,8 @@ resource "random_string" "acr_suffix" {
 
 resource "azurerm_container_registry" "backend_acr" {
   name                = "armportalacr${random_string.acr_suffix.result}"
-  resource_group_name = azurerm_resource_group.backend_infra.name
-  location            = azurerm_resource_group.backend_infra.location
+  resource_group_name = data.azurerm_resource_group.backend_infra.name
+  location            = data.azurerm_resource_group.backend_infra.location
   sku                 = "Basic"
   admin_enabled       = true
 
@@ -35,8 +28,8 @@ resource "azurerm_container_registry" "backend_acr" {
 
 resource "azurerm_log_analytics_workspace" "aca" {
   name                = "log-armportal-dev"
-  location            = azurerm_resource_group.backend_infra.location
-  resource_group_name = azurerm_resource_group.backend_infra.name
+  location            = data.azurerm_resource_group.backend_infra.location
+  resource_group_name = data.azurerm_resource_group.backend_infra.name
   sku                 = "PerGB2018"
   retention_in_days   = 30
 
@@ -50,8 +43,8 @@ resource "azurerm_log_analytics_workspace" "aca" {
 
 resource "azurerm_container_app_environment" "backend" {
   name                       = "cae-armportal-dev"
-  location                   = azurerm_resource_group.backend_infra.location
-  resource_group_name        = azurerm_resource_group.backend_infra.name
+  location                   = data.azurerm_resource_group.backend_infra.location
+  resource_group_name        = data.azurerm_resource_group.backend_infra.name
   log_analytics_workspace_id = azurerm_log_analytics_workspace.aca.id
 
   tags = {
@@ -64,7 +57,7 @@ resource "azurerm_container_app_environment" "backend" {
 
 resource "azurerm_container_app" "backend" {
   name                         = "armportal-api-dev"
-  resource_group_name          = azurerm_resource_group.backend_infra.name
+  resource_group_name          = data.azurerm_resource_group.backend_infra.name
   container_app_environment_id = azurerm_container_app_environment.backend.id
   revision_mode                = "Single"
 
