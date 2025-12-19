@@ -19,11 +19,10 @@ module "aks_mgmt_hub" {
   service_cidr   = "10.100.0.0/16"
   dns_service_ip = "10.100.0.10"
 
-  # Node pool configuration - larger VMs for platform services
-  default_node_pool_vm_size   = "Standard_B4ms"
-  default_node_pool_min_count = 2
-  default_node_pool_max_count = 4
-  availability_zones          = ["3"]
+  default_node_pool_vm_size   = "Standard_B2s"
+  default_node_pool_min_count = 1
+  default_node_pool_max_count = 2
+  availability_zones          = null
 
   # Kubernetes version
   kubernetes_version = "1.32"
