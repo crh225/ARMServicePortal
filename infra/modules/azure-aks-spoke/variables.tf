@@ -125,9 +125,9 @@ variable "service_mesh_enabled" {
 }
 
 variable "service_mesh_revisions" {
-  description = "Istio control plane revisions (e.g., ['asm-1-23']). Required when service_mesh_enabled is true."
+  description = "Istio control plane revisions (e.g., ['asm-1-26']). Required when service_mesh_enabled is true."
   type        = list(string)
-  default     = ["asm-1-23"]
+  default     = ["asm-1-26"]
 }
 
 variable "service_mesh_internal_ingress_enabled" {
@@ -140,4 +140,17 @@ variable "service_mesh_external_ingress_enabled" {
   description = "Enable Istio external ingress gateway"
   type        = bool
   default     = false
+}
+
+# Key Vault Secrets Provider (CSI Driver)
+variable "key_vault_secrets_provider_enabled" {
+  description = "Enable Azure Key Vault secrets provider for CSI driver integration"
+  type        = bool
+  default     = false
+}
+
+variable "key_vault_secret_rotation_enabled" {
+  description = "Enable automatic secret rotation"
+  type        = bool
+  default     = true
 }

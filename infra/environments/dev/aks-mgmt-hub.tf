@@ -36,6 +36,9 @@ module "aks_mgmt_hub" {
   service_mesh_external_ingress_enabled = true # External ingress for internet traffic
   service_mesh_internal_ingress_enabled = true # Internal ingress for spoke-to-hub communication
 
+  # Key Vault Secrets Provider - required for existing SecretProviderClasses
+  key_vault_secrets_provider_enabled = true
+
   tags = {
     "landing-zone"          = "hub"
     "armportal-environment" = "shared"

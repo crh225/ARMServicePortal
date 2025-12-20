@@ -83,6 +83,14 @@ resource "azurerm_kubernetes_cluster" "aks" {
     }
   }
 
+  # Key Vault secrets provider for CSI driver integration
+  dynamic "key_vault_secrets_provider" {
+    for_each = var.key_vault_secrets_provider_enabled ? [1] : []
+    content {
+      secret_rotation_enabled = var.key_vault_secret_rotation_enabled
+    }
+  }
+
   tags = merge(var.tags, {
     "landing-zone" = "spoke"
     "environment"  = var.environment
