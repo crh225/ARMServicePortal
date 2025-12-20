@@ -33,8 +33,8 @@ module "aks_mgmt_hub" {
 
   # Istio Service Mesh - Hub acts as ingress gateway for all traffic
   service_mesh_enabled                  = true
-  service_mesh_external_ingress_enabled = true  # External ingress for internet traffic
-  service_mesh_internal_ingress_enabled = true  # Internal ingress for spoke-to-hub communication
+  service_mesh_external_ingress_enabled = true # External ingress for internet traffic
+  service_mesh_internal_ingress_enabled = true # Internal ingress for spoke-to-hub communication
 
   tags = {
     "landing-zone"          = "hub"
