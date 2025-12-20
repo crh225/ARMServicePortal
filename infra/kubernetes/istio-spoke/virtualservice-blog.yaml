@@ -11,6 +11,6 @@ spec:
   http:
     - route:
         - destination:
-            host: blog.blog.svc.cluster.local
+            host: theblog.blog.svc.cluster.local
             port:
               number: 80
