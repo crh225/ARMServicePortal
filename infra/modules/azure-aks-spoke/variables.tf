@@ -124,6 +124,12 @@ variable "service_mesh_enabled" {
   default     = false
 }
 
+variable "service_mesh_revisions" {
+  description = "Istio control plane revisions (e.g., ['asm-1-23']). Required when service_mesh_enabled is true."
+  type        = list(string)
+  default     = ["asm-1-23"]
+}
+
 variable "service_mesh_internal_ingress_enabled" {
   description = "Enable Istio internal ingress gateway"
   type        = bool

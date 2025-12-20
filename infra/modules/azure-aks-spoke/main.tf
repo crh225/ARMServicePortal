@@ -77,6 +77,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
     for_each = var.service_mesh_enabled ? [1] : []
     content {
       mode                             = "Istio"
+      revisions                        = var.service_mesh_revisions
       internal_ingress_gateway_enabled = var.service_mesh_internal_ingress_enabled
       external_ingress_gateway_enabled = var.service_mesh_external_ingress_enabled
     }
