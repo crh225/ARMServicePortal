@@ -43,6 +43,19 @@ spec:
                 dnsServiceIp:
                   type: string
                   default: "10.101.0.10"
+                # Istio Service Mesh configuration
+                serviceMeshEnabled:
+                  type: boolean
+                  default: false
+                  description: Enable Istio service mesh add-on
+                serviceMeshExternalIngressEnabled:
+                  type: boolean
+                  default: false
+                  description: Enable Istio external ingress gateway
+                serviceMeshInternalIngressEnabled:
+                  type: boolean
+                  default: false
+                  description: Enable Istio internal ingress gateway
               required:
                 - resourceGroupName
                 - subnetId
