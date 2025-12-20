@@ -73,74 +73,71 @@ The system consists of four core components:
 ## Architecture Diagram
 
 ```text
-                              +---------------------------+
-                              |   Cloudflare (DNS/CDN)    |
-                              +-------------+-------------+
-                                            |
-              +-----------------------------+-----------------------------+
-              |                             |                             |
-              v                             v                             v
+                                    +---------------------------+
+                                    |   Cloudflare (DNS/CDN)    |
+                                    +-------------+-------------+
+                                                  |
+                 +--------------------------------+--------------------------------+
+                 |                                                                 |
+                 v                                                                 v
++----------------------------------- Hub Traffic -----+    +---------- Spoke Traffic ------------+
+|  backstage.chrishouse.io                           |    |  portal.chrishouse.io               |
+|  argocd.chrishouse.io                              |    |  portal-api.chrishouse.io           |
++----------------------------------------------------+    |  blog.chrishouse.io                 |
+                 |                                        +--------------------------------------+
+                 v                                                                 |
++--------------------------------------------------------------------------------+ |
+|                         AKS Hub Cluster (aks-mgmt-hub)                         | |
+|  Management & Platform Services (Control Plane)                                | |
+|  +--------------------------------------------------------------------------+  | |
+|  |                           Istio Service Mesh                             |  | |
+|  |  +------------------------+    +------------------------+                |  | |
+|  |  | Istio Ingress Gateway  |    |  Backstage             |                |  | |
+|  |  | (Hub Services Only)    |--->|  (Developer Portal)    |                |  | |
+|  |  +------------------------+    +------------------------+                |  | |
+|  +--------------------------------------------------------------------------+  | |
+|                                                                                | |
+|  +------------------------+  +------------------------+  +------------------+  | |
+|  | ArgoCD                 |  | Crossplane             |  | Cert-Manager     |  | |
+|  | (GitOps Controller)    |  | (Infrastructure IaC)   |  | (TLS Certs)      |  | |
+|  +------------------------+  +------------------------+  +------------------+  | |
++--------------------------------------------------------------------------------+ |
+              |                                                                    |
+              | Manages (ArgoCD)                                                   |
+              v                                                                    v
++---------------------------------------------------------------------------------+
+|                        AKS Spoke Cluster (aks-app-spoke)                        |
+|  Application Workloads (Data Plane)                                             |
+|  +-----------------------------------------------------------------------+      |
+|  |                          Istio Service Mesh                           |      |
+|  |  +---------------------------+                                        |      |
+|  |  |  Istio Ingress Gateway    |---+------------------+---------------+ |      |
+|  |  |  (App Traffic - Direct)   |   |                  |               | |      |
+|  |  +---------------------------+   v                  v               v |      |
+|  |                          +-----------+      +-----------+   +-----------+    |
+|  |                          | portal-api|      | blog      |   | frontend  |    |
+|  |                          | (Node.js) |      | (Static)  |   | (React)   |    |
+|  |                          +-----------+      +-----------+   +-----------+    |
+|  +-----------------------------------------------------------------------+      |
++---------------------------------------------------------------------------------+
+              |                           |                           |
+              v                           v                           v
 +---------------------------+ +---------------------------+ +---------------------------+
-|  Azure Static Web Apps    | |  *.chrishouse.io          | |  backstage.chrishouse.io  |
-|  (Frontend Portal)        | |  (API, Blog)              | |  (Developer Portal)       |
+|      GitHub               | |         Azure             | |    External Services      |
+|  - Source Repositories    | |  - Key Vault (Secrets)    | |  - Redis                  |
+|  - GitHub Actions (CI/CD) | |  - Container Registry     | |  - RabbitMQ               |
+|  - Webhooks               | |  - Blob Storage (TF State)| |  - Azure App Config       |
 +---------------------------+ +---------------------------+ +---------------------------+
-                                            |                             |
-                                            v                             v
-+-----------------------------------------------------------------------------------------------------------+
-|                                     AKS Hub Cluster (aks-mgmt-hub)                                        |
-|  Management & Platform Services                                                                           |
-|  +-----------------------------------------------------------------------------------------------------+  |
-|  |                                      Istio Service Mesh                                             |  |
-|  |  +---------------------------+    +---------------------------+    +---------------------------+    |  |
-|  |  |  Istio Ingress Gateway    |    |  ArgoCD                   |    |  Backstage                |    |  |
-|  |  |  (External Traffic)       |    |  (GitOps Controller)      |    |  (Developer Portal)       |    |  |
-|  |  +---------------------------+    +---------------------------+    +---------------------------+    |  |
-|  +-----------------------------------------------------------------------------------------------------+  |
-|                                                                                                           |
-|  +---------------------------+    +---------------------------+    +---------------------------+          |
-|  |  Crossplane               |    |  Cert-Manager             |    |  Argo Rollouts            |          |
-|  |  (Infrastructure as Code) |    |  (TLS via Let's Encrypt)  |    |  (Deployment Controller)  |          |
-|  +---------------------------+    +---------------------------+    +---------------------------+          |
-+-----------------------------------------------------------------------------------------------------------+
-              |                                         |
-              | Manages (ArgoCD ApplicationSets)        | Provisions (Crossplane)
-              v                                         v
-+-----------------------------------------------------------------------------------------------------------+
-|                                    AKS Spoke Cluster (aks-app-spoke)                                      |
-|  Application Workloads                                                                                    |
-|  +-----------------------------------------------------------------------------------------------------+  |
-|  |                                      Istio Service Mesh                                             |  |
-|  |  +---------------------------+                                                                      |  |
-|  |  |  Istio Ingress Gateway    |----+-----------------------------+-----------------------------+     |  |
-|  |  |  (Internal Traffic)       |    |                             |                             |     |  |
-|  |  +---------------------------+    v                             v                             v     |  |
-|  |                              +----------------+         +----------------+         +----------------+|  |
-|  |                              | portal-api    |         | blog           |         | armportal-     ||  |
-|  |                              | namespace     |         | namespace      |         | frontend       ||  |
-|  |                              +----------------+         +----------------+         +----------------+|  |
-|  |                              | Portal API    |         | TheBlog        |         | Portal         ||  |
-|  |                              | (Node.js)     |         | (Static Site)  |         | Frontend       ||  |
-|  |                              +----------------+         +----------------+         +----------------+|  |
-|  +-----------------------------------------------------------------------------------------------------+  |
-+-----------------------------------------------------------------------------------------------------------+
-              |                             |                             |
-              v                             v                             v
-+-------------------------------+ +-------------------------------+ +-------------------------------+
-|      GitHub                   | |         Azure                 | |      External Services        |
-|  - Source Repositories        | |  - Container Registry (GHCR)  | |  - Redis (Crossplane)         |
-|  - GitHub Actions (CI/CD)     | |  - Key Vault (Secrets)        | |  - RabbitMQ (Crossplane)      |
-|  - Webhooks                   | |  - Blob Storage (TF State)    | |  - Azure App Config           |
-+-------------------------------+ +-------------------------------+ +-------------------------------+
 ```
 
 ### Cluster Topology
 
 | Cluster | Purpose | Key Workloads |
 |---------|---------|---------------|
-| **aks-mgmt-hub** | Management & Platform | ArgoCD, Backstage, Crossplane, Cert-Manager, Argo Rollouts |
-| **aks-app-spoke** | Application Workloads | Portal API, TheBlog, Portal Frontend |
+| **aks-mgmt-hub** | Management & Control Plane | ArgoCD, Backstage, Crossplane, Cert-Manager |
+| **aks-app-spoke** | Application Data Plane | Portal API, TheBlog, Portal Frontend |
 
-Traffic flows through Cloudflare to the Hub's Istio Gateway, which routes to either Hub services (Backstage) or forwards to the Spoke cluster for application workloads.
+**Traffic Flow:** Cloudflare routes traffic directly to each cluster's Istio Gateway based on hostname. Hub services (Backstage) go to the hub cluster. Application traffic (portal, blog, API) goes directly to the spoke cluster. The hub is **not in the data path** for application traffic - if the hub goes down, spoke applications remain accessible.
 
 ---
 
