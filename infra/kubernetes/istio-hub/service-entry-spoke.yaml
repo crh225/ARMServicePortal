@@ -13,6 +13,5 @@ spec:
       protocol: HTTP
   resolution: STATIC
   endpoints:
-    # Spoke internal ingress gateway IP - update after spoke ingress is provisioned
-    # Get IP with: kubectl --context aks-app-spoke get svc -n aks-istio-ingress
-    - address: "SPOKE_INTERNAL_IP"
+    # Spoke internal ingress gateway IP (from: kubectl --context aks-app-spoke get svc -n aks-istio-ingress)
+    - address: "10.1.0.62"
