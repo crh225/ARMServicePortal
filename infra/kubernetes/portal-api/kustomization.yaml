@@ -10,7 +10,6 @@ resources:
   - secret-provider-class.yaml
   - deployment.yaml
   - service.yaml
-  - ingress.yaml
 
 commonLabels:
   app.kubernetes.io/part-of: armportal
