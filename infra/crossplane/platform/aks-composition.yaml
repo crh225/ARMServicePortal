@@ -27,7 +27,7 @@ spec:
                       nodeCount: 2
                       minCount: 2
                       maxCount: 4
-                      enableAutoScaling: true
+                      autoScalingEnabled: true
                       vmSize: Standard_B2s
                       vnetSubnetId: ""
                   identity:
