@@ -1,44 +1,10 @@
-apiVersion: pkg.crossplane.io/v1
-kind: Provider
-metadata:
-  name: provider-azure-storage
-spec:
-  package: xpkg.upbound.io/upbound/provider-azure-storage:v2.3.0
-  runtimeConfigRef:
-    name: azure-workload-identity
----
-apiVersion: pkg.crossplane.io/v1
-kind: Provider
-metadata:
-  name: provider-azure-keyvault
-spec:
-  package: xpkg.upbound.io/upbound/provider-azure-keyvault:v2.3.0
-  runtimeConfigRef:
-    name: azure-workload-identity
----
-apiVersion: pkg.crossplane.io/v1
-kind: Provider
-metadata:
-  name: provider-azure-appconfiguration
-spec:
-  package: xpkg.upbound.io/upbound/provider-azure-appconfiguration:v2.3.0
-  runtimeConfigRef:
-    name: azure-workload-identity
----
+# Only provider-azure-containerservice is needed for AKS cluster provisioning
+# Removed unused providers to reduce CRD count (~200+ CRDs removed)
 apiVersion: pkg.crossplane.io/v1
 kind: Provider
 metadata:
   name: provider-azure-containerservice
 spec:
   package: xpkg.upbound.io/upbound/provider-azure-containerservice:v2.3.0
-  runtimeConfigRef:
-    name: azure-workload-identity
----
-apiVersion: pkg.crossplane.io/v1
-kind: Provider
-metadata:
-  name: provider-azure-network
-spec:
-  package: xpkg.upbound.io/upbound/provider-azure-network:v2.3.0
   runtimeConfigRef:
     name: azure-workload-identity
