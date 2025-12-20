@@ -26,8 +26,8 @@ spec:
         - name: image.tag
           value: "sha-03dc3d5"
   destination:
-    server: https://kubernetes.default.svc
-    namespace: dev
+    name: aks-app-spoke
+    namespace: blog
   syncPolicy:
     automated:
       prune: true
