@@ -7,7 +7,6 @@ metadata:
     app.kubernetes.io/name: portal-api
     app.kubernetes.io/component: backend
   annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-dns01
     nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
 spec:
@@ -15,7 +14,7 @@ spec:
   tls:
     - hosts:
         - portal-api.chrishouse.io
-      secretName: portal-api-ingress-tls
+      secretName: portal-api-tls
   rules:
     - host: portal-api.chrishouse.io
       http:
