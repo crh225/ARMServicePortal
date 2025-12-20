@@ -17,6 +17,7 @@ spec:
       labels:
         app.kubernetes.io/name: portal-api
         app.kubernetes.io/component: backend
+        azure.workload.identity/use: "true"
     spec:
       serviceAccountName: portal-api
       containers:
