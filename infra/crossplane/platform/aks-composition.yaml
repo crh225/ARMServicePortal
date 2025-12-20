@@ -29,6 +29,8 @@ spec:
                       vnetSubnetId: ""
                   identity:
                     - type: SystemAssigned
+                  oidcIssuerEnabled: true
+                  workloadIdentityEnabled: true
                   networkProfile:
                     - networkPlugin: azure
                       serviceCidr: ""
