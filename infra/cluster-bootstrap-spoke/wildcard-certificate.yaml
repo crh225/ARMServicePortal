@@ -1,0 +1,12 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: wildcard-chrishouse-io
+  namespace: cert-manager
+spec:
+  secretName: wildcard-chrishouse-io-tls
+  issuerRef:
+    name: letsencrypt-dns01
+    kind: ClusterIssuer
+  dnsNames:
+    - "*.chrishouse.io"
