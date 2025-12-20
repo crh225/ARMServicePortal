@@ -24,10 +24,10 @@ spec:
         - name: image.repository
           value: ghcr.io/crh225/theblog
         - name: image.tag
-          value: "sha-03dc3d5"
+          value: "sha-0bbdbb3"
   destination:
-    name: aks-app-spoke
-    namespace: blog
+    server: https://kubernetes.default.svc
+    namespace: dev
   syncPolicy:
     automated:
       prune: true
