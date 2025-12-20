@@ -7,6 +7,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
   resource_group_name = var.resource_group_name
   dns_prefix          = var.dns_prefix
   kubernetes_version  = var.kubernetes_version
+  sku_tier            = var.sku_tier
 
   # Private cluster configuration
   private_cluster_enabled = var.private_cluster_enabled

@@ -84,6 +84,16 @@ variable "kubernetes_version" {
   default     = null
 }
 
+variable "sku_tier" {
+  description = "AKS SKU tier - Free or Standard. Standard provides SLA and higher API server capacity."
+  type        = string
+  default     = "Free"
+  validation {
+    condition     = contains(["Free", "Standard"], var.sku_tier)
+    error_message = "sku_tier must be either 'Free' or 'Standard'."
+  }
+}
+
 # Security configuration
 variable "private_cluster_enabled" {
   description = "Enable private cluster (API server not exposed to internet)"

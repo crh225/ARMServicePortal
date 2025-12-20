@@ -28,6 +28,9 @@ module "aks_mgmt_hub" {
   # Kubernetes version
   kubernetes_version = "1.32"
 
+  # Standard tier for API server SLA and higher capacity
+  sku_tier = "Standard"
+
   # Public cluster for now (set to true for production)
   private_cluster_enabled = false
 
