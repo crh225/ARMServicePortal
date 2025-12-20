@@ -31,9 +31,9 @@ module "aks_mgmt_hub" {
   # Public cluster for now (set to true for production)
   private_cluster_enabled = false
 
-  # Istio Service Mesh - Disabled
-  service_mesh_enabled                  = false
-  service_mesh_external_ingress_enabled = false
+  # Istio Service Mesh - Hub acts as external ingress for all traffic
+  service_mesh_enabled                  = true
+  service_mesh_external_ingress_enabled = true
   service_mesh_internal_ingress_enabled = false
 
   # Key Vault Secrets Provider - required for existing SecretProviderClasses

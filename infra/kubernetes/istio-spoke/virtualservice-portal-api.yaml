@@ -1,0 +1,16 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: portal-api-vs
+  namespace: istio-ingress
+spec:
+  hosts:
+    - "portal-api.chrishouse.io"
+  gateways:
+    - internal-gateway
+  http:
+    - route:
+        - destination:
+            host: portal-api.portal-api.svc.cluster.local
+            port:
+              number: 80

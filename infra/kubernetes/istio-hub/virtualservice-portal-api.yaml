@@ -1,0 +1,20 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: portal-api
+  namespace: istio-ingress
+spec:
+  hosts:
+    - "portal-api.chrishouse.io"
+  gateways:
+    - main-gateway
+  http:
+    - route:
+        - destination:
+            host: spoke.internal
+            port:
+              number: 80
+      headers:
+        request:
+          set:
+            Host: portal-api.chrishouse.io

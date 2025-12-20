@@ -1,0 +1,30 @@
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: main-gateway
+  namespace: istio-ingress
+spec:
+  selector:
+    istio: aks-istio-ingressgateway-external
+  servers:
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - "blog.chrishouse.io"
+        - "portal.chrishouse.io"
+        - "portal-api.chrishouse.io"
+      tls:
+        httpsRedirect: true
+    - port:
+        number: 443
+        name: https
+        protocol: HTTPS
+      hosts:
+        - "blog.chrishouse.io"
+        - "portal.chrishouse.io"
+        - "portal-api.chrishouse.io"
+      tls:
+        mode: SIMPLE
+        credentialName: wildcard-tls

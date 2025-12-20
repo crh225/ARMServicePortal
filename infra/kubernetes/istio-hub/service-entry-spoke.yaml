@@ -1,0 +1,18 @@
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: spoke-cluster
+  namespace: istio-ingress
+spec:
+  hosts:
+    - spoke.internal
+  location: MESH_EXTERNAL
+  ports:
+    - number: 80
+      name: http
+      protocol: HTTP
+  resolution: STATIC
+  endpoints:
+    # Spoke internal ingress gateway IP - update after spoke ingress is provisioned
+    # Get IP with: kubectl --context aks-app-spoke get svc -n aks-istio-ingress
+    - address: "SPOKE_INTERNAL_IP"
