@@ -152,4 +152,9 @@ nul
 # Temporary Crossplane test manifests
 infra/crossplane/examples/*-test.yaml
 infra/crossplane/examples/*-temp.yaml
+
+# ArgoCD cluster secrets (contain TLS certs/keys)
+infra/kubernetes/argocd-spoke-secret.yaml
+**/argocd-*-secret.yaml
+
 PROJECT.MD

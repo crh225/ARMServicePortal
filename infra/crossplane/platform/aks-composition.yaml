@@ -31,6 +31,8 @@ spec:
                     - type: SystemAssigned
                   oidcIssuerEnabled: true
                   workloadIdentityEnabled: true
+                  keyVaultSecretsProvider:
+                    - secretRotationEnabled: true
                   networkProfile:
                     - networkPlugin: azure
                       serviceCidr: ""
