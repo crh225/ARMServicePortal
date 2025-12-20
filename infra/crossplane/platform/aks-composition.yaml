@@ -24,7 +24,10 @@ spec:
                   dnsPrefix: ""
                   defaultNodePool:
                     - name: default
-                      nodeCount: 1
+                      nodeCount: 2
+                      minCount: 2
+                      maxCount: 4
+                      enableAutoScaling: true
                       vmSize: Standard_B2s
                       vnetSubnetId: ""
                   identity:
