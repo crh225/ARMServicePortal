@@ -11,6 +11,6 @@ spec:
   http:
     - route:
         - destination:
-            host: portal.portal.svc.cluster.local
+            host: portal-frontend.armportal-frontend.svc.cluster.local
             port:
               number: 80
