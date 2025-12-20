@@ -7,7 +7,7 @@ metadata:
     app.kubernetes.io/name: portal-api
     app.kubernetes.io/component: backend
   annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
+    cert-manager.io/cluster-issuer: letsencrypt-dns01
     nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
 spec:
