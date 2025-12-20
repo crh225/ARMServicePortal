@@ -116,3 +116,28 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+# Service Mesh (Istio)
+variable "service_mesh_enabled" {
+  description = "Enable Istio service mesh add-on"
+  type        = bool
+  default     = false
+}
+
+variable "service_mesh_revisions" {
+  description = "Istio control plane revisions (e.g., ['asm-1-23'])"
+  type        = list(string)
+  default     = []
+}
+
+variable "service_mesh_internal_ingress_enabled" {
+  description = "Enable Istio internal ingress gateway"
+  type        = bool
+  default     = false
+}
+
+variable "service_mesh_external_ingress_enabled" {
+  description = "Enable Istio external ingress gateway"
+  type        = bool
+  default     = true
+}

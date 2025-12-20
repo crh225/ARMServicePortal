@@ -1,5 +1,6 @@
 # Management AKS Cluster in Hub VNet
 # This cluster runs platform services: Crossplane, ArgoCD, Backstage, ingress controllers
+# Istio ingress gateway handles all external traffic and routes to spoke clusters
 
 module "aks_mgmt_hub" {
   source = "../../modules/azure-aks-spoke"
@@ -29,6 +30,11 @@ module "aks_mgmt_hub" {
 
   # Public cluster for now (set to true for production)
   private_cluster_enabled = false
+
+  # Istio Service Mesh - Hub acts as ingress gateway for all traffic
+  service_mesh_enabled                  = true
+  service_mesh_external_ingress_enabled = true  # External ingress for internet traffic
+  service_mesh_internal_ingress_enabled = true  # Internal ingress for spoke-to-hub communication
 
   tags = {
     "landing-zone"          = "hub"
