@@ -20,12 +20,23 @@ spec:
         azure.workload.identity/use: "true"
     spec:
       serviceAccountName: portal-api
+      volumes:
+        - name: secrets-store
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: "azure-backend-secrets"
       containers:
         - name: backend
           image: armportalacre4k9.azurecr.io/armportal-api-backend:latest
           ports:
             - containerPort: 4000
               name: http
+          volumeMounts:
+            - name: secrets-store
+              mountPath: "/mnt/secrets-store"
+              readOnly: true
           envFrom:
             - configMapRef:
                 name: portal-api-config
