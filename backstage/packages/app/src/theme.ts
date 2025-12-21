@@ -5,47 +5,59 @@ import {
   shapes,
 } from '@backstage/theme';
 
-// Light theme colors (GitHub light inspired)
-const lightColors = {
-  // Primary accent
-  accent: '#238636',
-  accentHover: '#2ea043',
-  accentEmphasis: '#0969da',
+// ARM Portal inspired theme - clean, modern, light
+const portalColors = {
+  // Primary accent (blue)
+  accent: '#2563eb',
+  accentSoft: 'rgba(37, 99, 235, 0.12)',
+  accentStrong: '#1d4ed8',
+  accentGradFrom: '#2563eb',
+  accentGradTo: '#0ea5e9',
 
-  // Backgrounds (light)
-  bgCanvas: '#ffffff',
-  bgDefault: '#ffffff',
-  bgSubtle: '#f6f8fa',
-  bgMuted: '#eaeef2',
-  bgInset: '#f6f8fa',
-
-  // Backgrounds (overlays)
-  bgOverlay: '#ffffff',
+  // Backgrounds
+  bgCanvas: '#f3f4f6',
+  bgElevated: '#ffffff',
+  bgPanel: '#ffffff',
+  bgChip: 'rgba(148, 163, 184, 0.12)',
+  bgHover: 'rgba(148, 163, 184, 0.12)',
+  bgHoverSubtle: 'rgba(148, 163, 184, 0.06)',
+  bgMuted: '#f9fafb',
 
   // Text
-  textPrimary: '#1f2328',
-  textSecondary: '#59636e',
-  textMuted: '#8b949e',
-  textLink: '#0969da',
+  textMain: '#0f172a',
+  textMuted: '#6b7280',
+  textSoft: '#9ca3af',
+  textLink: '#2563eb',
 
   // Borders
-  borderDefault: '#d1d9e0',
-  borderMuted: '#e1e4e8',
-  borderSubtle: 'rgba(31, 35, 40, 0.15)',
+  borderSubtle: 'rgba(148, 163, 184, 0.45)',
+  borderStrong: 'rgba(148, 163, 184, 0.8)',
+  borderDefault: 'rgba(148, 163, 184, 0.45)',
 
   // Status colors
-  success: '#1a7f37',
-  successEmphasis: '#2da44e',
-  danger: '#cf222e',
-  dangerEmphasis: '#d1242f',
-  warning: '#9a6700',
-  warningEmphasis: '#bf8700',
-  info: '#0969da',
-  infoEmphasis: '#218bff',
+  success: '#16a34a',
+  successBg: '#dcfce7',
+  successBorder: '#22c55e',
+  danger: '#dc2626',
+  dangerBg: '#fee2e2',
+  dangerBorder: '#f87171',
+  warning: '#d97706',
+  warningBg: '#fef3c7',
+  warningBorder: '#fbbf24',
+  info: '#0891b2',
+  infoBg: '#e0f2fe',
+  infoBorder: '#38bdf8',
 
-  // Special
-  done: '#8250df',
-  sponsors: '#bf3989',
+  // Shadows
+  shadowSoft: '0 18px 40px rgba(148, 163, 184, 0.35)',
+  shadowCard: '0 12px 28px rgba(148, 163, 184, 0.25)',
+  shadowHover: '0 4px 12px rgba(0, 0, 0, 0.08)',
+
+  // Border radius
+  radiusXl: '28px',
+  radiusLg: '18px',
+  radiusMd: '12px',
+  radiusSm: '8px',
 };
 
 export const armPortalTheme = createUnifiedTheme({
@@ -53,95 +65,95 @@ export const armPortalTheme = createUnifiedTheme({
     ...palettes.light,
     mode: 'light',
     primary: {
-      main: lightColors.accentEmphasis,
-      light: lightColors.infoEmphasis,
-      dark: '#0550ae',
+      main: portalColors.accent,
+      light: portalColors.accentGradTo,
+      dark: portalColors.accentStrong,
     },
     secondary: {
-      main: lightColors.accent,
-      light: lightColors.accentHover,
-      dark: '#196c2e',
+      main: portalColors.success,
+      light: '#22c55e',
+      dark: '#15803d',
     },
     background: {
-      default: lightColors.bgCanvas,
-      paper: lightColors.bgDefault,
+      default: portalColors.bgCanvas,
+      paper: portalColors.bgElevated,
     },
     text: {
-      primary: lightColors.textPrimary,
-      secondary: lightColors.textSecondary,
+      primary: portalColors.textMain,
+      secondary: portalColors.textMuted,
     },
     navigation: {
-      background: lightColors.bgSubtle,
-      indicator: lightColors.accentEmphasis,
-      color: lightColors.textSecondary,
-      selectedColor: lightColors.textPrimary,
+      background: portalColors.bgElevated,
+      indicator: portalColors.accent,
+      color: portalColors.textMuted,
+      selectedColor: portalColors.textMain,
       navItem: {
-        hoverBackground: lightColors.bgMuted,
+        hoverBackground: portalColors.bgHover,
       },
     },
     status: {
-      ok: lightColors.success,
-      warning: lightColors.warningEmphasis,
-      error: lightColors.danger,
-      running: lightColors.info,
-      pending: lightColors.done,
-      aborted: lightColors.textMuted,
+      ok: portalColors.success,
+      warning: portalColors.warning,
+      error: portalColors.danger,
+      running: portalColors.info,
+      pending: '#8b5cf6',
+      aborted: portalColors.textSoft,
     },
     error: {
-      main: lightColors.danger,
-      light: lightColors.dangerEmphasis,
+      main: portalColors.danger,
+      light: '#ef4444',
     },
     success: {
-      main: lightColors.success,
-      light: lightColors.successEmphasis,
+      main: portalColors.success,
+      light: '#22c55e',
     },
     info: {
-      main: lightColors.info,
-      light: lightColors.infoEmphasis,
+      main: portalColors.info,
+      light: '#06b6d4',
     },
     warning: {
-      main: lightColors.warning,
-      light: lightColors.warningEmphasis,
+      main: portalColors.warning,
+      light: '#f59e0b',
     },
-    divider: lightColors.borderDefault,
+    divider: portalColors.borderSubtle,
   },
   defaultPageTheme: 'home',
-  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif',
+  fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif',
   pageTheme: {
     home: genPageTheme({
-      colors: [lightColors.bgSubtle, lightColors.bgMuted],
+      colors: [portalColors.bgElevated, portalColors.bgCanvas],
       shape: shapes.wave,
     }),
     documentation: genPageTheme({
-      colors: [lightColors.bgSubtle, lightColors.bgMuted],
+      colors: [portalColors.bgElevated, portalColors.bgCanvas],
       shape: shapes.wave,
     }),
     tool: genPageTheme({
-      colors: [lightColors.bgSubtle, lightColors.bgMuted],
+      colors: [portalColors.bgElevated, portalColors.bgCanvas],
       shape: shapes.round,
     }),
     service: genPageTheme({
-      colors: [lightColors.bgSubtle, lightColors.bgMuted],
+      colors: [portalColors.bgElevated, portalColors.bgCanvas],
       shape: shapes.wave,
     }),
     website: genPageTheme({
-      colors: [lightColors.bgSubtle, lightColors.bgMuted],
+      colors: [portalColors.bgElevated, portalColors.bgCanvas],
       shape: shapes.wave,
     }),
     library: genPageTheme({
-      colors: [lightColors.bgSubtle, lightColors.bgMuted],
+      colors: [portalColors.bgElevated, portalColors.bgCanvas],
       shape: shapes.wave,
     }),
     other: genPageTheme({
-      colors: [lightColors.bgSubtle, lightColors.bgMuted],
+      colors: [portalColors.bgElevated, portalColors.bgCanvas],
       shape: shapes.wave,
     }),
     app: genPageTheme({
-      colors: [lightColors.bgSubtle, lightColors.bgMuted],
+      colors: [portalColors.bgElevated, portalColors.bgCanvas],
       shape: shapes.wave,
     }),
     apis: genPageTheme({
-      colors: [lightColors.bgSubtle, lightColors.bgMuted],
+      colors: [portalColors.bgElevated, portalColors.bgCanvas],
       shape: shapes.wave,
     }),
   },
@@ -149,34 +161,36 @@ export const armPortalTheme = createUnifiedTheme({
     MuiCssBaseline: {
       styleOverrides: {
         body: {
-          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif',
-          backgroundColor: lightColors.bgCanvas,
+          fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif',
+          backgroundColor: portalColors.bgCanvas,
         },
       },
     },
     MuiButton: {
       styleOverrides: {
         root: {
-          borderRadius: '6px',
+          borderRadius: portalColors.radiusSm,
           textTransform: 'none',
           fontWeight: 500,
-          fontSize: '14px',
+          fontSize: '0.875rem',
+          padding: '8px 16px',
         },
         containedPrimary: {
-          backgroundColor: lightColors.accent,
+          background: `linear-gradient(135deg, ${portalColors.accentGradFrom}, ${portalColors.accentGradTo})`,
           boxShadow: 'none',
-          border: '1px solid rgba(31, 35, 40, 0.15)',
+          color: '#f9fafb',
           '&:hover': {
-            backgroundColor: lightColors.accentHover,
-            boxShadow: 'none',
+            background: `linear-gradient(135deg, ${portalColors.accentStrong}, ${portalColors.accent})`,
+            boxShadow: portalColors.shadowHover,
+            transform: 'translateY(-1px)',
           },
         },
         outlined: {
-          borderColor: lightColors.borderDefault,
-          color: lightColors.textSecondary,
+          borderColor: portalColors.borderDefault,
+          color: portalColors.textMuted,
           '&:hover': {
-            backgroundColor: lightColors.bgSubtle,
-            borderColor: lightColors.textMuted,
+            backgroundColor: portalColors.bgHoverSubtle,
+            borderColor: portalColors.borderStrong,
           },
         },
       },
@@ -184,10 +198,15 @@ export const armPortalTheme = createUnifiedTheme({
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: '6px',
+          borderRadius: portalColors.radiusMd,
           boxShadow: 'none',
-          border: `1px solid ${lightColors.borderDefault}`,
-          backgroundColor: lightColors.bgDefault,
+          border: `1px solid ${portalColors.borderSubtle}`,
+          backgroundColor: portalColors.bgElevated,
+          transition: 'all 0.2s ease',
+          '&:hover': {
+            boxShadow: portalColors.shadowHover,
+            transform: 'translateY(-2px)',
+          },
         },
       },
     },
@@ -195,10 +214,22 @@ export const armPortalTheme = createUnifiedTheme({
       styleOverrides: {
         root: {
           backgroundImage: 'none',
-          backgroundColor: lightColors.bgDefault,
+          backgroundColor: portalColors.bgElevated,
         },
         rounded: {
-          borderRadius: '6px',
+          borderRadius: portalColors.radiusMd,
+        },
+        elevation1: {
+          boxShadow: 'none',
+          border: `1px solid ${portalColors.borderSubtle}`,
+        },
+        elevation2: {
+          boxShadow: portalColors.shadowHover,
+          border: `1px solid ${portalColors.borderSubtle}`,
+        },
+        elevation3: {
+          boxShadow: portalColors.shadowCard,
+          border: `1px solid ${portalColors.borderSubtle}`,
         },
       },
     },
@@ -206,17 +237,17 @@ export const armPortalTheme = createUnifiedTheme({
       styleOverrides: {
         root: {
           '& .MuiOutlinedInput-root': {
-            borderRadius: '6px',
-            backgroundColor: lightColors.bgCanvas,
+            borderRadius: portalColors.radiusSm,
+            backgroundColor: portalColors.bgElevated,
             '& fieldset': {
-              borderColor: lightColors.borderDefault,
+              borderColor: portalColors.borderStrong,
             },
             '&:hover fieldset': {
-              borderColor: lightColors.textMuted,
+              borderColor: portalColors.textSoft,
             },
             '&.Mui-focused fieldset': {
-              borderColor: lightColors.accentEmphasis,
-              boxShadow: `0 0 0 3px rgba(9, 105, 218, 0.3)`,
+              borderColor: portalColors.accent,
+              boxShadow: `0 0 0 3px ${portalColors.accentSoft}`,
             },
           },
         },
@@ -225,16 +256,16 @@ export const armPortalTheme = createUnifiedTheme({
     MuiOutlinedInput: {
       styleOverrides: {
         root: {
-          borderRadius: '6px',
-          backgroundColor: lightColors.bgCanvas,
+          borderRadius: portalColors.radiusSm,
+          backgroundColor: portalColors.bgElevated,
           '& .MuiOutlinedInput-notchedOutline': {
-            borderColor: lightColors.borderDefault,
+            borderColor: portalColors.borderStrong,
           },
           '&:hover .MuiOutlinedInput-notchedOutline': {
-            borderColor: lightColors.textMuted,
+            borderColor: portalColors.textSoft,
           },
           '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-            borderColor: lightColors.accentEmphasis,
+            borderColor: portalColors.accent,
           },
         },
       },
@@ -242,40 +273,66 @@ export const armPortalTheme = createUnifiedTheme({
     MuiSelect: {
       styleOverrides: {
         outlined: {
-          borderRadius: '6px',
+          borderRadius: portalColors.radiusSm,
         },
       },
     },
     MuiChip: {
       styleOverrides: {
         root: {
-          borderRadius: '2em',
-          fontSize: '12px',
+          borderRadius: '999px',
+          fontSize: '0.75rem',
           fontWeight: 500,
+          letterSpacing: '0.04em',
         },
         filled: {
-          backgroundColor: lightColors.bgSubtle,
-          border: `1px solid ${lightColors.borderDefault}`,
+          backgroundColor: portalColors.bgChip,
+          border: `1px solid ${portalColors.borderSubtle}`,
+        },
+        colorSuccess: {
+          backgroundColor: portalColors.successBg,
+          borderColor: portalColors.successBorder,
+          color: '#166534',
+        },
+        colorError: {
+          backgroundColor: portalColors.dangerBg,
+          borderColor: portalColors.dangerBorder,
+          color: '#7f1d1d',
+        },
+        colorWarning: {
+          backgroundColor: portalColors.warningBg,
+          borderColor: portalColors.warningBorder,
+          color: '#92400e',
+        },
+        colorInfo: {
+          backgroundColor: portalColors.infoBg,
+          borderColor: portalColors.infoBorder,
+          color: '#0e7490',
         },
       },
     },
     MuiTableCell: {
       styleOverrides: {
         root: {
-          borderBottom: `1px solid ${lightColors.borderDefault}`,
+          borderBottom: `1px solid ${portalColors.borderSubtle}`,
+          padding: '12px 16px',
         },
         head: {
           fontWeight: 600,
-          color: lightColors.textPrimary,
-          backgroundColor: lightColors.bgSubtle,
+          color: portalColors.textMain,
+          backgroundColor: portalColors.bgMuted,
+          fontSize: '0.75rem',
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em',
         },
       },
     },
     MuiTableRow: {
       styleOverrides: {
         root: {
+          transition: 'background-color 0.15s ease',
           '&:hover': {
-            backgroundColor: lightColors.bgSubtle,
+            backgroundColor: portalColors.bgHoverSubtle,
           },
         },
       },
@@ -285,9 +342,11 @@ export const armPortalTheme = createUnifiedTheme({
         root: {
           textTransform: 'none',
           fontWeight: 500,
-          color: lightColors.textSecondary,
+          fontSize: '0.875rem',
+          color: portalColors.textMuted,
+          minHeight: '48px',
           '&.Mui-selected': {
-            color: lightColors.textPrimary,
+            color: portalColors.textMain,
           },
         },
       },
@@ -295,40 +354,46 @@ export const armPortalTheme = createUnifiedTheme({
     MuiTabs: {
       styleOverrides: {
         indicator: {
-          backgroundColor: '#fd8c73',
+          backgroundColor: portalColors.accent,
           height: '2px',
+          borderRadius: '1px',
         },
       },
     },
     MuiAlert: {
       styleOverrides: {
         root: {
-          borderRadius: '6px',
-          border: `1px solid ${lightColors.borderDefault}`,
+          borderRadius: portalColors.radiusSm,
+          border: '1px solid',
         },
         standardSuccess: {
-          backgroundColor: 'rgba(26, 127, 55, 0.1)',
-          borderColor: 'rgba(45, 164, 78, 0.4)',
+          backgroundColor: portalColors.successBg,
+          borderColor: portalColors.successBorder,
+          color: '#166534',
         },
         standardError: {
-          backgroundColor: 'rgba(207, 34, 46, 0.1)',
-          borderColor: 'rgba(209, 36, 47, 0.4)',
+          backgroundColor: portalColors.dangerBg,
+          borderColor: portalColors.dangerBorder,
+          color: '#7f1d1d',
         },
         standardWarning: {
-          backgroundColor: 'rgba(154, 103, 0, 0.1)',
-          borderColor: 'rgba(191, 135, 0, 0.4)',
+          backgroundColor: portalColors.warningBg,
+          borderColor: portalColors.warningBorder,
+          color: '#92400e',
         },
         standardInfo: {
-          backgroundColor: 'rgba(9, 105, 218, 0.1)',
-          borderColor: 'rgba(33, 139, 255, 0.4)',
+          backgroundColor: portalColors.infoBg,
+          borderColor: portalColors.infoBorder,
+          color: '#0e7490',
         },
       },
     },
     MuiLink: {
       styleOverrides: {
         root: {
-          color: lightColors.textLink,
+          color: portalColors.textLink,
           textDecoration: 'none',
+          fontWeight: 500,
           '&:hover': {
             textDecoration: 'underline',
           },
@@ -338,8 +403,9 @@ export const armPortalTheme = createUnifiedTheme({
     MuiListItem: {
       styleOverrides: {
         root: {
+          borderRadius: portalColors.radiusSm,
           '&:hover': {
-            backgroundColor: lightColors.bgSubtle,
+            backgroundColor: portalColors.bgHover,
           },
         },
       },
@@ -347,21 +413,27 @@ export const armPortalTheme = createUnifiedTheme({
     MuiMenu: {
       styleOverrides: {
         paper: {
-          backgroundColor: lightColors.bgOverlay,
-          border: `1px solid ${lightColors.borderDefault}`,
-          boxShadow: '0 8px 24px rgba(140, 149, 159, 0.2)',
+          backgroundColor: portalColors.bgElevated,
+          border: `1px solid ${portalColors.borderSubtle}`,
+          borderRadius: portalColors.radiusSm,
+          boxShadow: portalColors.shadowCard,
         },
       },
     },
     MuiMenuItem: {
       styleOverrides: {
         root: {
-          fontSize: '14px',
+          fontSize: '0.875rem',
+          borderRadius: '6px',
+          margin: '2px 4px',
           '&:hover': {
-            backgroundColor: lightColors.bgSubtle,
+            backgroundColor: portalColors.bgHover,
           },
           '&.Mui-selected': {
-            backgroundColor: lightColors.bgMuted,
+            backgroundColor: portalColors.accentSoft,
+            '&:hover': {
+              backgroundColor: portalColors.accentSoft,
+            },
           },
         },
       },
@@ -369,10 +441,43 @@ export const armPortalTheme = createUnifiedTheme({
     MuiTooltip: {
       styleOverrides: {
         tooltip: {
-          backgroundColor: lightColors.textPrimary,
-          border: 'none',
-          color: lightColors.bgCanvas,
-          fontSize: '12px',
+          backgroundColor: portalColors.textMain,
+          color: '#ffffff',
+          fontSize: '0.75rem',
+          borderRadius: '6px',
+          padding: '6px 10px',
+        },
+      },
+    },
+    MuiDialog: {
+      styleOverrides: {
+        paper: {
+          borderRadius: portalColors.radiusLg,
+          boxShadow: portalColors.shadowSoft,
+        },
+      },
+    },
+    MuiDrawer: {
+      styleOverrides: {
+        paper: {
+          backgroundColor: portalColors.bgElevated,
+          borderRight: `1px solid ${portalColors.borderSubtle}`,
+        },
+      },
+    },
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          backgroundColor: portalColors.bgElevated,
+          boxShadow: 'none',
+          borderBottom: `1px solid ${portalColors.borderSubtle}`,
+        },
+      },
+    },
+    MuiToolbar: {
+      styleOverrides: {
+        root: {
+          backgroundColor: portalColors.bgElevated,
         },
       },
     },
@@ -380,46 +485,53 @@ export const armPortalTheme = createUnifiedTheme({
       styleOverrides: {
         header: {
           backgroundImage: 'none',
-          backgroundColor: lightColors.bgSubtle,
-          borderBottom: `1px solid ${lightColors.borderDefault}`,
+          backgroundColor: portalColors.bgElevated,
+          borderBottom: `1px solid ${portalColors.borderSubtle}`,
           boxShadow: 'none',
+          paddingBottom: '16px',
         },
         title: {
-          color: lightColors.textPrimary,
+          color: portalColors.textMain,
+          fontWeight: 600,
+          fontSize: '1.5rem',
         },
         subtitle: {
-          color: lightColors.textSecondary,
+          color: portalColors.textMuted,
+          fontSize: '0.9rem',
         },
       },
     },
     BackstageSidebar: {
       styleOverrides: {
         drawer: {
-          backgroundColor: lightColors.bgSubtle,
-          borderRight: `1px solid ${lightColors.borderDefault}`,
+          backgroundColor: portalColors.bgElevated,
+          borderRight: `1px solid ${portalColors.borderSubtle}`,
         },
       },
     },
     BackstageSidebarItem: {
       styleOverrides: {
         root: {
+          borderRadius: portalColors.radiusSm,
+          margin: '2px 8px',
           '&:hover': {
-            backgroundColor: lightColors.bgMuted,
+            backgroundColor: portalColors.bgHover,
           },
         },
         selected: {
-          backgroundColor: lightColors.bgMuted,
+          backgroundColor: portalColors.accentSoft,
           '&::before': {
             content: '""',
             position: 'absolute',
             left: 0,
-            top: 0,
-            bottom: 0,
-            width: '2px',
-            backgroundColor: '#fd8c73',
+            top: '8px',
+            bottom: '8px',
+            width: '3px',
+            borderRadius: '0 3px 3px 0',
+            backgroundColor: portalColors.accent,
           },
           '&:hover': {
-            backgroundColor: lightColors.borderDefault,
+            backgroundColor: portalColors.accentSoft,
           },
         },
       },
@@ -428,17 +540,29 @@ export const armPortalTheme = createUnifiedTheme({
       styleOverrides: {
         root: {
           backgroundImage: 'none',
-          backgroundColor: lightColors.bgSubtle,
-          color: lightColors.textPrimary,
-          padding: '16px 20px 12px',
-          borderBottom: `1px solid ${lightColors.borderDefault}`,
+          backgroundColor: portalColors.bgMuted,
+          color: portalColors.textMain,
+          padding: '16px 20px',
+          borderBottom: `1px solid ${portalColors.borderSubtle}`,
+          borderRadius: `${portalColors.radiusMd} ${portalColors.radiusMd} 0 0`,
         },
       },
     },
     BackstageInfoCard: {
       styleOverrides: {
         header: {
-          borderBottom: `1px solid ${lightColors.borderDefault}`,
+          borderBottom: `1px solid ${portalColors.borderSubtle}`,
+        },
+      },
+    },
+    BackstageTable: {
+      styleOverrides: {
+        root: {
+          '& > div': {
+            borderRadius: portalColors.radiusMd,
+            border: `1px solid ${portalColors.borderSubtle}`,
+            overflow: 'hidden',
+          },
         },
       },
     },
