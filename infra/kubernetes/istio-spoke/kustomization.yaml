@@ -9,3 +9,4 @@ resources:
   - virtualservice-blog.yaml
   - virtualservice-portal.yaml
   - virtualservice-portal-api.yaml
+  - wildcard-certificate.yaml
