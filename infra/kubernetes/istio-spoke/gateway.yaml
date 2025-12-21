@@ -31,3 +31,5 @@ spec:
         protocol: HTTP
       hosts:
         - "blog.chrishouse.io"
+        - "portal.chrishouse.io"
+        - "portal-api.chrishouse.io"

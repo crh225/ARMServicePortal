@@ -8,6 +8,7 @@ spec:
     - "portal-api.chrishouse.io"
   gateways:
     - internal-gateway
+    - external-gateway
   http:
     - route:
         - destination:
