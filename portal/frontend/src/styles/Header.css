@@ -84,7 +84,7 @@
 
 .nav-tab--active {
   color: var(--text-primary);
-  border-bottom-color: #f97316;
+  border-bottom-color: #CC0000;
 }
 
 .nav-tab:disabled {

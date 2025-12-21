@@ -5,17 +5,14 @@ import {
   shapes,
 } from '@backstage/theme';
 
-// ARM Portal inspired theme - clean, modern, light
 const portalColors = {
-  // Primary accent (blue)
-  accent: '#2563eb',
-  accentSoft: 'rgba(37, 99, 235, 0.12)',
-  accentStrong: '#1d4ed8',
-  accentGradFrom: '#2563eb',
-  accentGradTo: '#0ea5e9',
+  accent: '#CC0000',
+  accentSoft: 'rgba(204, 0, 0, 0.12)',
+  accentStrong: '#8B0000',
+  accentGradFrom: '#CC0000',
+  accentGradTo: '#7B0041',
 
-  // GitHub orange for active indicators
-  activeOrange: '#f78166',
+  activeOrange: '#CC0000',
 
   // Backgrounds
   bgCanvas: '#f3f4f6',
@@ -31,7 +28,7 @@ const portalColors = {
   textMain: '#0f172a',
   textMuted: '#6b7280',
   textSoft: '#9ca3af',
-  textLink: '#2563eb',
+  textLink: '#CC0000',
 
   // Borders
   borderSubtle: 'rgba(148, 163, 184, 0.45)',
@@ -58,7 +55,7 @@ const portalColors = {
   shadowHover: '0 4px 14px rgba(15, 23, 42, 0.08)',
   shadowCardHover: '0 8px 24px rgba(148, 163, 184, 0.35)',
   shadowPill: '0 0 0 1px rgba(148, 163, 184, 0.8), 0 8px 18px rgba(148, 163, 184, 0.35)',
-  shadowFocus: '0 0 0 3px rgba(37, 99, 235, 0.15)',
+  shadowFocus: '0 0 0 3px rgba(204, 0, 0, 0.15)',
 
   // Border radius
   radiusXl: '28px',
@@ -482,7 +479,7 @@ export const armPortalTheme = createUnifiedTheme({
           },
         },
         input: {
-          padding: '12px 14px',
+          padding: '25px 14px 8px 14px',
           backgroundColor: 'transparent !important',
         },
         underline: {
@@ -500,19 +497,12 @@ export const armPortalTheme = createUnifiedTheme({
         root: {
           color: portalColors.textMain,
           fontWeight: 500,
-          fontSize: '0.875rem',
-          marginBottom: '6px',
-          position: 'relative',
-          transform: 'none',
           '&.Mui-focused': {
             color: portalColors.accent,
           },
           '&.Mui-error': {
             color: portalColors.danger,
           },
-        },
-        shrink: {
-          transform: 'none',
         },
       },
     },
