@@ -14,4 +14,4 @@ spec:
   dnsServiceIp: "10.101.0.10"
   serviceMeshEnabled: true
   serviceMeshInternalIngressEnabled: true
-  serviceMeshExternalIngressEnabled: false
+  serviceMeshExternalIngressEnabled: true
