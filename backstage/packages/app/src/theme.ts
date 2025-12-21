@@ -510,26 +510,41 @@ export const armPortalTheme = createUnifiedTheme({
     MuiInputLabel: {
       styleOverrides: {
         root: {
-          color: portalColors.textMuted,
+          color: `${portalColors.textMuted} !important`,
           fontWeight: 500,
+          WebkitTextFillColor: `${portalColors.textMuted} !important`,
+          zIndex: 1,
+          position: 'relative',
           '&.Mui-focused': {
-            color: portalColors.accent,
+            color: `${portalColors.accent} !important`,
+            WebkitTextFillColor: `${portalColors.accent} !important`,
           },
           '&.Mui-error': {
-            color: portalColors.danger,
+            color: `${portalColors.danger} !important`,
+            WebkitTextFillColor: `${portalColors.danger} !important`,
           },
           '&.MuiInputLabel-shrink': {
-            color: portalColors.textMain,
+            color: `${portalColors.textMain} !important`,
+            WebkitTextFillColor: `${portalColors.textMain} !important`,
             backgroundColor: portalColors.bgElevated,
             padding: '0 4px',
+            zIndex: 2,
           },
         },
         outlined: {
-          // Ensure label is visible when inside the input (not shrunk)
-          color: portalColors.textMuted,
+          color: `${portalColors.textMuted} !important`,
+          WebkitTextFillColor: `${portalColors.textMuted} !important`,
+          zIndex: 1,
           '&.MuiInputLabel-shrink': {
-            color: portalColors.textMain,
+            color: `${portalColors.textMain} !important`,
+            WebkitTextFillColor: `${portalColors.textMain} !important`,
+            zIndex: 2,
           },
+        },
+        formControl: {
+          color: `${portalColors.textMuted} !important`,
+          WebkitTextFillColor: `${portalColors.textMuted} !important`,
+          zIndex: 1,
         },
       },
     },

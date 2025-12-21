@@ -139,6 +139,8 @@ form label {
   opacity: 1 !important;
   visibility: visible !important;
   -webkit-text-fill-color: #6b7280 !important;
+  z-index: 1 !important;
+  position: relative !important;
 }
 
 /* Focused state - blue accent */
@@ -161,6 +163,7 @@ label.MuiInputLabel-shrink,
   -webkit-text-fill-color: #0f172a !important;
   background-color: #ffffff;
   padding: 0 4px;
+  z-index: 2 !important;
 }
 
 /* Error state */
