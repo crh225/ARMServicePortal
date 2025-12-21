@@ -214,7 +214,7 @@ export const armPortalTheme = createUnifiedTheme({
           borderBottom: 'none !important',
         },
         '.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
-          borderColor: `${portalColors.borderSubtle} !important`,
+          borderColor: `${portalColors.borderStrong} !important`,
           borderWidth: '1px !important',
         },
         '.MuiFormControl-root .MuiInputBase-root': {
@@ -228,17 +228,17 @@ export const armPortalTheme = createUnifiedTheme({
           backgroundColor: `${portalColors.bgElevated} !important`,
         },
         '.MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline': {
-          borderColor: `${portalColors.borderSubtle} !important`,
+          borderColor: `${portalColors.borderStrong} !important`,
         },
         '.MuiOutlinedInput-notchedOutline': {
           borderColor: `${portalColors.borderSubtle} !important`,
         },
         '.MuiAutocomplete-inputRoot.Mui-focused .MuiOutlinedInput-notchedOutline': {
-          borderColor: `${portalColors.borderSubtle} !important`,
+          borderColor: `${portalColors.borderStrong} !important`,
           borderWidth: '1px !important',
         },
         '.MuiAutocomplete-inputRoot:hover .MuiOutlinedInput-notchedOutline': {
-          borderColor: `${portalColors.borderSubtle} !important`,
+          borderColor: `${portalColors.borderStrong} !important`,
         },
         '.MuiStepIcon-root.Mui-active .MuiStepIcon-text': {
           fill: '#ffffff !important',
@@ -355,23 +355,22 @@ export const armPortalTheme = createUnifiedTheme({
       styleOverrides: {
         root: {
           borderRadius: portalColors.radiusSm,
-          backgroundColor: `${portalColors.bgElevated} !important`,
+          backgroundColor: portalColors.bgElevated,
           transition: 'all 0.15s ease-out',
-          boxShadow: 'none !important',
-          border: 'none !important',
+          boxShadow: 'none',
           '&:hover .MuiOutlinedInput-notchedOutline': {
-            borderColor: `${portalColors.borderSubtle} !important`,
+            borderColor: portalColors.borderStrong,
           },
           '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-            borderColor: `${portalColors.borderSubtle} !important`,
-            borderWidth: '1px !important',
+            borderColor: portalColors.borderStrong,
+            borderWidth: '1px',
           },
           '&.Mui-focused': {
-            boxShadow: 'none !important',
+            boxShadow: 'none',
           },
         },
         notchedOutline: {
-          borderColor: `${portalColors.borderSubtle} !important`,
+          borderColor: portalColors.borderSubtle,
         },
         input: {
           padding: '10px 12px',
@@ -1065,7 +1064,7 @@ export const armPortalTheme = createUnifiedTheme({
         root: {
           width: '32px',
           height: '32px',
-          color: portalColors.borderStrong,
+          color: '#9ca3af',
           '&.Mui-active': {
             color: portalColors.accent,
             '& .MuiStepIcon-text': {
@@ -1077,7 +1076,7 @@ export const armPortalTheme = createUnifiedTheme({
           },
         },
         text: {
-          fill: portalColors.textMuted,
+          fill: '#ffffff',
           fontSize: '0.8rem',
           fontWeight: 700,
         },
