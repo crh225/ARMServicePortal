@@ -39,7 +39,7 @@ jobs:
         run: |
           az aks get-credentials \
             --resource-group rg-landing-zone-dev \
-            --name aks-app-spoke-vpnks-0e71fa43101a \
+            --name aks-app-spoke-mw4q4-ac97e2e2b0ef \
             --overwrite-existing
 
       - name: Find and cleanup stale PR namespaces
