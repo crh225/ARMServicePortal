@@ -6,17 +6,13 @@ import {
 } from '@backstage/theme';
 
 const portalColors = {
-  brandRed: '#CC0000',
-  brandRedSoft: 'rgba(204, 0, 0, 0.12)',
-  brandRedStrong: '#8B0000',
-
   accent: '#2563eb',
   accentSoft: 'rgba(37, 99, 235, 0.12)',
   accentStrong: '#1d4ed8',
   accentGradFrom: '#3b82f6',
   accentGradTo: '#1e40af',
 
-  activeOrange: '#CC0000',
+  activeOrange: '#FF6B35',
 
   bgCanvas: '#f3f4f6',
   bgElevated: '#ffffff',
