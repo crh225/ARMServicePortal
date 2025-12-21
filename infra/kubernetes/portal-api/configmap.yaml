@@ -12,7 +12,7 @@ data:
   GH_INSTALLATION_ID: "94912535"
   GH_INFRA_OWNER: "crh225"
   GH_INFRA_REPO: "ARMServicePortal"
-  GH_OAUTH_CLIENT_ID: "Iv23liET8OEe9yXJ5iea"
+  GH_OAUTH_CLIENT_ID: "Ov23liHgcQ7urCFXPs2k"
   FRONTEND_URL: "https://portal.chrishouse.io"
   APP_NAME: "arm-portal-dev"
   APP_URL: "https://portal-api.chrishouse.io"
