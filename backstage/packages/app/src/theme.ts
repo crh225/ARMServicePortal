@@ -259,7 +259,7 @@ export const armPortalTheme = createUnifiedTheme({
     MuiButton: {
       styleOverrides: {
         root: {
-          borderRadius: portalColors.radiusPill,
+          borderRadius: portalColors.radiusSm, // 8px - less round
           textTransform: 'none',
           fontWeight: 500,
           fontSize: '0.875rem',
