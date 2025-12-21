@@ -15,3 +15,19 @@ spec:
         - "blog.chrishouse.io"
         - "portal.chrishouse.io"
         - "portal-api.chrishouse.io"
+---
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: external-gateway
+  namespace: istio-ingress
+spec:
+  selector:
+    istio: aks-istio-ingressgateway-external
+  servers:
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - "blog.chrishouse.io"
