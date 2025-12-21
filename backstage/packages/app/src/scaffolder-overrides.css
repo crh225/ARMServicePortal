@@ -125,15 +125,22 @@
 /* =============================================== */
 
 /* =============================================== */
-/* Fix label visibility - just z-index and colors */
-/* Do NOT override transforms - MUI handles those */
+/* Fix label visibility and positioning           */
 /* =============================================== */
 
 .MuiInputLabel-root {
   z-index: 1 !important;
 }
 
-.MuiInputLabel-root.MuiInputLabel-shrink {
+/* Fix label position for outlined variant style */
+.MuiInputLabel-formControl {
+  transform: translate(14px, 14px) scale(1) !important;
+}
+
+/* Shrunk/focused state - label floats above border */
+.MuiInputLabel-root.MuiInputLabel-shrink,
+.MuiInputLabel-formControl.MuiInputLabel-shrink {
+  transform: translate(14px, -6px) scale(0.75) !important;
   background-color: #ffffff;
   padding: 0 4px;
 }
