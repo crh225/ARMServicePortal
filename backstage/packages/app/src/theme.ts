@@ -763,13 +763,20 @@ export const armPortalTheme = createUnifiedTheme({
         },
         bar: {
           borderRadius: portalColors.radiusPill,
+          backgroundColor: portalColors.activeOrange,
+        },
+        colorPrimary: {
+          backgroundColor: portalColors.bgChip,
+        },
+        barColorPrimary: {
+          backgroundColor: portalColors.activeOrange,
         },
       },
     },
     MuiCircularProgress: {
       styleOverrides: {
         colorPrimary: {
-          color: portalColors.accent,
+          color: portalColors.activeOrange,
         },
       },
     },
