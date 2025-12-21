@@ -70,7 +70,7 @@ proxy:
       headers:
         x-api-key: ${ARM_PORTAL_API_KEY}
     '/argocd':
-      target: https://argocd.chrishouse.io
+      target: https://argohub.chrishouse.io
       changeOrigin: true
       headers:
         Authorization: Bearer ${ARGOCD_AUTH_TOKEN}
@@ -240,12 +240,12 @@ kubernetes:
 
 # ArgoCD plugin configuration
 argocd:
-  baseUrl: https://argocd.chrishouse.io
+  baseUrl: https://argohub.chrishouse.io
   appLocatorMethods:
     - type: 'config'
       instances:
         - name: main
-          url: https://argocd.chrishouse.io
+          url: https://argohub.chrishouse.io
           token: ${ARGOCD_AUTH_TOKEN}
 
 permission:

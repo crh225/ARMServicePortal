@@ -581,9 +581,11 @@ export const armPortalTheme = createUnifiedTheme({
         header: {
           backgroundImage: 'none',
           backgroundColor: portalColors.bgElevated,
-          borderBottom: `1px solid ${portalColors.borderSubtle}`,
-          boxShadow: 'none',
+          borderBottom: 'none',
+          boxShadow: '0 2px 12px rgba(148, 163, 184, 0.15), 0 4px 24px rgba(148, 163, 184, 0.08)',
           paddingBottom: '20px',
+          position: 'relative',
+          zIndex: 1,
         },
         title: {
           color: portalColors.textMain,
@@ -602,7 +604,7 @@ export const armPortalTheme = createUnifiedTheme({
         drawer: {
           backgroundColor: portalColors.bgElevated,
           borderRight: 'none',
-          boxShadow: '1px 0 8px rgba(148, 163, 184, 0.15)',
+          boxShadow: '2px 0 12px rgba(148, 163, 184, 0.2), 4px 0 24px rgba(148, 163, 184, 0.1)',
         },
       },
     },
@@ -694,7 +696,7 @@ export const armPortalTheme = createUnifiedTheme({
     MuiIconButton: {
       styleOverrides: {
         root: {
-          color: portalColors.textMuted,
+          color: portalColors.activeOrange,
           borderRadius: portalColors.radiusSm,
           transition: 'all 0.15s ease',
           '&:hover': {
@@ -713,14 +715,21 @@ export const armPortalTheme = createUnifiedTheme({
         },
       },
     },
-    // Ensure MoreVert (3-dot) icon is visible
+    // Ensure icons are visible - inherit from parent by default
     MuiSvgIcon: {
       styleOverrides: {
+        root: {
+          // Inherit color from parent (like MuiIconButton)
+          color: 'inherit',
+        },
         colorAction: {
           color: portalColors.textMuted,
         },
         colorDisabled: {
           color: portalColors.textSoft,
+        },
+        colorPrimary: {
+          color: portalColors.accent,
         },
       },
     },
