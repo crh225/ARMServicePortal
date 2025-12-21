@@ -231,6 +231,28 @@ export const armPortalTheme = createUnifiedTheme({
           backgroundColor: `${portalColors.bgElevated} !important`,
           outline: 'none !important',
         },
+        // Remove blue border from Select/Dropdown components
+        '.MuiSelect-select:focus': {
+          backgroundColor: `${portalColors.bgElevated} !important`,
+        },
+        '.MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline': {
+          borderColor: `${portalColors.borderStrong} !important`,
+        },
+        '.MuiOutlinedInput-notchedOutline': {
+          borderColor: `${portalColors.borderStrong} !important`,
+        },
+        // Autocomplete dropdowns
+        '.MuiAutocomplete-inputRoot.Mui-focused .MuiOutlinedInput-notchedOutline': {
+          borderColor: `${portalColors.borderStrong} !important`,
+          borderWidth: '1px !important',
+        },
+        '.MuiAutocomplete-inputRoot:hover .MuiOutlinedInput-notchedOutline': {
+          borderColor: `${portalColors.borderStrong} !important`,
+        },
+        // Step icon active state - white number
+        '.MuiStepIcon-root.Mui-active .MuiStepIcon-text': {
+          fill: '#ffffff !important',
+        },
       },
     },
     // Buttons - gradient primary, clean outlined
@@ -346,21 +368,22 @@ export const armPortalTheme = createUnifiedTheme({
       styleOverrides: {
         root: {
           borderRadius: portalColors.radiusSm,
-          backgroundColor: portalColors.bgElevated,
+          backgroundColor: `${portalColors.bgElevated} !important`,
           transition: 'all 0.15s ease-out',
-          '& .MuiOutlinedInput-notchedOutline': {
-            borderColor: portalColors.borderStrong,
-          },
+          boxShadow: 'none !important',
           '&:hover .MuiOutlinedInput-notchedOutline': {
-            borderColor: portalColors.textSoft,
+            borderColor: `${portalColors.borderStrong} !important`,
           },
           '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-            borderColor: portalColors.accent,
-            borderWidth: '1px',
+            borderColor: `${portalColors.borderStrong} !important`,
+            borderWidth: '1px !important',
           },
           '&.Mui-focused': {
-            boxShadow: portalColors.shadowFocus,
+            boxShadow: 'none !important',
           },
+        },
+        notchedOutline: {
+          borderColor: `${portalColors.borderStrong} !important`,
         },
         input: {
           padding: '10px 12px',
@@ -371,6 +394,11 @@ export const armPortalTheme = createUnifiedTheme({
       styleOverrides: {
         outlined: {
           borderRadius: portalColors.radiusSm,
+        },
+        select: {
+          '&:focus': {
+            backgroundColor: `${portalColors.bgElevated} !important`,
+          },
         },
       },
     },
