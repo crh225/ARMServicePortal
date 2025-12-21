@@ -239,16 +239,11 @@ export const armPortalTheme = createUnifiedTheme({
         '.MuiStepIcon-root.Mui-active .MuiStepIcon-text': {
           fill: '#ffffff !important',
         },
-        // Input label colors and z-index fix (label was behind input)
-        '.MuiInputLabel-root, .MuiFormLabel-root': {
-          color: portalColors.textMuted,
+        // Input label z-index fix (label was behind input)
+        '.MuiInputLabel-root': {
           zIndex: '1 !important',
         },
-        '.MuiInputLabel-root.Mui-focused, .MuiFormLabel-root.Mui-focused': {
-          color: portalColors.accent,
-        },
         '.MuiInputLabel-root.MuiInputLabel-shrink': {
-          color: portalColors.textMain,
           backgroundColor: portalColors.bgElevated,
           padding: '0 4px',
         },
@@ -501,23 +496,10 @@ export const armPortalTheme = createUnifiedTheme({
     MuiInputLabel: {
       styleOverrides: {
         root: {
-          color: portalColors.textMuted,
-          fontWeight: 500,
-          fontSize: '0.875rem',
           zIndex: 1, // Fix label visibility - label was behind input
-          transform: 'translate(14px, 12px) scale(1)',
-          '&.Mui-focused': {
-            color: portalColors.accent,
-            transform: 'translate(12px, -6px) scale(0.75)',
-          },
-          '&.Mui-error': {
-            color: portalColors.danger,
-          },
           '&.MuiInputLabel-shrink': {
-            color: portalColors.textMain,
             backgroundColor: portalColors.bgElevated,
             padding: '0 4px',
-            transform: 'translate(12px, -6px) scale(0.75)',
           },
         },
       },
