@@ -239,9 +239,17 @@ export const armPortalTheme = createUnifiedTheme({
         '.MuiStepIcon-root.Mui-active .MuiStepIcon-text': {
           fill: '#ffffff !important',
         },
-        // Ensure input labels are visible
+        // Ensure input labels are visible - MUI v4
         '.MuiInputLabel-root': {
           color: `${portalColors.textMuted} !important`,
+          opacity: '1 !important',
+          visibility: 'visible !important',
+          zIndex: '1 !important',
+        },
+        '.MuiInputLabel-outlined': {
+          color: `${portalColors.textMuted} !important`,
+          opacity: '1 !important',
+          visibility: 'visible !important',
         },
         '.MuiInputLabel-root.Mui-focused': {
           color: `${portalColors.accent} !important`,
@@ -250,6 +258,14 @@ export const armPortalTheme = createUnifiedTheme({
           color: `${portalColors.textMain} !important`,
           backgroundColor: portalColors.bgElevated,
           padding: '0 4px',
+        },
+        '.MuiFormLabel-root': {
+          color: `${portalColors.textMuted} !important`,
+          opacity: '1 !important',
+          visibility: 'visible !important',
+        },
+        '.MuiFormLabel-root.Mui-focused': {
+          color: `${portalColors.accent} !important`,
         },
       },
     },
