@@ -124,52 +124,35 @@
 /* Scaffolder Form Input Label Fixes               */
 /* =============================================== */
 
-/* Force ALL labels to be visible - very aggressive targeting */
-label,
+/* =============================================== */
+/* Fix label visibility with z-index              */
+/* The label is behind the input - need z-index   */
+/* but NOT position:relative which breaks layout  */
+/* =============================================== */
+
+/* Labels already have position:absolute from MUI, just need z-index */
 .MuiInputLabel-root,
 .MuiFormLabel-root,
-.MuiInputLabel-outlined,
-.MuiInputLabel-formControl,
 [class*="MuiInputLabel"],
-[class*="MuiFormLabel"],
-[class*="ScaffolderPage"] label,
-[class*="Scaffolder"] label,
-form label {
+[class*="MuiFormLabel"] {
   color: #6b7280 !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-  -webkit-text-fill-color: #6b7280 !important;
   z-index: 1 !important;
-  position: relative !important;
 }
 
 /* Focused state - blue accent */
-label.Mui-focused,
 .MuiInputLabel-root.Mui-focused,
-.MuiFormLabel-root.Mui-focused,
-[class*="MuiInputLabel"].Mui-focused,
-[class*="MuiFormLabel"].Mui-focused {
+.MuiFormLabel-root.Mui-focused {
   color: #3b82f6 !important;
-  -webkit-text-fill-color: #3b82f6 !important;
 }
 
 /* Shrunk state (label floating above input) */
-label.MuiInputLabel-shrink,
-.MuiInputLabel-root.MuiInputLabel-shrink,
-.MuiFormLabel-root.MuiFormLabel-filled,
-[class*="MuiInputLabel-shrink"],
-[class*="shrink"] {
+.MuiInputLabel-root.MuiInputLabel-shrink {
   color: #0f172a !important;
-  -webkit-text-fill-color: #0f172a !important;
   background-color: #ffffff;
   padding: 0 4px;
-  z-index: 2 !important;
 }
 
 /* Error state */
-label.Mui-error,
-.MuiInputLabel-root.Mui-error,
-[class*="MuiInputLabel"].Mui-error {
+.MuiInputLabel-root.Mui-error {
   color: #dc2626 !important;
-  -webkit-text-fill-color: #dc2626 !important;
 }

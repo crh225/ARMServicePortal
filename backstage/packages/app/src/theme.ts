@@ -239,25 +239,16 @@ export const armPortalTheme = createUnifiedTheme({
         '.MuiStepIcon-root.Mui-active .MuiStepIcon-text': {
           fill: '#ffffff !important',
         },
-        // Ensure input labels are visible - MUI v4 - aggressive
-        'label, .MuiInputLabel-root, .MuiFormLabel-root': {
-          color: `${portalColors.textMuted} !important`,
-          opacity: '1 !important',
-          visibility: 'visible !important',
-          WebkitTextFillColor: `${portalColors.textMuted} !important`,
+        // Input label colors and z-index fix (label was behind input)
+        '.MuiInputLabel-root, .MuiFormLabel-root': {
+          color: portalColors.textMuted,
+          zIndex: '1 !important',
         },
-        '.MuiInputLabel-outlined, .MuiInputLabel-formControl': {
-          color: `${portalColors.textMuted} !important`,
-          opacity: '1 !important',
-          visibility: 'visible !important',
+        '.MuiInputLabel-root.Mui-focused, .MuiFormLabel-root.Mui-focused': {
+          color: portalColors.accent,
         },
-        'label.Mui-focused, .MuiInputLabel-root.Mui-focused, .MuiFormLabel-root.Mui-focused': {
-          color: `${portalColors.accent} !important`,
-          WebkitTextFillColor: `${portalColors.accent} !important`,
-        },
-        '.MuiInputLabel-shrink, .MuiInputLabel-root.MuiInputLabel-shrink': {
-          color: `${portalColors.textMain} !important`,
-          WebkitTextFillColor: `${portalColors.textMain} !important`,
+        '.MuiInputLabel-root.MuiInputLabel-shrink': {
+          color: portalColors.textMain,
           backgroundColor: portalColors.bgElevated,
           padding: '0 4px',
         },
@@ -510,41 +501,20 @@ export const armPortalTheme = createUnifiedTheme({
     MuiInputLabel: {
       styleOverrides: {
         root: {
-          color: `${portalColors.textMuted} !important`,
+          color: portalColors.textMuted,
           fontWeight: 500,
-          WebkitTextFillColor: `${portalColors.textMuted} !important`,
-          zIndex: 1,
-          position: 'relative',
+          zIndex: 1, // Fix label visibility - label was behind input
           '&.Mui-focused': {
-            color: `${portalColors.accent} !important`,
-            WebkitTextFillColor: `${portalColors.accent} !important`,
+            color: portalColors.accent,
           },
           '&.Mui-error': {
-            color: `${portalColors.danger} !important`,
-            WebkitTextFillColor: `${portalColors.danger} !important`,
+            color: portalColors.danger,
           },
           '&.MuiInputLabel-shrink': {
-            color: `${portalColors.textMain} !important`,
-            WebkitTextFillColor: `${portalColors.textMain} !important`,
+            color: portalColors.textMain,
             backgroundColor: portalColors.bgElevated,
             padding: '0 4px',
-            zIndex: 2,
           },
-        },
-        outlined: {
-          color: `${portalColors.textMuted} !important`,
-          WebkitTextFillColor: `${portalColors.textMuted} !important`,
-          zIndex: 1,
-          '&.MuiInputLabel-shrink': {
-            color: `${portalColors.textMain} !important`,
-            WebkitTextFillColor: `${portalColors.textMain} !important`,
-            zIndex: 2,
-          },
-        },
-        formControl: {
-          color: `${portalColors.textMuted} !important`,
-          WebkitTextFillColor: `${portalColors.textMuted} !important`,
-          zIndex: 1,
         },
       },
     },
