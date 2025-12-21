@@ -5,122 +5,143 @@ import {
   shapes,
 } from '@backstage/theme';
 
-// ARM Portal theme colors matching portal/frontend/src/styles/variables.css
-const armPortalColors = {
-  // Primary accent
-  accent: '#2563eb',
-  accentSoft: 'rgba(37, 99, 235, 0.12)',
-  accentStrong: '#1d4ed8',
+// GitHub-inspired theme colors
+const githubColors = {
+  // Primary accent (GitHub blue/green)
+  accent: '#238636',
+  accentHover: '#2ea043',
+  accentEmphasis: '#1f6feb',
 
-  // Backgrounds
-  bg: '#f3f4f6',
-  bgElevated: '#ffffff',
-  bgPanel: '#ffffff',
-  bgHover: 'rgba(148, 163, 184, 0.12)',
+  // Backgrounds (GitHub dark)
+  bgCanvas: '#0d1117',
+  bgDefault: '#161b22',
+  bgSubtle: '#21262d',
+  bgMuted: '#30363d',
+  bgInset: '#010409',
+
+  // Backgrounds (overlays)
+  bgOverlay: '#1c2128',
 
   // Text
-  textMain: '#0f172a',
-  textMuted: '#6b7280',
-  textSoft: '#9ca3af',
+  textPrimary: '#e6edf3',
+  textSecondary: '#8d96a0',
+  textMuted: '#6e7681',
+  textLink: '#58a6ff',
 
   // Borders
-  borderSubtle: 'rgba(148, 163, 184, 0.45)',
-  borderStrong: 'rgba(148, 163, 184, 0.8)',
+  borderDefault: '#30363d',
+  borderMuted: '#21262d',
+  borderSubtle: 'rgba(240, 246, 252, 0.1)',
 
-  // Status colors
-  success: '#16a34a',
-  danger: '#dc2626',
-  info: '#0891b2',
+  // Status colors (GitHub style)
+  success: '#238636',
+  successEmphasis: '#2ea043',
+  danger: '#da3633',
+  dangerEmphasis: '#f85149',
+  warning: '#9e6a03',
+  warningEmphasis: '#d29922',
+  info: '#1f6feb',
+  infoEmphasis: '#58a6ff',
+
+  // Special
+  done: '#8957e5',
+  sponsors: '#bf4b8a',
 };
 
 export const armPortalTheme = createUnifiedTheme({
   palette: {
-    ...palettes.light,
+    ...palettes.dark,
+    mode: 'dark',
     primary: {
-      main: armPortalColors.accent,
-      light: armPortalColors.accentSoft,
-      dark: armPortalColors.accentStrong,
+      main: githubColors.accentEmphasis,
+      light: githubColors.infoEmphasis,
+      dark: '#1158c7',
     },
     secondary: {
-      main: armPortalColors.accent,
-      light: armPortalColors.accentSoft,
-      dark: armPortalColors.accentStrong,
+      main: githubColors.accent,
+      light: githubColors.accentHover,
+      dark: '#196c2e',
     },
     background: {
-      default: armPortalColors.bg,
-      paper: armPortalColors.bgElevated,
+      default: githubColors.bgCanvas,
+      paper: githubColors.bgDefault,
     },
     text: {
-      primary: armPortalColors.textMain,
-      secondary: armPortalColors.textMuted,
+      primary: githubColors.textPrimary,
+      secondary: githubColors.textSecondary,
     },
     navigation: {
-      background: '#1e293b',
-      indicator: armPortalColors.accent,
-      color: '#e2e8f0',
-      selectedColor: '#ffffff',
+      background: githubColors.bgDefault,
+      indicator: githubColors.accentEmphasis,
+      color: githubColors.textSecondary,
+      selectedColor: githubColors.textPrimary,
       navItem: {
-        hoverBackground: 'rgba(255, 255, 255, 0.08)',
+        hoverBackground: githubColors.bgSubtle,
       },
     },
     status: {
-      ok: armPortalColors.success,
-      warning: '#f59e0b',
-      error: armPortalColors.danger,
-      running: armPortalColors.info,
-      pending: '#8b5cf6',
-      aborted: '#6b7280',
+      ok: githubColors.success,
+      warning: githubColors.warningEmphasis,
+      error: githubColors.danger,
+      running: githubColors.info,
+      pending: githubColors.done,
+      aborted: githubColors.textMuted,
     },
     error: {
-      main: armPortalColors.danger,
+      main: githubColors.danger,
+      light: githubColors.dangerEmphasis,
     },
     success: {
-      main: armPortalColors.success,
+      main: githubColors.success,
+      light: githubColors.successEmphasis,
     },
     info: {
-      main: armPortalColors.info,
+      main: githubColors.info,
+      light: githubColors.infoEmphasis,
     },
     warning: {
-      main: '#f59e0b',
+      main: githubColors.warning,
+      light: githubColors.warningEmphasis,
     },
+    divider: githubColors.borderDefault,
   },
   defaultPageTheme: 'home',
-  fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif',
+  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif',
   pageTheme: {
     home: genPageTheme({
-      colors: ['#2563eb', '#0ea5e9'],
+      colors: [githubColors.bgDefault, githubColors.bgSubtle],
       shape: shapes.wave,
     }),
     documentation: genPageTheme({
-      colors: ['#2563eb', '#0ea5e9'],
+      colors: [githubColors.bgDefault, githubColors.bgSubtle],
       shape: shapes.wave,
     }),
     tool: genPageTheme({
-      colors: ['#2563eb', '#0ea5e9'],
+      colors: [githubColors.bgDefault, githubColors.bgSubtle],
       shape: shapes.round,
     }),
     service: genPageTheme({
-      colors: ['#2563eb', '#0ea5e9'],
+      colors: [githubColors.bgDefault, githubColors.bgSubtle],
       shape: shapes.wave,
     }),
     website: genPageTheme({
-      colors: ['#2563eb', '#0ea5e9'],
+      colors: [githubColors.bgDefault, githubColors.bgSubtle],
       shape: shapes.wave,
     }),
     library: genPageTheme({
-      colors: ['#2563eb', '#0ea5e9'],
+      colors: [githubColors.bgDefault, githubColors.bgSubtle],
       shape: shapes.wave,
     }),
     other: genPageTheme({
-      colors: ['#2563eb', '#0ea5e9'],
+      colors: [githubColors.bgDefault, githubColors.bgSubtle],
       shape: shapes.wave,
     }),
     app: genPageTheme({
-      colors: ['#2563eb', '#0ea5e9'],
+      colors: [githubColors.bgDefault, githubColors.bgSubtle],
       shape: shapes.wave,
     }),
     apis: genPageTheme({
-      colors: ['#2563eb', '#0ea5e9'],
+      colors: [githubColors.bgDefault, githubColors.bgSubtle],
       shape: shapes.wave,
     }),
   },
@@ -128,21 +149,34 @@ export const armPortalTheme = createUnifiedTheme({
     MuiCssBaseline: {
       styleOverrides: {
         body: {
-          fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif',
+          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif',
+          backgroundColor: githubColors.bgCanvas,
         },
       },
     },
     MuiButton: {
       styleOverrides: {
         root: {
-          borderRadius: '8px',
+          borderRadius: '6px',
           textTransform: 'none',
           fontWeight: 500,
+          fontSize: '14px',
         },
         containedPrimary: {
+          backgroundColor: githubColors.accent,
           boxShadow: 'none',
+          border: '1px solid rgba(240, 246, 252, 0.1)',
           '&:hover': {
-            boxShadow: '0 4px 12px rgba(37, 99, 235, 0.25)',
+            backgroundColor: githubColors.accentHover,
+            boxShadow: 'none',
+          },
+        },
+        outlined: {
+          borderColor: githubColors.borderDefault,
+          color: githubColors.textSecondary,
+          '&:hover': {
+            backgroundColor: githubColors.bgSubtle,
+            borderColor: githubColors.textMuted,
           },
         },
       },
@@ -150,9 +184,10 @@ export const armPortalTheme = createUnifiedTheme({
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: '12px',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)',
-          border: '1px solid rgba(148, 163, 184, 0.2)',
+          borderRadius: '6px',
+          boxShadow: 'none',
+          border: `1px solid ${githubColors.borderDefault}`,
+          backgroundColor: githubColors.bgDefault,
         },
       },
     },
@@ -160,9 +195,10 @@ export const armPortalTheme = createUnifiedTheme({
       styleOverrides: {
         root: {
           backgroundImage: 'none',
+          backgroundColor: githubColors.bgDefault,
         },
         rounded: {
-          borderRadius: '12px',
+          borderRadius: '6px',
         },
       },
     },
@@ -170,7 +206,18 @@ export const armPortalTheme = createUnifiedTheme({
       styleOverrides: {
         root: {
           '& .MuiOutlinedInput-root': {
-            borderRadius: '8px',
+            borderRadius: '6px',
+            backgroundColor: githubColors.bgCanvas,
+            '& fieldset': {
+              borderColor: githubColors.borderDefault,
+            },
+            '&:hover fieldset': {
+              borderColor: githubColors.textMuted,
+            },
+            '&.Mui-focused fieldset': {
+              borderColor: githubColors.accentEmphasis,
+              boxShadow: `0 0 0 3px rgba(31, 111, 235, 0.3)`,
+            },
           },
         },
       },
@@ -178,32 +225,58 @@ export const armPortalTheme = createUnifiedTheme({
     MuiOutlinedInput: {
       styleOverrides: {
         root: {
-          borderRadius: '8px',
+          borderRadius: '6px',
+          backgroundColor: githubColors.bgCanvas,
+          '& .MuiOutlinedInput-notchedOutline': {
+            borderColor: githubColors.borderDefault,
+          },
+          '&:hover .MuiOutlinedInput-notchedOutline': {
+            borderColor: githubColors.textMuted,
+          },
+          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+            borderColor: githubColors.accentEmphasis,
+          },
         },
       },
     },
     MuiSelect: {
       styleOverrides: {
         outlined: {
-          borderRadius: '8px',
+          borderRadius: '6px',
         },
       },
     },
     MuiChip: {
       styleOverrides: {
         root: {
-          borderRadius: '6px',
+          borderRadius: '2em',
+          fontSize: '12px',
+          fontWeight: 500,
+        },
+        filled: {
+          backgroundColor: githubColors.bgSubtle,
+          border: `1px solid ${githubColors.borderDefault}`,
         },
       },
     },
     MuiTableCell: {
       styleOverrides: {
         root: {
-          borderBottom: '1px solid rgba(148, 163, 184, 0.2)',
+          borderBottom: `1px solid ${githubColors.borderDefault}`,
         },
         head: {
           fontWeight: 600,
-          color: armPortalColors.textMain,
+          color: githubColors.textPrimary,
+          backgroundColor: githubColors.bgSubtle,
+        },
+      },
+    },
+    MuiTableRow: {
+      styleOverrides: {
+        root: {
+          '&:hover': {
+            backgroundColor: githubColors.bgSubtle,
+          },
         },
       },
     },
@@ -212,28 +285,118 @@ export const armPortalTheme = createUnifiedTheme({
         root: {
           textTransform: 'none',
           fontWeight: 500,
+          color: githubColors.textSecondary,
+          '&.Mui-selected': {
+            color: githubColors.textPrimary,
+          },
+        },
+      },
+    },
+    MuiTabs: {
+      styleOverrides: {
+        indicator: {
+          backgroundColor: '#f78166',
+          height: '2px',
         },
       },
     },
     MuiAlert: {
       styleOverrides: {
         root: {
-          borderRadius: '8px',
+          borderRadius: '6px',
+          border: `1px solid ${githubColors.borderDefault}`,
+        },
+        standardSuccess: {
+          backgroundColor: 'rgba(35, 134, 54, 0.15)',
+          borderColor: 'rgba(46, 160, 67, 0.4)',
+        },
+        standardError: {
+          backgroundColor: 'rgba(218, 54, 51, 0.15)',
+          borderColor: 'rgba(248, 81, 73, 0.4)',
+        },
+        standardWarning: {
+          backgroundColor: 'rgba(158, 106, 3, 0.15)',
+          borderColor: 'rgba(210, 153, 34, 0.4)',
+        },
+        standardInfo: {
+          backgroundColor: 'rgba(31, 111, 235, 0.15)',
+          borderColor: 'rgba(88, 166, 255, 0.4)',
+        },
+      },
+    },
+    MuiLink: {
+      styleOverrides: {
+        root: {
+          color: githubColors.textLink,
+          textDecoration: 'none',
+          '&:hover': {
+            textDecoration: 'underline',
+          },
+        },
+      },
+    },
+    MuiListItem: {
+      styleOverrides: {
+        root: {
+          '&:hover': {
+            backgroundColor: githubColors.bgSubtle,
+          },
+        },
+      },
+    },
+    MuiMenu: {
+      styleOverrides: {
+        paper: {
+          backgroundColor: githubColors.bgOverlay,
+          border: `1px solid ${githubColors.borderDefault}`,
+          boxShadow: '0 8px 24px rgba(1, 4, 9, 0.75)',
+        },
+      },
+    },
+    MuiMenuItem: {
+      styleOverrides: {
+        root: {
+          fontSize: '14px',
+          '&:hover': {
+            backgroundColor: githubColors.bgSubtle,
+          },
+          '&.Mui-selected': {
+            backgroundColor: githubColors.bgMuted,
+          },
+        },
+      },
+    },
+    MuiTooltip: {
+      styleOverrides: {
+        tooltip: {
+          backgroundColor: githubColors.bgOverlay,
+          border: `1px solid ${githubColors.borderDefault}`,
+          color: githubColors.textPrimary,
+          fontSize: '12px',
         },
       },
     },
     BackstageHeader: {
       styleOverrides: {
         header: {
-          backgroundImage: 'linear-gradient(135deg, #2563eb 0%, #0ea5e9 100%)',
+          backgroundImage: 'none',
+          backgroundColor: githubColors.bgDefault,
+          borderBottom: `1px solid ${githubColors.borderDefault}`,
           boxShadow: 'none',
+        },
+        title: {
+          color: githubColors.textPrimary,
+        },
+        subtitle: {
+          color: githubColors.textSecondary,
         },
       },
     },
     BackstageSidebar: {
       styleOverrides: {
         drawer: {
-          backgroundColor: '#1e293b',
+          backgroundColor: githubColors.bgDefault,
+          borderRight: `1px solid ${githubColors.borderDefault}`,
         },
       },
     },
@@ -241,25 +404,41 @@ export const armPortalTheme = createUnifiedTheme({
       styleOverrides: {
         root: {
           '&:hover': {
-            backgroundColor: 'rgba(255, 255, 255, 0.08)',
+            backgroundColor: githubColors.bgSubtle,
           },
         },
         selected: {
-          backgroundColor: 'rgba(37, 99, 235, 0.2)',
+          backgroundColor: githubColors.bgSubtle,
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: '2px',
+            backgroundColor: '#f78166',
+          },
           '&:hover': {
-            backgroundColor: 'rgba(37, 99, 235, 0.25)',
+            backgroundColor: githubColors.bgMuted,
           },
         },
       },
     },
-    // Scaffolder Template Card Overrides - ARM Portal Blueprint style
     BackstageItemCardHeader: {
       styleOverrides: {
         root: {
           backgroundImage: 'none',
-          backgroundColor: '#ffffff',
-          color: armPortalColors.textMain,
+          backgroundColor: githubColors.bgDefault,
+          color: githubColors.textPrimary,
           padding: '16px 20px 12px',
+          borderBottom: `1px solid ${githubColors.borderDefault}`,
+        },
+      },
+    },
+    BackstageInfoCard: {
+      styleOverrides: {
+        header: {
+          borderBottom: `1px solid ${githubColors.borderDefault}`,
         },
       },
     },
