@@ -124,38 +124,49 @@
 /* Scaffolder Form Input Label Fixes               */
 /* =============================================== */
 
-/* Ensure input labels are always visible */
-[class*="ScaffolderPage"] label[class*="MuiInputLabel"],
-[class*="ScaffolderPage"] label[class*="MuiFormLabel"],
-[class*="Scaffolder"] label[class*="MuiInputLabel"],
-[class*="Scaffolder"] label[class*="MuiFormLabel"],
+/* Force ALL labels to be visible - very aggressive targeting */
+label,
 .MuiInputLabel-root,
-.MuiFormLabel-root {
+.MuiFormLabel-root,
+.MuiInputLabel-outlined,
+.MuiInputLabel-formControl,
+[class*="MuiInputLabel"],
+[class*="MuiFormLabel"],
+[class*="ScaffolderPage"] label,
+[class*="Scaffolder"] label,
+form label {
   color: #6b7280 !important;
   opacity: 1 !important;
   visibility: visible !important;
+  -webkit-text-fill-color: #6b7280 !important;
 }
 
 /* Focused state - blue accent */
-[class*="ScaffolderPage"] label[class*="MuiInputLabel"].Mui-focused,
-[class*="ScaffolderPage"] label[class*="MuiFormLabel"].Mui-focused,
+label.Mui-focused,
 .MuiInputLabel-root.Mui-focused,
-.MuiFormLabel-root.Mui-focused {
-  color: #2563eb !important;
+.MuiFormLabel-root.Mui-focused,
+[class*="MuiInputLabel"].Mui-focused,
+[class*="MuiFormLabel"].Mui-focused {
+  color: #3b82f6 !important;
+  -webkit-text-fill-color: #3b82f6 !important;
 }
 
 /* Shrunk state (label floating above input) */
-[class*="ScaffolderPage"] label[class*="MuiInputLabel"][class*="shrink"],
-[class*="ScaffolderPage"] label[class*="MuiInputLabel-shrink"],
+label.MuiInputLabel-shrink,
 .MuiInputLabel-root.MuiInputLabel-shrink,
-.MuiFormLabel-root.MuiFormLabel-filled {
+.MuiFormLabel-root.MuiFormLabel-filled,
+[class*="MuiInputLabel-shrink"],
+[class*="shrink"] {
   color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
   background-color: #ffffff;
   padding: 0 4px;
 }
 
 /* Error state */
-[class*="ScaffolderPage"] label[class*="MuiInputLabel"].Mui-error,
-.MuiInputLabel-root.Mui-error {
+label.Mui-error,
+.MuiInputLabel-root.Mui-error,
+[class*="MuiInputLabel"].Mui-error {
   color: #dc2626 !important;
+  -webkit-text-fill-color: #dc2626 !important;
 }

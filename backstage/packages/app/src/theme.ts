@@ -6,11 +6,11 @@ import {
 } from '@backstage/theme';
 
 const portalColors = {
-  accent: '#2563eb',
-  accentSoft: 'rgba(37, 99, 235, 0.12)',
-  accentStrong: '#1d4ed8',
-  accentGradFrom: '#3b82f6',
-  accentGradTo: '#1e40af',
+  accent: '#3b82f6',
+  accentSoft: 'rgba(59, 130, 246, 0.12)',
+  accentStrong: '#2563eb',
+  accentGradFrom: '#2563eb',
+  accentGradTo: '#60a5fa',
 
   activeOrange: '#FF6B35',
 
@@ -239,33 +239,27 @@ export const armPortalTheme = createUnifiedTheme({
         '.MuiStepIcon-root.Mui-active .MuiStepIcon-text': {
           fill: '#ffffff !important',
         },
-        // Ensure input labels are visible - MUI v4
-        '.MuiInputLabel-root': {
+        // Ensure input labels are visible - MUI v4 - aggressive
+        'label, .MuiInputLabel-root, .MuiFormLabel-root': {
           color: `${portalColors.textMuted} !important`,
           opacity: '1 !important',
           visibility: 'visible !important',
-          zIndex: '1 !important',
+          WebkitTextFillColor: `${portalColors.textMuted} !important`,
         },
-        '.MuiInputLabel-outlined': {
+        '.MuiInputLabel-outlined, .MuiInputLabel-formControl': {
           color: `${portalColors.textMuted} !important`,
           opacity: '1 !important',
           visibility: 'visible !important',
         },
-        '.MuiInputLabel-root.Mui-focused': {
+        'label.Mui-focused, .MuiInputLabel-root.Mui-focused, .MuiFormLabel-root.Mui-focused': {
           color: `${portalColors.accent} !important`,
+          WebkitTextFillColor: `${portalColors.accent} !important`,
         },
-        '.MuiInputLabel-root.MuiInputLabel-shrink': {
+        '.MuiInputLabel-shrink, .MuiInputLabel-root.MuiInputLabel-shrink': {
           color: `${portalColors.textMain} !important`,
+          WebkitTextFillColor: `${portalColors.textMain} !important`,
           backgroundColor: portalColors.bgElevated,
           padding: '0 4px',
-        },
-        '.MuiFormLabel-root': {
-          color: `${portalColors.textMuted} !important`,
-          opacity: '1 !important',
-          visibility: 'visible !important',
-        },
-        '.MuiFormLabel-root.Mui-focused': {
-          color: `${portalColors.accent} !important`,
         },
       },
     },
