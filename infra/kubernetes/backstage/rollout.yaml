@@ -70,11 +70,16 @@ spec:
             secretKeyRef:
               name: backstage-secrets
               key: ARGOCD_AUTH_TOKEN
-        - name: K8S_SERVICE_ACCOUNT_TOKEN
+        - name: K8S_MGMT_SERVICE_ACCOUNT_TOKEN
           valueFrom:
             secretKeyRef:
               name: backstage-secrets
-              key: K8S_SERVICE_ACCOUNT_TOKEN
+              key: K8S_MGMT_SERVICE_ACCOUNT_TOKEN
+        - name: K8S_APP_SERVICE_ACCOUNT_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: backstage-secrets
+              key: K8S_APP_SERVICE_ACCOUNT_TOKEN
         - name: PORT_BACKSTAGE_TOKEN
           valueFrom:
             secretKeyRef:

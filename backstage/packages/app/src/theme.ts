@@ -505,34 +505,51 @@ export const armPortalTheme = createUnifiedTheme({
       styleOverrides: {
         drawer: {
           backgroundColor: portalColors.bgElevated,
-          borderRight: `1px solid ${portalColors.borderSubtle}`,
+          borderRight: 'none',
+          boxShadow: '1px 0 8px rgba(148, 163, 184, 0.15)',
         },
       },
     },
     BackstageSidebarItem: {
       styleOverrides: {
         root: {
-          borderRadius: portalColors.radiusSm,
-          margin: '2px 8px',
+          borderRadius: '10px',
+          margin: '4px 12px',
+          border: 'none',
+          transition: 'all 0.15s ease',
           '&:hover': {
             backgroundColor: portalColors.bgHover,
           },
         },
         selected: {
           backgroundColor: portalColors.accentSoft,
+          border: 'none',
           '&::before': {
             content: '""',
             position: 'absolute',
-            left: 0,
-            top: '8px',
-            bottom: '8px',
+            left: '4px',
+            top: '10px',
+            bottom: '10px',
             width: '3px',
-            borderRadius: '0 3px 3px 0',
+            borderRadius: '3px',
             backgroundColor: portalColors.accent,
           },
           '&:hover': {
             backgroundColor: portalColors.accentSoft,
           },
+        },
+        label: {
+          fontWeight: 500,
+        },
+      },
+    },
+    BackstageSidebarDivider: {
+      styleOverrides: {
+        root: {
+          background: 'transparent',
+          margin: '8px 16px',
+          height: '1px',
+          backgroundColor: 'rgba(148, 163, 184, 0.2)',
         },
       },
     },

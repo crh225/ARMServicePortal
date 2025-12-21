@@ -18,5 +18,6 @@ data:
   POSTGRES_USER: "admin_f9rg"
   POSTGRES_DB: "backstagedb"
 
-  # Kubernetes cluster for Backstage Kubernetes plugin
-  K8S_CLUSTER_URL: "https://aks-armportal-crossplane-dev.hcp.eastus.azmk8s.io:443"
+  # Kubernetes clusters for Backstage Kubernetes plugin
+  K8S_MGMT_CLUSTER_URL: "https://aks-mgmt-hub-0pvmz07v.hcp.eastus.azmk8s.io:443"
+  K8S_APP_CLUSTER_URL: "https://aks-app-spoke-mw4q4-svbm04f8.hcp.eastus.azmk8s.io:443"
