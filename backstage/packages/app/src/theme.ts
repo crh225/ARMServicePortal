@@ -6,15 +6,18 @@ import {
 } from '@backstage/theme';
 
 const portalColors = {
-  accent: '#CC0000',
-  accentSoft: 'rgba(204, 0, 0, 0.12)',
-  accentStrong: '#8B0000',
-  accentGradFrom: '#CC0000',
-  accentGradTo: '#7B0041',
+  brandRed: '#CC0000',
+  brandRedSoft: 'rgba(204, 0, 0, 0.12)',
+  brandRedStrong: '#8B0000',
+
+  accent: '#2563eb',
+  accentSoft: 'rgba(37, 99, 235, 0.12)',
+  accentStrong: '#1d4ed8',
+  accentGradFrom: '#3b82f6',
+  accentGradTo: '#1e40af',
 
   activeOrange: '#CC0000',
 
-  // Backgrounds
   bgCanvas: '#f3f4f6',
   bgElevated: '#ffffff',
   bgPanel: '#ffffff',
@@ -24,18 +27,15 @@ const portalColors = {
   bgMuted: '#f9fafb',
   bgNavPill: '#e5e7eb',
 
-  // Text
   textMain: '#0f172a',
   textMuted: '#6b7280',
   textSoft: '#9ca3af',
-  textLink: '#CC0000',
+  textLink: '#2563eb',
 
-  // Borders
   borderSubtle: 'rgba(148, 163, 184, 0.45)',
   borderStrong: 'rgba(148, 163, 184, 0.8)',
   borderDefault: 'rgba(148, 163, 184, 0.45)',
 
-  // Status colors
   success: '#16a34a',
   successBg: '#dcfce7',
   successBorder: '#22c55e',
@@ -49,15 +49,13 @@ const portalColors = {
   infoBg: '#e0f2fe',
   infoBorder: '#38bdf8',
 
-  // Shadows
   shadowSoft: '0 18px 40px rgba(148, 163, 184, 0.35)',
   shadowCard: '0 12px 28px rgba(148, 163, 184, 0.25)',
   shadowHover: '0 4px 14px rgba(15, 23, 42, 0.08)',
   shadowCardHover: '0 8px 24px rgba(148, 163, 184, 0.35)',
   shadowPill: '0 0 0 1px rgba(148, 163, 184, 0.8), 0 8px 18px rgba(148, 163, 184, 0.35)',
-  shadowFocus: '0 0 0 3px rgba(204, 0, 0, 0.15)',
+  shadowFocus: '0 0 0 3px rgba(37, 99, 235, 0.15)',
 
-  // Border radius
   radiusXl: '28px',
   radiusLg: '18px',
   radiusMd: '12px',
@@ -124,7 +122,6 @@ export const armPortalTheme = createUnifiedTheme({
   },
   defaultPageTheme: 'home',
   fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif',
-  // Flat page themes - no shapes/waves for cleaner look
   pageTheme: {
     home: genPageTheme({
       colors: [portalColors.bgElevated, portalColors.bgElevated],
@@ -981,7 +978,7 @@ export const armPortalTheme = createUnifiedTheme({
           backgroundColor: portalColors.accent,
         },
         colorSecondary: {
-          backgroundColor: portalColors.activeOrange,
+          backgroundColor: portalColors.accentStrong,
         },
       },
     },
@@ -993,20 +990,20 @@ export const armPortalTheme = createUnifiedTheme({
         },
         bar: {
           borderRadius: portalColors.radiusPill,
-          backgroundColor: portalColors.activeOrange,
+          backgroundColor: portalColors.accent,
         },
         colorPrimary: {
           backgroundColor: portalColors.bgChip,
         },
         barColorPrimary: {
-          backgroundColor: portalColors.activeOrange,
+          backgroundColor: portalColors.accent,
         },
       },
     },
     MuiCircularProgress: {
       styleOverrides: {
         colorPrimary: {
-          color: portalColors.activeOrange,
+          color: portalColors.accent,
         },
       },
     },
