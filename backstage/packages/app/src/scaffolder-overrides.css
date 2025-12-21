@@ -126,20 +126,22 @@
 
 /* =============================================== */
 /* Fix label visibility and positioning           */
+/* Use attribute selectors for hashed class names */
 /* =============================================== */
 
-.MuiInputLabel-root {
+[class*="MuiInputLabel-root"],
+[class*="MuiFormLabel-root"] {
   z-index: 1 !important;
 }
 
-/* Fix label position for outlined variant style */
-.MuiInputLabel-formControl {
+/* Fix label position for form control labels */
+[class*="MuiInputLabel-formControl"] {
   transform: translate(14px, 14px) scale(1) !important;
 }
 
 /* Shrunk/focused state - label floats above border */
-.MuiInputLabel-root.MuiInputLabel-shrink,
-.MuiInputLabel-formControl.MuiInputLabel-shrink {
+[class*="MuiInputLabel-shrink"],
+[class*="MuiInputLabel-formControl"][class*="shrink"] {
   transform: translate(14px, -6px) scale(0.75) !important;
   background-color: #ffffff;
   padding: 0 4px;
