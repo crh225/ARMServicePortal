@@ -55,7 +55,7 @@ spec:
                 toFieldPath: spec.forProvider.resourceGroupName
               - type: FromCompositeFieldPath
                 fromFieldPath: spec.nodeCount
-                toFieldPath: spec.forProvider.defaultNodePool[0].nodeCount
+                toFieldPath: spec.forProvider.defaultNodePool[0].minCount
               - type: FromCompositeFieldPath
                 fromFieldPath: spec.vmSize
                 toFieldPath: spec.forProvider.defaultNodePool[0].vmSize
