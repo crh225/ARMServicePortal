@@ -173,21 +173,18 @@ export const armPortalTheme = createUnifiedTheme({
           fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif',
           backgroundColor: portalColors.bgCanvas,
         },
-        // Global fix for icon buttons that might be white on white
         '[class*="MuiIconButton"]': {
           color: `${portalColors.activeOrange} !important`,
         },
         '[class*="MuiIconButton"] svg': {
           color: `${portalColors.activeOrange} !important`,
         },
-        // Target the "more" 3-dot menu specifically
         '[aria-label="more"]': {
           color: `${portalColors.activeOrange} !important`,
         },
         '[aria-label="more"] svg': {
           color: `${portalColors.activeOrange} !important`,
         },
-        // Force all inputs to have white background, no light blue fill
         '.MuiInputBase-root': {
           backgroundColor: `${portalColors.bgElevated} !important`,
           boxShadow: 'none !important',
@@ -210,56 +207,48 @@ export const armPortalTheme = createUnifiedTheme({
           backgroundColor: `${portalColors.bgElevated} !important`,
           boxShadow: 'none !important',
         },
-        // Remove any underlines from inputs
         '.MuiInput-underline:before, .MuiInput-underline:after': {
           borderBottom: 'none !important',
         },
         '.MuiFilledInput-underline:before, .MuiFilledInput-underline:after': {
           borderBottom: 'none !important',
         },
-        // Remove light blue focus ring/glow - keep gray border
         '.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
-          borderColor: `${portalColors.borderStrong} !important`,
+          borderColor: `${portalColors.borderSubtle} !important`,
           borderWidth: '1px !important',
         },
-        // Target any remaining blue backgrounds on form controls
         '.MuiFormControl-root .MuiInputBase-root': {
           backgroundColor: `${portalColors.bgElevated} !important`,
         },
-        // Remove blue highlight from focused inputs
         'input:focus, textarea:focus, select:focus': {
           backgroundColor: `${portalColors.bgElevated} !important`,
           outline: 'none !important',
         },
-        // Remove blue border from Select/Dropdown components
         '.MuiSelect-select:focus': {
           backgroundColor: `${portalColors.bgElevated} !important`,
         },
         '.MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline': {
-          borderColor: `${portalColors.borderStrong} !important`,
+          borderColor: `${portalColors.borderSubtle} !important`,
         },
         '.MuiOutlinedInput-notchedOutline': {
-          borderColor: `${portalColors.borderStrong} !important`,
+          borderColor: `${portalColors.borderSubtle} !important`,
         },
-        // Autocomplete dropdowns
         '.MuiAutocomplete-inputRoot.Mui-focused .MuiOutlinedInput-notchedOutline': {
-          borderColor: `${portalColors.borderStrong} !important`,
+          borderColor: `${portalColors.borderSubtle} !important`,
           borderWidth: '1px !important',
         },
         '.MuiAutocomplete-inputRoot:hover .MuiOutlinedInput-notchedOutline': {
-          borderColor: `${portalColors.borderStrong} !important`,
+          borderColor: `${portalColors.borderSubtle} !important`,
         },
-        // Step icon active state - white number
         '.MuiStepIcon-root.Mui-active .MuiStepIcon-text': {
           fill: '#ffffff !important',
         },
       },
     },
-    // Buttons - gradient primary, clean outlined
     MuiButton: {
       styleOverrides: {
         root: {
-          borderRadius: portalColors.radiusSm, // 8px - less round
+          borderRadius: portalColors.radiusSm,
           textTransform: 'none',
           fontWeight: 500,
           fontSize: '0.875rem',
@@ -294,7 +283,6 @@ export const armPortalTheme = createUnifiedTheme({
         },
       },
     },
-    // Cards - better hover effect like ARM Portal
     MuiCard: {
       styleOverrides: {
         root: {
@@ -338,7 +326,6 @@ export const armPortalTheme = createUnifiedTheme({
         },
       },
     },
-    // Inputs - better focus ring like ARM Portal
     MuiTextField: {
       styleOverrides: {
         root: {
@@ -371,11 +358,12 @@ export const armPortalTheme = createUnifiedTheme({
           backgroundColor: `${portalColors.bgElevated} !important`,
           transition: 'all 0.15s ease-out',
           boxShadow: 'none !important',
+          border: 'none !important',
           '&:hover .MuiOutlinedInput-notchedOutline': {
-            borderColor: `${portalColors.borderStrong} !important`,
+            borderColor: `${portalColors.borderSubtle} !important`,
           },
           '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-            borderColor: `${portalColors.borderStrong} !important`,
+            borderColor: `${portalColors.borderSubtle} !important`,
             borderWidth: '1px !important',
           },
           '&.Mui-focused': {
@@ -383,7 +371,7 @@ export const armPortalTheme = createUnifiedTheme({
           },
         },
         notchedOutline: {
-          borderColor: `${portalColors.borderStrong} !important`,
+          borderColor: `${portalColors.borderSubtle} !important`,
         },
         input: {
           padding: '10px 12px',
@@ -402,7 +390,6 @@ export const armPortalTheme = createUnifiedTheme({
         },
       },
     },
-    // Standard input (underlined) - convert to outlined style for consistency
     MuiInput: {
       styleOverrides: {
         root: {
@@ -426,22 +413,17 @@ export const armPortalTheme = createUnifiedTheme({
         },
       },
     },
-    // Input base - affects all input types
     MuiInputBase: {
       styleOverrides: {
         root: {
           backgroundColor: `${portalColors.bgElevated} !important`,
           borderRadius: portalColors.radiusSm,
-          border: `1px solid ${portalColors.borderStrong}`,
           transition: 'border-color 0.15s ease-out',
           boxShadow: 'none !important',
           '&:hover': {
-            borderColor: portalColors.borderStrong,
             backgroundColor: `${portalColors.bgElevated} !important`,
           },
           '&.Mui-focused': {
-            borderColor: `${portalColors.borderStrong} !important`,
-            borderWidth: '1px',
             backgroundColor: `${portalColors.bgElevated} !important`,
             boxShadow: 'none !important',
           },
@@ -464,13 +446,12 @@ export const armPortalTheme = createUnifiedTheme({
         },
       },
     },
-    // FilledInput - force white background
     MuiFilledInput: {
       styleOverrides: {
         root: {
           backgroundColor: `${portalColors.bgElevated} !important`,
           borderRadius: portalColors.radiusSm,
-          border: `1px solid ${portalColors.borderStrong}`,
+          border: `1px solid ${portalColors.borderSubtle}`,
           boxShadow: 'none !important',
           '&:before': {
             borderBottom: 'none !important',
@@ -480,11 +461,11 @@ export const armPortalTheme = createUnifiedTheme({
           },
           '&:hover': {
             backgroundColor: `${portalColors.bgElevated} !important`,
-            borderColor: portalColors.borderStrong,
+            borderColor: portalColors.borderSubtle,
           },
           '&.Mui-focused': {
             backgroundColor: `${portalColors.bgElevated} !important`,
-            borderColor: `${portalColors.borderStrong} !important`,
+            borderColor: `${portalColors.borderSubtle} !important`,
             borderWidth: '1px',
             boxShadow: 'none !important',
           },
@@ -506,7 +487,6 @@ export const armPortalTheme = createUnifiedTheme({
         },
       },
     },
-    // Form labels
     MuiInputLabel: {
       styleOverrides: {
         root: {
@@ -528,7 +508,6 @@ export const armPortalTheme = createUnifiedTheme({
         },
       },
     },
-    // Form helper text
     MuiFormHelperText: {
       styleOverrides: {
         root: {
@@ -542,7 +521,6 @@ export const armPortalTheme = createUnifiedTheme({
         },
       },
     },
-    // Form control styling
     MuiFormControl: {
       styleOverrides: {
         root: {
@@ -550,7 +528,6 @@ export const armPortalTheme = createUnifiedTheme({
         },
       },
     },
-    // Autocomplete
     MuiAutocomplete: {
       styleOverrides: {
         root: {
@@ -578,7 +555,6 @@ export const armPortalTheme = createUnifiedTheme({
         },
       },
     },
-    // Chips - pill style with colored backgrounds
     MuiChip: {
       styleOverrides: {
         root: {
@@ -614,7 +590,6 @@ export const armPortalTheme = createUnifiedTheme({
         },
       },
     },
-    // Tables - cleaner, white header
     MuiTableCell: {
       styleOverrides: {
         root: {
@@ -646,7 +621,6 @@ export const armPortalTheme = createUnifiedTheme({
         },
       },
     },
-    // Tabs - clean with orange underline
     MuiTab: {
       styleOverrides: {
         root: {
@@ -686,7 +660,6 @@ export const armPortalTheme = createUnifiedTheme({
         },
       },
     },
-    // Alerts
     MuiAlert: {
       styleOverrides: {
         root: {
@@ -837,7 +810,6 @@ export const armPortalTheme = createUnifiedTheme({
         },
       },
     },
-    // Backstage specific components
     BackstageHeader: {
       styleOverrides: {
         header: {
@@ -848,7 +820,6 @@ export const armPortalTheme = createUnifiedTheme({
           paddingBottom: '20px',
           position: 'relative',
           zIndex: 1,
-          // Force icon buttons in header to be visible
           '& .MuiIconButton-root': {
             color: portalColors.activeOrange,
           },
@@ -953,7 +924,6 @@ export const armPortalTheme = createUnifiedTheme({
         },
       },
     },
-    // Fix the sidebar filter/personal sections - make white instead of gray
     CatalogReactUserListPicker: {
       styleOverrides: {
         root: {
@@ -961,7 +931,6 @@ export const armPortalTheme = createUnifiedTheme({
         },
       },
     },
-    // Icon buttons
     MuiIconButton: {
       styleOverrides: {
         root: {
@@ -971,7 +940,6 @@ export const armPortalTheme = createUnifiedTheme({
           '&:hover': {
             backgroundColor: portalColors.bgHover,
           },
-          // Make sure the 3-dot menu is visible
           '& svg': {
             color: `${portalColors.activeOrange} !important`,
           },
@@ -984,11 +952,9 @@ export const armPortalTheme = createUnifiedTheme({
         },
       },
     },
-    // Ensure icons are visible - inherit from parent by default
     MuiSvgIcon: {
       styleOverrides: {
         root: {
-          // Inherit color from parent (like MuiIconButton)
           color: 'inherit',
         },
         colorAction: {
@@ -1002,7 +968,6 @@ export const armPortalTheme = createUnifiedTheme({
         },
       },
     },
-    // Avatars
     MuiAvatar: {
       styleOverrides: {
         root: {
@@ -1012,7 +977,6 @@ export const armPortalTheme = createUnifiedTheme({
         },
       },
     },
-    // Badges
     MuiBadge: {
       styleOverrides: {
         colorPrimary: {
@@ -1023,7 +987,6 @@ export const armPortalTheme = createUnifiedTheme({
         },
       },
     },
-    // Progress indicators
     MuiLinearProgress: {
       styleOverrides: {
         root: {
@@ -1049,7 +1012,6 @@ export const armPortalTheme = createUnifiedTheme({
         },
       },
     },
-    // Skeleton loading
     MuiSkeleton: {
       styleOverrides: {
         root: {
@@ -1057,7 +1019,6 @@ export const armPortalTheme = createUnifiedTheme({
         },
       },
     },
-    // Stepper - for scaffolder wizard steps
     MuiStepper: {
       styleOverrides: {
         root: {
@@ -1142,7 +1103,6 @@ export const armPortalTheme = createUnifiedTheme({
         },
       },
     },
-    // Typography tweaks for scaffolder
     MuiTypography: {
       styleOverrides: {
         h1: {
