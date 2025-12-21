@@ -187,6 +187,50 @@ export const armPortalTheme = createUnifiedTheme({
         '[aria-label="more"] svg': {
           color: `${portalColors.activeOrange} !important`,
         },
+        // Force all inputs to have white background, no light blue fill
+        '.MuiInputBase-root': {
+          backgroundColor: `${portalColors.bgElevated} !important`,
+          boxShadow: 'none !important',
+        },
+        '.MuiInputBase-root.Mui-focused': {
+          backgroundColor: `${portalColors.bgElevated} !important`,
+          boxShadow: 'none !important',
+        },
+        '.MuiInputBase-input': {
+          backgroundColor: 'transparent !important',
+        },
+        '.MuiFilledInput-root': {
+          backgroundColor: `${portalColors.bgElevated} !important`,
+          boxShadow: 'none !important',
+        },
+        '.MuiFilledInput-root:hover': {
+          backgroundColor: `${portalColors.bgElevated} !important`,
+        },
+        '.MuiFilledInput-root.Mui-focused': {
+          backgroundColor: `${portalColors.bgElevated} !important`,
+          boxShadow: 'none !important',
+        },
+        // Remove any underlines from inputs
+        '.MuiInput-underline:before, .MuiInput-underline:after': {
+          borderBottom: 'none !important',
+        },
+        '.MuiFilledInput-underline:before, .MuiFilledInput-underline:after': {
+          borderBottom: 'none !important',
+        },
+        // Remove light blue focus ring/glow - keep gray border
+        '.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
+          borderColor: `${portalColors.borderStrong} !important`,
+          borderWidth: '1px !important',
+        },
+        // Target any remaining blue backgrounds on form controls
+        '.MuiFormControl-root .MuiInputBase-root': {
+          backgroundColor: `${portalColors.bgElevated} !important`,
+        },
+        // Remove blue highlight from focused inputs
+        'input:focus, textarea:focus, select:focus': {
+          backgroundColor: `${portalColors.bgElevated} !important`,
+          outline: 'none !important',
+        },
       },
     },
     // Buttons - gradient primary, clean outlined
@@ -238,7 +282,7 @@ export const armPortalTheme = createUnifiedTheme({
           backgroundColor: portalColors.bgElevated,
           transition: 'all 0.2s ease-out',
           '&:hover': {
-            borderColor: portalColors.accentStrong,
+            borderColor: portalColors.borderStrong,
             boxShadow: portalColors.shadowCardHover,
             transform: 'translateY(-2px)',
           },
@@ -358,16 +402,20 @@ export const armPortalTheme = createUnifiedTheme({
     MuiInputBase: {
       styleOverrides: {
         root: {
-          backgroundColor: portalColors.bgElevated,
+          backgroundColor: `${portalColors.bgElevated} !important`,
           borderRadius: portalColors.radiusSm,
           border: `1px solid ${portalColors.borderStrong}`,
-          transition: 'all 0.15s ease-out',
+          transition: 'border-color 0.15s ease-out',
+          boxShadow: 'none !important',
           '&:hover': {
-            borderColor: portalColors.textSoft,
+            borderColor: portalColors.borderStrong,
+            backgroundColor: `${portalColors.bgElevated} !important`,
           },
           '&.Mui-focused': {
-            borderColor: portalColors.accent,
-            boxShadow: portalColors.shadowFocus,
+            borderColor: `${portalColors.borderStrong} !important`,
+            borderWidth: '1px',
+            backgroundColor: `${portalColors.bgElevated} !important`,
+            boxShadow: 'none !important',
           },
           '&.Mui-error': {
             borderColor: portalColors.danger,
@@ -376,9 +424,56 @@ export const armPortalTheme = createUnifiedTheme({
         input: {
           padding: '12px 14px',
           fontSize: '0.875rem',
+          backgroundColor: 'transparent !important',
           '&::placeholder': {
             color: portalColors.textSoft,
             opacity: 1,
+          },
+          '&:-webkit-autofill': {
+            WebkitBoxShadow: `0 0 0 100px ${portalColors.bgElevated} inset !important`,
+            backgroundColor: `${portalColors.bgElevated} !important`,
+          },
+        },
+      },
+    },
+    // FilledInput - force white background
+    MuiFilledInput: {
+      styleOverrides: {
+        root: {
+          backgroundColor: `${portalColors.bgElevated} !important`,
+          borderRadius: portalColors.radiusSm,
+          border: `1px solid ${portalColors.borderStrong}`,
+          boxShadow: 'none !important',
+          '&:before': {
+            borderBottom: 'none !important',
+          },
+          '&:after': {
+            borderBottom: 'none !important',
+          },
+          '&:hover': {
+            backgroundColor: `${portalColors.bgElevated} !important`,
+            borderColor: portalColors.borderStrong,
+          },
+          '&.Mui-focused': {
+            backgroundColor: `${portalColors.bgElevated} !important`,
+            borderColor: `${portalColors.borderStrong} !important`,
+            borderWidth: '1px',
+            boxShadow: 'none !important',
+          },
+          '&.Mui-disabled': {
+            backgroundColor: `${portalColors.bgMuted} !important`,
+          },
+        },
+        input: {
+          padding: '12px 14px',
+          backgroundColor: 'transparent !important',
+        },
+        underline: {
+          '&:before': {
+            borderBottom: 'none !important',
+          },
+          '&:after': {
+            borderBottom: 'none !important',
           },
         },
       },
@@ -981,22 +1076,21 @@ export const armPortalTheme = createUnifiedTheme({
         root: {
           width: '32px',
           height: '32px',
-          color: portalColors.bgChip,
-          border: `2px solid ${portalColors.borderStrong}`,
-          borderRadius: '50%',
+          color: portalColors.borderStrong,
           '&.Mui-active': {
             color: portalColors.accent,
-            border: 'none',
+            '& .MuiStepIcon-text': {
+              fill: '#ffffff',
+            },
           },
           '&.Mui-completed': {
             color: portalColors.success,
-            border: 'none',
           },
         },
         text: {
           fill: portalColors.textMuted,
-          fontSize: '0.75rem',
-          fontWeight: 600,
+          fontSize: '0.8rem',
+          fontWeight: 700,
         },
       },
     },
