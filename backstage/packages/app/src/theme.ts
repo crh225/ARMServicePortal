@@ -188,10 +188,16 @@ export const armPortalTheme = createUnifiedTheme({
         '.MuiInputBase-root': {
           backgroundColor: `${portalColors.bgElevated} !important`,
           boxShadow: 'none !important',
+          border: `1px solid ${portalColors.borderSubtle} !important`,
+          borderRadius: `${portalColors.radiusSm} !important`,
+        },
+        '.MuiInputBase-root:hover': {
+          borderColor: `${portalColors.borderStrong} !important`,
         },
         '.MuiInputBase-root.Mui-focused': {
           backgroundColor: `${portalColors.bgElevated} !important`,
           boxShadow: 'none !important',
+          borderColor: `${portalColors.borderStrong} !important`,
         },
         '.MuiInputBase-input': {
           backgroundColor: 'transparent !important',
@@ -417,14 +423,17 @@ export const armPortalTheme = createUnifiedTheme({
         root: {
           backgroundColor: `${portalColors.bgElevated} !important`,
           borderRadius: portalColors.radiusSm,
+          border: `1px solid ${portalColors.borderSubtle}`,
           transition: 'border-color 0.15s ease-out',
           boxShadow: 'none !important',
           '&:hover': {
             backgroundColor: `${portalColors.bgElevated} !important`,
+            borderColor: portalColors.borderStrong,
           },
           '&.Mui-focused': {
             backgroundColor: `${portalColors.bgElevated} !important`,
             boxShadow: 'none !important',
+            borderColor: portalColors.borderStrong,
           },
           '&.Mui-error': {
             borderColor: portalColors.danger,
