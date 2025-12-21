@@ -173,6 +173,20 @@ export const armPortalTheme = createUnifiedTheme({
           fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif',
           backgroundColor: portalColors.bgCanvas,
         },
+        // Global fix for icon buttons that might be white on white
+        '[class*="MuiIconButton"]': {
+          color: `${portalColors.activeOrange} !important`,
+        },
+        '[class*="MuiIconButton"] svg': {
+          color: `${portalColors.activeOrange} !important`,
+        },
+        // Target the "more" 3-dot menu specifically
+        '[aria-label="more"]': {
+          color: `${portalColors.activeOrange} !important`,
+        },
+        '[aria-label="more"] svg': {
+          color: `${portalColors.activeOrange} !important`,
+        },
       },
     },
     // Buttons - gradient primary, clean outlined
@@ -586,6 +600,13 @@ export const armPortalTheme = createUnifiedTheme({
           paddingBottom: '20px',
           position: 'relative',
           zIndex: 1,
+          // Force icon buttons in header to be visible
+          '& .MuiIconButton-root': {
+            color: portalColors.activeOrange,
+          },
+          '& .MuiIconButton-root svg': {
+            color: portalColors.activeOrange,
+          },
         },
         title: {
           color: portalColors.textMain,
@@ -696,7 +717,7 @@ export const armPortalTheme = createUnifiedTheme({
     MuiIconButton: {
       styleOverrides: {
         root: {
-          color: portalColors.activeOrange,
+          color: `${portalColors.activeOrange} !important`,
           borderRadius: portalColors.radiusSm,
           transition: 'all 0.15s ease',
           '&:hover': {
@@ -704,14 +725,14 @@ export const armPortalTheme = createUnifiedTheme({
           },
           // Make sure the 3-dot menu is visible
           '& svg': {
-            color: 'inherit',
+            color: `${portalColors.activeOrange} !important`,
           },
         },
         colorInherit: {
-          color: portalColors.activeOrange,
+          color: `${portalColors.activeOrange} !important`,
         },
         colorPrimary: {
-          color: portalColors.accent,
+          color: `${portalColors.accent} !important`,
         },
       },
     },
