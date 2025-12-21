@@ -24,7 +24,6 @@ spec:
                   dnsPrefix: ""
                   defaultNodePool:
                     - name: default
-                      nodeCount: 2
                       minCount: 2
                       maxCount: 4
                       autoScalingEnabled: true
