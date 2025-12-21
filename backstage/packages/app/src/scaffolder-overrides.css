@@ -137,6 +137,8 @@
 [class*="MuiFormLabel"] {
   color: #6b7280 !important;
   z-index: 1 !important;
+  font-size: 0.875rem !important;
+  transform: translate(14px, 12px) scale(1) !important;
 }
 
 /* Focused state - blue accent */
@@ -146,10 +148,19 @@
 }
 
 /* Shrunk state (label floating above input) */
-.MuiInputLabel-root.MuiInputLabel-shrink {
+.MuiInputLabel-root.MuiInputLabel-shrink,
+.MuiFormLabel-root.MuiFormLabel-filled,
+.MuiInputLabel-root.Mui-focused {
   color: #0f172a !important;
   background-color: #ffffff;
   padding: 0 4px;
+  transform: translate(12px, -6px) scale(0.75) !important;
+  font-size: 0.875rem !important;
+}
+
+/* Focused shrunk label should be blue */
+.MuiInputLabel-root.MuiInputLabel-shrink.Mui-focused {
+  color: #3b82f6 !important;
 }
 
 /* Error state */

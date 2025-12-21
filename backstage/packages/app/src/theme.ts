@@ -503,9 +503,12 @@ export const armPortalTheme = createUnifiedTheme({
         root: {
           color: portalColors.textMuted,
           fontWeight: 500,
+          fontSize: '0.875rem',
           zIndex: 1, // Fix label visibility - label was behind input
+          transform: 'translate(14px, 12px) scale(1)',
           '&.Mui-focused': {
             color: portalColors.accent,
+            transform: 'translate(12px, -6px) scale(0.75)',
           },
           '&.Mui-error': {
             color: portalColors.danger,
@@ -514,6 +517,7 @@ export const armPortalTheme = createUnifiedTheme({
             color: portalColors.textMain,
             backgroundColor: portalColors.bgElevated,
             padding: '0 4px',
+            transform: 'translate(12px, -6px) scale(0.75)',
           },
         },
       },
