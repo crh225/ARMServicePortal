@@ -136,7 +136,7 @@
 
 /* Fix label position for form control labels */
 [class*="MuiInputLabel-formControl"] {
-  transform: translate(14px, 14px) scale(1) !important;
+  transform: translate(14px, 18px) scale(1) !important;
 }
 
 /* Shrunk/focused state - label floats above border */
