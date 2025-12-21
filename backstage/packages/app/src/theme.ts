@@ -239,6 +239,18 @@ export const armPortalTheme = createUnifiedTheme({
         '.MuiStepIcon-root.Mui-active .MuiStepIcon-text': {
           fill: '#ffffff !important',
         },
+        // Ensure input labels are visible
+        '.MuiInputLabel-root': {
+          color: `${portalColors.textMuted} !important`,
+        },
+        '.MuiInputLabel-root.Mui-focused': {
+          color: `${portalColors.accent} !important`,
+        },
+        '.MuiInputLabel-root.MuiInputLabel-shrink': {
+          color: `${portalColors.textMain} !important`,
+          backgroundColor: portalColors.bgElevated,
+          padding: '0 4px',
+        },
       },
     },
     MuiButton: {
@@ -488,13 +500,25 @@ export const armPortalTheme = createUnifiedTheme({
     MuiInputLabel: {
       styleOverrides: {
         root: {
-          color: portalColors.textMain,
+          color: portalColors.textMuted,
           fontWeight: 500,
           '&.Mui-focused': {
             color: portalColors.accent,
           },
           '&.Mui-error': {
             color: portalColors.danger,
+          },
+          '&.MuiInputLabel-shrink': {
+            color: portalColors.textMain,
+            backgroundColor: portalColors.bgElevated,
+            padding: '0 4px',
+          },
+        },
+        outlined: {
+          // Ensure label is visible when inside the input (not shrunk)
+          color: portalColors.textMuted,
+          '&.MuiInputLabel-shrink': {
+            color: portalColors.textMain,
           },
         },
       },
