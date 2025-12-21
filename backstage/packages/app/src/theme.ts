@@ -330,6 +330,131 @@ export const armPortalTheme = createUnifiedTheme({
         },
       },
     },
+    // Standard input (underlined) - convert to outlined style for consistency
+    MuiInput: {
+      styleOverrides: {
+        root: {
+          '&:before': {
+            borderBottom: 'none !important',
+          },
+          '&:after': {
+            borderBottom: 'none !important',
+          },
+          '&:hover:not(.Mui-disabled):before': {
+            borderBottom: 'none !important',
+          },
+        },
+        underline: {
+          '&:before': {
+            borderBottom: 'none !important',
+          },
+          '&:after': {
+            borderBottom: 'none !important',
+          },
+        },
+      },
+    },
+    // Input base - affects all input types
+    MuiInputBase: {
+      styleOverrides: {
+        root: {
+          backgroundColor: portalColors.bgElevated,
+          borderRadius: portalColors.radiusSm,
+          border: `1px solid ${portalColors.borderStrong}`,
+          transition: 'all 0.15s ease-out',
+          '&:hover': {
+            borderColor: portalColors.textSoft,
+          },
+          '&.Mui-focused': {
+            borderColor: portalColors.accent,
+            boxShadow: portalColors.shadowFocus,
+          },
+          '&.Mui-error': {
+            borderColor: portalColors.danger,
+          },
+        },
+        input: {
+          padding: '12px 14px',
+          fontSize: '0.875rem',
+          '&::placeholder': {
+            color: portalColors.textSoft,
+            opacity: 1,
+          },
+        },
+      },
+    },
+    // Form labels
+    MuiInputLabel: {
+      styleOverrides: {
+        root: {
+          color: portalColors.textMain,
+          fontWeight: 500,
+          fontSize: '0.875rem',
+          marginBottom: '6px',
+          position: 'relative',
+          transform: 'none',
+          '&.Mui-focused': {
+            color: portalColors.accent,
+          },
+          '&.Mui-error': {
+            color: portalColors.danger,
+          },
+        },
+        shrink: {
+          transform: 'none',
+        },
+      },
+    },
+    // Form helper text
+    MuiFormHelperText: {
+      styleOverrides: {
+        root: {
+          color: portalColors.textMuted,
+          fontSize: '0.75rem',
+          marginTop: '6px',
+          marginLeft: 0,
+          '&.Mui-error': {
+            color: portalColors.danger,
+          },
+        },
+      },
+    },
+    // Form control styling
+    MuiFormControl: {
+      styleOverrides: {
+        root: {
+          marginBottom: '16px',
+        },
+      },
+    },
+    // Autocomplete
+    MuiAutocomplete: {
+      styleOverrides: {
+        root: {
+          '& .MuiInputBase-root': {
+            padding: '4px 12px',
+          },
+        },
+        inputRoot: {
+          borderRadius: portalColors.radiusSm,
+        },
+        paper: {
+          borderRadius: portalColors.radiusSm,
+          boxShadow: portalColors.shadowCard,
+          border: `1px solid ${portalColors.borderSubtle}`,
+        },
+        option: {
+          padding: '10px 14px',
+          fontSize: '0.875rem',
+          '&:hover': {
+            backgroundColor: portalColors.bgHover,
+          },
+          '&[aria-selected="true"]': {
+            backgroundColor: portalColors.accentSoft,
+          },
+        },
+      },
+    },
     // Chips - pill style with colored backgrounds
     MuiChip: {
       styleOverrides: {
@@ -806,6 +931,145 @@ export const armPortalTheme = createUnifiedTheme({
       styleOverrides: {
         root: {
           backgroundColor: portalColors.bgChip,
+        },
+      },
+    },
+    // Stepper - for scaffolder wizard steps
+    MuiStepper: {
+      styleOverrides: {
+        root: {
+          backgroundColor: 'transparent',
+          padding: '24px 0',
+        },
+      },
+    },
+    MuiStep: {
+      styleOverrides: {
+        root: {
+          padding: '0 16px',
+        },
+      },
+    },
+    MuiStepLabel: {
+      styleOverrides: {
+        root: {
+          '&.Mui-disabled': {
+            opacity: 0.5,
+          },
+        },
+        label: {
+          fontSize: '0.8rem',
+          fontWeight: 500,
+          color: portalColors.textMuted,
+          marginTop: '8px',
+          '&.Mui-active': {
+            color: portalColors.textMain,
+            fontWeight: 600,
+          },
+          '&.Mui-completed': {
+            color: portalColors.success,
+            fontWeight: 500,
+          },
+        },
+        iconContainer: {
+          paddingRight: 0,
+        },
+      },
+    },
+    MuiStepIcon: {
+      styleOverrides: {
+        root: {
+          width: '32px',
+          height: '32px',
+          color: portalColors.bgChip,
+          border: `2px solid ${portalColors.borderStrong}`,
+          borderRadius: '50%',
+          '&.Mui-active': {
+            color: portalColors.accent,
+            border: 'none',
+          },
+          '&.Mui-completed': {
+            color: portalColors.success,
+            border: 'none',
+          },
+        },
+        text: {
+          fill: portalColors.textMuted,
+          fontSize: '0.75rem',
+          fontWeight: 600,
+        },
+      },
+    },
+    MuiStepConnector: {
+      styleOverrides: {
+        root: {
+          '&.Mui-active': {
+            '& .MuiStepConnector-line': {
+              borderColor: portalColors.accent,
+            },
+          },
+          '&.Mui-completed': {
+            '& .MuiStepConnector-line': {
+              borderColor: portalColors.success,
+            },
+          },
+        },
+        line: {
+          borderColor: portalColors.borderStrong,
+          borderTopWidth: '2px',
+        },
+      },
+    },
+    // Typography tweaks for scaffolder
+    MuiTypography: {
+      styleOverrides: {
+        h1: {
+          fontSize: '2rem',
+          fontWeight: 600,
+          color: portalColors.textMain,
+          letterSpacing: '-0.02em',
+        },
+        h2: {
+          fontSize: '1.5rem',
+          fontWeight: 600,
+          color: portalColors.textMain,
+          letterSpacing: '-0.01em',
+        },
+        h3: {
+          fontSize: '1.25rem',
+          fontWeight: 600,
+          color: portalColors.textMain,
+        },
+        h4: {
+          fontSize: '1.1rem',
+          fontWeight: 600,
+          color: portalColors.textMain,
+        },
+        h5: {
+          fontSize: '1rem',
+          fontWeight: 600,
+          color: portalColors.textMain,
+        },
+        h6: {
+          fontSize: '0.875rem',
+          fontWeight: 600,
+          color: portalColors.textMain,
+        },
+        subtitle1: {
+          fontSize: '0.9rem',
+          color: portalColors.textMuted,
+        },
+        subtitle2: {
+          fontSize: '0.8rem',
+          color: portalColors.textMuted,
+        },
+        body1: {
+          fontSize: '0.875rem',
+          color: portalColors.textMain,
+        },
+        body2: {
+          fontSize: '0.8rem',
+          color: portalColors.textMuted,
         },
       },
     },
