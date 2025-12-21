@@ -14,6 +14,9 @@ const portalColors = {
   accentGradFrom: '#2563eb',
   accentGradTo: '#0ea5e9',
 
+  // GitHub orange for active indicators
+  activeOrange: '#f78166',
+
   // Backgrounds
   bgCanvas: '#f3f4f6',
   bgElevated: '#ffffff',
@@ -84,7 +87,7 @@ export const armPortalTheme = createUnifiedTheme({
     },
     navigation: {
       background: portalColors.bgElevated,
-      indicator: portalColors.accent,
+      indicator: portalColors.activeOrange,
       color: portalColors.textMuted,
       selectedColor: portalColors.textMain,
       navItem: {
@@ -513,8 +516,8 @@ export const armPortalTheme = createUnifiedTheme({
     BackstageSidebarItem: {
       styleOverrides: {
         root: {
-          borderRadius: '10px',
-          margin: '4px 12px',
+          borderRadius: 0,
+          margin: '0',
           border: 'none',
           transition: 'all 0.15s ease',
           '&:hover': {
@@ -522,20 +525,20 @@ export const armPortalTheme = createUnifiedTheme({
           },
         },
         selected: {
-          backgroundColor: portalColors.accentSoft,
+          backgroundColor: 'transparent',
           border: 'none',
           '&::before': {
             content: '""',
             position: 'absolute',
-            left: '4px',
-            top: '10px',
-            bottom: '10px',
+            left: 0,
+            top: 0,
+            bottom: 0,
             width: '3px',
-            borderRadius: '3px',
-            backgroundColor: portalColors.accent,
+            borderRadius: 0,
+            backgroundColor: portalColors.activeOrange,
           },
           '&:hover': {
-            backgroundColor: portalColors.accentSoft,
+            backgroundColor: portalColors.bgHover,
           },
         },
         label: {
@@ -580,6 +583,28 @@ export const armPortalTheme = createUnifiedTheme({
             border: `1px solid ${portalColors.borderSubtle}`,
             overflow: 'hidden',
           },
+        },
+      },
+    },
+    // Fix the sidebar filter/personal sections - make white instead of gray
+    CatalogReactUserListPicker: {
+      styleOverrides: {
+        root: {
+          backgroundColor: portalColors.bgElevated,
+        },
+      },
+    },
+    // Make 3-dot menu icon orange
+    MuiIconButton: {
+      styleOverrides: {
+        root: {
+          color: portalColors.textMuted,
+          '&:hover': {
+            backgroundColor: portalColors.bgHover,
+          },
+        },
+        colorInherit: {
+          color: portalColors.activeOrange,
         },
       },
     },
