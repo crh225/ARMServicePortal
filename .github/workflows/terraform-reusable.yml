@@ -115,7 +115,9 @@ jobs:
       - name: Plan
         id: plan
         continue-on-error: true
-        run: terraform plan -input=false -no-color -out=tfplan
+        run: |
+          terraform plan -input=false -no-color -out=tfplan 2>&1 | tee plan.txt
+          echo "exitcode=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
         working-directory: ${{ env.TF_DIR }}
         env:
           TF_VAR_github_infra_owner: ${{ secrets.GH_INFRA_OWNER }}
@@ -136,6 +138,34 @@ jobs:
           name: tfplan-${{ inputs.environment }}
           path: ${{ env.TF_DIR }}/tfplan
           retention-days: 5
+
+      - name: Post Plan Comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        env:
+          PLAN_OUTCOME: ${{ steps.plan.outcome }}
+          PLAN_OUTPUT: ${{ steps.plan.outputs.stdout }}
+          ENVIRONMENT: ${{ inputs.environment }}
+          TF_DIR: ${{ env.TF_DIR }}
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            // Read the plan output from file
+            const planPath = path.join(process.env.GITHUB_WORKSPACE, process.env.TF_DIR, 'plan.txt');
+            let planOutput = '';
+            try {
+              planOutput = fs.readFileSync(planPath, 'utf8');
+            } catch (err) {
+              core.warning(`Failed to read plan output: ${err.message}`);
+            }
+
+            // Set as environment variable for the script
+            process.env.PLAN_OUTPUT = planOutput;
+
+            const script = require('./.github/scripts/terraform-pr-plan-comment.js');
+            await script({ github, context, core });
 
       - name: Label PR
         if: github.event_name == 'pull_request'
