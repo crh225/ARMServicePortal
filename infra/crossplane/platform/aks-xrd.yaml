@@ -56,6 +56,38 @@ spec:
                   type: boolean
                   default: false
                   description: Enable Istio internal ingress gateway
+                # Node pool scaling configuration
+                minNodeCount:
+                  type: integer
+                  default: 1
+                  description: Minimum number of nodes for autoscaling
+                maxNodeCount:
+                  type: integer
+                  default: 3
+                  description: Maximum number of nodes for autoscaling
+                enableAutoScaling:
+                  type: boolean
+                  default: true
+                  description: Enable node pool autoscaling
+                # Spot instance configuration
+                priority:
+                  type: string
+                  default: Spot
+                  enum:
+                    - Regular
+                    - Spot
+                  description: VM priority tier (Regular for standard VMs, Spot for low-cost evictable VMs)
+                spotMaxPrice:
+                  type: number
+                  default: -1
+                  description: Maximum price for spot instances (-1 means market price)
+                evictionPolicy:
+                  type: string
+                  default: Delete
+                  enum:
+                    - Delete
+                    - Deallocate
+                  description: What to do when spot instance is evicted
               required:
                 - resourceGroupName
                 - subnetId

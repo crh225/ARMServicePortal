@@ -188,6 +188,10 @@ catalog:
       target: ./templates/team-app-stack/template.yaml
       rules:
         - allow: [Template]
+    - type: file
+      target: ./templates/team-k8s-cluster/template.yaml
+      rules:
+        - allow: [Template]
 
     # ARM Portal Documentation
     - type: url

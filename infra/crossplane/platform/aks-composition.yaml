@@ -24,10 +24,6 @@ spec:
                   dnsPrefix: ""
                   defaultNodePool:
                     - name: default
-                      minCount: 2
-                      maxCount: 4
-                      autoScalingEnabled: true
-                      vmSize: Standard_B2s
                       vnetSubnetId: ""
                   identity:
                     - type: SystemAssigned
@@ -55,10 +51,35 @@ spec:
                 toFieldPath: spec.forProvider.resourceGroupName
               - type: FromCompositeFieldPath
                 fromFieldPath: spec.nodeCount
+                toFieldPath: spec.forProvider.defaultNodePool[0].nodeCount
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.minNodeCount
                 toFieldPath: spec.forProvider.defaultNodePool[0].minCount
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.maxNodeCount
+                toFieldPath: spec.forProvider.defaultNodePool[0].maxCount
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.enableAutoScaling
+                toFieldPath: spec.forProvider.defaultNodePool[0].autoScalingEnabled
               - type: FromCompositeFieldPath
                 fromFieldPath: spec.vmSize
                 toFieldPath: spec.forProvider.defaultNodePool[0].vmSize
+              # Spot instance configuration
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.priority
+                toFieldPath: spec.forProvider.defaultNodePool[0].priority
+                policy:
+                  fromFieldPath: Optional
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.spotMaxPrice
+                toFieldPath: spec.forProvider.defaultNodePool[0].spotMaxPrice
+                policy:
+                  fromFieldPath: Optional
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.evictionPolicy
+                toFieldPath: spec.forProvider.defaultNodePool[0].evictionPolicy
+                policy:
+                  fromFieldPath: Optional
               - type: FromCompositeFieldPath
                 fromFieldPath: spec.kubernetesVersion
                 toFieldPath: spec.forProvider.kubernetesVersion

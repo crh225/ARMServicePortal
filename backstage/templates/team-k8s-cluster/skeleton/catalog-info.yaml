@@ -1,0 +1,21 @@
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: ${{ values.clusterName }}
+  description: Ephemeral AKS cluster for ${{ values.teamName }}
+  labels:
+    team: ${{ values.teamName }}
+    environment: ${{ values.environment }}
+    type: kubernetes-cluster
+    ephemeral: "true"
+  annotations:
+    azure.com/resource-id: /subscriptions/f989de0f-8697-4a05-8c34-b82c941767c0/resourceGroups/${{ values.resourceGroupName }}/providers/Microsoft.ContainerService/managedClusters/${{ values.clusterName }}
+    azure.com/portal-url: https://portal.azure.com/#@/resource/subscriptions/f989de0f-8697-4a05-8c34-b82c941767c0/resourceGroups/${{ values.resourceGroupName }}/providers/Microsoft.ContainerService/managedClusters/${{ values.clusterName }}
+    kubernetes.io/cluster-name: ${{ values.clusterName }}
+spec:
+  type: kubernetes-cluster
+  lifecycle: experimental
+  owner: ${{ values.owner }}
+  system: platform
+  dependsOn:
+    - resource:default/${{ values.resourceGroupName }}

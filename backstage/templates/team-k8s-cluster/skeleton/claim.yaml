@@ -1,0 +1,35 @@
+apiVersion: platform.chrishouse.io/v1alpha1
+kind: AKSCluster
+metadata:
+  name: ${{ values.clusterName }}
+  namespace: crossplane-system
+  labels:
+    team: ${{ values.teamName }}
+    environment: ${{ values.environment }}
+    ephemeral: "true"
+  annotations:
+    description: "Ephemeral AKS cluster for ${{ values.teamName }}"
+    created-by: "${{ values.owner }}"
+spec:
+  location: ${{ values.location }}
+  resourceGroupName: ${{ values.resourceGroupName }}
+  nodeCount: ${{ values.nodeCount }}
+  vmSize: ${{ values.vmSize }}
+  kubernetesVersion: "${{ values.kubernetesVersion }}"
+  subnetId: ${{ values.subnetId }}
+  serviceCidr: "${{ values.serviceCidr }}"
+  dnsServiceIp: "${{ values.dnsServiceIp }}"
+  # Autoscaling configuration
+  minNodeCount: ${{ values.minNodeCount }}
+  maxNodeCount: ${{ values.maxNodeCount }}
+  enableAutoScaling: ${{ values.enableAutoScaling }}
+  # Spot instance configuration
+  priority: ${{ values.priority }}
+  {%- if values.priority === 'Spot' %}
+  spotMaxPrice: ${{ values.spotMaxPrice }}
+  evictionPolicy: ${{ values.evictionPolicy }}
+  {%- endif %}
+  # Service mesh disabled for ephemeral clusters
+  serviceMeshEnabled: false
+  serviceMeshExternalIngressEnabled: false
+  serviceMeshInternalIngressEnabled: false

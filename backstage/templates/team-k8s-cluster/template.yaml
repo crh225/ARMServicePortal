@@ -1,0 +1,336 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: team-k8s-cluster
+  title: Team Kubernetes Cluster
+  description: Provision an ephemeral AKS cluster for team development and testing. Creates a PR to the GitOps repo with the Crossplane claim.
+  tags:
+    - kubernetes
+    - aks
+    - crossplane
+    - ephemeral
+    - azure
+  links:
+    - url: https://docs.crossplane.io/
+      title: Crossplane Documentation
+      icon: dashboard
+spec:
+  owner: platform-team
+  type: infrastructure
+
+  parameters:
+    - title: Cluster Configuration
+      required:
+        - clusterName
+        - teamName
+        - owner
+      properties:
+        clusterName:
+          title: Cluster Name
+          type: string
+          description: Name for the AKS cluster (must start with 'aks-')
+          pattern: '^aks-[a-z0-9-]{3,20}$'
+          ui:autofocus: true
+          ui:help: 'Example: aks-team-alpha-dev'
+        teamName:
+          title: Team Name
+          type: string
+          description: Team or project owning this cluster
+          pattern: '^[a-z0-9-]{2,30}$'
+        owner:
+          title: Owner
+          type: string
+          description: Team or person responsible
+          ui:field: OwnerPicker
+          ui:options:
+            catalogFilter:
+              kind: Group
+        environment:
+          title: Environment
+          type: string
+          default: dev
+          enum: [dev, staging, prod]
+          enumNames: ['Development', 'Staging', 'Production']
+
+    - title: Compute Configuration
+      required:
+        - vmSize
+        - priority
+        - nodeCount
+      properties:
+        vmSize:
+          title: VM Size
+          type: string
+          default: Standard_B2s
+          enum:
+            - Standard_B2s
+            - Standard_B2ms
+            - Standard_D2s_v3
+          enumNames:
+            - 'B2s - 2 vCPU, 4 GB RAM (~$30/mo)'
+            - 'B2ms - 2 vCPU, 8 GB RAM (~$60/mo)'
+            - 'D2s_v3 - 2 vCPU, 8 GB RAM (~$70/mo)'
+        priority:
+          title: VM Priority
+          type: string
+          default: Spot
+          enum:
+            - Regular
+            - Spot
+          enumNames:
+            - 'Regular - Guaranteed availability'
+            - 'Spot - Low-cost, may be evicted (60-80% cheaper)'
+          description: Spot instances are recommended for ephemeral dev clusters
+        spotMaxPrice:
+          title: Max Spot Price
+          type: number
+          default: -1
+          description: Maximum price per hour (-1 means market price, recommended for dev)
+          ui:widget: hidden
+        evictionPolicy:
+          title: Eviction Policy
+          type: string
+          default: Delete
+          enum:
+            - Delete
+            - Deallocate
+          enumNames:
+            - 'Delete - Remove VM when evicted'
+            - 'Deallocate - Stop VM when evicted'
+          ui:widget: hidden
+        nodeCount:
+          title: Initial Node Count
+          type: integer
+          default: 1
+          minimum: 1
+          maximum: 5
+          description: Number of nodes to start with
+        minNodeCount:
+          title: Minimum Nodes (Autoscaling)
+          type: integer
+          default: 1
+          minimum: 1
+          maximum: 3
+        maxNodeCount:
+          title: Maximum Nodes (Autoscaling)
+          type: integer
+          default: 3
+          minimum: 1
+          maximum: 10
+        enableAutoScaling:
+          title: Enable Autoscaling
+          type: boolean
+          default: true
+        kubernetesVersion:
+          title: Kubernetes Version
+          type: string
+          default: "1.32"
+          enum:
+            - "1.31"
+            - "1.32"
+
+    - title: Network Configuration
+      required:
+        - location
+        - resourceGroupName
+        - subnetId
+      properties:
+        location:
+          title: Azure Region
+          type: string
+          default: westus2
+          enum:
+            - westus2
+            - centralus
+            - westeurope
+            - northeurope
+            - australiaeast
+            - southeastasia
+          enumNames:
+            - 'West US 2'
+            - 'Central US'
+            - 'West Europe'
+            - 'North Europe'
+            - 'Australia East'
+            - 'Southeast Asia'
+          description: 'Note: East US excluded due to quota limits'
+        resourceGroupName:
+          title: Resource Group Name
+          type: string
+          description: Existing resource group for the cluster
+          pattern: '^rg-[a-zA-Z0-9-]{1,80}$'
+          ui:help: 'Must be an existing resource group. Example: rg-landing-zone-dev'
+        subnetId:
+          title: Subnet ID
+          type: string
+          description: Full Azure resource ID of the subnet for AKS nodes
+          ui:help: 'Example: /subscriptions/{sub-id}/resourceGroups/{rg}/providers/Microsoft.Network/virtualNetworks/{vnet}/subnets/{subnet}'
+        serviceCidr:
+          title: Service CIDR
+          type: string
+          default: "10.101.0.0/16"
+          description: IP range for Kubernetes services (must be unique per cluster)
+          pattern: '^(\d{1,3}\.){3}\d{1,3}\/\d{1,2}$'
+        dnsServiceIp:
+          title: DNS Service IP
+          type: string
+          default: "10.101.0.10"
+          description: IP address for Kubernetes DNS service (must be within Service CIDR)
+          pattern: '^(\d{1,3}\.){3}\d{1,3}$'
+
+  steps:
+    - id: fetch
+      name: Generate Crossplane Claim
+      action: fetch:template
+      input:
+        url: ./skeleton
+        targetPath: infra/crossplane/claims/${{ parameters.clusterName }}
+        values:
+          clusterName: ${{ parameters.clusterName }}
+          teamName: ${{ parameters.teamName }}
+          owner: ${{ parameters.owner }}
+          environment: ${{ parameters.environment }}
+          location: ${{ parameters.location }}
+          resourceGroupName: ${{ parameters.resourceGroupName }}
+          vmSize: ${{ parameters.vmSize }}
+          priority: ${{ parameters.priority }}
+          spotMaxPrice: ${{ parameters.spotMaxPrice }}
+          evictionPolicy: ${{ parameters.evictionPolicy }}
+          nodeCount: ${{ parameters.nodeCount }}
+          minNodeCount: ${{ parameters.minNodeCount }}
+          maxNodeCount: ${{ parameters.maxNodeCount }}
+          enableAutoScaling: ${{ parameters.enableAutoScaling }}
+          kubernetesVersion: ${{ parameters.kubernetesVersion }}
+          subnetId: ${{ parameters.subnetId }}
+          serviceCidr: ${{ parameters.serviceCidr }}
+          dnsServiceIp: ${{ parameters.dnsServiceIp }}
+
+    - id: publish
+      name: Create Pull Request
+      action: publish:github:pull-request
+      input:
+        repoUrl: github.com?owner=crh225&repo=ARMServicePortal
+        branchName: crossplane/cluster-${{ parameters.clusterName }}
+        title: "feat(crossplane): Add ephemeral cluster ${{ parameters.clusterName }}"
+        description: |
+          ## Ephemeral AKS Cluster: ${{ parameters.clusterName }}
+
+          This PR creates a new ephemeral AKS cluster for team **${{ parameters.teamName }}**.
+
+          ### Cluster Configuration
+
+          | Setting | Value |
+          |---------|-------|
+          | **Name** | ${{ parameters.clusterName }} |
+          | **Team** | ${{ parameters.teamName }} |
+          | **Owner** | ${{ parameters.owner }} |
+          | **Environment** | ${{ parameters.environment }} |
+          | **Region** | ${{ parameters.location }} |
+          | **Resource Group** | ${{ parameters.resourceGroupName }} |
+
+          ### Compute
+
+          | Setting | Value |
+          |---------|-------|
+          | **VM Size** | ${{ parameters.vmSize }} |
+          | **Priority** | ${{ parameters.priority }} |
+          | **Initial Nodes** | ${{ parameters.nodeCount }} |
+          | **Autoscaling** | ${{ parameters.minNodeCount }}-${{ parameters.maxNodeCount }} nodes |
+          | **Kubernetes Version** | ${{ parameters.kubernetesVersion }} |
+
+          ### Network
+
+          | Setting | Value |
+          |---------|-------|
+          | **Subnet** | `${{ parameters.subnetId }}` |
+          | **Service CIDR** | ${{ parameters.serviceCidr }} |
+          | **DNS Service IP** | ${{ parameters.dnsServiceIp }} |
+
+          {%- if parameters.priority === 'Spot' %}
+
+          ### ⚠️ Spot Instance Configuration
+
+          This cluster uses **Spot VMs** which are 60-80% cheaper but can be evicted with 30 seconds notice.
+          - **Max Price**: `${{ parameters.spotMaxPrice }}` (-1 = market price)
+          - **Eviction Policy**: ${{ parameters.evictionPolicy }}
+          - **Recommended for**: Dev/test workloads only
+
+          {%- endif %}
+
+          ### What happens when merged?
+
+          1. ArgoCD syncs the Crossplane claim to the mgmt-hub cluster
+          2. Crossplane provisions the AKS cluster in Azure (~5-10 minutes)
+          3. Kubeconfig secret is created in `crossplane-system` namespace
+          4. Cluster appears in Backstage catalog
+
+          ### How to delete this cluster
+
+          To delete, create a new PR that removes the directory:
+          ```bash
+          rm -rf infra/crossplane/claims/${{ parameters.clusterName }}
+          ```
+
+          ---
+          🤖 Created via Backstage Software Template: **team-k8s-cluster**
+        sourcePath: infra/crossplane/claims/${{ parameters.clusterName }}
+        targetPath: infra/crossplane/claims/${{ parameters.clusterName }}
+
+  output:
+    links:
+      - title: View Pull Request
+        url: ${{ steps.publish.output.remoteUrl }}
+        icon: github
+      - title: Azure Portal
+        url: https://portal.azure.com/#@/resource/subscriptions/f989de0f-8697-4a05-8c34-b82c941767c0/resourceGroups/${{ parameters.resourceGroupName }}
+        icon: cloud
+    text:
+      - title: Next Steps
+        content: |
+          ## Cluster: ${{ parameters.clusterName }}
+
+          A pull request has been created for your ephemeral AKS cluster.
+
+          ### After PR is merged:
+
+          1. **ArgoCD syncs** the Crossplane claim (~30 seconds)
+          2. **Crossplane provisions** the AKS cluster in Azure (~5-10 minutes)
+          3. **Kubeconfig secret** is created: `${{ parameters.clusterName }}-kubeconfig` in `crossplane-system` namespace
+
+          ### Get cluster access:
+
+          ```bash
+          # Extract kubeconfig from secret
+          kubectl get secret ${{ parameters.clusterName }}-kubeconfig -n crossplane-system -o jsonpath='{.data.kubeconfig}' | base64 -d > ~/.kube/${{ parameters.clusterName }}.yaml
+
+          # Set context
+          export KUBECONFIG=~/.kube/${{ parameters.clusterName }}.yaml
+          kubectl get nodes
+          ```
+
+          ### Monitor provisioning:
+
+          ```bash
+          # Check Crossplane claim status
+          kubectl get aksclusters.platform.chrishouse.io -n crossplane-system
+
+          # Check Azure cluster status
+          az aks show --name ${{ parameters.clusterName }} --resource-group ${{ parameters.resourceGroupName }}
+          ```
+
+          ### Delete cluster when done:
+
+          To delete the cluster, create a PR that removes this directory:
+          ```bash
+          rm -rf infra/crossplane/claims/${{ parameters.clusterName }}
+          ```
+
+          {%- if parameters.priority === 'Spot' %}
+
+          ### ⚠️ Spot Instance Notice
+
+          This cluster uses Spot VMs which can be evicted. Monitor evictions:
+          ```bash
+          kubectl get events --all-namespaces --field-selector reason=Evicted
+          ```
+          {%- endif %}
