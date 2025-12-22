@@ -76,30 +76,8 @@ spec:
               - type: FromCompositeFieldPath
                 fromFieldPath: spec.dnsServiceIp
                 toFieldPath: spec.forProvider.networkProfile[0].dnsServiceIp
-              # Istio Service Mesh configuration - only applied when serviceMeshEnabled=true
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.serviceMeshEnabled
-                toFieldPath: spec.forProvider.serviceMeshProfile[0].mode
-                transforms:
-                  - type: convert
-                    convert:
-                      toType: string
-                  - type: map
-                    map:
-                      "true": "Istio"
-                      "false": ""
-                policy:
-                  fromFieldPath: Optional
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.serviceMeshExternalIngressEnabled
-                toFieldPath: spec.forProvider.serviceMeshProfile[0].externalIngressGatewayEnabled
-                policy:
-                  fromFieldPath: Optional
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.serviceMeshInternalIngressEnabled
-                toFieldPath: spec.forProvider.serviceMeshProfile[0].internalIngressGatewayEnabled
-                policy:
-                  fromFieldPath: Optional
+              # Service mesh configuration removed from composition
+              # Each cluster claim must explicitly define serviceMeshProfile in spec if needed
               - type: FromCompositeFieldPath
                 fromFieldPath: metadata.name
                 toFieldPath: spec.writeConnectionSecretToRef.name

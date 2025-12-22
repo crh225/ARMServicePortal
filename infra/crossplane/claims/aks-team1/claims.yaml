@@ -11,6 +11,10 @@ metadata:
     description: "Ephemeral AKS cluster for team1"
     created-by: "group:default/crh225"
 spec:
+  # Pin to latest composition revision without serviceMesh bug
+  compositionUpdatePolicy: Manual
+  compositionRevisionRef:
+    name: xaksclusters.platform.chrishouse.io-c62c9ea
   location: eastus
   resourceGroupName: rg-landing-zone-dev
   nodeCount: 1
@@ -19,11 +23,7 @@ spec:
   subnetId: /subscriptions/f989de0f-8697-4a05-8c34-b82c941767c0/resourceGroups/rg-landing-zone-dev/providers/Microsoft.Network/virtualNetworks/vnet-spoke-dev/subnets/AksNodesSubnet
   serviceCidr: "10.102.0.0/16"
   dnsServiceIp: "10.102.0.10"
-  # Autoscaling configuration
   minNodeCount: 1
   maxNodeCount: 3
   enableAutoScaling: true
-  # Service mesh disabled - spoke clusters route through hub cluster's Istio ingress
-  serviceMeshEnabled: false
-  serviceMeshExternalIngressEnabled: false
-  serviceMeshInternalIngressEnabled: false
+  # serviceMesh fields removed - not supported in composition revision c62c9ea
