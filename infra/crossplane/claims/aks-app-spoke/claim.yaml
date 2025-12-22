@@ -4,6 +4,10 @@ metadata:
   name: aks-app-spoke
   namespace: crossplane-system
 spec:
+  # Pin to specific composition revision to prevent automatic updates
+  compositionUpdatePolicy: Manual
+  compositionRevisionRef:
+    name: xaksclusters.platform.chrishouse.io-ba6e116
   location: eastus
   resourceGroupName: rg-landing-zone-dev
   nodeCount: 2
