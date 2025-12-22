@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/part-of: crossplane
     app.kubernetes.io/component: platform
 spec:
-  project: default
+  project: platform-infrastructure
 
   source:
     repoURL: https://github.com/crh225/ARMServicePortal.git

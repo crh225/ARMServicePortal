@@ -11,7 +11,7 @@ metadata:
     app.kubernetes.io/part-of: platform
     app.kubernetes.io/component: microservices
 spec:
-  project: default
+  project: applications
 
   source:
     repoURL: https://github.com/crh225/ARMServicePortal.git

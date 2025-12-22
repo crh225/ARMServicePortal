@@ -11,7 +11,7 @@ metadata:
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
-  project: default
+  project: applications
   source:
     repoURL: https://github.com/crh225/theblog.git
     targetRevision: main

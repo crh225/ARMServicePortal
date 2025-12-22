@@ -34,7 +34,7 @@ spec:
       annotations:
         argocd.argoproj.io/manifest-generate-paths: '{{ .path.path }}'
     spec:
-      project: default
+      project: infrastructure-claims
 
       source:
         repoURL: https://github.com/crh225/ARMServicePortal.git

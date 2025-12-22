@@ -7,7 +7,7 @@ metadata:
   name: istio-spoke
   namespace: argocd
 spec:
-  project: default
+  project: platform-infrastructure
 
   source:
     repoURL: https://github.com/crh225/ARMServicePortal.git
