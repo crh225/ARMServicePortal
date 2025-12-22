@@ -1,0 +1,128 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xnamespaces.platform.chrishouse.io
+spec:
+  group: platform.chrishouse.io
+  names:
+    kind: XNamespace
+    plural: xnamespaces
+    shortNames:
+      - xns
+  claimNames:
+    kind: NamespaceClaim
+    plural: namespaceclaims
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              required:
+                - parameters
+              properties:
+                parameters:
+                  type: object
+                  required:
+                    - namespaceName
+                  properties:
+                    targetCluster:
+                      type: string
+                      description: "Target cluster ProviderConfig (default, app-spoke, shared-dev-cluster, etc)"
+                      default: "app-spoke"
+                    namespaceName:
+                      type: string
+                      description: "Kubernetes namespace name to create"
+                    labels:
+                      type: object
+                      additionalProperties:
+                        type: string
+                      description: "Additional labels for namespace"
+                    enableResourceQuota:
+                      type: boolean
+                      description: "Enable ResourceQuota for namespace"
+                      default: true
+                    enableNetworkPolicy:
+                      type: boolean
+                      description: "Enable default-deny NetworkPolicy"
+                      default: true
+                    enableLimitRange:
+                      type: boolean
+                      description: "Enable LimitRange for default resource limits"
+                      default: true
+                    resourceQuota:
+                      type: object
+                      description: "ResourceQuota limits for namespace"
+                      properties:
+                        requestsCpu:
+                          type: string
+                          description: "Total CPU requests allowed"
+                          default: "2"
+                        requestsMemory:
+                          type: string
+                          description: "Total memory requests allowed"
+                          default: "4Gi"
+                        limitsCpu:
+                          type: string
+                          description: "Total CPU limits allowed"
+                          default: "4"
+                        limitsMemory:
+                          type: string
+                          description: "Total memory limits allowed"
+                          default: "8Gi"
+                        pods:
+                          type: integer
+                          description: "Maximum number of pods"
+                          default: 50
+                    limitRange:
+                      type: object
+                      description: "Default pod/container limits"
+                      properties:
+                        cpuRequest:
+                          type: string
+                          description: "Default CPU request per container"
+                          default: "100m"
+                        cpuLimit:
+                          type: string
+                          description: "Default CPU limit per container"
+                          default: "500m"
+                        memoryRequest:
+                          type: string
+                          description: "Default memory request per container"
+                          default: "128Mi"
+                        memoryLimit:
+                          type: string
+                          description: "Default memory limit per container"
+                          default: "512Mi"
+            status:
+              type: object
+              properties:
+                namespaceName:
+                  type: string
+                  description: "The name of the created namespace"
+                clusterName:
+                  type: string
+                  description: "The target cluster where namespace was created"
+                quotaStatus:
+                  type: string
+                  description: "Resource quota status"
+      additionalPrinterColumns:
+        - name: Namespace
+          type: string
+          jsonPath: ".spec.parameters.namespaceName"
+        - name: Cluster
+          type: string
+          jsonPath: ".spec.parameters.targetCluster"
+        - name: Ready
+          type: string
+          jsonPath: ".status.conditions[?(@.type=='Ready')].status"
+        - name: Synced
+          type: string
+          jsonPath: ".status.conditions[?(@.type=='Synced')].status"
+        - name: Age
+          type: date
+          jsonPath: ".metadata.creationTimestamp"

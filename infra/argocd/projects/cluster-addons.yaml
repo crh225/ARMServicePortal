@@ -20,6 +20,8 @@ spec:
       server: https://kubernetes.default.svc
     - namespace: '*'
       name: aks-app-spoke
+    - namespace: '*'
+      name: shared-dev-cluster
 
   # Allow most cluster resources for bootstrap
   clusterResourceWhitelist:

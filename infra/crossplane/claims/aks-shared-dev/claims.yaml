@@ -1,0 +1,34 @@
+apiVersion: platform.chrishouse.io/v1alpha1
+kind: AKSCluster
+metadata:
+  name: aks-shared-dev
+  namespace: crossplane-system
+  labels:
+    purpose: shared-development
+    cost-center: platform
+    environment: dev
+    managed-by: crossplane
+  annotations:
+    description: "Shared development cluster for multi-tenant workloads"
+    created-by: "platform-team"
+spec:
+  # Location and networking
+  location: eastus
+  resourceGroupName: rg-landing-zone-dev
+  subnetId: /subscriptions/f989de0f-8697-4a05-8c34-b82c941767c0/resourceGroups/rg-landing-zone-dev/providers/Microsoft.Network/virtualNetworks/vnet-spoke-dev/subnets/AksNodesSubnet
+
+  # Network configuration (unique CIDR to avoid conflicts)
+  # aks-app-spoke uses 10.101.0.0/16
+  # team1 uses 10.102.0.0/16
+  # shared-dev uses 10.103.0.0/16
+  serviceCidr: "10.103.0.0/16"
+  dnsServiceIp: "10.103.0.10"
+
+  # Node pool configuration (optimized for shared dev workloads)
+  nodeCount: 3
+  minNodeCount: 1
+  maxNodeCount: 6
+  enableAutoScaling: true
+  vmSize: Standard_D2s_v3  
+  priority: Regular
+  kubernetesVersion: "1.32"

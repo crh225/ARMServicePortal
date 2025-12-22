@@ -1,0 +1,143 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xnamespace
+  labels:
+    crossplane.io/xrd: xnamespaces.platform.chrishouse.io
+spec:
+  compositeTypeRef:
+    apiVersion: platform.chrishouse.io/v1alpha1
+    kind: XNamespace
+  mode: Pipeline
+  pipeline:
+    - step: namespace-resources
+      functionRef:
+        name: function-go-templating
+      input:
+        apiVersion: gotemplating.fn.crossplane.io/v1beta1
+        kind: GoTemplate
+        source: Inline
+        inline:
+          template: |
+            {{- $xr := .observed.composite.resource }}
+            {{- $p := $xr.spec.parameters }}
+            {{- $nsName := $p.namespaceName }}
+            {{- $labels := $p.labels | default dict }}
+
+            # Namespace
+            ---
+            apiVersion: kubernetes.crossplane.io/v1alpha2
+            kind: Object
+            metadata:
+              name: {{ $xr.metadata.name }}-namespace
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: namespace
+            spec:
+              providerConfigRef:
+                name: {{ default "app-spoke" $p.targetCluster }}
+              forProvider:
+                manifest:
+                  apiVersion: v1
+                  kind: Namespace
+                  metadata:
+                    name: {{ $nsName }}
+                    labels:
+                      app.kubernetes.io/managed-by: crossplane
+                      {{- range $key, $value := $labels }}
+                      {{ $key }}: "{{ $value }}"
+                      {{- end }}
+
+            # ResourceQuota (optional)
+            {{- if $p.enableResourceQuota }}
+            ---
+            apiVersion: kubernetes.crossplane.io/v1alpha2
+            kind: Object
+            metadata:
+              name: {{ $xr.metadata.name }}-quota
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: resourcequota
+            spec:
+              providerConfigRef:
+                name: {{ default "app-spoke" $p.targetCluster }}
+              forProvider:
+                manifest:
+                  apiVersion: v1
+                  kind: ResourceQuota
+                  metadata:
+                    name: {{ $nsName }}-quota
+                    namespace: {{ $nsName }}
+                    labels:
+                      app.kubernetes.io/managed-by: crossplane
+                  spec:
+                    hard:
+                      requests.cpu: {{ default "2" (index $p.resourceQuota "requestsCpu") }}
+                      requests.memory: {{ default "4Gi" (index $p.resourceQuota "requestsMemory") }}
+                      limits.cpu: {{ default "4" (index $p.resourceQuota "limitsCpu") }}
+                      limits.memory: {{ default "8Gi" (index $p.resourceQuota "limitsMemory") }}
+                      pods: "{{ default 50 (index $p.resourceQuota "pods") }}"
+            {{- end }}
+
+            # LimitRange (optional)
+            {{- if $p.enableLimitRange }}
+            ---
+            apiVersion: kubernetes.crossplane.io/v1alpha2
+            kind: Object
+            metadata:
+              name: {{ $xr.metadata.name }}-limits
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: limitrange
+            spec:
+              providerConfigRef:
+                name: {{ default "app-spoke" $p.targetCluster }}
+              forProvider:
+                manifest:
+                  apiVersion: v1
+                  kind: LimitRange
+                  metadata:
+                    name: {{ $nsName }}-limits
+                    namespace: {{ $nsName }}
+                    labels:
+                      app.kubernetes.io/managed-by: crossplane
+                  spec:
+                    limits:
+                      - type: Container
+                        default:
+                          cpu: {{ default "500m" (index $p.limitRange "cpuLimit") }}
+                          memory: {{ default "512Mi" (index $p.limitRange "memoryLimit") }}
+                        defaultRequest:
+                          cpu: {{ default "100m" (index $p.limitRange "cpuRequest") }}
+                          memory: {{ default "128Mi" (index $p.limitRange "memoryRequest") }}
+                        max:
+                          cpu: "2"
+                          memory: "4Gi"
+                        min:
+                          cpu: "50m"
+                          memory: "64Mi"
+            {{- end }}
+
+            # NetworkPolicy (optional)
+            {{- if $p.enableNetworkPolicy }}
+            ---
+            apiVersion: kubernetes.crossplane.io/v1alpha2
+            kind: Object
+            metadata:
+              name: {{ $xr.metadata.name }}-netpolicy
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: networkpolicy
+            spec:
+              providerConfigRef:
+                name: {{ default "app-spoke" $p.targetCluster }}
+              forProvider:
+                manifest:
+                  apiVersion: networking.k8s.io/v1
+                  kind: NetworkPolicy
+                  metadata:
+                    name: default-deny-ingress
+                    namespace: {{ $nsName }}
+                    labels:
+                      app.kubernetes.io/managed-by: crossplane
+                  spec:
+                    podSelector: {}
+                    policyTypes:
+                      - Ingress
+            {{- end }}

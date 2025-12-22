@@ -1,0 +1,14 @@
+# ProviderConfig for Shared Dev Cluster
+# Allows Crossplane to deploy Kubernetes resources to the shared-dev-cluster
+---
+apiVersion: kubernetes.crossplane.io/v1alpha1
+kind: ProviderConfig
+metadata:
+  name: shared-dev-cluster
+spec:
+  credentials:
+    source: Secret
+    secretRef:
+      namespace: crossplane-system
+      name: aks-shared-dev-kubeconfig
+      key: kubeconfig

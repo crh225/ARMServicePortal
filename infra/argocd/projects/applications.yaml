@@ -22,6 +22,8 @@ spec:
       server: https://kubernetes.default.svc
     - namespace: '*'
       name: aks-app-spoke
+    - namespace: '*'
+      name: shared-dev-cluster
     - namespace: argocd  # For app-of-apps pattern
       server: https://kubernetes.default.svc
 
