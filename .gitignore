@@ -159,3 +159,4 @@ infra/kubernetes/argocd-spoke-secret.yaml
 
 PROJECT.MD
 .ai/cluster-recreation-automation-plan.md
+.ai/developer-portal-golden-paths-plan.md

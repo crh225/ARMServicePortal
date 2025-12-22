@@ -1,0 +1,22 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: ${{ values.serviceName }}
+  description: ${{ values.description }}
+  tags:
+    - nodejs
+    - microservice
+    - golden-path
+  annotations:
+    github.com/project-slug: crh225/${{ values.serviceName }}
+    backstage.io/kubernetes-id: ${{ values.serviceName }}
+    backstage.io/kubernetes-namespace: ${{ values.namespace }}
+    backstage.io/kubernetes-cluster: shared-dev-cluster
+    argocd/app-name: ${{ values.serviceName }}
+spec:
+  type: service
+  lifecycle: experimental
+  owner: ${{ values.team }}
+  system: platform
+  providesApis: []
+  consumesApis: []

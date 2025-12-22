@@ -1,0 +1,59 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ${{ values.serviceName }}
+  namespace: argocd
+  labels:
+    team: ${{ values.team }}
+    environment: dev
+    created-by: backstage
+    template: golden-path
+    app.kubernetes.io/part-of: ${{ values.team }}
+  annotations:
+    description: "${{ values.description }}"
+    created-via: "backstage-golden-path-template"
+    repository: "${{ values.repoUrl }}"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: applications
+
+  source:
+    repoURL: ${{ values.repoUrl }}
+    targetRevision: main
+    path: helm
+    helm:
+      releaseName: ${{ values.serviceName }}
+      valueFiles:
+        - values.yaml
+      parameters:
+        - name: image.repository
+          value: ghcr.io/crh225/${{ values.serviceName }}
+        - name: image.tag
+          value: "latest"
+        - name: namespace
+          value: ${{ values.namespace }}
+
+  destination:
+    name: ${{ values.targetCluster }}
+    namespace: ${{ values.namespace }}
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=false  # Namespace created by NamespaceClaim
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+  # Health assessment
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas  # Allow manual scaling
