@@ -11,7 +11,7 @@ metadata:
     description: "Ephemeral AKS cluster for team1"
     created-by: "group:default/crh225"
 spec:
-  location: westus2
+  location: eastus
   resourceGroupName: rg-landing-zone-dev
   nodeCount: 1
   vmSize: Standard_B2s
