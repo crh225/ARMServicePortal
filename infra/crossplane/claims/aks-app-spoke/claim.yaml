@@ -4,7 +4,6 @@ metadata:
   name: aks-app-spoke
   namespace: crossplane-system
 spec:
-  deletionPolicy: Orphan
   compositionUpdatePolicy: Manual
   compositionRevisionRef:
     name: xaksclusters.platform.chrishouse.io-ba6e116
