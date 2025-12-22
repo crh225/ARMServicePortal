@@ -4,8 +4,6 @@ metadata:
   name: nodejs-goldenpath
   title: 🥚 Golden Path - Node.js Microservice
   description: Get started fast! Deploy a Node.js microservice to the shared dev cluster in under 5 minutes with just 3 fields.
-  annotations:
-    backstage.io/template-icon: https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/nodedotjs.svg
   tags:
     - nodejs
     - quickstart

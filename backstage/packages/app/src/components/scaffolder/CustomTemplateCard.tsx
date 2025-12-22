@@ -210,6 +210,17 @@ const serviceIcons: Record<string, { icon: string; color: string; bgColor: strin
     color: '#6C4DC4',
     bgColor: 'rgba(108, 77, 196, 0.1)',
   },
+  'team-k8s-cluster': {
+    icon: 'https://raw.githubusercontent.com/cncf/artwork/main/projects/crossplane/icon/color/crossplane-icon-color.svg',
+    color: '#6C4DC4',
+    bgColor: 'rgba(108, 77, 196, 0.1)',
+  },
+  // Golden Path - Quick Start template
+  'nodejs-goldenpath': {
+    icon: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48ZWxsaXBzZSBjeD0iMjU2IiBjeT0iMjgwIiByeD0iMTYwIiByeT0iMjAwIiBmaWxsPSIjRkZENzAwIi8+PGVsbGlwc2UgY3g9IjI1NiIgY3k9IjI2MCIgcng9IjEyMCIgcnk9IjE1MCIgZmlsbD0iI0ZGQUIwMCIvPjxlbGxpcHNlIGN4PSIyMjAiIGN5PSIyMjAiIHJ4PSI0MCIgcnk9IjUwIiBmaWxsPSIjRkZGRkNDIiBvcGFjaXR5PSIwLjYiLz48L3N2Zz4=',
+    color: '#FFD700',
+    bgColor: 'rgba(255, 215, 0, 0.15)',
+  },
 };
 
 // Default icon for unknown templates
