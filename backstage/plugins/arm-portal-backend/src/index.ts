@@ -80,7 +80,7 @@ export const armPortalScaffolderModule = createBackendModule({
         }));
 
         // Register the GitHub repository configuration action
-        scaffolder.addActions(configureGitHubRepoAction());
+        scaffolder.addActions(configureGitHubRepoAction({ token: githubToken }));
       },
     });
   },

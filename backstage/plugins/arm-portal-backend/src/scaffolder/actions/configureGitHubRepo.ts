@@ -5,7 +5,7 @@ import { Octokit } from '@octokit/rest';
  * Custom Backstage action to configure GitHub repository settings
  * Automatically sets workflow permissions to 'write' to enable GHCR package publishing
  */
-export const configureGitHubRepoAction = () => {
+export const configureGitHubRepoAction = (options?: { token?: string }) => {
   return createTemplateAction<{
     repoUrl: string;
     token?: string;
@@ -42,8 +42,8 @@ export const configureGitHubRepoAction = () => {
       const [, owner, repo] = match;
       ctx.logger.info(`Configuring repository: ${owner}/${repo}`);
 
-      // Get GitHub token from integration or input
-      const githubToken = token || ctx.secrets?.githubToken;
+      // Get GitHub token from input, options, or integration (in order of precedence)
+      const githubToken = token || options?.token || ctx.secrets?.githubToken;
       if (!githubToken) {
         throw new Error('No GitHub token available. Please provide a token or configure GitHub integration.');
       }
