@@ -132,6 +132,9 @@ resource "azurerm_automation_schedule" "start_aks" {
 
   week_days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
 
+  lifecycle {
+    ignore_changes = [start_time]
+  }
 }
 
 # Schedule to stop AKS at 9pm EST (02:00 UTC next day) - weekdays only
@@ -147,6 +150,10 @@ resource "azurerm_automation_schedule" "stop_aks" {
   description = "Stop AKS cluster at 9pm EST on weekdays"
 
   week_days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+
+  lifecycle {
+    ignore_changes = [start_time]
+  }
 }
 
 # Link start runbook to schedule
