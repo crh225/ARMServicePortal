@@ -11,6 +11,7 @@ import { createGitHubSecretsAction } from './actions/github-secrets';
 import { createArgoCdDeleteAction } from './actions/argocd-delete';
 import { createCatalogUnregisterAction } from './actions/catalog-unregister';
 import { createPortNotifyAction } from './actions/port-notify';
+import { configureGitHubRepoAction } from './scaffolder/actions/configureGitHubRepo';
 
 /**
  * Backend module that adds ARM Portal scaffolder actions
@@ -77,6 +78,9 @@ export const armPortalScaffolderModule = createBackendModule({
           clientId: portClientId,
           clientSecret: portClientSecret,
         }));
+
+        // Register the GitHub repository configuration action
+        scaffolder.addActions(configureGitHubRepoAction());
       },
     });
   },

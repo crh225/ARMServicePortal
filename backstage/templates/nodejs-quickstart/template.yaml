@@ -69,7 +69,14 @@ spec:
         defaultBranch: main
         protectDefaultBranch: false
 
-    # Step 3: Create GitOps manifests in infra repo
+    # Step 3: Configure repository permissions for GHCR
+    - id: configure-repo
+      name: Configure Repository Permissions
+      action: armportal:github:configure-repo
+      input:
+        repoUrl: github.com?owner=crh225&repo=${{ parameters.service_name }}
+
+    # Step 4: Create GitOps manifests in infra repo
     - id: create-gitops-pr
       name: Create GitOps Configuration
       action: fetch:template
@@ -84,7 +91,7 @@ spec:
           namespace: ${{ parameters.team | parseEntityRef | pick('name') }}-dev
           targetCluster: shared-dev-cluster
 
-    # Step 4: Create pull request in ARMServicePortal repo
+    # Step 5: Create pull request in ARMServicePortal repo
     - id: publish-gitops
       name: Submit GitOps PR
       action: publish:github:pull-request
@@ -111,7 +118,7 @@ spec:
         sourcePath: ./gitops
         targetPath: infra/quickstart-services/${{ parameters.service_name }}
 
-    # Step 5: Register in Backstage catalog
+    # Step 6: Register in Backstage catalog
     - id: register-catalog
       name: Register in Catalog
       action: catalog:register
