@@ -1,0 +1,33 @@
+apiVersion: platform.chrishouse.io/v1alpha1
+kind: AKSCluster
+metadata:
+  name: aks-team1
+  namespace: crossplane-system
+  labels:
+    team: team1
+    environment: dev
+    ephemeral: "true"
+  annotations:
+    description: "Ephemeral AKS cluster for team1"
+    created-by: "group:default/crh225"
+spec:
+  location: westus2
+  resourceGroupName: rg-landing-zone-dev
+  nodeCount: 1
+  vmSize: Standard_B2s
+  kubernetesVersion: "1.32"
+  subnetId: /subscriptions/f989de0f-8697-4a05-8c34-b82c941767c0/resourceGroups/rg-landing-zone-dev/providers/Microsoft.Network/virtualNetworks/vnet-spoke-dev/subnets/AksNodesSubnet
+  serviceCidr: "10.102.0.0/16"
+  dnsServiceIp: "10.102.0.10"
+  # Autoscaling configuration
+  minNodeCount: 1
+  maxNodeCount: 3
+  enableAutoScaling: true
+  # Spot instance configuration
+  priority: Spot
+  spotMaxPrice: -1
+  evictionPolicy: Delete
+  # Service mesh disabled for ephemeral clusters
+  serviceMeshEnabled: false
+  serviceMeshExternalIngressEnabled: false
+  serviceMeshInternalIngressEnabled: false
