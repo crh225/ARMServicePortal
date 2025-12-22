@@ -20,7 +20,7 @@ const portalColors = {
   bgChip: 'rgba(148, 163, 184, 0.12)',
   bgHover: 'rgba(148, 163, 184, 0.12)',
   bgHoverSubtle: 'rgba(148, 163, 184, 0.06)',
-  bgMuted: '#f9fafb',
+  bgMuted: '#ffffff',
   bgNavPill: '#e5e7eb',
 
   textMain: '#0f172a',
