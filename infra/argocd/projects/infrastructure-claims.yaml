@@ -16,9 +16,7 @@ spec:
     - https://github.com/crh225/ARMServicePortal.git
 
   destinations:
-    - namespace: platform-claims
-      server: https://kubernetes.default.svc
-    - namespace: argocd
+    - namespace: '*'
       server: https://kubernetes.default.svc
 
   # Allow Crossplane claim resources
