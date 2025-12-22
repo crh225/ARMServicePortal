@@ -2,8 +2,8 @@ apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
   name: team-k8s-cluster
-  title: Team Kubernetes Cluster
-  description: Provision an ephemeral AKS cluster for team development and testing. Creates a PR to the GitOps repo with the Crossplane claim.
+  title: Team Kubernetes Cluster (Spoke)
+  description: Provision an ephemeral spoke AKS cluster for team development and testing. Clusters connect through the hub for ingress. Creates a PR to the GitOps repo with the Crossplane claim.
   tags:
     - kubernetes
     - aks
@@ -218,6 +218,7 @@ spec:
           | **Subnet** | `${{ parameters.subnetId }}` |
           | **Service CIDR** | ${{ parameters.serviceCidr }} |
           | **DNS Service IP** | ${{ parameters.dnsServiceIp }} |
+          | **Service Mesh** | Disabled (ingress via hub cluster) |
 
           ### What happens when merged?
 
@@ -225,6 +226,8 @@ spec:
           2. Crossplane provisions the AKS cluster in Azure (~5-10 minutes)
           3. Kubeconfig secret is created in `crossplane-system` namespace
           4. Cluster appears in Backstage catalog
+
+          **Note**: This is a spoke cluster. Services are accessed via the hub cluster's Istio ingress gateway, not directly.
 
           ### How to delete this cluster
 

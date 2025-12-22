@@ -23,7 +23,7 @@ spec:
   minNodeCount: ${{ values.minNodeCount }}
   maxNodeCount: ${{ values.maxNodeCount }}
   enableAutoScaling: ${{ values.enableAutoScaling }}
-  # Service mesh disabled for ephemeral clusters
+  # Service mesh disabled - spoke clusters route through hub cluster's Istio ingress
   serviceMeshEnabled: false
   serviceMeshExternalIngressEnabled: false
   serviceMeshInternalIngressEnabled: false

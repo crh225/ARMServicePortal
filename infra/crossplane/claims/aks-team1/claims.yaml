@@ -23,7 +23,7 @@ spec:
   minNodeCount: 1
   maxNodeCount: 3
   enableAutoScaling: true
-  # Service mesh disabled for ephemeral clusters
+  # Service mesh disabled - spoke clusters route through hub cluster's Istio ingress
   serviceMeshEnabled: false
   serviceMeshExternalIngressEnabled: false
   serviceMeshInternalIngressEnabled: false
