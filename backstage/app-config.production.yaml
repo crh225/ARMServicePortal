@@ -192,6 +192,10 @@ catalog:
       target: ./templates/team-k8s-cluster/template.yaml
       rules:
         - allow: [Template]
+    - type: file
+      target: ./templates/nodejs-quickstart/template.yaml
+      rules:
+        - allow: [Template]
 
     # ARM Portal Documentation
     - type: url

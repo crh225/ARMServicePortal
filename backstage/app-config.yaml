@@ -154,6 +154,10 @@ catalog:
       target: ../../templates/team-k8s-cluster/template.yaml
       rules:
         - allow: [Template]
+    - type: file
+      target: ../../templates/nodejs-quickstart/template.yaml
+      rules:
+        - allow: [Template]
 
     # GitHub Entity Provider - Auto-discover provisioned infrastructure resources
     # This discovers catalog-info.yaml files in the infra directories
