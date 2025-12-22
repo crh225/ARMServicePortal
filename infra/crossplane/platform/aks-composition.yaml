@@ -87,6 +87,7 @@ spec:
                   - type: map
                     map:
                       "true": "Istio"
+                      "false": "Disabled"
                 policy:
                   fromFieldPath: Optional
               - type: FromCompositeFieldPath
