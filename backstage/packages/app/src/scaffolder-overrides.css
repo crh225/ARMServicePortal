@@ -134,10 +134,6 @@
   z-index: 1 !important;
 }
 
-/* Fix label position for form control labels */
-[class*="MuiInputLabel-formControl"] {
-  transform: translate(14px, 18px) scale(1) !important;
-}
 
 /* Shrunk/focused state - label floats above border */
 [class*="MuiInputLabel-shrink"],
