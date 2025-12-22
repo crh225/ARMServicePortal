@@ -10,5 +10,5 @@ spec:
     source: Secret
     secretRef:
       namespace: crossplane-system
-      name: aks-shared-dev-kubeconfig
+      name: aks-shared-dev-m4vw8-kubeconfig
       key: kubeconfig
