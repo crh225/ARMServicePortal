@@ -23,10 +23,6 @@ spec:
   minNodeCount: 1
   maxNodeCount: 3
   enableAutoScaling: true
-  # Spot instance configuration
-  priority: Spot
-  spotMaxPrice: -1
-  evictionPolicy: Delete
   # Service mesh disabled for ephemeral clusters
   serviceMeshEnabled: false
   serviceMeshExternalIngressEnabled: false

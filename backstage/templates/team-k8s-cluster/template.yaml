@@ -57,7 +57,6 @@ spec:
     - title: Compute Configuration
       required:
         - vmSize
-        - priority
         - nodeCount
       properties:
         vmSize:
@@ -72,34 +71,7 @@ spec:
             - 'B2s - 2 vCPU, 4 GB RAM (~$30/mo)'
             - 'B2ms - 2 vCPU, 8 GB RAM (~$60/mo)'
             - 'D2s_v3 - 2 vCPU, 8 GB RAM (~$70/mo)'
-        priority:
-          title: VM Priority
-          type: string
-          default: Spot
-          enum:
-            - Regular
-            - Spot
-          enumNames:
-            - 'Regular - Guaranteed availability'
-            - 'Spot - Low-cost, may be evicted (60-80% cheaper)'
-          description: Spot instances are recommended for ephemeral dev clusters
-        spotMaxPrice:
-          title: Max Spot Price
-          type: number
-          default: -1
-          description: Maximum price per hour (-1 means market price, recommended for dev)
-          ui:widget: hidden
-        evictionPolicy:
-          title: Eviction Policy
-          type: string
-          default: Delete
-          enum:
-            - Delete
-            - Deallocate
-          enumNames:
-            - 'Delete - Remove VM when evicted'
-            - 'Deallocate - Stop VM when evicted'
-          ui:widget: hidden
+          description: Note - Spot instances are not supported on AKS default node pools
         nodeCount:
           title: Initial Node Count
           type: integer
@@ -195,9 +167,6 @@ spec:
           location: ${{ parameters.location }}
           resourceGroupName: ${{ parameters.resourceGroupName }}
           vmSize: ${{ parameters.vmSize }}
-          priority: ${{ parameters.priority }}
-          spotMaxPrice: ${{ parameters.spotMaxPrice }}
-          evictionPolicy: ${{ parameters.evictionPolicy }}
           nodeCount: ${{ parameters.nodeCount }}
           minNodeCount: ${{ parameters.minNodeCount }}
           maxNodeCount: ${{ parameters.maxNodeCount }}
@@ -235,7 +204,6 @@ spec:
           | Setting | Value |
           |---------|-------|
           | **VM Size** | ${{ parameters.vmSize }} |
-          | **Priority** | ${{ parameters.priority }} |
           | **Initial Nodes** | ${{ parameters.nodeCount }} |
           | **Autoscaling** | ${{ parameters.minNodeCount }}-${{ parameters.maxNodeCount }} nodes |
           | **Kubernetes Version** | ${{ parameters.kubernetesVersion }} |
@@ -247,17 +215,6 @@ spec:
           | **Subnet** | `${{ parameters.subnetId }}` |
           | **Service CIDR** | ${{ parameters.serviceCidr }} |
           | **DNS Service IP** | ${{ parameters.dnsServiceIp }} |
-
-          {%- if parameters.priority === 'Spot' %}
-
-          ### ⚠️ Spot Instance Configuration
-
-          This cluster uses **Spot VMs** which are 60-80% cheaper but can be evicted with 30 seconds notice.
-          - **Max Price**: `${{ parameters.spotMaxPrice }}` (-1 = market price)
-          - **Eviction Policy**: ${{ parameters.evictionPolicy }}
-          - **Recommended for**: Dev/test workloads only
-
-          {%- endif %}
 
           ### What happens when merged?
 

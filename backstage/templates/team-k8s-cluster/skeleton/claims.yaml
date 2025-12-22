@@ -23,12 +23,6 @@ spec:
   minNodeCount: ${{ values.minNodeCount }}
   maxNodeCount: ${{ values.maxNodeCount }}
   enableAutoScaling: ${{ values.enableAutoScaling }}
-  # Spot instance configuration
-  priority: ${{ values.priority }}
-  {%- if values.priority === 'Spot' %}
-  spotMaxPrice: ${{ values.spotMaxPrice }}
-  evictionPolicy: ${{ values.evictionPolicy }}
-  {%- endif %}
   # Service mesh disabled for ephemeral clusters
   serviceMeshEnabled: false
   serviceMeshExternalIngressEnabled: false

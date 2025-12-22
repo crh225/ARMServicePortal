@@ -64,17 +64,6 @@ spec:
               - type: FromCompositeFieldPath
                 fromFieldPath: spec.vmSize
                 toFieldPath: spec.forProvider.defaultNodePool[0].vmSize
-              # Spot instance configuration
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.priority
-                toFieldPath: spec.forProvider.defaultNodePool[0].priority
-                policy:
-                  fromFieldPath: Optional
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.spotMaxPrice
-                toFieldPath: spec.forProvider.defaultNodePool[0].spotMaxPrice
-                policy:
-                  fromFieldPath: Optional
               - type: FromCompositeFieldPath
                 fromFieldPath: spec.kubernetesVersion
                 toFieldPath: spec.forProvider.kubernetesVersion
