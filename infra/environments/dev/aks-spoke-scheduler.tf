@@ -21,7 +21,7 @@ resource "azurerm_automation_account" "aks_spoke_scheduler" {
 
 # Data source to find the Crossplane-managed spoke cluster
 data "azurerm_kubernetes_cluster" "spoke" {
-  name                = "aks-app-spoke-mw4q4-ac97e2e2b0ef"
+  name                = "aks-app-spoke-hsn7p-0e18fb09d1f7"
   resource_group_name = azurerm_resource_group.landing_zone_dev.name
 }
 
@@ -136,6 +136,10 @@ resource "azurerm_automation_schedule" "start_aks_spoke" {
   description             = "Start AKS spoke cluster at 7:30am EST on weekdays"
 
   week_days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+
+  lifecycle {
+    ignore_changes = [start_time]
+  }
 }
 
 # Schedule to stop AKS spoke at 11:30pm EST - weekdays only
@@ -150,6 +154,10 @@ resource "azurerm_automation_schedule" "stop_aks_spoke" {
   description             = "Stop AKS spoke cluster at 11:30pm EST on weekdays"
 
   week_days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+
+  lifecycle {
+    ignore_changes = [start_time]
+  }
 }
 
 # Link start runbook to schedule

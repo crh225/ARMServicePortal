@@ -66,7 +66,7 @@ spec:
         allowedHosts: ['github.com']
         description: ${{ parameters.description }}
         repoUrl: github.com?owner=crh225&repo=${{ parameters.service_name }}
-        repoVisibility: private
+        repoVisibility: public
         defaultBranch: main
         protectDefaultBranch: false
 
