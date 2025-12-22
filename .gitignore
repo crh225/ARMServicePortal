@@ -158,3 +158,4 @@ infra/kubernetes/argocd-spoke-secret.yaml
 **/argocd-*-secret.yaml
 
 PROJECT.MD
+.ai/cluster-recreation-automation-plan.md
