@@ -1,0 +1,40 @@
+# Argo CD App-of-Apps for Quick Start Services
+# Syncs all Application manifests from infra/quickstart-services/*/
+# Each directory contains an argocd-application.yaml that defines the service deployment
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: quickstart-services
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: platform
+    app.kubernetes.io/component: quickstart-services
+spec:
+  project: applications
+
+  source:
+    repoURL: https://github.com/crh225/ARMServicePortal.git
+    targetRevision: main
+    path: infra/quickstart-services
+    directory:
+      recurse: true
+      include: '*/argocd-application.yaml'
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: true  # Allow empty directory initially
+    syncOptions:
+      - CreateNamespace=false
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
