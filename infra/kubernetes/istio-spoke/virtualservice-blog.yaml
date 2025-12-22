@@ -7,7 +7,6 @@ spec:
   hosts:
     - "blog.chrishouse.io"
   gateways:
-    - internal-gateway
     - external-gateway
   http:
     - route:

@@ -7,7 +7,6 @@ spec:
   hosts:
     - "portal.chrishouse.io"
   gateways:
-    - internal-gateway
     - external-gateway
   http:
     - route:
