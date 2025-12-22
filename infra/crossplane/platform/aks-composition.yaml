@@ -76,11 +76,6 @@ spec:
                 policy:
                   fromFieldPath: Optional
               - type: FromCompositeFieldPath
-                fromFieldPath: spec.evictionPolicy
-                toFieldPath: spec.forProvider.defaultNodePool[0].evictionPolicy
-                policy:
-                  fromFieldPath: Optional
-              - type: FromCompositeFieldPath
                 fromFieldPath: spec.kubernetesVersion
                 toFieldPath: spec.forProvider.kubernetesVersion
               - type: FromCompositeFieldPath
