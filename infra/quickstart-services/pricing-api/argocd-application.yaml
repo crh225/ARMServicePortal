@@ -33,6 +33,8 @@ spec:
           value: "latest"
         - name: namespace
           value: red-dev
+        - name: serviceMonitor.enabled
+          value: "false"
 
   destination:
     name: shared-dev-cluster

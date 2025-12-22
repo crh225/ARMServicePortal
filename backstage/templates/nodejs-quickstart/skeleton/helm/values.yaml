@@ -43,7 +43,7 @@ readinessProbe:
   failureThreshold: 3
 
 serviceMonitor:
-  enabled: true
+  enabled: false  # Set to true after installing Prometheus Operator
   interval: 30s
   path: /metrics
 
