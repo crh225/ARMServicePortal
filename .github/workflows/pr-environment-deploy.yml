@@ -56,7 +56,7 @@ jobs:
         run: |
           az aks get-credentials \
             --resource-group rg-landing-zone-dev \
-            --name aks-app-spoke-mw4q4-ac97e2e2b0ef \
+            --name aks-app-spoke-hsn7p-0e18fb09d1f7 \
             --overwrite-existing
 
       - name: Create PR namespace and copy secrets

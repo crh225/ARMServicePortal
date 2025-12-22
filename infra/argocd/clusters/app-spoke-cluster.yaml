@@ -12,7 +12,7 @@ metadata:
 type: Opaque
 stringData:
   name: app-spoke-dev
-  server: "https://aks-app-spoke.hcp.eastus.azmk8s.io:443"
+  server: "https://aks-app-spoke-hsn7p-ln5m3b7h.hcp.eastus.azmk8s.io:443"
   # Config contains authentication details
   # This is a placeholder - populate with actual cluster credentials after creation
   config: |

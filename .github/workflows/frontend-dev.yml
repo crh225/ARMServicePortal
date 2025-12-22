@@ -63,7 +63,7 @@ jobs:
     env:
       ACR_NAME: armportalacre4k9
       RESOURCE_GROUP: rg-landing-zone-dev
-      AKS_CLUSTER: aks-app-spoke-mw4q4-ac97e2e2b0ef
+      AKS_CLUSTER: aks-app-spoke-hsn7p-0e18fb09d1f7
       VITE_API_URL: https://portal-api.chrishouse.io
 
     steps:

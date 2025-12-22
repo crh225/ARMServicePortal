@@ -61,7 +61,7 @@ jobs:
             CLUSTER_NAME="aks-mgmt-hub"
             RESOURCE_GROUP="rg-landing-zone-hub"
           else
-            CLUSTER_NAME="aks-app-spoke-mw4q4-ac97e2e2b0ef"
+            CLUSTER_NAME="aks-app-spoke-hsn7p-0e18fb09d1f7"
             RESOURCE_GROUP="rg-landing-zone-dev"
           fi
 

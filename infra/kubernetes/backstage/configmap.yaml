@@ -20,4 +20,4 @@ data:
 
   # Kubernetes clusters for Backstage Kubernetes plugin
   K8S_MGMT_CLUSTER_URL: "https://aks-mgmt-hub-0pvmz07v.hcp.eastus.azmk8s.io:443"
-  K8S_APP_CLUSTER_URL: "https://aks-app-spoke-mw4q4-svbm04f8.hcp.eastus.azmk8s.io:443"
+  K8S_APP_CLUSTER_URL: "https://aks-app-spoke-hsn7p-ln5m3b7h.hcp.eastus.azmk8s.io:443"
