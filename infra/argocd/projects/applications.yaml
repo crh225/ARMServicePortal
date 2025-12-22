@@ -1,0 +1,47 @@
+# ArgoCD Project for Applications
+# End-user applications and workloads
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: applications
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: platform
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  description: User-facing applications and microservices
+
+  sourceRepos:
+    - https://github.com/crh225/ARMServicePortal.git
+    - https://github.com/crh225/theblog.git
+    - 'https://github.com/crh225/*'  # Allow team repositories
+
+  destinations:
+    - namespace: '*'
+      server: https://kubernetes.default.svc
+    - namespace: '*'
+      name: aks-app-spoke
+    - namespace: argocd  # For app-of-apps pattern
+      server: https://kubernetes.default.svc
+
+  # Limited cluster resources
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+
+  # Deny dangerous cluster resources
+  clusterResourceBlacklist:
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRole
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRoleBinding
+    - group: apiextensions.k8s.io
+      kind: CustomResourceDefinition
+
+  orphanedResources:
+    warn: true

@@ -1,0 +1,34 @@
+# ArgoCD Project for Cluster Addons
+# Cluster-scoped addons and bootstrap resources
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: cluster-addons
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: platform
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  description: Cluster bootstrap and addon components
+
+  sourceRepos:
+    - https://github.com/crh225/ARMServicePortal.git
+
+  destinations:
+    - namespace: '*'
+      server: https://kubernetes.default.svc
+    - namespace: '*'
+      name: aks-app-spoke
+
+  # Allow most cluster resources for bootstrap
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'
+
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+
+  orphanedResources:
+    warn: true

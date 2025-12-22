@@ -1,0 +1,36 @@
+# ArgoCD Project for Infrastructure Claims
+# Crossplane-managed infrastructure resources
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: infrastructure-claims
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: crossplane
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  description: Crossplane infrastructure claims for self-service provisioning
+
+  sourceRepos:
+    - https://github.com/crh225/ARMServicePortal.git
+
+  destinations:
+    - namespace: platform-claims
+      server: https://kubernetes.default.svc
+    - namespace: argocd
+      server: https://kubernetes.default.svc
+
+  # Allow Crossplane claim resources
+  clusterResourceWhitelist:
+    - group: azure.platform.chrishouse.io
+      kind: '*'
+    - group: ''
+      kind: Namespace
+
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+
+  orphanedResources:
+    warn: true

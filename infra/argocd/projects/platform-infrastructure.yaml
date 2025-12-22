@@ -1,0 +1,35 @@
+# ArgoCD Project for Platform Infrastructure
+# Core platform services that everything depends on
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: platform-infrastructure
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: platform
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  description: Core platform infrastructure - Crossplane, Istio, cert-manager
+
+  sourceRepos:
+    - https://github.com/crh225/ARMServicePortal.git
+    - https://charts.jetstack.io  # cert-manager Helm chart
+
+  destinations:
+    - namespace: '*'
+      server: https://kubernetes.default.svc
+    - namespace: '*'
+      name: aks-app-spoke
+
+  # Allow all cluster resources for platform infrastructure
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'
+
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+
+  orphanedResources:
+    warn: true

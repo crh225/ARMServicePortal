@@ -1,0 +1,41 @@
+# ArgoCD Project for ARM Service Portal
+# Portal application components
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: armportal
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: armportal
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  description: ARM Service Portal application stack - API and Backstage
+
+  sourceRepos:
+    - https://github.com/crh225/ARMServicePortal.git
+
+  destinations:
+    - namespace: backstage
+      server: https://kubernetes.default.svc
+    - namespace: portal-api
+      name: aks-app-spoke
+
+  # Limited cluster resources
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+
+  # Deny dangerous cluster resources
+  clusterResourceBlacklist:
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRole
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRoleBinding
+
+  orphanedResources:
+    warn: true

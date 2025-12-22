@@ -10,6 +10,8 @@ metadata:
     - crossplane
     - ephemeral
     - azure
+  annotations:
+    backstage.io/template-icon: https://raw.githubusercontent.com/crossplane/artwork/master/icon/crossplane-icon-color.svg
   links:
     - url: https://docs.crossplane.io/
       title: Crossplane Documentation
