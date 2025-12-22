@@ -14,7 +14,7 @@ const portalColors = {
 
   activeOrange: '#FF6B35',
 
-  bgCanvas: '#f3f4f6',
+  bgCanvas: '#ffffff',
   bgElevated: '#ffffff',
   bgPanel: '#ffffff',
   bgChip: 'rgba(148, 163, 184, 0.12)',
@@ -812,7 +812,7 @@ export const armPortalTheme = createUnifiedTheme({
           backgroundImage: 'none',
           backgroundColor: portalColors.bgElevated,
           borderBottom: 'none',
-          boxShadow: '0 2px 12px rgba(148, 163, 184, 0.15), 0 4px 24px rgba(148, 163, 184, 0.08)',
+          boxShadow: 'none',
           paddingBottom: '20px',
           position: 'relative',
           zIndex: 1,

@@ -2,8 +2,10 @@ apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
   name: nodejs-goldenpath
-  title: 🥚 Golden Path - Node.js Microservice
+  title: Golden Path - Node.js Microservice
   description: Get started fast! Deploy a Node.js microservice to the shared dev cluster in under 5 minutes with just 3 fields.
+  annotations:
+    backstage.io/template-icon: 🥚
   tags:
     - nodejs
     - quickstart
@@ -63,7 +65,6 @@ spec:
       name: Publish to GitHub
       action: publish:github
       input:
-        allowedHosts: ['github.com']
         description: ${{ parameters.description }}
         repoUrl: github.com?owner=crh225&repo=${{ parameters.service_name }}
         repoVisibility: public
