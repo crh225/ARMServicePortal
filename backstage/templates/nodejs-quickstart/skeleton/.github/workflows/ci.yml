@@ -10,7 +10,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: ${{ '${{ github.repository }}' }}
 
 jobs:
   test:
@@ -50,15 +50,15 @@ jobs:
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: ${{ '${{ env.REGISTRY }}' }}
+          username: ${{ '${{ github.actor }}' }}
+          password: ${{ '${{ secrets.GITHUB_TOKEN }}' }}
 
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}' }}
           tags: |
             type=sha,prefix=sha-
             type=raw,value=latest
@@ -68,10 +68,11 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ '${{ steps.meta.outputs.tags }}' }}
+          labels: ${{ '${{ steps.meta.outputs.labels }}' }}
 
-      - name: Update ArgoCD Application
+      - name: Output image info
         run: |
-          echo "Image built: ${{ steps.meta.outputs.tags }}"
-          echo "ArgoCD will detect and deploy the new image"
+          echo "✅ Image built and pushed successfully"
+          echo "📦 Tags: ${{ '${{ steps.meta.outputs.tags }}' }}"
+          echo "🚀 ArgoCD will automatically detect and deploy the new image"
