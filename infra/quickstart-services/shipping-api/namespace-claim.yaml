@@ -1,0 +1,43 @@
+apiVersion: platform.chrishouse.io/v1alpha1
+kind: NamespaceClaim
+metadata:
+  name: group:default/red-dev
+  namespace: crossplane-system
+  labels:
+    team: group:default/red
+    environment: dev
+    created-by: backstage
+    template: golden-path
+  annotations:
+    description: "Development namespace for group:default/red team"
+    created-via: "backstage-golden-path-template"
+    service: "shipping-api"
+spec:
+  parameters:
+    targetCluster: shared-dev-cluster
+    namespaceName: group:default/red-dev
+    labels:
+      team: group:default/red
+      environment: dev
+      managed-by: crossplane
+      backstage.io/kubernetes-id: group:default/red
+
+    # Enable all isolation features
+    enableResourceQuota: true
+    enableNetworkPolicy: true
+    enableLimitRange: true
+
+    # Default quotas for shared dev cluster (team-wide limits)
+    resourceQuota:
+      requestsCpu: "2"
+      requestsMemory: "4Gi"
+      limitsCpu: "4"
+      limitsMemory: "8Gi"
+      pods: 50
+
+    # Default limits for individual containers
+    limitRange:
+      cpuRequest: "100m"
+      cpuLimit: "500m"
+      memoryRequest: "128Mi"
+      memoryLimit: "512Mi"
