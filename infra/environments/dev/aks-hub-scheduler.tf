@@ -78,6 +78,7 @@ resource "azurerm_automation_runbook" "stop_aks_hub" {
   content = <<-POWERSHELL
     # Stop AKS Hub Cluster Runbook
     # Uses managed identity for authentication
+    # Removes Crossplane webhook that prevents stop operation
 
     try {
         # Connect using managed identity
@@ -85,6 +86,20 @@ resource "azurerm_automation_runbook" "stop_aks_hub" {
 
         $resourceGroupName = "${azurerm_resource_group.landing_zone_hub.name}"
         $clusterName = "aks-mgmt-hub"
+
+        # Delete the Crossplane webhook that prevents stop/start using PowerShell cmdlet
+        Write-Output "Removing Crossplane webhook configuration..."
+        $result = Invoke-AzAksRunCommand `
+            -ResourceGroupName $resourceGroupName `
+            -Name $clusterName `
+            -Command "kubectl delete validatingwebhookconfiguration crossplane-no-usages --ignore-not-found=true" `
+            -Force
+
+        if ($result.ExitCode -eq 0) {
+            Write-Output "Webhook removed successfully"
+        } else {
+            Write-Output "Webhook removal completed with exit code: $($result.ExitCode)"
+        }
 
         Write-Output "Stopping AKS cluster: $clusterName in resource group: $resourceGroupName"
         Stop-AzAksCluster -ResourceGroupName $resourceGroupName -Name $clusterName
