@@ -1,26 +1,26 @@
 apiVersion: platform.chrishouse.io/v1alpha1
 kind: NamespaceClaim
 metadata:
-  name: group:default/red-dev
+  name: red-dev
   namespace: crossplane-system
   labels:
-    team: group:default/red
+    team: red
     environment: dev
     created-by: backstage
     template: golden-path
   annotations:
-    description: "Development namespace for group:default/red team"
+    description: "Development namespace for red team"
     created-via: "backstage-golden-path-template"
     service: "shipping-api"
 spec:
   parameters:
     targetCluster: shared-dev-cluster
-    namespaceName: group:default/red-dev
+    namespaceName: red-dev
     labels:
-      team: group:default/red
+      team: red
       environment: dev
       managed-by: crossplane
-      backstage.io/kubernetes-id: group:default/red
+      backstage.io/kubernetes-id: red
 
     # Enable all isolation features
     enableResourceQuota: true

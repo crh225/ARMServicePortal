@@ -4,11 +4,11 @@ metadata:
   name: shipping-api
   namespace: argocd
   labels:
-    team: group:default/red
+    team: red
     environment: dev
     created-by: backstage
     template: golden-path
-    app.kubernetes.io/part-of: group:default/red
+    app.kubernetes.io/part-of: red
   annotations:
     description: "This is the first attempt at generating a golden path repo/pipeline and service"
     created-via: "backstage-golden-path-template"
@@ -32,11 +32,11 @@ spec:
         - name: image.tag
           value: "latest"
         - name: namespace
-          value: group:default/red-dev
+          value: red-dev
 
   destination:
     name: shared-dev-cluster
-    namespace: group:default/red-dev
+    namespace: red-dev
 
   syncPolicy:
     automated:

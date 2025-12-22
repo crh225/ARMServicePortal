@@ -52,11 +52,11 @@ spec:
         url: ./skeleton
         values:
           serviceName: ${{ parameters.service_name }}
-          team: ${{ parameters.team }}
+          team: ${{ parameters.team | parseEntityRef | pick('name') }}
           description: ${{ parameters.description }}
           owner: ${{ parameters.team }}
           repoUrl: github.com?owner=crh225&repo=${{ parameters.service_name }}
-          namespace: ${{ parameters.team }}-dev
+          namespace: ${{ parameters.team | parseEntityRef | pick('name') }}-dev
 
     # Step 2: Create GitHub repository
     - id: publish-github
@@ -78,10 +78,10 @@ spec:
         targetPath: ./gitops
         values:
           serviceName: ${{ parameters.service_name }}
-          team: ${{ parameters.team }}
+          team: ${{ parameters.team | parseEntityRef | pick('name') }}
           description: ${{ parameters.description }}
           repoUrl: https://github.com/crh225/${{ parameters.service_name }}
-          namespace: ${{ parameters.team }}-dev
+          namespace: ${{ parameters.team | parseEntityRef | pick('name') }}-dev
           targetCluster: shared-dev-cluster
 
     # Step 4: Create pull request in ARMServicePortal repo
