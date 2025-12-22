@@ -70,11 +70,11 @@ spec:
                       app.kubernetes.io/managed-by: crossplane
                   spec:
                     hard:
-                      requests.cpu: {{ default "2" (index $p.resourceQuota "requestsCpu") }}
-                      requests.memory: {{ default "4Gi" (index $p.resourceQuota "requestsMemory") }}
-                      limits.cpu: {{ default "4" (index $p.resourceQuota "limitsCpu") }}
-                      limits.memory: {{ default "8Gi" (index $p.resourceQuota "limitsMemory") }}
-                      pods: "{{ default 50 (index $p.resourceQuota "pods") }}"
+                      requests.cpu: {{ if $p.resourceQuota }}{{ default "2" (index $p.resourceQuota "requestsCpu") }}{{ else }}"2"{{ end }}
+                      requests.memory: {{ if $p.resourceQuota }}{{ default "4Gi" (index $p.resourceQuota "requestsMemory") }}{{ else }}"4Gi"{{ end }}
+                      limits.cpu: {{ if $p.resourceQuota }}{{ default "4" (index $p.resourceQuota "limitsCpu") }}{{ else }}"4"{{ end }}
+                      limits.memory: {{ if $p.resourceQuota }}{{ default "8Gi" (index $p.resourceQuota "limitsMemory") }}{{ else }}"8Gi"{{ end }}
+                      pods: "{{ if $p.resourceQuota }}{{ default 50 (index $p.resourceQuota "pods") }}{{ else }}50{{ end }}"
             {{- end }}
 
             # LimitRange (optional)
@@ -102,11 +102,11 @@ spec:
                     limits:
                       - type: Container
                         default:
-                          cpu: {{ default "500m" (index $p.limitRange "cpuLimit") }}
-                          memory: {{ default "512Mi" (index $p.limitRange "memoryLimit") }}
+                          cpu: {{ if $p.limitRange }}{{ default "500m" (index $p.limitRange "cpuLimit") }}{{ else }}"500m"{{ end }}
+                          memory: {{ if $p.limitRange }}{{ default "512Mi" (index $p.limitRange "memoryLimit") }}{{ else }}"512Mi"{{ end }}
                         defaultRequest:
-                          cpu: {{ default "100m" (index $p.limitRange "cpuRequest") }}
-                          memory: {{ default "128Mi" (index $p.limitRange "memoryRequest") }}
+                          cpu: {{ if $p.limitRange }}{{ default "100m" (index $p.limitRange "cpuRequest") }}{{ else }}"100m"{{ end }}
+                          memory: {{ if $p.limitRange }}{{ default "128Mi" (index $p.limitRange "memoryRequest") }}{{ else }}"128Mi"{{ end }}
                         max:
                           cpu: "2"
                           memory: "4Gi"
