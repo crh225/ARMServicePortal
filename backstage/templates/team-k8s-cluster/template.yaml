@@ -112,8 +112,9 @@ spec:
         location:
           title: Azure Region
           type: string
-          default: westus2
+          default: eastus
           enum:
+            - eastus
             - westus2
             - centralus
             - westeurope
@@ -121,24 +122,26 @@ spec:
             - australiaeast
             - southeastasia
           enumNames:
-            - 'West US 2'
-            - 'Central US'
-            - 'West Europe'
-            - 'North Europe'
-            - 'Australia East'
-            - 'Southeast Asia'
-          description: 'Note: East US excluded due to quota limits'
+            - 'East US (vnet-spoke-dev)'
+            - 'West US 2 (vnet-spoke-westus2)'
+            - 'Central US (no VNet)'
+            - 'West Europe (no VNet)'
+            - 'North Europe (no VNet)'
+            - 'Australia East (no VNet)'
+            - 'Southeast Asia (no VNet)'
+          description: 'Select region with pre-configured VNet. Only East US and West US 2 have VNets deployed.'
         resourceGroupName:
           title: Resource Group Name
           type: string
+          default: rg-landing-zone-dev
           description: Existing resource group for the cluster
           pattern: '^rg-[a-zA-Z0-9-]{1,80}$'
-          ui:help: 'Must be an existing resource group. Example: rg-landing-zone-dev'
+          ui:help: 'Use rg-landing-zone-dev for dev environment'
         subnetId:
           title: Subnet ID
           type: string
           description: Full Azure resource ID of the subnet for AKS nodes
-          ui:help: 'Example: /subscriptions/{sub-id}/resourceGroups/{rg}/providers/Microsoft.Network/virtualNetworks/{vnet}/subnets/{subnet}'
+          ui:help: 'East US: /subscriptions/f989de0f-8697-4a05-8c34-b82c941767c0/resourceGroups/rg-landing-zone-dev/providers/Microsoft.Network/virtualNetworks/vnet-spoke-dev/subnets/AksNodesSubnet | West US 2: /subscriptions/f989de0f-8697-4a05-8c34-b82c941767c0/resourceGroups/rg-landing-zone-dev/providers/Microsoft.Network/virtualNetworks/vnet-spoke-westus2/subnets/AksNodesSubnet'
         serviceCidr:
           title: Service CIDR
           type: string
