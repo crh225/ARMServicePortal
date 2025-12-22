@@ -81,6 +81,9 @@ spec:
                 fromFieldPath: spec.serviceMeshEnabled
                 toFieldPath: spec.forProvider.serviceMeshProfile[0].mode
                 transforms:
+                  - type: convert
+                    convert:
+                      toType: string
                   - type: map
                     map:
                       "true": "Istio"
