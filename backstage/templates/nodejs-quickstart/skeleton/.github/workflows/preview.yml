@@ -1,0 +1,256 @@
+name: Preview Environment
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+
+env:
+  REGISTRY: ghcr.io
+  SERVICE_NAME: ${{ values.serviceName }}
+  TEAM_NAME: ${{ values.team }}
+  GITOPS_REPO: crh225/ARMServicePortal
+  GITOPS_BRANCH: main
+
+jobs:
+  # Deploy preview environment when PR is opened/updated
+  deploy-preview:
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set environment variables
+        id: vars
+        run: |
+          echo "pr_number=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
+          echo "namespace=${TEAM_NAME}-dev-pr-${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
+          echo "hostname=${SERVICE_NAME}-pr-${{ github.event.pull_request.number }}.${TEAM_NAME}.devspoke.chrishouse.io" >> $GITHUB_OUTPUT
+          echo "image_tag=pr-${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "repository=$REPO_LOWER" >> $GITHUB_OUTPUT
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push preview image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ steps.vars.outputs.repository }}:${{ steps.vars.outputs.image_tag }}
+
+      - name: Checkout GitOps repository
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ env.GITOPS_REPO }}
+          token: ${{ secrets.GITOPS_TOKEN }}
+          path: gitops
+
+      - name: Create preview environment manifests
+        run: |
+          PR_NUM="${{ steps.vars.outputs.pr_number }}"
+          NAMESPACE="${{ steps.vars.outputs.namespace }}"
+          HOSTNAME="${{ steps.vars.outputs.hostname }}"
+          IMAGE_TAG="${{ steps.vars.outputs.image_tag }}"
+
+          # Create preview directory
+          mkdir -p gitops/infra/quickstart-services/${SERVICE_NAME}/preview-pr-${PR_NUM}
+
+          # Create NamespaceClaim for preview environment
+          cat > gitops/infra/quickstart-services/${SERVICE_NAME}/preview-pr-${PR_NUM}/namespace-claim.yaml <<EOF
+          apiVersion: platform.chrishouse.io/v1alpha1
+          kind: NamespaceClaim
+          metadata:
+            name: ${NAMESPACE}
+            namespace: crossplane-system
+            labels:
+              team: ${TEAM_NAME}
+              environment: preview
+              pr-number: "${PR_NUM}"
+              ephemeral: "true"
+              created-by: backstage
+              service: ${SERVICE_NAME}
+            annotations:
+              description: "Preview environment for PR #${PR_NUM}"
+              preview-url: "https://${HOSTNAME}"
+          spec:
+            parameters:
+              targetCluster: shared-dev-cluster
+              namespaceName: ${NAMESPACE}
+              enableResourceQuota: true
+              enableNetworkPolicy: true
+              enableLimitRange: true
+              resourceQuota:
+                requestsCpu: "1"
+                requestsMemory: "2Gi"
+                limitsCpu: "2"
+                limitsMemory: "4Gi"
+                pods: 10
+              limitRange:
+                cpuRequest: "100m"
+                cpuLimit: "500m"
+                memoryRequest: "128Mi"
+                memoryLimit: "512Mi"
+          EOF
+
+          # Create ArgoCD Application for preview environment
+          cat > gitops/infra/quickstart-services/${SERVICE_NAME}/preview-pr-${PR_NUM}/argocd-application.yaml <<EOF
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: ${SERVICE_NAME}-pr-${PR_NUM}
+            namespace: argocd
+            labels:
+              team: ${TEAM_NAME}
+              environment: preview
+              pr-number: "${PR_NUM}"
+              ephemeral: "true"
+              app.kubernetes.io/part-of: ${TEAM_NAME}
+            annotations:
+              description: "Preview environment for PR #${PR_NUM}"
+              preview-url: "https://${HOSTNAME}"
+              pr-url: "${{ github.event.pull_request.html_url }}"
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: applications
+
+            source:
+              repoURL: https://github.com/${{ github.repository }}
+              targetRevision: ${{ github.head_ref }}
+              path: helm
+              helm:
+                releaseName: ${SERVICE_NAME}-pr-${PR_NUM}
+                valueFiles:
+                  - values.yaml
+                parameters:
+                  - name: image.repository
+                    value: ${{ env.REGISTRY }}/${{ steps.vars.outputs.repository }}
+                  - name: image.tag
+                    value: "${IMAGE_TAG}"
+                  - name: namespace
+                    value: ${NAMESPACE}
+                  - name: serviceMonitor.enabled
+                    value: "false"
+                  - name: istio.enabled
+                    value: "true"
+                  - name: istio.preview.enabled
+                    value: "true"
+                  - name: istio.preview.hostname
+                    value: ${HOSTNAME}
+
+            destination:
+              name: shared-dev-cluster
+              namespace: ${NAMESPACE}
+
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=false  # Namespace created by NamespaceClaim
+              retry:
+                limit: 5
+                backoff:
+                  duration: 5s
+                  factor: 2
+                  maxDuration: 3m
+          EOF
+
+      - name: Commit and push preview manifests
+        working-directory: gitops
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "Deploy preview environment for ${{ env.SERVICE_NAME }} PR #${{ steps.vars.outputs.pr_number }}"
+          git push
+
+      - name: Comment PR with preview URL
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const hostname = '${{ steps.vars.outputs.hostname }}';
+            const body = `## 🚀 Preview Environment Deployed
+
+            Your preview environment is being deployed!
+
+            **Preview URL:** https://${hostname}
+            **Namespace:** \`${{ steps.vars.outputs.namespace }}\`
+            **Image:** \`${{ env.REGISTRY }}/${{ steps.vars.outputs.repository }}:${{ steps.vars.outputs.image_tag }}\`
+
+            ⏳ It may take 2-3 minutes for the environment to be fully ready.
+
+            The preview environment will be automatically deleted when this PR is closed or merged.`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
+  # Cleanup preview environment when PR is closed/merged
+  cleanup-preview:
+    if: github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Set environment variables
+        id: vars
+        run: |
+          echo "pr_number=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
+          echo "namespace=${TEAM_NAME}-dev-pr-${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
+
+      - name: Checkout GitOps repository
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ env.GITOPS_REPO }}
+          token: ${{ secrets.GITOPS_TOKEN }}
+          path: gitops
+
+      - name: Remove preview environment manifests
+        working-directory: gitops
+        run: |
+          PR_NUM="${{ steps.vars.outputs.pr_number }}"
+          rm -rf infra/quickstart-services/${SERVICE_NAME}/preview-pr-${PR_NUM}
+
+      - name: Commit and push cleanup
+        working-directory: gitops
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "Cleanup preview environment for ${{ env.SERVICE_NAME }} PR #${{ steps.vars.outputs.pr_number }}" || echo "No changes to commit"
+          git push
+
+      - name: Comment PR with cleanup notice
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const body = `## 🧹 Preview Environment Cleaned Up
+
+            The preview environment for this PR has been deleted.
+
+            **Namespace:** \`${{ steps.vars.outputs.namespace }}\` - deleted
+            **Resources:** All associated resources have been removed`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });

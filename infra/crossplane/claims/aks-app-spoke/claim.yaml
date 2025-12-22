@@ -9,7 +9,6 @@ spec:
     name: xaksclusters.platform.chrishouse.io-ba6e116
   location: eastus
   resourceGroupName: rg-landing-zone-dev
-  nodeCount: 2
   minNodeCount: 2
   maxNodeCount: 3
   enableAutoScaling: true

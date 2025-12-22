@@ -1,0 +1,32 @@
+---
+# Istio Gateway for preview environments
+# Handles all incoming traffic to *.chrishouse.io
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: preview-gateway
+  namespace: istio-system
+spec:
+  selector:
+    istio: ingress  # Use the default Istio ingress gateway
+  servers:
+    # HTTP server (for ACME challenges and redirect to HTTPS)
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - "*.devspoke.chrishouse.io"
+      tls:
+        httpsRedirect: true  # Redirect HTTP to HTTPS
+
+    # HTTPS server (for secure traffic)
+    - port:
+        number: 443
+        name: https
+        protocol: HTTPS
+      hosts:
+        - "*.devspoke.chrishouse.io"
+      tls:
+        mode: SIMPLE
+        credentialName: wildcard-devspoke-tls  # Wildcard cert for *.devspoke.chrishouse.io

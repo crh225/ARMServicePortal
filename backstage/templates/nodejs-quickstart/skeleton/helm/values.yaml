@@ -52,3 +52,14 @@ labels:
   app.kubernetes.io/name: ${{ values.serviceName }}
   app.kubernetes.io/part-of: ${{ values.team }}
   app.kubernetes.io/managed-by: backstage
+
+# Istio configuration
+istio:
+  enabled: false  # Set to true to enable Istio ingress
+  domain: devspoke.chrishouse.io
+  gateway: istio-system/preview-gateway
+
+  # Preview environment configuration (set by preview workflow)
+  preview:
+    enabled: false
+    hostname: ""  # Will be set to {service}-pr-{number}.{team}.devspoke.chrishouse.io
