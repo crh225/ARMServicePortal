@@ -1,0 +1,59 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: shipping-api
+  namespace: argocd
+  labels:
+    team: group:default/red
+    environment: dev
+    created-by: backstage
+    template: golden-path
+    app.kubernetes.io/part-of: group:default/red
+  annotations:
+    description: "This is the first attempt at generating a golden path repo/pipeline and service"
+    created-via: "backstage-golden-path-template"
+    repository: "https://github.com/crh225/shipping-api"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: applications
+
+  source:
+    repoURL: https://github.com/crh225/shipping-api
+    targetRevision: main
+    path: helm
+    helm:
+      releaseName: shipping-api
+      valueFiles:
+        - values.yaml
+      parameters:
+        - name: image.repository
+          value: ghcr.io/crh225/shipping-api
+        - name: image.tag
+          value: "latest"
+        - name: namespace
+          value: group:default/red-dev
+
+  destination:
+    name: shared-dev-cluster
+    namespace: group:default/red-dev
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=false  # Namespace created by NamespaceClaim
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+  # Health assessment
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas  # Allow manual scaling
