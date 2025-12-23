@@ -17,6 +17,9 @@ spec:
     {{- end }}
   gateways:
     - {{ .Values.istio.gateway }}
+    {{- if .Values.istio.preview.enabled }}
+    - istio-system/cross-network-gateway 
+    {{- end }}
   http:
     - match:
         - uri:
