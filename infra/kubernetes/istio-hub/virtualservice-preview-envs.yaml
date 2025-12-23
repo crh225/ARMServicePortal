@@ -16,7 +16,7 @@ spec:
             regex: ".*"
           headers:
             ":authority":
-              regex: ".*-pr-[0-9]+\\..*\\.chrishouse\\.io"
+              regex: ".*-pr-[0-9]+-[a-z0-9]+\\.chrishouse\\.io"
       route:
         - destination:
             # Route to shared-dev spoke cluster via ServiceEntry

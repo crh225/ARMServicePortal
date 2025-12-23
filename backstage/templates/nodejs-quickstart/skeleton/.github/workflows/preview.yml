@@ -30,7 +30,7 @@ jobs:
         run: |
           echo "pr_number=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
           echo "namespace=${TEAM_NAME}-dev-pr-${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
-          echo "hostname=${SERVICE_NAME}-pr-${{ github.event.pull_request.number }}.${TEAM_NAME}.chrishouse.io" >> $GITHUB_OUTPUT
+          echo "hostname=${SERVICE_NAME}-pr-${{ github.event.pull_request.number }}-${TEAM_NAME}.chrishouse.io" >> $GITHUB_OUTPUT
           echo "image_tag=pr-${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
           REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
           echo "repository=$REPO_LOWER" >> $GITHUB_OUTPUT
