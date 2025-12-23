@@ -47,7 +47,7 @@ spec:
           topology.istio.io/network: shared-dev-network
 
   destination:
-    server: https://kubernetes.default.svc
+    name: shared-dev-cluster
     namespace: istio-system
 
   syncPolicy:
