@@ -1,0 +1,19 @@
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: shared-dev-cluster
+  namespace: istio-ingress
+spec:
+  hosts:
+    - shared-dev.internal
+  location: MESH_EXTERNAL
+  ports:
+    - number: 80
+      name: http
+      protocol: HTTP
+    - number: 443
+      name: https
+      protocol: HTTPS
+  resolution: STATIC
+  endpoints:
+    - address: "10.103.130.211"  # Cluster IP of istio-eastwest-gateway service
