@@ -11,7 +11,7 @@ metadata:
     app.kubernetes.io/part-of: red
   annotations:
     description: "Preview environment for PR #1"
-    preview-url: "https://pricing-api-pr-1.red.chrishouse.io"
+    preview-url: "https://pricing-api-pr-1-red.chrishouse.io"
     pr-url: "https://github.com/crh225/pricing-api/pull/1"
   finalizers:
     - resources-finalizer.argocd.argoproj.io
@@ -40,7 +40,7 @@ spec:
         - name: istio.preview.enabled
           value: "true"
         - name: istio.preview.hostname
-          value: pricing-api-pr-1.red.chrishouse.io
+          value: pricing-api-pr-1-red.chrishouse.io
 
   destination:
     name: shared-dev-cluster
