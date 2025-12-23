@@ -62,4 +62,4 @@ istio:
   # Preview environment configuration (set by preview workflow)
   preview:
     enabled: false
-    hostname: ""  # Will be set to {service}-pr-{number}.{team}.chrishouse.io
+    hostname: ""  # Will be set to {service}-pr-{number}-{team}.chrishouse.io
