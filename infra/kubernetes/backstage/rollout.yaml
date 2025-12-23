@@ -95,6 +95,11 @@ spec:
             secretKeyRef:
               name: backstage-secrets
               key: PORT_CLIENT_SECRET
+        - name: ARGOCD_GITHUB_PAT
+          valueFrom:
+            secretKeyRef:
+              name: backstage-secrets
+              key: ARGOCD_GITHUB_PAT
         # POSTGRES_DB comes from configmap via envFrom
 
         resources:

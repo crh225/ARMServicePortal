@@ -71,6 +71,42 @@ export const configureGitHubRepoAction = (options?: { token?: string }) => {
         });
         ctx.logger.info('✓ GitHub Actions enabled');
 
+        // Get GITOPS_TOKEN from environment or Key Vault
+        const gitopsToken = process.env.ARGOCD_GITHUB_PAT;
+        if (gitopsToken) {
+          ctx.logger.info('Adding GITOPS_TOKEN secret...');
+
+          // Create repository secret for GitOps workflow
+          // Note: Requires sodium library for encryption
+          const sodium = require('libsodium-wrappers');
+          await sodium.ready;
+
+          // Get repository public key for encrypting secrets
+          const { data: publicKey } = await octokit.request('GET /repos/{owner}/{repo}/actions/secrets/public-key', {
+            owner,
+            repo,
+          });
+
+          // Encrypt the secret value
+          const messageBytes = Buffer.from(gitopsToken);
+          const keyBytes = Buffer.from(publicKey.key, 'base64');
+          const encryptedBytes = sodium.crypto_box_seal(messageBytes, keyBytes);
+          const encryptedValue = Buffer.from(encryptedBytes).toString('base64');
+
+          // Create or update the secret
+          await octokit.request('PUT /repos/{owner}/{repo}/actions/secrets/{secret_name}', {
+            owner,
+            repo,
+            secret_name: 'GITOPS_TOKEN',
+            encrypted_value: encryptedValue,
+            key_id: publicKey.key_id,
+          });
+
+          ctx.logger.info('✓ GITOPS_TOKEN secret added');
+        } else {
+          ctx.logger.warn('⚠ ARGOCD_GITHUB_PAT environment variable not set - GITOPS_TOKEN secret not added');
+        }
+
         ctx.logger.info(`✅ Repository ${owner}/${repo} configured successfully!`);
         ctx.output('configured', true);
         ctx.output('repository', `${owner}/${repo}`);
