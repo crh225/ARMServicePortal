@@ -16,4 +16,4 @@ spec:
       protocol: HTTPS
   resolution: STATIC
   endpoints:
-    - address: "10.103.130.211"  # Cluster IP of istio-eastwest-gateway service
+    - address: "10.1.0.158"  # Internal LoadBalancer IP of istio-eastwest-gateway
