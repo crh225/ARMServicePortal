@@ -1,6 +1,7 @@
 ---
-# East-west Gateway for cross-cluster traffic
-# Accepts traffic from hub cluster and routes to local services
+# East-west Gateway for cross-cluster traffic (Istio Multi-Cluster)
+# Exposes services to remote clusters via mTLS
+# Reference: https://istio.io/latest/docs/setup/install/multicluster/multi-primary_multi-network/
 apiVersion: networking.istio.io/v1beta1
 kind: Gateway
 metadata:
@@ -10,12 +11,21 @@ spec:
   selector:
     istio: eastwest-gateway
   servers:
+    # Used for cross-cluster service-to-service communication with mutual TLS
+    - port:
+        number: 15443
+        name: tls
+        protocol: TLS
+      hosts:
+        - "*.local"  # All mesh-internal services (Istio convention)
+      tls:
+        mode: AUTO_PASSTHROUGH  # Envoy SNI-based routing with mTLS passthrough
     - port:
         number: 80
         name: http
         protocol: HTTP
       hosts:
-        - "*.chrishouse.io"  # Accept any preview environment hostname
+        - "*.chrishouse.io"
     - port:
         number: 443
         name: https
@@ -23,4 +33,4 @@ spec:
       hosts:
         - "*.chrishouse.io"
       tls:
-        mode: AUTO_PASSTHROUGH  # Pass through TLS from hub
+        mode: AUTO_PASSTHROUGH
