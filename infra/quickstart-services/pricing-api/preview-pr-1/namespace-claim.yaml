@@ -12,7 +12,7 @@ metadata:
     service: pricing-api
   annotations:
     description: "Preview environment for PR #1"
-    preview-url: "https://pricing-api-pr-1.red.chrishouse.io"
+    preview-url: "https://pricing-api-pr-1-red.chrishouse.io"
 spec:
   parameters:
     targetCluster: shared-dev-cluster
