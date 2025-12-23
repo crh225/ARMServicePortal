@@ -11,7 +11,7 @@ metadata:
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
-  project: applications
+  project: default
   source:
     repoURL: https://github.com/crh225/theblog.git
     targetRevision: main
@@ -24,7 +24,7 @@ spec:
         - name: image.repository
           value: ghcr.io/crh225/theblog
         - name: image.tag
-          value: "sha-f1f1544"
+          value: "sha-c727634"
   destination:
     name: aks-app-spoke
     namespace: blog
