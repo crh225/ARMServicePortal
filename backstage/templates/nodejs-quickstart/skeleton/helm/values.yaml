@@ -56,10 +56,10 @@ labels:
 # Istio configuration
 istio:
   enabled: false  # Set to true to enable Istio ingress
-  domain: devspoke.chrishouse.io
-  gateway: istio-system/preview-gateway
+  domain: chrishouse.io
+  gateway: istio-ingress/main-gateway  # Hub gateway (cross-cluster routing)
 
   # Preview environment configuration (set by preview workflow)
   preview:
     enabled: false
-    hostname: ""  # Will be set to {service}-pr-{number}.{team}.devspoke.chrishouse.io
+    hostname: ""  # Will be set to {service}-pr-{number}.{team}.chrishouse.io

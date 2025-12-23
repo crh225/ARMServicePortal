@@ -15,6 +15,7 @@ spec:
         - "blog.chrishouse.io"
         - "portal.chrishouse.io"
         - "portal-api.chrishouse.io"
+        - "*.*.chrishouse.io"  # Preview environments
       tls:
         httpsRedirect: true
     - port:
@@ -25,6 +26,7 @@ spec:
         - "blog.chrishouse.io"
         - "portal.chrishouse.io"
         - "portal-api.chrishouse.io"
+        - "*.*.chrishouse.io"  # Preview environments
       tls:
         mode: SIMPLE
         credentialName: wildcard-tls

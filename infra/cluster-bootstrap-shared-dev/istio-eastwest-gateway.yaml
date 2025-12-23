@@ -1,0 +1,26 @@
+---
+# East-west Gateway for cross-cluster traffic
+# Accepts traffic from hub cluster and routes to local services
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: cross-network-gateway
+  namespace: istio-system
+spec:
+  selector:
+    istio: eastwest-gateway
+  servers:
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - "*.chrishouse.io"  # Accept any preview environment hostname
+    - port:
+        number: 443
+        name: https
+        protocol: HTTPS
+      hosts:
+        - "*.chrishouse.io"
+      tls:
+        mode: AUTO_PASSTHROUGH  # Pass through TLS from hub

@@ -1,0 +1,25 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: preview-envs-vs
+  namespace: istio-ingress
+spec:
+  hosts:
+    # Match all preview environment URLs: {service}-pr-{number}.{team}.chrishouse.io
+    - "*.*.chrishouse.io"
+  gateways:
+    - main-gateway
+  http:
+    - match:
+        # Only match URLs with preview pattern (contains "-pr-")
+        - uri:
+            regex: ".*"
+          headers:
+            ":authority":
+              regex: ".*-pr-[0-9]+\\..*\\.chrishouse\\.io"
+      route:
+        - destination:
+            # Route to shared-dev spoke cluster via ServiceEntry
+            host: shared-dev.internal
+            port:
+              number: 80
