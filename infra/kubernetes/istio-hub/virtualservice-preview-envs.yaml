@@ -5,8 +5,8 @@ metadata:
   namespace: istio-ingress
 spec:
   hosts:
-    # Match all preview environment URLs: {service}-pr-{number}.{team}.chrishouse.io
-    - "*.*.chrishouse.io"
+    # Match all chrishouse.io subdomains, filter by header regex below
+    - "*.chrishouse.io"
   gateways:
     - main-gateway
   http:
