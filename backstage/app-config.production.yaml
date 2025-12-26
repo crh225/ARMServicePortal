@@ -15,6 +15,10 @@ backend:
     port: 7007
     host: 0.0.0.0
 
+  reading:
+    allow:
+      - host: raw.githubusercontent.com
+
   # Backend authentication secret - REQUIRED for production
   auth:
     keys:

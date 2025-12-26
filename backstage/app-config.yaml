@@ -15,6 +15,9 @@ backend:
   baseUrl: http://localhost:7007
   listen:
     port: 7007
+  reading:
+    allow:
+      - host: raw.githubusercontent.com
     # Uncomment the following host directive to bind to specific interfaces
     # host: 127.0.0.1
   csp:
