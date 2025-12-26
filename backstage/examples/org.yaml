@@ -7,11 +7,32 @@ metadata:
 spec:
   memberOf: [guests]
 ---
+# Auth0 user - add users with matching Auth0 email addresses
+# The email in spec.profile.email must match the user's Auth0 email for sign-in to work
+apiVersion: backstage.io/v1alpha1
+kind: User
+metadata:
+  name: chris
+spec:
+  profile:
+    displayName: Chris House
+    email: chris@chrishouse.us  # Must match Auth0 user email
+  memberOf: [platform-team]
+---
 # https://backstage.io/docs/features/software-catalog/descriptor-format#kind-group
 apiVersion: backstage.io/v1alpha1
 kind: Group
 metadata:
   name: guests
+spec:
+  type: team
+  children: []
+---
+apiVersion: backstage.io/v1alpha1
+kind: Group
+metadata:
+  name: platform-team
+  description: Platform engineering team
 spec:
   type: team
   children: []
