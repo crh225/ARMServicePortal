@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { SignInPageProps, useApi } from '@backstage/core-plugin-api';
 import { UserIdentity } from '@backstage/core-components';
 import { auth0AuthApiRef } from '../../apis';
