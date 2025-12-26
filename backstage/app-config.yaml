@@ -69,9 +69,24 @@ techdocs:
 
 auth:
   # see https://backstage.io/docs/auth/ to learn about auth providers
+  environment: development
+  session:
+    secret: ${AUTH_SESSION_SECRET}
   providers:
-    # See https://backstage.io/docs/auth/guest/provider
+    # Guest provider for local development convenience
     guest: {}
+    # Auth0 OAuth provider - see https://backstage.io/docs/auth/auth0/provider
+    auth0:
+      development:
+        clientId: ${AUTH_AUTH0_CLIENT_ID}
+        clientSecret: ${AUTH_AUTH0_CLIENT_SECRET}
+        domain: ${AUTH_AUTH0_DOMAIN}
+        signIn:
+          resolvers:
+            # Match Auth0 email with Backstage User entity profile email
+            - resolver: emailMatchingUserEntityProfileEmail
+            # Fallback: Match email local part (before @) with User entity name
+            - resolver: emailLocalPartMatchingUserEntityName
 
 scaffolder:
   # see https://backstage.io/docs/features/software-templates/configuration for software template options
@@ -81,15 +96,16 @@ catalog:
     entityFilename: catalog-info.yaml
     pullRequestBranchName: backstage-integration
   rules:
-    - allow: [Component, System, API, Resource, Location, Template]
+    - allow: [Component, System, API, Resource, Location, Template, User, Group]
   locations:
-    # Local example data
-    - type: file
-      target: ../../examples/entities.yaml
+    # User and org entities from GitHub (GITHUB_TOKEN required)
+    - type: url
+      target: https://raw.githubusercontent.com/crh225/ARMServicePortal/main/backstage/examples/entities.yaml
+      rules:
+        - allow: [Component, System, API, User, Group]
 
-    # Local example organizational data
-    - type: file
-      target: ../../examples/org.yaml
+    - type: url
+      target: https://raw.githubusercontent.com/crh225/ARMServicePortal/main/backstage/examples/org.yaml
       rules:
         - allow: [User, Group]
 

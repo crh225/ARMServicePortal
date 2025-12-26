@@ -109,23 +109,28 @@ techdocs:
 
 auth:
   environment: production
+  session:
+    secret: ${AUTH_SESSION_SECRET}
   providers:
-    # Guest auth for now - replace with GitHub OAuth for production security
-    guest:
-      dangerouslyAllowOutsideDevelopment: true
-    # TODO: Enable GitHub OAuth when ready
-    # the thing is, you will need a PR to approve the resources so im not worried about it right now
-    # github:
-    #   development:
-    #     clientId: ${GITHUB_OAUTH_CLIENT_ID}
-    #     clientSecret: ${GITHUB_OAUTH_CLIENT_SECRET}
+    # Auth0 OAuth provider - production authentication
+    # See https://backstage.io/docs/auth/auth0/provider
+    auth0:
+      production:
+        clientId: ${AUTH_AUTH0_CLIENT_ID}
+        clientSecret: ${AUTH_AUTH0_CLIENT_SECRET}
+        domain: ${AUTH_AUTH0_DOMAIN}
+        sessionDuration: { hours: 24 }
+        signIn:
+          resolvers:
+            - resolver: emailMatchingUserEntityProfileEmail
+            - resolver: emailLocalPartMatchingUserEntityName
 
 catalog:
   import:
     entityFilename: catalog-info.yaml
     pullRequestBranchName: backstage-integration
   rules:
-    - allow: [Component, System, API, Resource, Location, Template]
+    - allow: [Component, System, API, Resource, Location, Template, User, Group]
   locations:
     # ARM Portal Infrastructure Templates - bundled in container
     - type: file
@@ -196,6 +201,18 @@ catalog:
       target: ./templates/nodejs-quickstart/template.yaml
       rules:
         - allow: [Template]
+
+    # Organizational data (users and groups for Auth0 sign-in)
+    - type: url
+      target: https://raw.githubusercontent.com/crh225/ARMServicePortal/main/backstage/examples/org.yaml
+      rules:
+        - allow: [User, Group]
+
+    # User entities for Auth0 sign-in
+    - type: url
+      target: https://raw.githubusercontent.com/crh225/ARMServicePortal/main/backstage/examples/entities.yaml
+      rules:
+        - allow: [Component, System, API, User, Group]
 
     # ARM Portal Documentation
     - type: url

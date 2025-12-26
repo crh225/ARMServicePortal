@@ -29,9 +29,10 @@ backend.add(import('@backstage/plugin-techdocs-backend'));
 
 // auth plugin
 backend.add(import('@backstage/plugin-auth-backend'));
-// See https://backstage.io/docs/backend-system/building-backends/migrating#the-auth-plugin
+// Auth0 provider module - production authentication
+backend.add(import('@backstage/plugin-auth-backend-module-auth0-provider'));
+// Guest provider - only for local development convenience
 backend.add(import('@backstage/plugin-auth-backend-module-guest-provider'));
-// See https://backstage.io/docs/auth/guest/provider
 
 // catalog plugin
 backend.add(import('@backstage/plugin-catalog-backend'));
@@ -58,6 +59,7 @@ backend.add(import('@backstage/plugin-search-backend'));
 
 // search engine
 // See https://backstage.io/docs/features/search/search-engines
+// Uses PostgreSQL in production, falls back to Lunr in development
 backend.add(import('@backstage/plugin-search-backend-module-pg'));
 
 // search collators
@@ -67,8 +69,8 @@ backend.add(import('@backstage/plugin-search-backend-module-techdocs'));
 // kubernetes plugin
 backend.add(import('@backstage/plugin-kubernetes-backend'));
 
-// argocd plugin
-backend.add(import('@roadiehq/backstage-plugin-argo-cd-backend'));
+// argocd plugin - requires argocd config, disabled for local dev
+// backend.add(import('@roadiehq/backstage-plugin-argo-cd-backend'));
 
 // notifications and signals plugins
 backend.add(import('@backstage/plugin-notifications-backend'));

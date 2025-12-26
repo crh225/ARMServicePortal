@@ -38,6 +38,7 @@ import {
   OAuthRequestDialog,
   SignInPage,
 } from '@backstage/core-components';
+import { auth0AuthApiRef } from './apis';
 import { createApp } from '@backstage/app-defaults';
 import { UnifiedThemeProvider } from '@backstage/theme';
 import { AppRouter, FlatRoutes } from '@backstage/core-app-api';
@@ -67,7 +68,21 @@ const app = createApp({
     });
   },
   components: {
-    SignInPage: props => <SignInPage {...props} auto providers={['guest']} />,
+    SignInPage: props => (
+      <SignInPage
+        {...props}
+        providers={[
+          {
+            id: 'auth0-auth-provider',
+            title: 'Auth0',
+            message: 'Sign in with your organization account',
+            apiRef: auth0AuthApiRef,
+          },
+          // Guest only available in development
+          ...(process.env.NODE_ENV !== 'production' ? ['guest' as const] : []),
+        ]}
+      />
+    ),
   },
   themes: [
     {

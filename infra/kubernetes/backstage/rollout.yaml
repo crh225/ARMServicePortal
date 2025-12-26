@@ -100,6 +100,27 @@ spec:
             secretKeyRef:
               name: backstage-secrets
               key: ARGOCD_GITHUB_PAT
+        # Auth0 authentication secrets
+        - name: AUTH_AUTH0_DOMAIN
+          valueFrom:
+            secretKeyRef:
+              name: backstage-secrets
+              key: AUTH_AUTH0_DOMAIN
+        - name: AUTH_AUTH0_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: backstage-secrets
+              key: AUTH_AUTH0_CLIENT_ID
+        - name: AUTH_AUTH0_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: backstage-secrets
+              key: AUTH_AUTH0_CLIENT_SECRET
+        - name: AUTH_SESSION_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: backstage-secrets
+              key: AUTH_SESSION_SECRET
         # POSTGRES_DB comes from configmap via envFrom
 
         resources:
