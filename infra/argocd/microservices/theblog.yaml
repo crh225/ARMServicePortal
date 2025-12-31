@@ -24,7 +24,7 @@ spec:
         - name: image.repository
           value: ghcr.io/crh225/theblog
         - name: image.tag
-          value: "sha-8197f0d"
+          value: "sha-8e021ea"
   destination:
     name: aks-app-spoke
     namespace: blog
