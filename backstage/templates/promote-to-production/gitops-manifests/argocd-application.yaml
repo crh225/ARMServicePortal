@@ -1,0 +1,69 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ${{ values.serviceName }}-prod
+  namespace: argocd
+  labels:
+    team: ${{ values.team }}
+    environment: prod
+    created-by: backstage
+    template: promote-to-production
+    app.kubernetes.io/part-of: ${{ values.team }}
+  annotations:
+    description: "Production deployment of ${{ values.serviceName }}"
+    created-via: "backstage-promote-to-production-template"
+    repository: "${{ values.repoUrl }}"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: applications
+
+  source:
+    repoURL: ${{ values.repoUrl }}
+    targetRevision: ${{ values.targetRevision }}
+    path: ${{ values.helmPath }}
+    helm:
+      releaseName: ${{ values.serviceName }}
+      valueFiles:
+        - values.yaml
+      parameters:
+        - name: image.repository
+          value: ghcr.io/crh225/${{ values.serviceName }}
+        - name: image.tag
+          value: "latest"
+        - name: namespace
+          value: ${{ values.namespace }}
+        - name: replicaCount
+          value: "${{ values.replicas }}"
+        - name: autoscaling.enabled
+          value: "${{ values.enableHPA }}"
+        - name: autoscaling.minReplicas
+          value: "${{ values.replicas }}"
+        - name: autoscaling.maxReplicas
+          value: "${{ values.maxReplicas }}"
+        - name: labels.environment
+          value: "prod"
+
+  destination:
+    name: ${{ values.targetCluster }}
+    namespace: ${{ values.namespace }}
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=false  # Namespace created by NamespaceClaim
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+  # Health assessment
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas  # Allow HPA to manage replicas

@@ -1,0 +1,236 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: promote-to-production
+  title: Promote to Production
+  description: Promote an existing service from development to the production cluster. Creates GitOps manifests for aks-app-spoke deployment.
+  tags:
+    - production
+    - promotion
+    - gitops
+spec:
+  owner: platform-team
+  type: service
+
+  parameters:
+    - title: Service to Promote
+      required:
+        - repo_url
+        - service_name
+        - team
+      properties:
+        repo_url:
+          title: GitHub Repository URL
+          type: string
+          description: The GitHub repository containing your service (e.g., https://github.com/crh225/pricing-api)
+          pattern: '^https://github\.com/[^/]+/[^/]+$'
+          ui:autofocus: true
+          ui:help: 'Must be a GitHub repository with a helm/ folder'
+
+        service_name:
+          title: Service Name
+          type: string
+          description: The name of your service (should match what's in catalog-info.yaml)
+          pattern: '^[a-z][a-z0-9-]*$'
+
+        team:
+          title: Team
+          type: string
+          description: Which team owns this service?
+          ui:field: OwnerPicker
+          ui:options:
+            catalogFilter:
+              kind: Group
+
+    - title: Production Configuration
+      required:
+        - replicas
+      properties:
+        replicas:
+          title: Number of Replicas
+          type: integer
+          description: For high availability, use at least 3 replicas
+          default: 3
+          minimum: 2
+          maximum: 10
+
+        enableHPA:
+          title: Enable Horizontal Pod Autoscaling
+          type: boolean
+          default: true
+          description: Automatically scale pods based on CPU usage
+
+        maxReplicas:
+          title: Maximum Replicas (for HPA)
+          type: integer
+          default: 10
+          minimum: 3
+          maximum: 50
+
+        helmPath:
+          title: Helm Chart Path
+          type: string
+          default: helm
+          description: Path to Helm chart in your repository
+
+        targetRevision:
+          title: Branch/Tag to Deploy
+          type: string
+          default: main
+          description: Git branch or tag to deploy from
+
+    - title: Review & Confirm
+      description: |
+        **Production Deployment**
+
+        Your service will be deployed to the production cluster (aks-app-spoke).
+        This requires platform team approval before deployment.
+      required:
+        - confirmReview
+      properties:
+        confirmReview:
+          title: I confirm this service is ready for production
+          type: boolean
+          default: false
+          ui:widget: checkbox
+
+  steps:
+    # Step 1: Create ArgoCD and Crossplane manifests
+    - id: create-gitops
+      name: Create GitOps Configuration
+      action: fetch:template
+      input:
+        url: ./gitops-manifests
+        targetPath: ./gitops/production-services/${{ parameters.service_name }}
+        copyWithoutTemplating:
+          - "virtualservice-hub.yaml"
+          - "virtualservice-spoke.yaml"
+        values:
+          serviceName: ${{ parameters.service_name }}
+          team: ${{ parameters.team | parseEntityRef | pick('name') }}
+          repoUrl: ${{ parameters.repo_url }}
+          namespace: ${{ parameters.team | parseEntityRef | pick('name') }}-prod
+          targetCluster: aks-app-spoke
+          replicas: ${{ parameters.replicas }}
+          enableHPA: ${{ parameters.enableHPA }}
+          maxReplicas: ${{ parameters.maxReplicas }}
+          helmPath: ${{ parameters.helmPath }}
+          targetRevision: ${{ parameters.targetRevision }}
+
+    # Step 2: Create Hub VirtualService (routes external traffic to spoke)
+    - id: create-hub-vs
+      name: Create Hub Ingress Route
+      action: fetch:template
+      input:
+        url: ./hub-virtualservice
+        targetPath: ./gitops/kubernetes/istio-hub
+        values:
+          serviceName: ${{ parameters.service_name }}
+          team: ${{ parameters.team | parseEntityRef | pick('name') }}
+
+    # Step 3: Create Spoke VirtualService (routes to actual service)
+    - id: create-spoke-vs
+      name: Create Spoke Ingress Route
+      action: fetch:template
+      input:
+        url: ./spoke-virtualservice
+        targetPath: ./gitops/kubernetes/istio-spoke
+        values:
+          serviceName: ${{ parameters.service_name }}
+          team: ${{ parameters.team | parseEntityRef | pick('name') }}
+          namespace: ${{ parameters.team | parseEntityRef | pick('name') }}-prod
+
+    # Step 4: Create pull request in ARMServicePortal repo
+    - id: publish-gitops
+      name: Submit GitOps PR (Requires Approval)
+      action: publish:github:pull-request
+      input:
+        repoUrl: github.com?owner=crh225&repo=ARMServicePortal
+        branchName: production/${{ parameters.service_name }}
+        title: 'PRODUCTION: Promote ${{ parameters.service_name }} to production cluster'
+        description: |
+          ## Production Promotion Request: ${{ parameters.service_name }}
+
+          **REQUIRES PLATFORM TEAM APPROVAL**
+
+          This promotes an existing service to the production cluster.
+
+          ---
+
+          ### Service Information
+
+          | Field | Value |
+          |-------|-------|
+          | **Service Name** | ${{ parameters.service_name }} |
+          | **Team** | ${{ parameters.team }} |
+          | **Source Repository** | ${{ parameters.repo_url }} |
+          | **Branch/Tag** | ${{ parameters.targetRevision }} |
+
+          ---
+
+          ### Production Configuration
+
+          | Field | Value |
+          |-------|-------|
+          | **Target Cluster** | aks-app-spoke |
+          | **Namespace** | ${{ parameters.team }}-prod |
+          | **Replicas** | ${{ parameters.replicas }} |
+          | **HPA Enabled** | ${{ parameters.enableHPA }} |
+          | **Max Replicas** | ${{ parameters.maxReplicas }} |
+          | **Production URL** | https://${{ parameters.service_name }}-prod.chrishouse.io |
+
+          ---
+
+          ### What gets created
+
+          - **NamespaceClaim**: `${{ parameters.team }}-prod` on aks-app-spoke
+          - **ArgoCD Application**: Deploys from ${{ parameters.repo_url }}
+          - **Hub VirtualService**: Routes `${{ parameters.service_name }}-prod.chrishouse.io` to spoke
+          - **Spoke VirtualService**: Routes to service in namespace
+
+          ---
+
+          ### Approval Checklist
+
+          - [ ] Service has been tested in development
+          - [ ] Resource limits are appropriate for production
+          - [ ] Team has budget approval
+
+          ---
+
+          ### What happens when merged?
+
+          1. ArgoCD syncs the configuration
+          2. Namespace created: `${{ parameters.team }}-prod`
+          3. Application deployed to aks-app-spoke cluster
+          4. Service available at: https://${{ parameters.service_name }}-prod.chrishouse.io
+
+          ---
+          Created via Backstage Promote to Production Template
+        sourcePath: ./gitops
+        targetPath: infra
+
+  output:
+    links:
+      - title: GitOps PR (Requires Approval)
+        url: ${{ steps['publish-gitops'].output.remoteUrl }}
+      - title: Source Repository
+        url: ${{ parameters.repo_url }}
+      - title: Production URL (after merge)
+        url: https://${{ parameters.service_name }}-prod.chrishouse.io
+    text:
+      - title: Next Steps
+        content: |
+          ## Production Promotion: ${{ parameters.service_name }}
+
+          **GitOps PR created:** ${{ steps['publish-gitops'].output.remoteUrl }}
+
+          ### What happens next:
+
+          1. **Platform team reviews** the GitOps PR
+          2. **PR is merged** after approval
+          3. **ArgoCD deploys** to aks-app-spoke cluster
+          4. **Service available at:** https://${{ parameters.service_name }}-prod.chrishouse.io
+
+          Your existing repository (${{ parameters.repo_url }}) will be deployed to production.
+          No changes are made to your source repository.

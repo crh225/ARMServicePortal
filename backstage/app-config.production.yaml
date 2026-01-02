@@ -205,6 +205,10 @@ catalog:
       target: ./templates/nodejs-quickstart/template.yaml
       rules:
         - allow: [Template]
+    - type: file
+      target: ./templates/promote-to-production/template.yaml
+      rules:
+        - allow: [Template]
 
     # Organizational data (users and groups for Auth0 sign-in)
     - type: url
