@@ -3,7 +3,7 @@ kind: Template
 metadata:
   name: nodejs-goldenpath
   title: 🥚 Golden Path - Node.js Microservice
-  description: Get started fast! Deploy a Node.js microservice to the shared dev cluster in under 5 minutes with just 3 fields.
+  description: Deploy a Node.js microservice to dev AND production clusters. Includes automatic promotion infrastructure.
   tags:
     - nodejs
     - quickstart
@@ -43,6 +43,43 @@ spec:
           description: What does this service do? (one sentence)
           ui:help: 'Example: Handles user authentication and authorization'
 
+    - title: Production Configuration
+      properties:
+        includeProduction:
+          title: Include Production Infrastructure
+          type: boolean
+          default: true
+          description: Create production ArgoCD app, namespace, and ingress routes
+
+        prodReplicas:
+          title: Production Replicas
+          type: integer
+          description: Number of pods in production (min 2 for HA)
+          default: 3
+          minimum: 2
+          maximum: 10
+
+        enableHPA:
+          title: Enable Horizontal Pod Autoscaling
+          type: boolean
+          default: true
+          description: Automatically scale pods based on CPU usage
+
+        maxReplicas:
+          title: Maximum Replicas (for HPA)
+          type: integer
+          default: 10
+          minimum: 3
+          maximum: 50
+
+      dependencies:
+        prodReplicas:
+          - includeProduction
+        enableHPA:
+          - includeProduction
+        maxReplicas:
+          - includeProduction
+
   steps:
     # Step 1: Generate repository from template
     - id: fetch-template
@@ -76,49 +113,194 @@ spec:
       input:
         repoUrl: github.com?owner=crh225&repo=${{ parameters.service_name }}
 
-    # Step 4: Create GitOps manifests in infra repo
-    - id: create-gitops-pr
-      name: Create GitOps Configuration
+    # Step 4: Create dev GitOps manifests
+    - id: create-gitops-dev
+      name: Create Dev GitOps Configuration
       action: fetch:template
       input:
-        url: ./gitops-manifests
-        targetPath: ./gitops
+        url: ./gitops-manifests-dev
+        targetPath: ./gitops/quickstart-services/${{ parameters.service_name }}
         values:
           serviceName: ${{ parameters.service_name }}
           team: ${{ parameters.team | parseEntityRef | pick('name') }}
           description: ${{ parameters.description }}
           repoUrl: https://github.com/crh225/${{ parameters.service_name }}
-          namespace: ${{ parameters.team | parseEntityRef | pick('name') }}-dev
-          targetCluster: shared-dev-cluster
+          devNamespace: ${{ parameters.team | parseEntityRef | pick('name') }}-dev
+          devCluster: shared-dev-cluster
 
-    # Step 5: Create pull request in ARMServicePortal repo
-    - id: publish-gitops
-      name: Submit GitOps PR
+    # Step 5: Create prod GitOps manifests (conditional)
+    - id: create-gitops-prod
+      name: Create Prod GitOps Configuration
+      if: ${{ parameters.includeProduction }}
+      action: fetch:template
+      input:
+        url: ./gitops-manifests-prod
+        targetPath: ./gitops/quickstart-services/${{ parameters.service_name }}
+        values:
+          serviceName: ${{ parameters.service_name }}
+          team: ${{ parameters.team | parseEntityRef | pick('name') }}
+          description: ${{ parameters.description }}
+          repoUrl: https://github.com/crh225/${{ parameters.service_name }}
+          prodNamespace: ${{ parameters.team | parseEntityRef | pick('name') }}-prod
+          prodCluster: aks-app-spoke
+          prodReplicas: ${{ parameters.prodReplicas }}
+          enableHPA: ${{ parameters.enableHPA }}
+          maxReplicas: ${{ parameters.maxReplicas }}
+
+    # Step 6: Fetch existing Istio configs from repo (conditional)
+    - id: fetch-existing-istio
+      name: Fetch Existing Istio Configuration
+      if: ${{ parameters.includeProduction }}
+      action: fetch:plain
+      input:
+        url: https://github.com/crh225/ARMServicePortal/tree/main/infra/kubernetes
+        targetPath: ./gitops/kubernetes
+
+    # Step 7: Create Hub VirtualService (conditional)
+    - id: create-hub-vs
+      name: Create Hub Ingress Route
+      if: ${{ parameters.includeProduction }}
+      action: fetch:template
+      input:
+        url: ./hub-virtualservice
+        targetPath: ./gitops/kubernetes/istio-hub
+        values:
+          serviceName: ${{ parameters.service_name }}
+          team: ${{ parameters.team | parseEntityRef | pick('name') }}
+
+    # Step 8: Create Spoke VirtualService (conditional)
+    - id: create-spoke-vs
+      name: Create Spoke Ingress Route
+      if: ${{ parameters.includeProduction }}
+      action: fetch:template
+      input:
+        url: ./spoke-virtualservice
+        targetPath: ./gitops/kubernetes/istio-spoke
+        values:
+          serviceName: ${{ parameters.service_name }}
+          team: ${{ parameters.team | parseEntityRef | pick('name') }}
+          namespace: ${{ parameters.team | parseEntityRef | pick('name') }}-prod
+
+    # Step 9: Append VirtualService to hub kustomization.yaml (conditional)
+    - id: append-hub-kustomize
+      name: Add VirtualService to Hub Kustomization
+      if: ${{ parameters.includeProduction }}
+      action: roadiehq:utils:fs:append
+      input:
+        path: ./gitops/kubernetes/istio-hub/kustomization.yaml
+        content: "  - virtualservice-${{ parameters.service_name }}-prod.yaml"
+
+    # Step 10: Append VirtualService to spoke kustomization.yaml (conditional)
+    - id: append-spoke-kustomize
+      name: Add VirtualService to Spoke Kustomization
+      if: ${{ parameters.includeProduction }}
+      action: roadiehq:utils:fs:append
+      input:
+        path: ./gitops/kubernetes/istio-spoke/kustomization.yaml
+        content: "  - virtualservice-${{ parameters.service_name }}-prod.yaml"
+
+    # Step 11: Create pull request in ARMServicePortal repo (dev only)
+    - id: publish-gitops-dev-only
+      name: Submit GitOps PR (Dev Only)
+      if: ${{ not parameters.includeProduction }}
       action: publish:github:pull-request
       input:
         repoUrl: github.com?owner=crh225&repo=ARMServicePortal
         branchName: service/${{ parameters.service_name }}
-        title: 'feat: Add ${{ parameters.service_name }} to shared dev cluster'
+        title: 'feat: Add ${{ parameters.service_name }} to dev cluster'
         description: |
           ## New Service: ${{ parameters.service_name }}
 
           **Team:** ${{ parameters.team }}
           **Description:** ${{ parameters.description }}
-          **Target Cluster:** shared-dev-cluster
-          **Namespace:** ${{ parameters.team }}-dev
-
-          This PR adds:
-          - NamespaceClaim for team namespace isolation
-          - ArgoCD Application pointing to https://github.com/crh225/${{ parameters.service_name }}
-
-          Once merged, ArgoCD will automatically deploy the service.
 
           ---
-          🤖 Generated by Backstage Quick Start Template
-        sourcePath: ./gitops
-        targetPath: infra/quickstart-services/${{ parameters.service_name }}
 
-    # Step 6: Register in Backstage catalog
+          ### Development Environment
+
+          | Field | Value |
+          |-------|-------|
+          | **Cluster** | shared-dev-cluster |
+          | **Namespace** | ${{ parameters.team }}-dev |
+          | **Trigger** | Push to main |
+          | **Image Tag** | `latest` |
+
+          ---
+
+          ### This PR adds:
+
+          - NamespaceClaim for dev namespace (${{ parameters.team }}-dev)
+          - ArgoCD Application for dev (tracks `latest` tag)
+
+          ---
+          Generated by Backstage Golden Path Template
+        sourcePath: ./gitops
+        targetPath: infra
+
+    # Step 12: Create pull request in ARMServicePortal repo (dev + prod)
+    - id: publish-gitops
+      name: Submit GitOps PR (Dev + Production)
+      if: ${{ parameters.includeProduction }}
+      action: publish:github:pull-request
+      input:
+        repoUrl: github.com?owner=crh225&repo=ARMServicePortal
+        branchName: service/${{ parameters.service_name }}
+        title: 'feat: Add ${{ parameters.service_name }} (dev + production)'
+        description: |
+          ## New Service: ${{ parameters.service_name }}
+
+          **Team:** ${{ parameters.team }}
+          **Description:** ${{ parameters.description }}
+
+          ---
+
+          ### Development Environment
+
+          | Field | Value |
+          |-------|-------|
+          | **Cluster** | shared-dev-cluster |
+          | **Namespace** | ${{ parameters.team }}-dev |
+          | **Trigger** | Push to main |
+          | **Image Tag** | `latest` |
+
+          ---
+
+          ### Production Environment
+
+          | Field | Value |
+          |-------|-------|
+          | **Cluster** | aks-app-spoke |
+          | **Namespace** | ${{ parameters.team }}-prod |
+          | **Trigger** | GitHub Release (v*) |
+          | **Replicas** | ${{ parameters.prodReplicas }} |
+          | **HPA Enabled** | ${{ parameters.enableHPA }} |
+          | **Production URL** | https://${{ parameters.service_name }}-prod.chrishouse.io |
+
+          ---
+
+          ### This PR adds:
+
+          - NamespaceClaim for dev namespace (${{ parameters.team }}-dev)
+          - NamespaceClaim for prod namespace (${{ parameters.team }}-prod)
+          - ArgoCD Application for dev (tracks `latest` tag)
+          - ArgoCD Application for prod (tracks semver tags)
+          - Hub VirtualService (routes traffic to spoke)
+          - Spoke VirtualService (routes traffic to service)
+
+          ---
+
+          ### Release Flow
+
+          **Development:** Push to main → CI builds `latest` → ArgoCD deploys to dev
+
+          **Production:** Create GitHub Release (e.g., v1.0.0) → CI builds versioned image → ArgoCD deploys to prod
+
+          ---
+          Generated by Backstage Golden Path Template
+        sourcePath: ./gitops
+        targetPath: infra
+
+    # Step 13: Register in Backstage catalog
     - id: register-catalog
       name: Register in Catalog
       action: catalog:register
@@ -129,24 +311,27 @@ spec:
   output:
     links:
       - title: Repository
-        icon: 🥚
         url: ${{ steps['publish-github'].output.remoteUrl }}
       - title: GitOps PR
-        icon: 🥚
-        url: ${{ steps['publish-gitops'].output.remoteUrl }}
+        url: ${{ steps['publish-gitops'].output.remoteUrl }}${{ steps['publish-gitops-dev-only'].output.remoteUrl }}
       - title: View in Catalog
         icon: catalog
         entityRef: ${{ steps['register-catalog'].output.entityRef }}
     text:
       - title: Next Steps
         content: |
-          ✅ Repository created: ${{ steps['publish-github'].output.remoteUrl }}
-          ✅ GitOps PR submitted: ${{ steps['publish-gitops'].output.remoteUrl }}
+          ## Service Created: ${{ parameters.service_name }}
 
-          **What happens next:**
-          1. Review and merge the GitOps PR
-          2. ArgoCD will create your namespace on shared-dev-cluster
-          3. ArgoCD will deploy your service automatically
-          4. Your service will be available at: http://${{ parameters.service_name }}.shared-dev.internal
+          ✅ Repository: ${{ steps['publish-github'].output.remoteUrl }}
+
+          ---
+
+          ### After PR Merge
+
+          **Development deploys automatically** on every push to main.
+
+          ${{ parameters.includeProduction and "**Production requires a GitHub Release:**\n1. Create a Release with tag v1.0.0\n2. CI builds the production image\n3. ArgoCD deploys to production\n4. Service available at: https://" + parameters.service_name + "-prod.chrishouse.io" or "" }}
+
+          ---
 
           **Estimated deployment time:** 2-3 minutes after PR merge

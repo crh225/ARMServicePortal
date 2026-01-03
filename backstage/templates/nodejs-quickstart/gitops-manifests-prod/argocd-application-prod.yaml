@@ -1,0 +1,76 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ${{ values.serviceName }}-prod
+  namespace: argocd
+  labels:
+    team: ${{ values.team }}
+    environment: prod
+    created-by: backstage
+    template: golden-path
+    app.kubernetes.io/part-of: ${{ values.team }}
+  annotations:
+    description: "Production deployment of ${{ values.serviceName }}"
+    created-via: "backstage-golden-path-template"
+    repository: "${{ values.repoUrl }}"
+    # ArgoCD Image Updater annotations for automatic version updates
+    argocd-image-updater.argoproj.io/image-list: "app=ghcr.io/crh225/${{ values.serviceName }}"
+    argocd-image-updater.argoproj.io/app.update-strategy: "semver"
+    argocd-image-updater.argoproj.io/app.allow-tags: "regexp:^v[0-9]+\\.[0-9]+\\.[0-9]+$"
+    argocd-image-updater.argoproj.io/write-back-method: "argocd"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: applications
+
+  source:
+    repoURL: ${{ values.repoUrl }}
+    targetRevision: main  # Always track main branch for helm chart
+    path: helm
+    helm:
+      releaseName: ${{ values.serviceName }}
+      valueFiles:
+        - values.yaml
+      parameters:
+        - name: image.repository
+          value: ghcr.io/crh225/${{ values.serviceName }}
+        - name: image.tag
+          value: "v1.0.0"  # Initial version, updated by Image Updater
+        - name: namespace
+          value: ${{ values.prodNamespace }}
+        - name: replicaCount
+          value: "${{ values.prodReplicas }}"
+        - name: autoscaling.enabled
+          value: "${{ values.enableHPA }}"
+        - name: autoscaling.minReplicas
+          value: "${{ values.prodReplicas }}"
+        - name: autoscaling.maxReplicas
+          value: "${{ values.maxReplicas }}"
+        - name: labels.environment
+          value: "prod"
+        - name: serviceMonitor.enabled
+          value: "false"
+
+  destination:
+    name: ${{ values.prodCluster }}
+    namespace: ${{ values.prodNamespace }}
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=false  # Namespace created by NamespaceClaim
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+  # Health assessment
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas  # Allow HPA to manage replicas

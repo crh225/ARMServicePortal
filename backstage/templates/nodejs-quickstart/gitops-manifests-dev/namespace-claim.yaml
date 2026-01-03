@@ -14,8 +14,8 @@ metadata:
     service: "${{ values.serviceName }}"
 spec:
   parameters:
-    targetCluster: shared-dev-cluster
-    namespaceName: ${{ values.namespace }}
+    targetCluster: ${{ values.devCluster }}
+    namespaceName: ${{ values.devNamespace }}
     labels:
       team: ${{ values.team }}
       environment: dev

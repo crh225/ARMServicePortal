@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: ${{ values.serviceName }}
+  name: ${{ values.serviceName }}-dev
   namespace: argocd
   labels:
     team: ${{ values.team }}
@@ -32,13 +32,13 @@ spec:
         - name: image.tag
           value: "latest"
         - name: namespace
-          value: ${{ values.namespace }}
+          value: ${{ values.devNamespace }}
         - name: serviceMonitor.enabled
           value: "false"
 
   destination:
-    name: ${{ values.targetCluster }}
-    namespace: ${{ values.namespace }}
+    name: ${{ values.devCluster }}
+    namespace: ${{ values.devNamespace }}
 
   syncPolicy:
     automated:

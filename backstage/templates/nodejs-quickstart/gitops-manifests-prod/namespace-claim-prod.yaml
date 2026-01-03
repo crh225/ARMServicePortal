@@ -1,0 +1,43 @@
+apiVersion: platform.chrishouse.io/v1alpha1
+kind: NamespaceClaim
+metadata:
+  name: ${{ values.team }}-prod
+  namespace: crossplane-system
+  labels:
+    team: ${{ values.team }}
+    environment: prod
+    created-by: backstage
+    template: golden-path
+  annotations:
+    description: "Production namespace for ${{ values.team }} team"
+    created-via: "backstage-golden-path-template"
+    service: "${{ values.serviceName }}"
+spec:
+  parameters:
+    targetCluster: ${{ values.prodCluster }}
+    namespaceName: ${{ values.prodNamespace }}
+    labels:
+      team: ${{ values.team }}
+      environment: prod
+      managed-by: crossplane
+      backstage.io/kubernetes-id: ${{ values.team }}
+
+    # Enable all isolation features
+    enableResourceQuota: true
+    enableNetworkPolicy: true
+    enableLimitRange: true
+
+    # Production quotas (higher limits than dev)
+    resourceQuota:
+      requestsCpu: "4"
+      requestsMemory: "8Gi"
+      limitsCpu: "8"
+      limitsMemory: "16Gi"
+      pods: 100
+
+    # Default limits for individual containers
+    limitRange:
+      cpuRequest: "100m"
+      cpuLimit: "1"
+      memoryRequest: "128Mi"
+      memoryLimit: "1Gi"

@@ -1,0 +1,20 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: ${{ values.serviceName }}-prod-vs
+  namespace: istio-ingress
+  labels:
+    team: ${{ values.team }}
+    environment: prod
+    created-by: backstage
+spec:
+  hosts:
+    - "${{ values.serviceName }}-prod.chrishouse.io"
+  gateways:
+    - external-gateway
+  http:
+    - route:
+        - destination:
+            host: ${{ values.serviceName }}.${{ values.namespace }}.svc.cluster.local
+            port:
+              number: 80
