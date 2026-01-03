@@ -312,8 +312,6 @@ spec:
     links:
       - title: Repository
         url: ${{ steps['publish-github'].output.remoteUrl }}
-      - title: GitOps PR
-        url: ${{ steps['publish-gitops'].output.remoteUrl }}${{ steps['publish-gitops-dev-only'].output.remoteUrl }}
       - title: View in Catalog
         icon: catalog
         entityRef: ${{ steps['register-catalog'].output.entityRef }}
@@ -322,7 +320,8 @@ spec:
         content: |
           ## Service Created: ${{ parameters.service_name }}
 
-          ✅ Repository: ${{ steps['publish-github'].output.remoteUrl }}
+          ✅ Repository created
+          ✅ GitOps PR submitted - check the PR link above
 
           ---
 
@@ -330,7 +329,7 @@ spec:
 
           **Development deploys automatically** on every push to main.
 
-          ${{ parameters.includeProduction and "**Production requires a GitHub Release:**\n1. Create a Release with tag v1.0.0\n2. CI builds the production image\n3. ArgoCD deploys to production\n4. Service available at: https://" + parameters.service_name + "-prod.chrishouse.io" or "" }}
+          **Production** (if enabled): Create a GitHub Release with tag v1.0.0 to deploy.
 
           ---
 
