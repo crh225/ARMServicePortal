@@ -1,0 +1,60 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: customer-api-1-pr-1
+  namespace: argocd
+  labels:
+    team: green
+    environment: preview
+    pr-number: "1"
+    ephemeral: "true"
+    app.kubernetes.io/part-of: green
+  annotations:
+    description: "Preview environment for PR #1"
+    preview-url: "https://customer-api-1-pr-1-green.chrishouse.io"
+    pr-url: "https://github.com/crh225/customer-api-1/pull/1"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: applications
+
+  source:
+    repoURL: https://github.com/crh225/customer-api-1
+    targetRevision: crh225-patch-1
+    path: helm
+    helm:
+      releaseName: customer-api-1-pr-1
+      valueFiles:
+        - values.yaml
+      parameters:
+        - name: image.repository
+          value: ghcr.io/crh225/customer-api-1
+        - name: image.tag
+          value: "pr-1"
+        - name: namespace
+          value: green-dev-pr-1
+        - name: serviceMonitor.enabled
+          value: "false"
+        - name: istio.enabled
+          value: "true"
+        - name: istio.preview.enabled
+          value: "true"
+        - name: istio.preview.hostname
+          value: customer-api-1-pr-1-green.chrishouse.io
+
+  destination:
+    name: shared-dev-cluster
+    namespace: green-dev-pr-1
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=false  # Namespace created by NamespaceClaim
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
