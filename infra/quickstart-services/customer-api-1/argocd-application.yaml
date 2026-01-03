@@ -1,0 +1,61 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: customer-api-1-dev
+  namespace: argocd
+  labels:
+    team: green
+    environment: dev
+    created-by: backstage
+    template: golden-path
+    app.kubernetes.io/part-of: green
+  annotations:
+    description: "This is the first attempt at generating a golden path repo/pipeline and service"
+    created-via: "backstage-golden-path-template"
+    repository: "https://github.com/crh225/customer-api-1"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: applications
+
+  source:
+    repoURL: https://github.com/crh225/customer-api-1
+    targetRevision: main
+    path: helm
+    helm:
+      releaseName: customer-api-1
+      valueFiles:
+        - values.yaml
+      parameters:
+        - name: image.repository
+          value: ghcr.io/crh225/customer-api-1
+        - name: image.tag
+          value: "latest"
+        - name: namespace
+          value: green-dev
+        - name: serviceMonitor.enabled
+          value: "false"
+
+  destination:
+    name: shared-dev-cluster
+    namespace: green-dev
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=false  # Namespace created by NamespaceClaim
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+  # Health assessment
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas  # Allow manual scaling

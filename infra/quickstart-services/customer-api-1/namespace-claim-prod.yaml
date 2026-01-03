@@ -1,0 +1,43 @@
+apiVersion: platform.chrishouse.io/v1alpha1
+kind: NamespaceClaim
+metadata:
+  name: green-prod
+  namespace: crossplane-system
+  labels:
+    team: green
+    environment: prod
+    created-by: backstage
+    template: golden-path
+  annotations:
+    description: "Production namespace for green team"
+    created-via: "backstage-golden-path-template"
+    service: "customer-api-1"
+spec:
+  parameters:
+    targetCluster: aks-app-spoke
+    namespaceName: green-prod
+    labels:
+      team: green
+      environment: prod
+      managed-by: crossplane
+      backstage.io/kubernetes-id: green
+
+    # Enable all isolation features
+    enableResourceQuota: true
+    enableNetworkPolicy: true
+    enableLimitRange: true
+
+    # Production quotas (higher limits than dev)
+    resourceQuota:
+      requestsCpu: "4"
+      requestsMemory: "8Gi"
+      limitsCpu: "8"
+      limitsMemory: "16Gi"
+      pods: 100
+
+    # Default limits for individual containers
+    limitRange:
+      cpuRequest: "100m"
+      cpuLimit: "1"
+      memoryRequest: "128Mi"
+      memoryLimit: "1Gi"

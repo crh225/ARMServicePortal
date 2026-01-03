@@ -1,0 +1,76 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: customer-api-1-prod
+  namespace: argocd
+  labels:
+    team: green
+    environment: prod
+    created-by: backstage
+    template: golden-path
+    app.kubernetes.io/part-of: green
+  annotations:
+    description: "Production deployment of customer-api-1"
+    created-via: "backstage-golden-path-template"
+    repository: "https://github.com/crh225/customer-api-1"
+    # ArgoCD Image Updater annotations for automatic version updates
+    argocd-image-updater.argoproj.io/image-list: "app=ghcr.io/crh225/customer-api-1"
+    argocd-image-updater.argoproj.io/app.update-strategy: "semver"
+    argocd-image-updater.argoproj.io/app.allow-tags: "regexp:^v[0-9]+\\.[0-9]+\\.[0-9]+$"
+    argocd-image-updater.argoproj.io/write-back-method: "argocd"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: applications
+
+  source:
+    repoURL: https://github.com/crh225/customer-api-1
+    targetRevision: main  # Always track main branch for helm chart
+    path: helm
+    helm:
+      releaseName: customer-api-1
+      valueFiles:
+        - values.yaml
+      parameters:
+        - name: image.repository
+          value: ghcr.io/crh225/customer-api-1
+        - name: image.tag
+          value: "v1.0.0"  # Initial version, updated by Image Updater
+        - name: namespace
+          value: green-prod
+        - name: replicaCount
+          value: "3"
+        - name: autoscaling.enabled
+          value: "true"
+        - name: autoscaling.minReplicas
+          value: "3"
+        - name: autoscaling.maxReplicas
+          value: "10"
+        - name: labels.environment
+          value: "prod"
+        - name: serviceMonitor.enabled
+          value: "false"
+
+  destination:
+    name: aks-app-spoke
+    namespace: green-prod
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=false  # Namespace created by NamespaceClaim
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+  # Health assessment
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas  # Allow HPA to manage replicas
