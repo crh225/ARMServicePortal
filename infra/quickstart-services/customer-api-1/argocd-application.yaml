@@ -35,6 +35,12 @@ spec:
           value: green-dev
         - name: serviceMonitor.enabled
           value: "false"
+        - name: istio.enabled
+          value: "true"
+        - name: istio.crossCluster
+          value: "true"
+        - name: istio.domain
+          value: "green-dev.chrishouse.io"
 
   destination:
     name: shared-dev-cluster
