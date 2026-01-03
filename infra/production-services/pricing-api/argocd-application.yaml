@@ -48,6 +48,8 @@ spec:
           value: "8"
         - name: labels.environment
           value: "prod"
+        - name: serviceMonitor.enabled
+          value: "false"
 
   destination:
     name: aks-app-spoke

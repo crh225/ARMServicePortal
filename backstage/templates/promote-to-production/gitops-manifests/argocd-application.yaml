@@ -48,6 +48,8 @@ spec:
           value: "${{ values.maxReplicas }}"
         - name: labels.environment
           value: "prod"
+        - name: serviceMonitor.enabled
+          value: "false"
 
   destination:
     name: ${{ values.targetCluster }}
