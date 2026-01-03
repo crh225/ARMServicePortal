@@ -16,9 +16,13 @@ spec:
     - {{ .Chart.Name }}.{{ .Values.istio.domain }}
     {{- end }}
   gateways:
+    {{- if .Values.istio.crossCluster }}
+    - istio-system/cross-network-gateway
+    {{- else }}
     - {{ .Values.istio.gateway }}
+    {{- end }}
     {{- if .Values.istio.preview.enabled }}
-    - istio-system/cross-network-gateway 
+    - istio-system/cross-network-gateway
     {{- end }}
   http:
     - match:

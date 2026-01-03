@@ -58,6 +58,7 @@ istio:
   enabled: false  # Set to true to enable Istio ingress
   domain: chrishouse.io
   gateway: istio-ingress/main-gateway  # Hub gateway (cross-cluster routing)
+  crossCluster: false  # Set to true for dev/spoke clusters (uses cross-network-gateway)
 
   # Preview environment configuration (set by preview workflow)
   preview:

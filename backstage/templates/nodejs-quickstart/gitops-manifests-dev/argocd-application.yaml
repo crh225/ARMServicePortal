@@ -37,6 +37,8 @@ spec:
           value: "false"
         - name: istio.enabled
           value: "true"
+        - name: istio.crossCluster
+          value: "true"
         - name: istio.domain
           value: "${{ values.devNamespace }}.chrishouse.io"
 
