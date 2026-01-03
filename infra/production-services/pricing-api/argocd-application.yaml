@@ -13,6 +13,11 @@ metadata:
     description: "Production deployment of pricing-api"
     created-via: "backstage-promote-to-production-template"
     repository: "https://github.com/crh225/pricing-api"
+    # ArgoCD Image Updater annotations for automatic version updates
+    argocd-image-updater.argoproj.io/image-list: "app=ghcr.io/crh225/pricing-api"
+    argocd-image-updater.argoproj.io/app.update-strategy: "semver"
+    argocd-image-updater.argoproj.io/app.allow-tags: "regexp:^v[0-9]+\\.[0-9]+\\.[0-9]+$"
+    argocd-image-updater.argoproj.io/write-back-method: "argocd"
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
@@ -20,7 +25,7 @@ spec:
 
   source:
     repoURL: https://github.com/crh225/pricing-api
-    targetRevision: release/1
+    targetRevision: main  # Track main branch for helm chart
     path: helm
     helm:
       releaseName: pricing-api
@@ -30,7 +35,7 @@ spec:
         - name: image.repository
           value: ghcr.io/crh225/pricing-api
         - name: image.tag
-          value: "latest"
+          value: "v1.0.0"  # Initial version - will be auto-updated by Image Updater
         - name: namespace
           value: red-prod
         - name: replicaCount
@@ -53,7 +58,7 @@ spec:
       prune: true
       selfHeal: true
     syncOptions:
-      - CreateNamespace=false  # Namespace created by NamespaceClaim
+      - CreateNamespace=true  # ArgoCD creates namespace directly
     retry:
       limit: 5
       backoff:

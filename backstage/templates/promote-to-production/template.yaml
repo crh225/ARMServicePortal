@@ -45,7 +45,15 @@ spec:
     - title: Production Configuration
       required:
         - replicas
+        - initialVersion
       properties:
+        initialVersion:
+          title: Initial Version to Deploy
+          type: string
+          default: v1.0.0
+          description: Semantic version tag for initial deployment (e.g., v1.0.0). Create this release in GitHub after PR is merged.
+          pattern: '^v[0-9]+\.[0-9]+\.[0-9]+$'
+
         replicas:
           title: Number of Replicas
           type: integer
@@ -73,18 +81,15 @@ spec:
           default: helm
           description: Path to Helm chart in your repository
 
-        targetRevision:
-          title: Branch/Tag to Deploy
-          type: string
-          default: main
-          description: Git branch or tag to deploy from
-
     - title: Review & Confirm
       description: |
         **Production Deployment**
 
         Your service will be deployed to the production cluster (aks-app-spoke).
         This requires platform team approval before deployment.
+
+        **Important:** After the PR is merged, you must create a GitHub Release
+        with the version tag you specified (e.g., v1.0.0) to trigger the production build.
       required:
         - confirmReview
       properties:
@@ -115,7 +120,7 @@ spec:
           enableHPA: ${{ parameters.enableHPA }}
           maxReplicas: ${{ parameters.maxReplicas }}
           helmPath: ${{ parameters.helmPath }}
-          targetRevision: ${{ parameters.targetRevision }}
+          initialVersion: ${{ parameters.initialVersion }}
 
     # Step 2: Create Hub VirtualService (routes external traffic to spoke)
     - id: create-hub-vs
@@ -153,7 +158,7 @@ spec:
 
           **REQUIRES PLATFORM TEAM APPROVAL**
 
-          This promotes an existing service to the production cluster.
+          This promotes an existing service to the production cluster using trunk-based release flow.
 
           ---
 
@@ -164,7 +169,7 @@ spec:
           | **Service Name** | ${{ parameters.service_name }} |
           | **Team** | ${{ parameters.team }} |
           | **Source Repository** | ${{ parameters.repo_url }} |
-          | **Branch/Tag** | ${{ parameters.targetRevision }} |
+          | **Initial Version** | ${{ parameters.initialVersion }} |
 
           ---
 
@@ -181,12 +186,18 @@ spec:
 
           ---
 
-          ### What gets created
+          ### Release Flow (Trunk-Based)
 
-          - **NamespaceClaim**: `${{ parameters.team }}-prod` on aks-app-spoke
-          - **ArgoCD Application**: Deploys from ${{ parameters.repo_url }}
-          - **Hub VirtualService**: Routes `${{ parameters.service_name }}-prod.chrishouse.io` to spoke
-          - **Spoke VirtualService**: Routes to service in namespace
+          Once merged, production releases work as follows:
+
+          1. **Create a GitHub Release** in your service repo with tag `${{ parameters.initialVersion }}`
+          2. CI builds and pushes image tagged `${{ parameters.initialVersion }}`
+          3. ArgoCD detects the new image and deploys to production
+
+          **For future releases:**
+          - Create new GitHub Release (e.g., `v1.1.0`, `v1.2.0`)
+          - CI automatically builds and pushes the new version
+          - Update the ArgoCD manifest to use the new version tag
 
           ---
 
@@ -195,15 +206,7 @@ spec:
           - [ ] Service has been tested in development
           - [ ] Resource limits are appropriate for production
           - [ ] Team has budget approval
-
-          ---
-
-          ### What happens when merged?
-
-          1. ArgoCD syncs the configuration
-          2. Namespace created: `${{ parameters.team }}-prod`
-          3. Application deployed to aks-app-spoke cluster
-          4. Service available at: https://${{ parameters.service_name }}-prod.chrishouse.io
+          - [ ] Ready to create GitHub Release `${{ parameters.initialVersion }}` after merge
 
           ---
           Created via Backstage Promote to Production Template
@@ -229,8 +232,13 @@ spec:
 
           1. **Platform team reviews** the GitOps PR
           2. **PR is merged** after approval
-          3. **ArgoCD deploys** to aks-app-spoke cluster
-          4. **Service available at:** https://${{ parameters.service_name }}-prod.chrishouse.io
+          3. **You create a GitHub Release** with tag `${{ parameters.initialVersion }}` in your service repo
+          4. **CI builds** the production image with that version tag
+          5. **ArgoCD deploys** to aks-app-spoke cluster
+          6. **Service available at:** https://${{ parameters.service_name }}-prod.chrishouse.io
 
-          Your existing repository (${{ parameters.repo_url }}) will be deployed to production.
-          No changes are made to your source repository.
+          ### Future Releases
+
+          To deploy new versions to production:
+          1. Create a new GitHub Release (e.g., v1.1.0)
+          2. Update the image tag in the ArgoCD manifest (or use ArgoCD Image Updater)

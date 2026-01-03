@@ -13,6 +13,11 @@ metadata:
     description: "Production deployment of ${{ values.serviceName }}"
     created-via: "backstage-promote-to-production-template"
     repository: "${{ values.repoUrl }}"
+    # ArgoCD Image Updater annotations for automatic version updates
+    argocd-image-updater.argoproj.io/image-list: "app=ghcr.io/crh225/${{ values.serviceName }}"
+    argocd-image-updater.argoproj.io/app.update-strategy: "semver"
+    argocd-image-updater.argoproj.io/app.allow-tags: "regexp:^v[0-9]+\\.[0-9]+\\.[0-9]+$"
+    argocd-image-updater.argoproj.io/write-back-method: "argocd"
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
@@ -20,7 +25,7 @@ spec:
 
   source:
     repoURL: ${{ values.repoUrl }}
-    targetRevision: ${{ values.targetRevision }}
+    targetRevision: main  # Always track main branch for helm chart
     path: ${{ values.helmPath }}
     helm:
       releaseName: ${{ values.serviceName }}
@@ -30,7 +35,7 @@ spec:
         - name: image.repository
           value: ghcr.io/crh225/${{ values.serviceName }}
         - name: image.tag
-          value: "latest"
+          value: "${{ values.initialVersion }}"
         - name: namespace
           value: ${{ values.namespace }}
         - name: replicaCount
@@ -53,7 +58,7 @@ spec:
       prune: true
       selfHeal: true
     syncOptions:
-      - CreateNamespace=false  # Namespace created by NamespaceClaim
+      - CreateNamespace=true  # ArgoCD creates namespace directly
     retry:
       limit: 5
       backoff:
