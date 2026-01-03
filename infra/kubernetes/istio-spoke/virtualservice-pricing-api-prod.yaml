@@ -1,0 +1,20 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: pricing-api-prod-vs
+  namespace: istio-ingress
+  labels:
+    team: red
+    environment: prod
+    created-by: backstage
+spec:
+  hosts:
+    - "pricing-api-prod.chrishouse.io"
+  gateways:
+    - external-gateway
+  http:
+    - route:
+        - destination:
+            host: pricing-api.red-prod.svc.cluster.local
+            port:
+              number: 80
