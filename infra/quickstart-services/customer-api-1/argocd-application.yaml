@@ -40,7 +40,7 @@ spec:
         - name: istio.crossCluster
           value: "true"
         - name: istio.domain
-          value: "green-dev.chrishouse.io"
+          value: "chrishouse.io"
 
   destination:
     name: shared-dev-cluster

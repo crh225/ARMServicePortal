@@ -9,7 +9,7 @@ metadata:
     created-by: backstage
 spec:
   hosts:
-    - "${{ values.serviceName }}.${{ values.team }}-dev.chrishouse.io"
+    - "${{ values.serviceName }}.chrishouse.io"
   gateways:
     - main-gateway
   http:
@@ -22,4 +22,4 @@ spec:
           headers:
             request:
               set:
-                Host: ${{ values.serviceName }}.${{ values.team }}-dev.chrishouse.io
+                Host: ${{ values.serviceName }}.chrishouse.io

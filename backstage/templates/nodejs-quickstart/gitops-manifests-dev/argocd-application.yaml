@@ -40,7 +40,7 @@ spec:
         - name: istio.crossCluster
           value: "true"
         - name: istio.domain
-          value: "${{ values.devNamespace }}.chrishouse.io"
+          value: "chrishouse.io"
 
   destination:
     name: ${{ values.devCluster }}

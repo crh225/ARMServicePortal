@@ -9,7 +9,7 @@ metadata:
     created-by: backstage
 spec:
   hosts:
-    - "customer-api-1.green-dev.chrishouse.io"
+    - "customer-api-1.chrishouse.io"
   gateways:
     - main-gateway
   http:
@@ -22,4 +22,4 @@ spec:
           headers:
             request:
               set:
-                Host: customer-api-1.green-dev.chrishouse.io
+                Host: customer-api-1.chrishouse.io
