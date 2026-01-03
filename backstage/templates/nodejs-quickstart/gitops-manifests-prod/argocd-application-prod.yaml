@@ -52,7 +52,7 @@ spec:
           value: "false"
 
   destination:
-    name: ${{ values.prodCluster }}
+    name: ${{ values.prodClusterArgoCD }}
     namespace: ${{ values.prodNamespace }}
 
   syncPolicy:

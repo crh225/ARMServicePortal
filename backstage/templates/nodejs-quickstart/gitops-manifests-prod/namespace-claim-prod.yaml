@@ -14,7 +14,7 @@ metadata:
     service: "${{ values.serviceName }}"
 spec:
   parameters:
-    targetCluster: ${{ values.prodCluster }}
+    targetCluster: ${{ values.prodClusterCrossplane }}
     namespaceName: ${{ values.prodNamespace }}
     labels:
       team: ${{ values.team }}

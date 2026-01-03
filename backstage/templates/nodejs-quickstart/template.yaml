@@ -142,7 +142,8 @@ spec:
           description: ${{ parameters.description }}
           repoUrl: https://github.com/crh225/${{ parameters.service_name }}
           prodNamespace: ${{ parameters.team | parseEntityRef | pick('name') }}-prod
-          prodCluster: app-spoke
+          prodClusterArgoCD: aks-app-spoke
+          prodClusterCrossplane: app-spoke
           prodReplicas: ${{ parameters.prodReplicas }}
           enableHPA: ${{ parameters.enableHPA }}
           maxReplicas: ${{ parameters.maxReplicas }}
