@@ -1,0 +1,20 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: customer-api-1-prod-vs
+  namespace: istio-ingress
+  labels:
+    team: green
+    environment: prod
+    created-by: backstage
+spec:
+  hosts:
+    - "customer-api-1-prod.chrishouse.io"
+  gateways:
+    - external-gateway
+  http:
+    - route:
+        - destination:
+            host: customer-api-1.green-prod.svc.cluster.local
+            port:
+              number: 80
