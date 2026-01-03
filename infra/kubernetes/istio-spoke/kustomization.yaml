@@ -9,3 +9,4 @@ resources:
   - virtualservice-blog.yaml
   - virtualservice-portal.yaml
   - virtualservice-portal-api.yaml
+  - virtualservice-pricing-api-prod.yaml
