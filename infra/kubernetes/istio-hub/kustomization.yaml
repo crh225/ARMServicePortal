@@ -8,4 +8,7 @@ resources:
   - virtualservice-blog.yaml
   - virtualservice-portal.yaml
   - virtualservice-portal-api.yaml
+  - virtualservice-pricing-api-prod.yaml
+  - virtualservice-preview-envs.yaml
+  - service-entry-shared-dev.yaml
   - wildcard-certificate.yaml
