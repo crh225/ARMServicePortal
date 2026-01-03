@@ -1,0 +1,40 @@
+# Argo CD App-of-Apps for Production Services
+# Syncs all Application manifests from infra/production-services/*/
+# Each directory contains an argocd-application.yaml that defines the production deployment
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: production-services
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: platform
+    app.kubernetes.io/component: production-services
+spec:
+  project: applications
+
+  source:
+    repoURL: https://github.com/crh225/ARMServicePortal.git
+    targetRevision: main
+    path: infra/production-services
+    directory:
+      recurse: true
+      include: '*/argocd-application.yaml'
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: true  # Allow empty directory initially
+    syncOptions:
+      - CreateNamespace=false
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

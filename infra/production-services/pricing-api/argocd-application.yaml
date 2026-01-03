@@ -20,7 +20,7 @@ spec:
 
   source:
     repoURL: https://github.com/crh225/pricing-api
-    targetRevision: release
+    targetRevision: release/1
     path: helm
     helm:
       releaseName: pricing-api
