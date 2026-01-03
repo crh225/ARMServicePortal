@@ -28,40 +28,40 @@ jobs:
       - name: Set environment variables
         id: vars
         run: |
-          echo "pr_number=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
-          echo "namespace=${TEAM_NAME}-dev-pr-${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
-          echo "hostname=${SERVICE_NAME}-pr-${{ github.event.pull_request.number }}-${TEAM_NAME}.chrishouse.io" >> $GITHUB_OUTPUT
-          echo "image_tag=pr-${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
-          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "pr_number=${{ '${{ github.event.pull_request.number }}' }}" >> $GITHUB_OUTPUT
+          echo "namespace=${TEAM_NAME}-dev-pr-${{ '${{ github.event.pull_request.number }}' }}" >> $GITHUB_OUTPUT
+          echo "hostname=${SERVICE_NAME}-pr-${{ '${{ github.event.pull_request.number }}' }}-${TEAM_NAME}.chrishouse.io" >> $GITHUB_OUTPUT
+          echo "image_tag=pr-${{ '${{ github.event.pull_request.number }}' }}" >> $GITHUB_OUTPUT
+          REPO_LOWER=$(echo "${{ '${{ github.repository }}' }}" | tr '[:upper:]' '[:lower:]')
           echo "repository=$REPO_LOWER" >> $GITHUB_OUTPUT
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v2
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: ${{ '${{ env.REGISTRY }}' }}
+          username: ${{ '${{ github.actor }}' }}
+          password: ${{ '${{ secrets.GITHUB_TOKEN }}' }}
 
       - name: Build and push preview image
         uses: docker/build-push-action@v4
         with:
           context: .
           push: true
-          tags: ${{ env.REGISTRY }}/${{ steps.vars.outputs.repository }}:${{ steps.vars.outputs.image_tag }}
+          tags: ${{ '${{ env.REGISTRY }}/${{ steps.vars.outputs.repository }}:${{ steps.vars.outputs.image_tag }}' }}
 
       - name: Checkout GitOps repository
         uses: actions/checkout@v3
         with:
-          repository: ${{ env.GITOPS_REPO }}
-          token: ${{ secrets.GITOPS_TOKEN }}
+          repository: ${{ '${{ env.GITOPS_REPO }}' }}
+          token: ${{ '${{ secrets.GITOPS_TOKEN }}' }}
           path: gitops
 
       - name: Create preview environment manifests
         run: |
-          PR_NUM="${{ steps.vars.outputs.pr_number }}"
-          NAMESPACE="${{ steps.vars.outputs.namespace }}"
-          HOSTNAME="${{ steps.vars.outputs.hostname }}"
-          IMAGE_TAG="${{ steps.vars.outputs.image_tag }}"
+          PR_NUM="${{ '${{ steps.vars.outputs.pr_number }}' }}"
+          NAMESPACE="${{ '${{ steps.vars.outputs.namespace }}' }}"
+          HOSTNAME="${{ '${{ steps.vars.outputs.hostname }}' }}"
+          IMAGE_TAG="${{ '${{ steps.vars.outputs.image_tag }}' }}"
 
           # Create preview directory
           mkdir -p gitops/infra/quickstart-services/${SERVICE_NAME}/preview-pr-${PR_NUM}
@@ -119,15 +119,15 @@ jobs:
             annotations:
               description: "Preview environment for PR #${PR_NUM}"
               preview-url: "https://${HOSTNAME}"
-              pr-url: "${{ github.event.pull_request.html_url }}"
+              pr-url: "${{ '${{ github.event.pull_request.html_url }}' }}"
             finalizers:
               - resources-finalizer.argocd.argoproj.io
           spec:
             project: applications
 
             source:
-              repoURL: https://github.com/${{ github.repository }}
-              targetRevision: ${{ github.head_ref }}
+              repoURL: https://github.com/${{ '${{ github.repository }}' }}
+              targetRevision: ${{ '${{ github.head_ref }}' }}
               path: helm
               helm:
                 releaseName: ${SERVICE_NAME}-pr-${PR_NUM}
@@ -135,7 +135,7 @@ jobs:
                   - values.yaml
                 parameters:
                   - name: image.repository
-                    value: ${{ env.REGISTRY }}/${{ steps.vars.outputs.repository }}
+                    value: ${{ '${{ env.REGISTRY }}/${{ steps.vars.outputs.repository }}' }}
                   - name: image.tag
                     value: "${IMAGE_TAG}"
                   - name: namespace
@@ -173,23 +173,23 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add .
-          git commit -m "Deploy preview environment for ${{ env.SERVICE_NAME }} PR #${{ steps.vars.outputs.pr_number }}"
+          git commit -m "Deploy preview environment for ${{ '${{ env.SERVICE_NAME }}' }} PR #${{ '${{ steps.vars.outputs.pr_number }}' }}"
           git push
 
       - name: Comment PR with preview URL
         uses: actions/github-script@v6
         with:
           script: |
-            const hostname = '${{ steps.vars.outputs.hostname }}';
-            const body = `## 🚀 Preview Environment Deployed
+            const hostname = '${{ '${{ steps.vars.outputs.hostname }}' }}';
+            const body = `## Preview Environment Deployed
 
             Your preview environment is being deployed!
 
             **Preview URL:** https://${hostname}
-            **Namespace:** \`${{ steps.vars.outputs.namespace }}\`
-            **Image:** \`${{ env.REGISTRY }}/${{ steps.vars.outputs.repository }}:${{ steps.vars.outputs.image_tag }}\`
+            **Namespace:** \`${{ '${{ steps.vars.outputs.namespace }}' }}\`
+            **Image:** \`${{ '${{ env.REGISTRY }}/${{ steps.vars.outputs.repository }}:${{ steps.vars.outputs.image_tag }}' }}\`
 
-            ⏳ It may take 2-3 minutes for the environment to be fully ready.
+            It may take 2-3 minutes for the environment to be fully ready.
 
             The preview environment will be automatically deleted when this PR is closed or merged.`;
 
@@ -212,20 +212,20 @@ jobs:
       - name: Set environment variables
         id: vars
         run: |
-          echo "pr_number=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
-          echo "namespace=${TEAM_NAME}-dev-pr-${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
+          echo "pr_number=${{ '${{ github.event.pull_request.number }}' }}" >> $GITHUB_OUTPUT
+          echo "namespace=${TEAM_NAME}-dev-pr-${{ '${{ github.event.pull_request.number }}' }}" >> $GITHUB_OUTPUT
 
       - name: Checkout GitOps repository
         uses: actions/checkout@v3
         with:
-          repository: ${{ env.GITOPS_REPO }}
-          token: ${{ secrets.GITOPS_TOKEN }}
+          repository: ${{ '${{ env.GITOPS_REPO }}' }}
+          token: ${{ '${{ secrets.GITOPS_TOKEN }}' }}
           path: gitops
 
       - name: Remove preview environment manifests
         working-directory: gitops
         run: |
-          PR_NUM="${{ steps.vars.outputs.pr_number }}"
+          PR_NUM="${{ '${{ steps.vars.outputs.pr_number }}' }}"
           rm -rf infra/quickstart-services/${SERVICE_NAME}/preview-pr-${PR_NUM}
 
       - name: Commit and push cleanup
@@ -234,18 +234,18 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add .
-          git commit -m "Cleanup preview environment for ${{ env.SERVICE_NAME }} PR #${{ steps.vars.outputs.pr_number }}" || echo "No changes to commit"
+          git commit -m "Cleanup preview environment for ${{ '${{ env.SERVICE_NAME }}' }} PR #${{ '${{ steps.vars.outputs.pr_number }}' }}" || echo "No changes to commit"
           git push
 
       - name: Comment PR with cleanup notice
         uses: actions/github-script@v6
         with:
           script: |
-            const body = `## 🧹 Preview Environment Cleaned Up
+            const body = `## Preview Environment Cleaned Up
 
             The preview environment for this PR has been deleted.
 
-            **Namespace:** \`${{ steps.vars.outputs.namespace }}\` - deleted
+            **Namespace:** \`${{ '${{ steps.vars.outputs.namespace }}' }}\` - deleted
             **Resources:** All associated resources have been removed`;
 
             github.rest.issues.createComment({
