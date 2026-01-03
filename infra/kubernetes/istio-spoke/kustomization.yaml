@@ -10,3 +10,4 @@ resources:
   - virtualservice-portal.yaml
   - virtualservice-portal-api.yaml
   - virtualservice-pricing-api-prod.yaml
+  - virtualservice-customer-api-1-prod.yaml

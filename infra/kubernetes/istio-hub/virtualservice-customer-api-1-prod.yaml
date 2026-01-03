@@ -1,0 +1,25 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: customer-api-1-prod-vs
+  namespace: istio-ingress
+  labels:
+    team: green
+    environment: prod
+    created-by: backstage
+spec:
+  hosts:
+    - "customer-api-1-prod.chrishouse.io"
+  gateways:
+    - main-gateway
+  http:
+    - route:
+        - destination:
+            # Route to spoke cluster via ServiceEntry
+            host: spoke.internal
+            port:
+              number: 80
+          headers:
+            request:
+              set:
+                Host: customer-api-1-prod.chrishouse.io

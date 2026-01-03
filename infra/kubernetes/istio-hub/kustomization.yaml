@@ -12,3 +12,4 @@ resources:
   - virtualservice-preview-envs.yaml
   - service-entry-shared-dev.yaml
   - wildcard-certificate.yaml
+  - virtualservice-customer-api-1-prod.yaml
