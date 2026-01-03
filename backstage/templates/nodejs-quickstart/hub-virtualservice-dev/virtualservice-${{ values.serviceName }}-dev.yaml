@@ -1,0 +1,25 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: ${{ values.serviceName }}-dev-vs
+  namespace: istio-ingress
+  labels:
+    team: ${{ values.team }}
+    environment: dev
+    created-by: backstage
+spec:
+  hosts:
+    - "${{ values.serviceName }}.${{ values.team }}-dev.chrishouse.io"
+  gateways:
+    - main-gateway
+  http:
+    - route:
+        - destination:
+            # Route to shared-dev cluster via ServiceEntry
+            host: shared-dev.internal
+            port:
+              number: 80
+          headers:
+            request:
+              set:
+                Host: ${{ values.serviceName }}.${{ values.team }}-dev.chrishouse.io

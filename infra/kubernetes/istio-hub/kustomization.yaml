@@ -13,3 +13,4 @@ resources:
   - service-entry-shared-dev.yaml
   - wildcard-certificate.yaml
   - virtualservice-customer-api-1-prod.yaml
+  - virtualservice-customer-api-1-dev.yaml

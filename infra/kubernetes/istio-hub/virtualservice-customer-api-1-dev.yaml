@@ -1,0 +1,25 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: customer-api-1-dev-vs
+  namespace: istio-ingress
+  labels:
+    team: green
+    environment: dev
+    created-by: backstage
+spec:
+  hosts:
+    - "customer-api-1.green-dev.chrishouse.io"
+  gateways:
+    - main-gateway
+  http:
+    - route:
+        - destination:
+            # Route to shared-dev cluster via ServiceEntry
+            host: shared-dev.internal
+            port:
+              number: 80
+          headers:
+            request:
+              set:
+                Host: customer-api-1.green-dev.chrishouse.io

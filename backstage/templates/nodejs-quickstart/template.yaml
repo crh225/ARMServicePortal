@@ -147,16 +147,34 @@ spec:
           enableHPA: ${{ parameters.enableHPA }}
           maxReplicas: ${{ parameters.maxReplicas }}
 
-    # Step 6: Fetch existing Istio configs from repo (conditional)
+    # Step 6: Fetch existing Istio configs from repo (always needed for dev routing)
     - id: fetch-existing-istio
       name: Fetch Existing Istio Configuration
-      if: ${{ parameters.includeProduction }}
       action: fetch:plain
       input:
         url: https://github.com/crh225/ARMServicePortal/tree/main/infra/kubernetes
         targetPath: ./gitops/kubernetes
 
-    # Step 7: Create Hub VirtualService (conditional)
+    # Step 7: Create Hub VirtualService for Dev (always)
+    - id: create-hub-vs-dev
+      name: Create Dev Hub Ingress Route
+      action: fetch:template
+      input:
+        url: ./hub-virtualservice-dev
+        targetPath: ./gitops/kubernetes/istio-hub
+        values:
+          serviceName: ${{ parameters.service_name }}
+          team: ${{ parameters.team | parseEntityRef | pick('name') }}
+
+    # Step 8: Append Dev VirtualService to hub kustomization.yaml
+    - id: append-hub-kustomize-dev
+      name: Add Dev VirtualService to Hub Kustomization
+      action: roadiehq:utils:fs:append
+      input:
+        path: ./gitops/kubernetes/istio-hub/kustomization.yaml
+        content: "\n  - virtualservice-${{ parameters.service_name }}-dev.yaml"
+
+    # Step 9: Create Hub VirtualService for Prod (conditional)
     - id: create-hub-vs
       name: Create Hub Ingress Route
       if: ${{ parameters.includeProduction }}
