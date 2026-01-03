@@ -92,7 +92,7 @@ Deployments are fully automated via GitOps:
 Every Pull Request automatically deploys a preview environment:
 
 1. **Open a PR** - Preview environment automatically created
-2. **Preview URL** - Posted as PR comment: `https://${{ values.serviceName }}-pr-{number}.${{ values.team }}.chrishouse.io`
+2. **Preview URL** - Posted as PR comment: `https://${{ values.serviceName }}-pr-{number}-${{ values.team }}.chrishouse.io`
 3. **Automatic Updates** - Every commit updates the preview
 4. **Auto-Cleanup** - Preview deleted when PR is closed/merged
 
