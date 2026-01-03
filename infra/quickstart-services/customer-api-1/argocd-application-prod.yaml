@@ -52,7 +52,7 @@ spec:
           value: "false"
 
   destination:
-    name: aks-app-spoke
+    name: app-spoke
     namespace: green-prod
 
   syncPolicy:

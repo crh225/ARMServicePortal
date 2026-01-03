@@ -14,7 +14,7 @@ metadata:
     service: "customer-api-1"
 spec:
   parameters:
-    targetCluster: aks-app-spoke
+    targetCluster: app-spoke
     namespaceName: green-prod
     labels:
       team: green
