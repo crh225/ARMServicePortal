@@ -1,0 +1,40 @@
+# Argo CD Application for Quick Start Service Namespaces
+# Syncs NamespaceClaim manifests from infra/quickstart-services/*/
+# These claims provision the namespaces needed by quickstart services
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: quickstart-namespaces
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: platform
+    app.kubernetes.io/component: quickstart-namespaces
+spec:
+  project: infrastructure-claims
+
+  source:
+    repoURL: https://github.com/crh225/ARMServicePortal.git
+    targetRevision: main
+    path: infra/quickstart-services
+    directory:
+      recurse: true
+      include: '*/namespace-claim*.yaml'
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: crossplane-system
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: true
+    syncOptions:
+      - CreateNamespace=false
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
