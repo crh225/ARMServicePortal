@@ -1,6 +1,6 @@
 # Argo CD App-of-Apps for Quick Start Services
 # Syncs all Application manifests from infra/quickstart-services/*/
-# Each directory contains an argocd-application.yaml that defines the service deployment
+# Each directory contains argocd-application.yaml (dev) and argocd-application-prod.yaml (prod)
 
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -19,7 +19,7 @@ spec:
     path: infra/quickstart-services
     directory:
       recurse: true
-      include: '*/argocd-application.yaml'
+      include: '*/argocd-application*.yaml'
 
   destination:
     server: https://kubernetes.default.svc
