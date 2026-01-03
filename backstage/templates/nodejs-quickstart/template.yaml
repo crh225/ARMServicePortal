@@ -81,9 +81,9 @@ spec:
           - includeProduction
 
   steps:
-    # Step 1: Generate repository from template
+    # Step 1: Scaffold application from template
     - id: fetch-template
-      name: Fetch Application Template
+      name: Scaffold Application
       action: fetch:template
       input:
         url: ./skeleton
@@ -95,9 +95,9 @@ spec:
           repoUrl: github.com?owner=crh225&repo=${{ parameters.service_name }}
           namespace: ${{ parameters.team | parseEntityRef | pick('name') }}-dev
 
-    # Step 2: Create GitHub repository
+    # Step 2: Create and configure GitHub repository
     - id: publish-github
-      name: Publish to GitHub
+      name: Create GitHub Repository
       action: publish:github
       input:
         description: ${{ parameters.description }}
@@ -106,16 +106,15 @@ spec:
         defaultBranch: main
         protectDefaultBranch: false
 
-    # Step 3: Configure repository permissions for GHCR
     - id: configure-repo
-      name: Configure Repository Permissions
+      name: Configure Repository
       action: armportal:github:configure-repo
       input:
         repoUrl: github.com?owner=crh225&repo=${{ parameters.service_name }}
 
-    # Step 4: Create dev GitOps manifests
+    # Step 3: Create GitOps configuration (dev + prod manifests)
     - id: create-gitops-dev
-      name: Create Dev GitOps Configuration
+      name: Create GitOps Configuration
       action: fetch:template
       input:
         url: ./gitops-manifests-dev
@@ -128,9 +127,7 @@ spec:
           devNamespace: ${{ parameters.team | parseEntityRef | pick('name') }}-dev
           devCluster: shared-dev-cluster
 
-    # Step 5: Create prod GitOps manifests (conditional)
     - id: create-gitops-prod
-      name: Create Prod GitOps Configuration
       if: ${{ parameters.includeProduction }}
       action: fetch:template
       input:
@@ -148,17 +145,15 @@ spec:
           enableHPA: ${{ parameters.enableHPA }}
           maxReplicas: ${{ parameters.maxReplicas }}
 
-    # Step 6: Fetch existing Istio configs from repo (always needed for dev routing)
+    # Step 4: Create ingress routes (fetches existing config, adds VirtualServices)
     - id: fetch-existing-istio
-      name: Fetch Existing Istio Configuration
+      name: Create Ingress Routes
       action: fetch:plain
       input:
         url: https://github.com/crh225/ARMServicePortal/tree/main/infra/kubernetes
         targetPath: ./gitops/kubernetes
 
-    # Step 7: Create Hub VirtualService for Dev (always)
     - id: create-hub-vs-dev
-      name: Create Dev Hub Ingress Route
       action: fetch:template
       input:
         url: ./hub-virtualservice-dev
@@ -167,17 +162,13 @@ spec:
           serviceName: ${{ parameters.service_name }}
           team: ${{ parameters.team | parseEntityRef | pick('name') }}
 
-    # Step 8: Append Dev VirtualService to hub kustomization.yaml
     - id: append-hub-kustomize-dev
-      name: Add Dev VirtualService to Hub Kustomization
       action: roadiehq:utils:fs:append
       input:
         path: ./gitops/kubernetes/istio-hub/kustomization.yaml
         content: "\n  - virtualservice-${{ parameters.service_name }}-dev.yaml"
 
-    # Step 9: Create Hub VirtualService for Prod (conditional)
     - id: create-hub-vs
-      name: Create Hub Ingress Route
       if: ${{ parameters.includeProduction }}
       action: fetch:template
       input:
@@ -187,9 +178,7 @@ spec:
           serviceName: ${{ parameters.service_name }}
           team: ${{ parameters.team | parseEntityRef | pick('name') }}
 
-    # Step 8: Create Spoke VirtualService (conditional)
     - id: create-spoke-vs
-      name: Create Spoke Ingress Route
       if: ${{ parameters.includeProduction }}
       action: fetch:template
       input:
@@ -200,27 +189,23 @@ spec:
           team: ${{ parameters.team | parseEntityRef | pick('name') }}
           namespace: ${{ parameters.team | parseEntityRef | pick('name') }}-prod
 
-    # Step 9: Append VirtualService to hub kustomization.yaml (conditional)
     - id: append-hub-kustomize
-      name: Add VirtualService to Hub Kustomization
       if: ${{ parameters.includeProduction }}
       action: roadiehq:utils:fs:append
       input:
         path: ./gitops/kubernetes/istio-hub/kustomization.yaml
         content: "  - virtualservice-${{ parameters.service_name }}-prod.yaml"
 
-    # Step 10: Append VirtualService to spoke kustomization.yaml (conditional)
     - id: append-spoke-kustomize
-      name: Add VirtualService to Spoke Kustomization
       if: ${{ parameters.includeProduction }}
       action: roadiehq:utils:fs:append
       input:
         path: ./gitops/kubernetes/istio-spoke/kustomization.yaml
         content: "  - virtualservice-${{ parameters.service_name }}-prod.yaml"
 
-    # Step 11: Create pull request in ARMServicePortal repo (dev only)
+    # Step 5: Submit GitOps pull request
     - id: publish-gitops-dev-only
-      name: Submit GitOps PR (Dev Only)
+      name: Submit GitOps PR
       if: ${{ not parameters.includeProduction }}
       action: publish:github:pull-request
       input:
@@ -256,9 +241,8 @@ spec:
         sourcePath: ./gitops
         targetPath: infra
 
-    # Step 12: Create pull request in ARMServicePortal repo (dev + prod)
     - id: publish-gitops
-      name: Submit GitOps PR (Dev + Production)
+      name: Submit GitOps PR
       if: ${{ parameters.includeProduction }}
       action: publish:github:pull-request
       input:
@@ -319,7 +303,7 @@ spec:
         sourcePath: ./gitops
         targetPath: infra
 
-    # Step 13: Register in Backstage catalog
+    # Step 6: Register in Backstage catalog
     - id: register-catalog
       name: Register in Catalog
       action: catalog:register
