@@ -29,6 +29,6 @@ spec:
   minNodeCount: 1
   maxNodeCount: 6
   enableAutoScaling: true
-  vmSize: Standard_D2s_v3  
+  vmSize: Standard_B2s  
   priority: Regular
   kubernetesVersion: "1.32"
