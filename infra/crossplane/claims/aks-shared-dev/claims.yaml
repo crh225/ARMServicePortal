@@ -25,7 +25,6 @@ spec:
   dnsServiceIp: "10.103.0.10"
 
   # Node pool configuration (optimized for shared dev workloads)
-  nodeCount: 3
   minNodeCount: 1
   maxNodeCount: 6
   enableAutoScaling: true
