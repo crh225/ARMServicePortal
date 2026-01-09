@@ -64,3 +64,32 @@ output "hub_aks_mgmt_pods_subnet_id" {
   description = "ID of the AKS management cluster pods subnet in hub"
   value       = module.hub_vnet.aks_mgmt_pods_subnet_id
 }
+
+# ARM Portal Backend Managed Identity
+# Used for workload identity federation with AKS and Key Vault access
+resource "azurerm_user_assigned_identity" "armportal_backend" {
+  name                = "armportal-backend-identity"
+  resource_group_name = azurerm_resource_group.landing_zone_hub.name
+  location            = azurerm_resource_group.landing_zone_hub.location
+
+  tags = {
+    "purpose"               = "armportal-backend"
+    "managed-by"            = "terraform"
+    "armportal-environment" = "shared"
+  }
+}
+
+output "armportal_backend_identity_id" {
+  description = "ID of the ARM Portal backend managed identity"
+  value       = azurerm_user_assigned_identity.armportal_backend.id
+}
+
+output "armportal_backend_identity_client_id" {
+  description = "Client ID of the ARM Portal backend managed identity"
+  value       = azurerm_user_assigned_identity.armportal_backend.client_id
+}
+
+output "armportal_backend_identity_principal_id" {
+  description = "Principal ID of the ARM Portal backend managed identity"
+  value       = azurerm_user_assigned_identity.armportal_backend.principal_id
+}
