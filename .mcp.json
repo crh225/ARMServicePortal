@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "aks-mcp": {
+      "command": "C:\\Users\\Chris\\.vs-kubernetes\\tools\\aks-mcp\\v0.0.11\\aks-mcp.exe",
+      "args": ["--transport", "stdio", "--access-level", "readwrite"],
+      "env": {}
+    }
+  }
+}
